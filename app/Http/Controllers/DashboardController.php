@@ -70,14 +70,17 @@ class DashboardController extends Controller
         // Produk pompa, aksesoris, sparepart, safety gear
         $produkPerKategori = KategoriProduk::withCount('produk')
             ->where('is_active', true) // Only include active categories
-            ->having('produk_count', '>', 0) // Only include categories with products
             ->get()
+            ->filter(function ($kategori) {
+                return $kategori->produk_count > 0;
+            })
             ->map(function ($kategori) {
                 return [
                     'nama' => $kategori->nama,
                     'total' => $kategori->produk_count
                 ];
-            });
+            })
+            ->values();
 
         // If there's no data, provide a fallback for development/testing
         if ($produkPerKategori->isEmpty()) {
