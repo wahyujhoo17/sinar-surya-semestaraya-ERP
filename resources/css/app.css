@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Tambahkan style ini untuk memperbaiki transisi sidebar */
+.max-h-0 {
+    max-height: 0;
+}
+
+.max-h-96 {
+    max-height: 24rem;
+}
+
+/* Transisi hamburger icon */
+.rotate-90 {
+    transform: rotate(90deg);
+}
+
+/* Fix untuk overflow pada menu dropdown */
+.overflow-hidden {
+    overflow: hidden;
+}
+
+/* Sidebar Menu Styles */
+.menu-button {
+    @apply w-full flex items-center justify-between py-2.5 px-3 rounded-lg text-sm font-medium transition-colors duration-200 ease-in-out;
+    /* Slightly increased padding and rounded corners */
+}
+
+.menu-icon-wrapper {
+    @apply flex items-center space-x-3;
+    /* Added space for icon */
+}
+
+.menu-icon {
+    @apply flex-shrink-0 h-5 w-5 text-gray-500 transition-colors duration-200 ease-in-out;
+}
+
+.menu-button span {
+    @apply transition-opacity duration-300;
+    /* Smooth fade for text */
+}
+
+.menu-arrow {
+    @apply flex-shrink-0 ml-1 h-4 w-4 text-gray-400 transform transition-transform duration-200 ease-in-out;
+}
+
+.submenu {
+    @apply mt-1 space-y-1 overflow-hidden;
+    /* Added overflow-hidden for transition */
+    /* Removed pl-10, will add padding to items */
+}
+
+.submenu-item {
+    @apply flex items-center py-2 px-3 pl-11 rounded-md text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200 ease-in-out;
+    /* Added pl-11 for icon indent */
+}
+
+.submenu-item-icon {
+    @apply mr-3 h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-gray-500 transition-colors duration-200 ease-in-out;
+}
+
+/* Active States */
+.menu-button[aria-expanded="true"] {
+    @apply bg-primary-50 text-primary-700;
+}
+
+.menu-button[aria-expanded="true"] .menu-icon {
+    @apply text-primary-600;
+}
+
+.menu-button[aria-expanded="true"] .menu-arrow {
+    @apply rotate-90 text-primary-500;
+}
+
+/* Hover state for main menu button */
+.menu-button:not([aria-expanded="true"]):hover {
+    @apply bg-gray-50 text-gray-900;
+}
+
+.menu-button:not([aria-expanded="true"]):hover .menu-icon {
+    @apply text-gray-600;
+}
+
+.submenu-item.active {
+    @apply bg-primary-50 text-primary-700 font-medium;
+}
+
+.submenu-item.active .submenu-item-icon {
+    @apply text-primary-600;
+}
+
+/* Collapsed state adjustments */
+aside.w-20 .menu-button {
+    @apply justify-center;
+}
+
+aside.w-20 .menu-button span,
+aside.w-20 .menu-arrow {
+    @apply opacity-0 hidden;
+}
+
+aside.w-20 .submenu {
+    @apply hidden;
+    /* Hide submenus when collapsed */
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Sidebar Shadow */
+.sidebar-shadow {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode sidebar glow */
+.dark .sidebar-glow {
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+/* Menu active item styling */
+.menu-active-item {
+    border-left: 3px solid #f59e0b;
+}
+
+/* Card icon styling for sidebar */
+.sidebar-card-icon {
+    background-color: #ffffff;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+/* Hover effect for sidebar card icons */
+.sidebar-card-icon:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Active menu styling - using amber shade for modern yellow appearance */
+.active-menu-item {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+[x-cloak] {
+    display: none !important;
+}
