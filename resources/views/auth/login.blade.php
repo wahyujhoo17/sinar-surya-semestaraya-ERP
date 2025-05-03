@@ -8,7 +8,7 @@
                 <div>
                     <div class="flex items-center">
                         <!-- Logo di sebelah kiri, ukuran disesuaikan -->
-                        <img src="{{ asset('img/logo.png') }}" alt="Logo"
+                        <img src="{{ asset('img/Logo.png') }}" alt="Logo"
                             class="h-12 w-12 object-contain flex-shrink-0">
                         <div class="ml-4">
                             <!-- Nama perusahaan -->
