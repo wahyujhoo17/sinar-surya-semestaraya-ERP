@@ -28,7 +28,6 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->string('telepon')->nullable();
             $table->string('email')->nullable();
-            $table->string('npwp')->nullable();
             $table->string('kontak_person')->nullable();
             $table->string('no_hp_kontak')->nullable();
             $table->text('catatan')->nullable();
