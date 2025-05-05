@@ -30,12 +30,13 @@ class SupplierController extends Controller
                 'nama' => true,
                 'telepon' => true,
                 'email' => true,
+                'no_hp' => true, // Add no_hp
                 'type_produksi' => true,
                 'status' => true,
             ];
         } else {
             // Ensure all keys exist, default to true if missing
-            $defaults = ['kode' => true, 'nama' => true, 'telepon' => true, 'email' => true, 'type_produksi' => true, 'status' => true];
+            $defaults = ['kode' => true, 'nama' => true, 'telepon' => true, 'email' => true, 'no_hp' => true, 'type_produksi' => true, 'status' => true]; // Add no_hp
             $visibleColumns = array_merge($defaults, $visibleColumns);
         }
 
@@ -52,6 +53,7 @@ class SupplierController extends Controller
                     ->orWhere('nama', 'like', "%{$search}%")
                     ->orWhere('telepon', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('no_hp', 'like', "%{$search}%") // Add no_hp to search
                     ->orWhere('type_produksi', 'like', "%{$search}%");
             });
         }
@@ -115,6 +117,7 @@ class SupplierController extends Controller
             'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'nama_kontak' => 'nullable|string|max:255', // Tambah validasi nama_kontak
+            'no_hp' => 'nullable|string|max:20', // Add validation for no_hp
             'type_produksi' => 'nullable|string|max:100',
             'catatan' => 'nullable|string',
             'is_active' => 'boolean',
@@ -169,6 +172,7 @@ class SupplierController extends Controller
             'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|max:255',
             'nama_kontak' => 'nullable|string|max:255', // Tambah validasi nama_kontak
+            'no_hp' => 'nullable|string|max:20', // Add validation for no_hp
             'type_produksi' => 'nullable|string|max:100',
             'catatan' => 'nullable|string',
             'is_active' => 'boolean',

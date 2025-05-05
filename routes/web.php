@@ -12,6 +12,9 @@ use App\Http\Controllers\MasterData\SatuanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HakAksesController;
+use App\Http\Controllers\Pembelian\PermintaanPembelianController;
+use App\Http\Controllers\hr_karyawan\DataKaryawanController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -90,6 +93,20 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('satuan/bulk-destroy', [SatuanController::class, 'bulkDestroy'])->name('satuan.bulk-destroy');
         Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSatuan'])->name('satuan.get');
         Route::resource('satuan', SatuanController::class);
+    });
+
+    Route::prefix('pembelian')->name('pembelian.')->group(function () {
+        Route::put('permintaan-pembelian/{permintaan_pembelian}/change-status', [PermintaanPembelianController::class, 'changeStatus'])->name('permintaan-pembelian.change-status');
+        Route::put('permintaan-pembelian/{permintaan_pembelian}/approve', [PermintaanPembelianController::class, 'approve'])->name('permintaan-pembelian.approve');
+        Route::put('permintaan-pembelian/{permintaan_pembelian}/reject', [PermintaanPembelianController::class, 'reject'])->name('permintaan-pembelian.reject');
+        Route::resource('permintaan-pembelian', PermintaanPembelianController::class);
+    });
+
+    // HR & Karyawan
+    Route::prefix('hr')->name('hr.')->group(function () {
+        Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
+        Route::resource('karyawan', DataKaryawanController::class);
+        // Add other HR routes here if needed
     });
 });
 

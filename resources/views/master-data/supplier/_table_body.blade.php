@@ -24,6 +24,11 @@
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                 {{ $supplier->email ?? '-' }}</td>
         @endif
+        {{-- No HP --}}
+        @if ($visibleColumns['no_hp'] ?? true)
+            <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                {{ $supplier->no_hp ?? '-' }}</td>
+        @endif
         {{-- Alamat --}}
         @if ($visibleColumns['alamat'] ?? true)
             <td class="px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
@@ -119,8 +124,8 @@
     </tr>
 @empty
     <tr>
-        {{-- Adjust colspan value (e.g., if all columns are visible, it's now 9) --}}
-        <td id="empty-row-td" colspan="9" class="px-5 py-12 text-center">
+        {{-- Adjust colspan value (e.g., if all columns are visible, it's now 10) --}}
+        <td id="empty-row-td" colspan="10" class="px-5 py-12 text-center">
             <div class="flex flex-col items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-gray-300 dark:text-gray-600 mb-4"
                     fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">

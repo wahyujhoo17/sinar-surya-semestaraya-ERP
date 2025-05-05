@@ -193,6 +193,12 @@
                                             </label>
                                             <label
                                                 class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="checkbox" x-model="visibleColumns.no_hp"
+                                                    class="mr-2 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
+                                                No. HP
+                                            </label>
+                                            <label
+                                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer">
                                                 <input type="checkbox" x-model="visibleColumns.alamat"
                                                     class="mr-2 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
                                                 Alamat
@@ -389,6 +395,13 @@
                                             <th
                                                 class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                                 Email
+                                            </th>
+                                        </template>
+                                        {{-- No HP --}}
+                                        <template x-if="visibleColumns.no_hp">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                No. HP
                                             </th>
                                         </template>
                                         {{-- Alamat --}}
@@ -591,6 +604,7 @@
                     nama: true,
                     telepon: true,
                     email: true,
+                    no_hp: true, // Add No HP
                     alamat: true, // Add alamat
                     nama_kontak: true, // Tambah default
                     type_produksi: true,

@@ -65,6 +65,12 @@
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
+                            <label for="no_hp"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP</label>
+                            <input type="text" name="no_hp" id="no_hp" x-model="formData.no_hp"
+                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
+                        </div>
+                        <div>
                             <label for="alamat"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat</label>
                             <input type="text" name="alamat" id="alamat" x-model="formData.alamat"
@@ -136,7 +142,8 @@
                 alamat: '',
                 telepon: '',
                 email: '',
-                nama_kontak: '', // Tambah field nama_kontak
+                no_hp: '', // Add no_hp
+                nama_kontak: '',
                 type_produksi: '',
                 catatan: '',
                 is_active: true, // Set default ke true
@@ -169,7 +176,8 @@
                     alamat: '',
                     telepon: '',
                     email: '',
-                    nama_kontak: '', // Tambah field nama_kontak
+                    no_hp: '', // Add no_hp
+                    nama_kontak: '',
                     type_produksi: '',
                     catatan: '',
                     is_active: true,

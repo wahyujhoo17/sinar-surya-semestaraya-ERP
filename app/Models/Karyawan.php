@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Karyawan extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'karyawan';
-    
+
     protected $fillable = [
         'nip',
         'nama_lengkap',
@@ -28,7 +28,7 @@ class Karyawan extends Model
         'foto',
         'user_id'
     ];
-    
+
     /**
      * Relasi ke Department
      */
@@ -36,15 +36,15 @@ class Karyawan extends Model
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
-    
+
     /**
      * Relasi ke Jabatan
      */
     public function jabatan()
     {
-        return $this->belongsTo(Jabatan::class, 'jabatan_id');
+        return $this->belongsTo(Jabatan::class, 'jabatan_id', 'id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -52,7 +52,7 @@ class Karyawan extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Absensi
      */
@@ -60,7 +60,7 @@ class Karyawan extends Model
     {
         return $this->hasMany(Absensi::class, 'karyawan_id');
     }
-    
+
     /**
      * Relasi ke Cuti
      */

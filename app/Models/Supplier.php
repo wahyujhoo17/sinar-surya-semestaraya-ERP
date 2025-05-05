@@ -17,6 +17,7 @@ class Supplier extends Model
         'alamat',
         'telepon',
         'nama_kontak',
+        'no_hp',
         'email',
         'type_produksi',
         'catatan',

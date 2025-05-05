@@ -32,4 +32,40 @@ if (!function_exists('isMenuActive')) {
     }
 }
 
+if (!function_exists('tanggal_indo')) {
+    /**
+     * Format tanggal ke format Indonesia (dd/mm/yyyy atau dd Month yyyy)
+     * @param string|\DateTimeInterface $tanggal
+     * @param bool $withMonthName
+     * @return string
+     */
+    function tanggal_indo($tanggal, $withMonthName = false)
+    {
+        if (!$tanggal) return '';
+        if ($tanggal instanceof \DateTimeInterface) {
+            $tanggal = $tanggal->format('Y-m-d');
+        }
+        $bulan = [
+            1 => 'Januari',
+            'Februari',
+            'Maret',
+            'April',
+            'Mei',
+            'Juni',
+            'Juli',
+            'Agustus',
+            'September',
+            'Oktober',
+            'November',
+            'Desember'
+        ];
+        $parts = explode('-', $tanggal);
+        if (count($parts) !== 3) return $tanggal;
+        if ($withMonthName) {
+            return ltrim($parts[2], '0') . ' ' . $bulan[(int)$parts[1]] . ' ' . $parts[0];
+        }
+        return $parts[2] . '/' . $parts[1] . '/' . $parts[0];
+    }
+}
+
 // Add any other custom helper functions here...

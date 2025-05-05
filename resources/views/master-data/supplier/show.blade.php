@@ -117,6 +117,20 @@
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-400"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <div class="ml-3">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">No. HP</dt>
+                                <dd class="text-sm text-gray-900 dark:text-white">{{ $supplier->no_hp ?: '-' }}</dd>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div
+                                class="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600 dark:text-blue-400"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
@@ -163,7 +177,8 @@
                             </div>
                             <div class="ml-3">
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipe Produksi</dt>
-                                <dd class="text-sm text-gray-900 dark:text-white">{{ $supplier->type_produksi ?: '-' }}
+                                <dd class="text-sm text-gray-900 dark:text-white">
+                                    {{ $supplier->type_produksi ?: '-' }}
                                 </dd>
                             </div>
                         </div>

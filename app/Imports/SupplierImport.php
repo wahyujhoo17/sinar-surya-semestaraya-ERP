@@ -6,8 +6,10 @@ use App\Models\Supplier;
 use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class SupplierImport implements ToModel, WithHeadingRow
+class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChunkReading
 {
     public function model(array $row)
     {
@@ -38,6 +40,27 @@ class SupplierImport implements ToModel, WithHeadingRow
             'type_produksi' => $row['tipe_produksi'] ?? null,
             'catatan'       => $row['catatan'] ?? null,
             'is_active'     => isset($row['aktif']) ? (bool)$row['aktif'] : true,
+            'no_hp'         => $row['no_hp'] ?? null, // Add no_hp
         ]);
+    }
+
+    public function rules(): array
+    {
+        return [
+            'kode'          => 'required|unique:supplier,kode|max:50',
+            'nama'          => 'required|max:255',
+            'alamat'        => 'nullable|string',
+            'telepon'       => 'nullable|string|max:20',
+            'email'         => 'nullable|email|max:255',
+            'no_hp'         => 'nullable|string|max:20', // Add validation for no_hp
+            'type_produksi' => 'nullable|string|max:100',
+            'catatan'       => 'nullable|string',
+            'aktif'         => 'nullable|boolean',
+        ];
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000; // Process 1000 rows at a time
     }
 }

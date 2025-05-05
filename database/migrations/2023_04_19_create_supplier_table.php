@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('alamat')->nullable();
             $table->string('telepon')->nullable();
             $table->string('nama_kontak')->nullable();
+            $table->string('no_hp')->nullable();
             $table->string('email')->nullable();
             $table->text('catatan')->nullable();
             $table->string('type_produksi')->nullable();

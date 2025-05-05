@@ -5,18 +5,54 @@ namespace App\Exports;
 use App\Models\Supplier;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
 
-class SupplierExport implements FromCollection, WithHeadings
+class SupplierExport implements FromCollection, WithHeadings, WithMapping
 {
+    /**
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
-        return Supplier::select('kode', 'nama', 'alamat', 'telepon', 'email', 'type_produksi', 'catatan', 'is_active')->get();
+        return Supplier::all();
     }
 
+    /**
+     * @return array
+     */
     public function headings(): array
     {
         return [
-            'Kode', 'Nama', 'Alamat', 'Telepon', 'Email', 'Tipe Produksi', 'Catatan', 'Aktif'
+            'Kode',
+            'Nama',
+            'Alamat',
+            'Telepon',
+            'Email',
+            'Nama Kontak',
+            'No. HP', // Add No. HP heading
+            'Tipe Produksi',
+            'Catatan',
+            'Status',
+        ];
+    }
+
+    /**
+     * @param mixed $supplier
+     * @return array
+     */
+    public function map($supplier): array
+    {
+        return [
+            $supplier->kode,
+            $supplier->nama,
+            $supplier->alamat,
+            $supplier->telepon,
+            $supplier->email,
+            $supplier->nama_kontak,
+            $supplier->no_hp, // Add no_hp mapping
+            $supplier->type_produksi,
+            $supplier->catatan,
+            $supplier->is_active ? 'Aktif' : 'Nonaktif',
         ];
     }
 }
