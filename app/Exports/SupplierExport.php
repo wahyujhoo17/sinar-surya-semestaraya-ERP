@@ -29,7 +29,7 @@ class SupplierExport implements FromCollection, WithHeadings, WithMapping
             'Telepon',
             'Email',
             'Nama Kontak',
-            'No. HP', // Add No. HP heading
+            'No. HP',
             'Tipe Produksi',
             'Catatan',
             'Status',

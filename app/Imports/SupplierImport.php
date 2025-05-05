@@ -13,11 +13,6 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
 {
     public function model(array $row)
     {
-        // Lewati jika nama kosong
-        if (empty($row['nama'])) {
-            return null;
-        }
-
         // Generate kode jika kosong
         $kode = $row['kode'] ?? null;
         if (empty($kode)) {
@@ -31,16 +26,22 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             $kode = 'SUP-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
         }
 
+        // Helper function to get value checking multiple possible keys (case-insensitive keys from row)
+        // WithHeadingRow usually converts to snake_case, so 'no_hp' is the primary key.
+        // We check 'no. hp' as a fallback.
+        $noHp = $row['no_hp'] ?? $row['no. hp'] ?? null;
+
         return new Supplier([
             'kode'          => $kode,
-            'nama'          => $row['nama'],
+            'nama'          => $row['nama'] ?? null,
             'alamat'        => $row['alamat'] ?? null,
             'telepon'       => $row['telepon'] ?? null,
+            'nama_kontak'   => $row['nama_kontak'] ?? null,
             'email'         => $row['email'] ?? null,
-            'type_produksi' => $row['tipe_produksi'] ?? null,
+            'type_produksi' => $row['tipe_produksi'] ?? $row['type_produksi'] ?? null, // Also check type_produksi as fallback
             'catatan'       => $row['catatan'] ?? null,
-            'is_active'     => isset($row['aktif']) ? (bool)$row['aktif'] : true,
-            'no_hp'         => $row['no_hp'] ?? null, // Add no_hp
+            'is_active'     => isset($row['aktif']) ? filter_var($row['aktif'], FILTER_VALIDATE_BOOLEAN) : true, // Use filter_var for boolean
+            'no_hp'         => $noHp, // Use the variable that checked multiple keys
         ]);
     }
 
@@ -51,9 +52,10 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'nama'          => 'nullable|max:255',
             'alamat'        => 'nullable|string',
             'telepon'       => 'nullable|string|max:20',
+            'nama_kontak'   => 'nullable|string|max:255',
             'email'         => 'nullable|email|max:255',
-            'no_hp'         => 'nullable|string|max:20', // Add validation for no_hp
-            'type_produksi' => 'nullable|string|max:100',
+            'no_hp'         => 'nullable|string|max:20',
+            'tipe_produksi' => 'nullable|string|max:100', // Match the key used in model()
             'catatan'       => 'nullable|string',
             'aktif'         => 'nullable|boolean',
         ];

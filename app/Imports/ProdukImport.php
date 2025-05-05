@@ -113,7 +113,7 @@ class ProdukImport implements ToCollection, WithHeadingRow, WithValidation
     {
         return [
             '*.kode' => 'nullable|unique:produk,kode|max:50',
-            '*.nama' => 'required|max:255',
+            '*.nama' => 'nullable|max:255',
             '*.sku' => 'nullable|max:100',
             '*.kategori' => 'required',
             '*.merek' => 'nullable|max:100',
