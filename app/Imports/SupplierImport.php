@@ -48,7 +48,7 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
     {
         return [
             'kode'          => 'required|unique:supplier,kode|max:50',
-            'nama'          => 'required|max:255',
+            'nama'          => 'nullable|max:255',
             'alamat'        => 'nullable|string',
             'telepon'       => 'nullable|string|max:20',
             'email'         => 'nullable|email|max:255',
