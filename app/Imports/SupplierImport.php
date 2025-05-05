@@ -26,9 +26,6 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             $kode = 'SUP-' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
         }
 
-        // Helper function to get value checking multiple possible keys (case-insensitive keys from row)
-        // WithHeadingRow usually converts to snake_case, so 'no_hp' is the primary key.
-        // We check 'no. hp' as a fallback.
         $noHp = $row['no_hp'] ?? $row['no. hp'] ?? null;
 
         return new Supplier([
@@ -41,7 +38,7 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'type_produksi' => $row['tipe_produksi'] ?? $row['type_produksi'] ?? null, // Also check type_produksi as fallback
             'catatan'       => $row['catatan'] ?? null,
             'is_active'     => isset($row['aktif']) ? filter_var($row['aktif'], FILTER_VALIDATE_BOOLEAN) : true, // Use filter_var for boolean
-            'no_hp'         => $noHp, // Use the variable that checked multiple keys
+            'no_hp'         => $noHp, 
         ]);
     }
 
@@ -51,10 +48,10 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'kode'          => 'required|unique:supplier,kode|max:50',
             'nama'          => 'nullable|max:255',
             'alamat'        => 'nullable|string',
-            'telepon'       => 'nullable|string|max:20',
+            'telepon'       => 'nullable|string|max:255',
             'nama_kontak'   => 'nullable|string|max:255',
             'email'         => 'nullable|email|max:255',
-            'no_hp'         => 'nullable|string|max:20',
+            'no_hp'         => 'nullable|string|max:255',
             'tipe_produksi' => 'nullable|string|max:100', // Match the key used in model()
             'catatan'       => 'nullable|string',
             'aktif'         => 'nullable|boolean',
