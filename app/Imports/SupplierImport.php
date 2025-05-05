@@ -38,7 +38,7 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'type_produksi' => $row['tipe_produksi'] ?? $row['type_produksi'] ?? null, // Also check type_produksi as fallback
             'catatan'       => $row['catatan'] ?? null,
             'is_active'     => isset($row['aktif']) ? filter_var($row['aktif'], FILTER_VALIDATE_BOOLEAN) : true, // Use filter_var for boolean
-            'no_hp'         => $noHp, 
+            'no_hp'         => $noHp,
         ]);
     }
 
@@ -48,11 +48,8 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'kode'          => 'required|unique:supplier,kode|max:50',
             'nama'          => 'nullable|max:255',
             'alamat'        => 'nullable|string',
-            'telepon'       => 'nullable|string|max:255',
             'nama_kontak'   => 'nullable|string|max:255',
-            'email'         => 'nullable|email|max:255',
-            'no_hp'         => 'nullable|string|max:255',
-            'tipe_produksi' => 'nullable|string|max:100', // Match the key used in model()
+            'tipe_produksi' => 'nullable|string|max:100',
             'catatan'       => 'nullable|string',
             'aktif'         => 'nullable|boolean',
         ];
