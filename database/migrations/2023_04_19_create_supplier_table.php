@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('supplier', function (Blueprint $table) {
             $table->id();
             $table->string('kode')->unique();
-            $table->string('nama');
+            $table->string('nama')->nullable();
             $table->text('alamat')->nullable();
             $table->string('telepon')->nullable();
             $table->string('nama_kontak')->nullable();
