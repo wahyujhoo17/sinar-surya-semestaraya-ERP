@@ -24,14 +24,14 @@ return new class extends Migration
             $table->string('sub_kategori')->nullable(); // For "Bahan Jadi" or "Bahan Baku"
             $table->string('type_material')->nullable();
             $table->string('kualitas')->nullable();
-            $table->decimal('harga_beli', 15, 2);
-            $table->decimal('harga_jual', 15, 2);
+            $table->decimal('harga_beli', 15, 2)->nullable();
+            $table->decimal('harga_jual', 15, 2)->nullable();
             $table->decimal('stok_minimum', 15, 2)->nullable();
             $table->text('deskripsi')->nullable();
             $table->string('gambar')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             // Add index for common search fields
             $table->index('product_sku');
             $table->index('nama');

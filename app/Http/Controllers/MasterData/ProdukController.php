@@ -498,8 +498,13 @@ class ProdukController extends Controller
 
     protected function validationRules($id = null)
     {
+        $kodeRule = 'required|max:50|unique:produk,kode';
+        if ($id) {
+            $kodeRule = 'required|max:50|unique:produk,kode,' . $id;
+        }
+
         return [
-            'kode' => 'required|unique:produk,kode,' . $id . '|max:50',
+            'kode' => $kodeRule,
             'nama' => 'required|max:255',
             'product_sku' => 'nullable|max:100',
             'kategori_id' => 'required|exists:kategori_produk,id',

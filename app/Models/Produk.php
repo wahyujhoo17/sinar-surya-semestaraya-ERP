@@ -65,6 +65,14 @@ class Produk extends Model
     }
 
     /**
+     * Relasi ke SupplierProduk
+     */
+    public function supplierProduks()
+    {
+        return $this->hasMany(SupplierProduk::class, 'produk_id');
+    }
+
+    /**
      * Mendapatkan total stok produk dari semua gudang
      */
     public function getTotalStokAttribute()
