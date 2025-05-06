@@ -29,6 +29,12 @@ class PurchasingOrderController extends Controller
             'dibatalkan'
         ];
 
+        // Calculate counts for each status before applying filters for the main query
+        $statusCounts = [];
+        foreach ($validStatuses as $validStatus) {
+            $statusCounts[$validStatus] = PurchaseOrder::where('status', $validStatus)->count();
+        }
+
         // Ambil status dari request, default 'draft' agar konsisten dengan frontend
         $status = $request->input('status', 'draft');
 
@@ -107,6 +113,7 @@ class PurchasingOrderController extends Controller
         return view('pembelian.purchase_order.index', [
             'purchaseOrders' => $purchaseOrders,
             'validStatuses' => $validStatuses,
+            'statusCounts' => $statusCounts, // Pass the counts to the view
             'suppliers' => $suppliers,
             'currentStatus' => $status,
             'search' => $request->input('search', ''),

@@ -74,7 +74,7 @@
                                 {{ ucfirst($status) }}</p>
                             <div class="mt-2 flex items-baseline">
                                 <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {{ $purchaseOrders->where('status', $status)->count() }}
+                                    {{ $statusCounts[$status] ?? 0 }}
                                 </p>
                                 <p
                                     class="ml-2 text-sm font-medium text-{{ poStatusColor($status) }}-500 dark:text-{{ poStatusColor($status) }}-400">

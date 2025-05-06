@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('diskon_nominal', 15, 2)->default(0);
             $table->decimal('ppn', 15, 2)->default(0);
             $table->decimal('total', 15, 2);
+            $table->text('status')->nullable();
             $table->enum('status_pembayaran', ['belum_bayar', 'sebagian', 'lunas'])->default('belum_bayar');
             $table->enum('status_penerimaan', ['belum_diterima', 'sebagian', 'diterima'])->default('belum_diterima');
             $table->date('tanggal_pengiriman')->nullable();
