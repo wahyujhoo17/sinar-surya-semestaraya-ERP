@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Exports\SupplierExport;
 use App\Imports\SupplierImport;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Models\SupplierProduk; // Import SupplierProduk
 
 class SupplierController extends Controller
 {
@@ -144,7 +145,11 @@ class SupplierController extends Controller
             'Supplier' => route('master.supplier.index')
         ];
         $currentPage = 'Detail Supplier';
-        return view('master-data.supplier.show', compact('supplier', 'breadcrumbs', 'currentPage'));
+        // Eager load produk along with its relationships: kategori, jenis, and satuan
+        $supplierProduks = SupplierProduk::with(['produk.kategori', 'produk.jenis', 'produk.satuan']) // Updated eager loading
+            ->where('supplier_id', $supplier->id)
+            ->paginate(10);
+        return view('master-data.supplier.show', compact('supplier', 'breadcrumbs', 'currentPage', 'supplierProduks'));
     }
 
     /**

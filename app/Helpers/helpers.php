@@ -68,4 +68,20 @@ if (!function_exists('tanggal_indo')) {
     }
 }
 
-// Add any other custom helper functions here...
+if (!function_exists('format_rupiah')) {
+    /**
+     * Format number to Rupiah currency format.
+     *
+     * @param float $number
+     * @param bool $withRpPrefix
+     * @return string
+     */
+    function format_rupiah($number, $withRpPrefix = true)
+    {
+        if (!is_numeric($number)) {
+            return $number; // or return 'Invalid Number';
+        }
+        $formatted = number_format($number, 0, ',', '.');
+        return $withRpPrefix ? 'Rp ' . $formatted : $formatted;
+    }
+}

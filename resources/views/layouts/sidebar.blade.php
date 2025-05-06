@@ -6,7 +6,7 @@
         class="flex items-center justify-start h-[77px] flex-shrink-0 px-4 border-b border-gray-200 dark:border-gray-700">
         <a href="{{ route('dashboard') }}" class="flex items-center">
             <div class="flex items-center">
-                <img src="{{ asset('img/Logo_nama2.jpg') }}" alt="Logo PT Sinar Surya Semestaraya" class="h-auto w-auto">
+                <img src="{{ asset('img/Logo_nama3.png') }}" alt="Logo PT Sinar Surya Semestaraya" class="h-auto w-auto">
             </div>
         </a>
     </div>
@@ -233,8 +233,8 @@
                     <a href="/pembelian/permintaan-pembelian"
                         class="{{ request()->is('pembelian/permintaan-pembelian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Permintaan
                             Pembelian (PR)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pembelian/po') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Purchase
+                    <a href="/pembelian/purchasing-order"
+                        class="{{ request()->is('pembelian/purchasing-order') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Purchase
                             Order (PO)</span></a>
                     <a href="#"
                         class="{{ request()->is('pembelian/grn') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penerimaan

@@ -387,22 +387,126 @@
                             Produk Supplier
                         </h3>
                     </div>
-                    <div class="p-6 text-center">
-                        <div class="flex justify-center items-center mb-4">
-                            <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-12 w-12 text-gray-400 dark:text-gray-500" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                            </div>
+                    @if ($supplierProduks && $supplierProduks->count() > 0)
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach ($supplierProduks as $supplierProduk)
+                                @if ($supplierProduk->produk)
+                                    <div
+                                        class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/30 transition duration-150 ease-in-out">
+                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+                                            {{-- Product Image & Basic Info --}}
+                                            <div class="md:col-span-1 flex items-center">
+                                                @if ($supplierProduk->produk->gambar)
+                                                    <img src="{{ asset('storage/' . $supplierProduk->produk->gambar) }}"
+                                                        alt="{{ $supplierProduk->produk->nama }}"
+                                                        class="w-20 h-20 object-cover rounded-lg mr-4 border border-gray-200 dark:border-gray-700">
+                                                @else
+                                                    <div
+                                                        class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-lg mr-4 flex items-center justify-center border border-gray-200 dark:border-gray-700">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-10 w-10 text-gray-400 dark:text-gray-500"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                @endif
+                                                <div>
+                                                    <h4 class="text-md font-semibold text-gray-800 dark:text-white">
+                                                        {{ $supplierProduk->produk->nama }}
+                                                    </h4>
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                        Kode: {{ $supplierProduk->produk->kode }}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {{-- Product Details --}}
+                                            <div class="md:col-span-1">
+                                                <dl class="space-y-1 text-sm">
+                                                    @if ($supplierProduk->produk->kategori)
+                                                        <div>
+                                                            <dt class="text-gray-500 dark:text-gray-400 inline">
+                                                                Kategori:</dt>
+                                                            <dd class="text-gray-700 dark:text-gray-300 inline ml-1">
+                                                                {{ $supplierProduk->produk->kategori->nama_kategori_produk }}
+                                                            </dd>
+                                                        </div>
+                                                    @endif
+                                                    @if ($supplierProduk->produk->jenis)
+                                                        <div>
+                                                            <dt class="text-gray-500 dark:text-gray-400 inline">Jenis:
+                                                            </dt>
+                                                            <dd class="text-gray-700 dark:text-gray-300 inline ml-1">
+                                                                {{ $supplierProduk->produk->jenis->nama_jenis_produk }}
+                                                            </dd>
+                                                        </div>
+                                                    @endif
+                                                    @if ($supplierProduk->produk->satuan)
+                                                        <div>
+                                                            <dt class="text-gray-500 dark:text-gray-400 inline">Satuan:
+                                                            </dt>
+                                                            <dd class="text-gray-700 dark:text-gray-300 inline ml-1">
+                                                                {{ $supplierProduk->produk->satuan->nama_satuan }}</dd>
+                                                        </div>
+                                                    @endif
+                                                    @if ($supplierProduk->produk->ukuran)
+                                                        <div>
+                                                            <dt class="text-gray-500 dark:text-gray-400 inline">Ukuran:
+                                                            </dt>
+                                                            <dd class="text-gray-700 dark:text-gray-300 inline ml-1">
+                                                                {{ $supplierProduk->produk->ukuran }}</dd>
+                                                        </div>
+                                                    @endif
+                                                </dl>
+                                            </div>
+
+                                            {{-- Pricing/Stock (Placeholder) --}}
+                                            <div class="md:col-span-1 text-right">
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">Harga Beli Terakhir
+                                                </p>
+                                                <p class="text-md font-medium text-gray-800 dark:text-white">
+                                                    {{-- Placeholder for last purchase price --}}
+                                                    {{ $supplierProduk->produk->harga_beli ? format_rupiah($supplierProduk->produk->harga_beli) : 'Data belum tersedia' }}
+                                                </p>
+                                                {{-- You can add more info like current stock from this supplier if available --}}
+                                            </div>
+                                        </div>
+                                        @if ($supplierProduk->produk->deskripsi)
+                                            <p
+                                                class="mt-3 text-sm text-gray-500 dark:text-gray-400 md:ml-[calc(5rem+1rem)]">
+                                                {{-- 5rem for image, 1rem for margin --}}
+                                                {{ Str::limit($supplierProduk->produk->deskripsi, 200) }}
+                                            </p>
+                                        @endif
+                                    </div>
+                                @endif
+                            @endforeach
                         </div>
-                        <h3 class="text-base font-medium text-gray-900 dark:text-white mb-1">Belum Ada Produk</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                            Produk yang disediakan oleh supplier ini akan muncul di sini ketika tersedia.
-                        </p>
-                    </div>
+                        @if ($supplierProduks->hasPages())
+                            <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                                {{ $supplierProduks->links() }}
+                            </div>
+                        @endif
+                    @else
+                        <div class="p-6 text-center">
+                            <div class="flex justify-center items-center mb-4">
+                                <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-12 w-12 text-gray-400 dark:text-gray-500" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <h3 class="text-base font-medium text-gray-900 dark:text-white mb-1">Belum Ada Produk</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                                Produk yang disediakan oleh supplier ini akan muncul di sini ketika tersedia.
+                            </p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

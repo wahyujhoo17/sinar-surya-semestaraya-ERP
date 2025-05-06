@@ -120,6 +120,16 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
+
+                <a href="{{ route('pembelian.permintaan-pembelian.pdf', $permintaanPembelian->id) }}" target="_blank"
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7 10l5 5 5-5M12 15V3" />
+                    </svg>
+                    Download PDF
+                </a>
                 @if ($permintaanPembelian->status === 'draft')
                     <a href="{{ route('pembelian.permintaan-pembelian.edit', $permintaanPembelian->id) }}"
                         class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-colors">
@@ -809,9 +819,8 @@
             confirmBtn.addEventListener('click', function() {
                 hideModal();
                 if (currentForm) {
-                    setTimeout(() => {
-                        currentForm.submit();
-                    }, 300);
+                    // Submit the form when confirmation is confirmed
+                    currentForm.submit();
                 }
             });
 

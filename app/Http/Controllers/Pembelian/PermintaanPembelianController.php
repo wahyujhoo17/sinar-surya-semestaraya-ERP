@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PermintaanPembelianController extends Controller
 {
@@ -386,5 +387,14 @@ class PermintaanPembelianController extends Controller
             return redirect()->route('pembelian.permintaan-pembelian.index')
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    public function exportPdf($id)
+    {
+        $permintaanPembelian = PurchaseRequest::with(['details.produk', 'user', 'department'])->findOrFail($id);
+        $totalEstimasi = $permintaanPembelian->details->sum(fn($d) => $d->quantity * $d->harga_estimasi);
+
+        $pdf = Pdf::loadView('pembelian.permintaan_pembelian.pdf', compact('permintaanPembelian', 'totalEstimasi'));
+        return $pdf->download('Permintaan-Pembelian-' . $permintaanPembelian->nomor . '.pdf');
     }
 }

@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseOrder extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'purchase_order';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -22,6 +22,7 @@ class PurchaseOrder extends Model
         'diskon_nominal',
         'ppn',
         'total',
+        'status',  // Added missing status field
         'status_pembayaran', // 'belum_bayar', 'sebagian', 'lunas'
         'status_penerimaan', // 'belum_diterima', 'sebagian', 'diterima'
         'tanggal_pengiriman',
@@ -29,7 +30,7 @@ class PurchaseOrder extends Model
         'catatan',
         'syarat_ketentuan'
     ];
-    
+
     /**
      * Relasi ke Supplier
      */
@@ -37,7 +38,7 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -45,7 +46,7 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Purchase Request
      */
@@ -53,7 +54,7 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(PurchaseRequest::class, 'pr_id');
     }
-    
+
     /**
      * Relasi ke Detail Purchase Order
      */
@@ -61,7 +62,7 @@ class PurchaseOrder extends Model
     {
         return $this->hasMany(PurchaseOrderDetail::class, 'po_id');
     }
-    
+
     /**
      * Relasi ke Penerimaan Barang
      */

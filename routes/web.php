@@ -13,6 +13,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HakAksesController;
 use App\Http\Controllers\Pembelian\PermintaanPembelianController;
+use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
 
 
@@ -96,10 +97,20 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::prefix('pembelian')->name('pembelian.')->group(function () {
+        // Permintaan Pembelian
         Route::put('permintaan-pembelian/{permintaan_pembelian}/change-status', [PermintaanPembelianController::class, 'changeStatus'])->name('permintaan-pembelian.change-status');
         Route::put('permintaan-pembelian/{permintaan_pembelian}/approve', [PermintaanPembelianController::class, 'approve'])->name('permintaan-pembelian.approve');
         Route::put('permintaan-pembelian/{permintaan_pembelian}/reject', [PermintaanPembelianController::class, 'reject'])->name('permintaan-pembelian.reject');
+        Route::get('permintaan-pembelian/{id}/pdf', [PermintaanPembelianController::class, 'exportPdf'])->name('permintaan-pembelian.pdf');
         Route::resource('permintaan-pembelian', PermintaanPembelianController::class);
+
+        // PURCHASING ORDER
+        Route::put('purchasing-order/{purchasing_order}/change-status', [PurchasingOrderController::class, 'changeStatus'])->name('purchasing-order.change-status');
+        Route::get('purchasing-order/{id}/pdf', [PurchasingOrderController::class, 'exportPdf'])->name('purchasing-order.pdf');
+        Route::resource('purchasing-order', PurchasingOrderController::class);
+
+        // Route AJAX untuk produk supplier
+        Route::get('purchase-order/supplier-produk', [PurchasingOrderController::class, 'getSupplierProduk'])->name('pembelian.purchasing-order.supplier-produk');
     });
 
     // HR & Karyawan
