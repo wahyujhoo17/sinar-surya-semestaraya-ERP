@@ -13,6 +13,7 @@ use App\Models\SupplierProduk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PurchasingOrderController extends Controller
 {
@@ -552,11 +553,57 @@ class PurchasingOrderController extends Controller
         ]);
 
         $purchaseOrder = PurchaseOrder::findOrFail($id);
-        $purchaseOrder->status = $request->status;
+        $newStatus = $request->status;
+
+        // Special validation for changing to "selesai" status
+        if ($newStatus === 'selesai') {
+            // Check if payment is complete
+            if ($purchaseOrder->status_pembayaran !== 'lunas') {
+                return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
+                    ->with('error', 'Purchase Order tidak dapat diselesaikan. Pembayaran belum lunas.');
+            }
+
+            // Check if items are fully received
+            if ($purchaseOrder->status_penerimaan !== 'diterima') {
+                return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
+                    ->with('error', 'Purchase Order tidak dapat diselesaikan. Barang belum diterima sepenuhnya.');
+            }
+        }
+
+        // Store previous status for history
+        $oldStatus = $purchaseOrder->status;
+
+        // Update the status
+        $purchaseOrder->status = $newStatus;
         $purchaseOrder->save();
+
+        // Optional: Create status history entry
+        $this->createStatusHistory($purchaseOrder->id, $oldStatus, $newStatus, Auth::id());
 
         return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
             ->with('success', 'Status Purchase Order berhasil diubah.');
+    }
+
+    /**
+     * Create status history record
+     */
+    private function createStatusHistory($poId, $oldStatus, $newStatus, $userId)
+    {
+        // If you have a StatusHistory model, use it here
+        // For now, we'll just log the change
+        // \Log::info("PO ID {$poId}: Status changed from {$oldStatus} to {$newStatus} by User ID {$userId}");
+
+        // If you want to implement full status history tracking, create a model and migration for it
+        /*
+        StatusHistory::create([
+            'po_id' => $poId,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
+            'user_id' => $userId,
+            'notes' => null,
+            'created_at' => now()
+        ]);
+        */
     }
 
     /**
@@ -622,5 +669,24 @@ class PurchasingOrderController extends Controller
             default:
                 return 'text-gray-700 dark:text-gray-300';
         }
+    }
+
+    /**
+     * Export Purchase Order as PDF
+     */
+    public function exportPdf($id)
+    {
+
+
+        $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
+            ->findOrFail($id);
+
+        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', ['purchaseOrder' => $purchaseOrder]);
+
+        // Set paper size and orientation
+        $pdf->setPaper('a4', 'portrait');
+
+        // Download the PDF with a specific filename
+        return $pdf->download('PO-' . $purchaseOrder->nomor . '.pdf');
     }
 }
