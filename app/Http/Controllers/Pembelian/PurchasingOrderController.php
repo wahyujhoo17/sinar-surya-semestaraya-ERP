@@ -14,9 +14,25 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\LogAktivitas;
 
 class PurchasingOrderController extends Controller
 {
+    /**
+     * Helper untuk mencatat log aktivitas user
+     */
+    private function logUserAktivitas($aktivitas, $modul, $data_id = null, $detail = null)
+    {
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => $aktivitas,
+            'modul' => $modul,
+            'data_id' => $data_id,
+            'ip_address' => request()->ip(),
+            'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -111,6 +127,7 @@ class PurchasingOrderController extends Controller
             ]);
         }
 
+
         return view('pembelian.purchase_order.index', [
             'purchaseOrders' => $purchaseOrders,
             'validStatuses' => $validStatuses,
@@ -138,6 +155,8 @@ class PurchasingOrderController extends Controller
 
         // Generate PO number
         $nomorPO = $this->generatePONumber();
+
+        $this->logUserAktivitas('akses', 'purchase_order', null, 'Akses form tambah Purchase Order');
 
         return view('pembelian.purchase_order.create', compact('suppliers', 'purchaseRequests', 'produks', 'satuans', 'nomorPO'));
     }
@@ -317,6 +336,8 @@ class PurchasingOrderController extends Controller
 
             DB::commit();
 
+            $this->logUserAktivitas('tambah', 'purchase_order', $purchaseOrder->id, 'Membuat Purchase Order: ' . $purchaseOrder->nomor);
+
             return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
                 ->with('success', 'Purchase Order berhasil dibuat.');
         } catch (\Exception $e) {
@@ -337,7 +358,14 @@ class PurchasingOrderController extends Controller
         $statusBgColor = $this->getStatusBackgroundColor($purchaseOrder->status);
         $statusTextColor = $this->getStatusTextColor($purchaseOrder->status);
 
-        return view('pembelian.purchase_order.show', compact('purchaseOrder', 'statusBgColor', 'statusTextColor'));
+        // Ambil log aktivitas terkait PO ini
+        $logAktivitas = LogAktivitas::with('user')
+            ->where('modul', 'purchase_order')
+            ->where('data_id', $purchaseOrder->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        return view('pembelian.purchase_order.show', compact('purchaseOrder', 'statusBgColor', 'statusTextColor', 'logAktivitas'));
     }
 
     /**
@@ -358,6 +386,8 @@ class PurchasingOrderController extends Controller
         $purchaseRequests = PurchaseRequest::where('status', 'disetujui')->get();
         $produks = Produk::orderBy('nama')->get();
         $satuans = Satuan::orderBy('nama')->get();
+
+        // $this->logUserAktivitas('akses', 'purchase_order', $purchaseOrder->id, 'Akses edit Purchase Order: ' . $purchaseOrder->nomor);
 
         return view('pembelian.purchase_order.edit', compact('purchaseOrder', 'suppliers', 'purchaseRequests', 'produks', 'satuans'));
     }
@@ -503,6 +533,8 @@ class PurchasingOrderController extends Controller
 
             DB::commit();
 
+            $this->logUserAktivitas('ubah', 'purchase_order', $purchaseOrder->id, 'Mengubah Purchase Order: ' . $purchaseOrder->nomor);
+
             return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
                 ->with('success', 'Purchase Order berhasil diperbarui.');
         } catch (\Exception $e) {
@@ -534,6 +566,8 @@ class PurchasingOrderController extends Controller
             $purchaseOrder->delete();
 
             DB::commit();
+
+            $this->logUserAktivitas('hapus', 'purchase_order', $purchaseOrder->id, 'Menghapus Purchase Order: ' . $purchaseOrder->nomor);
 
             return redirect()->route('pembelian.purchasing-order.index')
                 ->with('success', 'Purchase Order berhasil dihapus.');
@@ -577,38 +611,12 @@ class PurchasingOrderController extends Controller
         $purchaseOrder->status = $newStatus;
         $purchaseOrder->save();
 
-        // Optional: Create status history entry
-        $this->createStatusHistory($purchaseOrder->id, $oldStatus, $newStatus, Auth::id());
+        $this->logUserAktivitas('ubah_status', 'purchase_order', $purchaseOrder->id, 'Ubah status dari ' . $oldStatus . ' ke ' . $newStatus . ' untuk PO: ' . $purchaseOrder->nomor);
 
         return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
             ->with('success', 'Status Purchase Order berhasil diubah.');
     }
 
-    /**
-     * Create status history record
-     */
-    private function createStatusHistory($poId, $oldStatus, $newStatus, $userId)
-    {
-        // If you have a StatusHistory model, use it here
-        // For now, we'll just log the change
-        // \Log::info("PO ID {$poId}: Status changed from {$oldStatus} to {$newStatus} by User ID {$userId}");
-
-        // If you want to implement full status history tracking, create a model and migration for it
-        /*
-        StatusHistory::create([
-            'po_id' => $poId,
-            'old_status' => $oldStatus,
-            'new_status' => $newStatus,
-            'user_id' => $userId,
-            'notes' => null,
-            'created_at' => now()
-        ]);
-        */
-    }
-
-    /**
-     * Generate a new PO number
-     */
     private function generatePONumber()
     {
         $today = now();
@@ -676,8 +684,6 @@ class PurchasingOrderController extends Controller
      */
     public function exportPdf($id)
     {
-
-
         $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
             ->findOrFail($id);
 
@@ -685,6 +691,7 @@ class PurchasingOrderController extends Controller
 
         // Set paper size and orientation
         $pdf->setPaper('a4', 'portrait');
+
 
         // Download the PDF with a specific filename
         return $pdf->download('PO-' . $purchaseOrder->nomor . '.pdf');

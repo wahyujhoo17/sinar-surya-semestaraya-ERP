@@ -15,6 +15,8 @@ use App\Http\Controllers\HakAksesController;
 use App\Http\Controllers\Pembelian\PermintaanPembelianController;
 use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
+use App\Http\Controllers\Inventaris\StokBarangController;
+use App\Http\Controllers\Pembelian\PenerimaanBarangController;
 
 
 /*
@@ -96,6 +98,13 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('satuan', SatuanController::class);
     });
 
+    // --- INVENTARIS ----
+    Route::prefix('inventaris')->name('inventaris.')->group(function () {
+        Route::resource('stok', StokBarangController::class);
+        Route::get('/inventaris/stok', [StokBarangController::class, 'index'])->name('inventaris.stok.index');
+    });
+
+    // --- PEMBELIAN ---
     Route::prefix('pembelian')->name('pembelian.')->group(function () {
         // Permintaan Pembelian
         Route::put('permintaan-pembelian/{permintaan_pembelian}/change-status', [PermintaanPembelianController::class, 'changeStatus'])->name('permintaan-pembelian.change-status');
@@ -108,12 +117,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('purchasing-order/{purchasing_order}/change-status', [PurchasingOrderController::class, 'changeStatus'])->name('purchasing-order.change-status');
         Route::get('purchasing-order/{id}/pdf', [PurchasingOrderController::class, 'exportPdf'])->name('purchasing-order.pdf');
         Route::resource('purchasing-order', PurchasingOrderController::class);
-
-        // Route AJAX untuk produk supplier
         Route::get('purchase-order/supplier-produk', [PurchasingOrderController::class, 'getSupplierProduk'])->name('pembelian.purchasing-order.supplier-produk');
+
+        //PENERIMAAN BARANG
+        Route::resource('penerimaan-barang', PenerimaanBarangController::class);
     });
 
-    // HR & Karyawan
+    // -- HR & Karyawan --
     Route::prefix('hr')->name('hr.')->group(function () {
         Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
         Route::resource('karyawan', DataKaryawanController::class);

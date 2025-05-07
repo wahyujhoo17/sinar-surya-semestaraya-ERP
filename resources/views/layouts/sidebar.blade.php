@@ -103,8 +103,8 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'inventaris'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('inventaris/stok') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Stok
+                    <a href="/inventaris/stok"
+                        class="{{ request()->is('inventaris/stok') || request()->is('inventaris/stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Stok
                             Barang</span></a>
                     <a href="#"
                         class="{{ request()->is('inventaris/tracking') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Tracking
@@ -231,13 +231,13 @@
                 </button>
                 <div x-show="activeDropdown === 'pembelian'" x-cloak class="mt-1 space-y-1 pl-11">
                     <a href="/pembelian/permintaan-pembelian"
-                        class="{{ request()->is('pembelian/permintaan-pembelian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Permintaan
+                        class="{{ request()->is('pembelian/permintaan-pembelian') || request()->is('pembelian/permintaan-pembelian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Permintaan
                             Pembelian (PR)</span></a>
                     <a href="/pembelian/purchasing-order"
-                        class="{{ request()->is('pembelian/purchasing-order') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Purchase
+                        class="{{ request()->is('pembelian/purchasing-order') || request()->is('pembelian/purchasing-order/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Purchase
                             Order (PO)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pembelian/grn') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penerimaan
+                    <a href="/pembelian/penerimaan-barang"
+                        class="{{ request()->is('pembelian/penerimaan-barang') || request()->is('pembelian/penerimaan-barang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penerimaan
                             Barang (GRN)</span></a>
                     <a href="#"
                         class="{{ request()->is('pembelian/invoice') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Invoice
