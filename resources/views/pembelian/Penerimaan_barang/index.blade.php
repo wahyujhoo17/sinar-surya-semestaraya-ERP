@@ -3,13 +3,11 @@
     function grStatusColor($status)
     {
         switch ($status) {
-            case 'draft':
-                return 'gray';
             case 'parsial':
                 return 'amber';
             case 'selesai':
                 return 'emerald';
-            case 'dibatalkan':
+            case 'batal':
                 return 'red';
             default:
                 return 'primary';
@@ -61,7 +59,7 @@
 
             {{-- Goods Receipt Overview --}}
             <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-                @php $grStatuses = ['draft', 'parsial', 'selesai', 'dibatalkan']; @endphp
+                @php $grStatuses = ['parsial', 'selesai', 'batal']; @endphp
                 @foreach ($grStatuses as $status)
                     <div
                         class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
@@ -99,7 +97,7 @@
                         class="relative flex space-x-4 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gray-200 dark:after:bg-gray-700">
                         @php
                             // Ensure the tabs are always in this specific order
-                            $grStatuses = ['draft', 'parsial', 'selesai', 'dibatalkan'];
+                            $grStatuses = ['parsial', 'selesai', 'batal'];
                         @endphp
                         @foreach ($grStatuses as $status)
                             <button type="button"
@@ -146,8 +144,11 @@
                             class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-sky-500 focus:border-sky-500 transition-colors">
                             <option value="">Semua Tanggal</option>
                             <option value="today">Hari Ini</option>
+                            <option value="yesterday">Kemarin</option>
                             <option value="this_week">Minggu Ini</option>
+                            <option value="last_week">Minggu Lalu</option>
                             <option value="this_month">Bulan Ini</option>
+                            <option value="last_month">Bulan Lalu</option>
                             <option value="range">Range Tanggal</option>
                         </select>
                     </div>
@@ -185,10 +186,30 @@
                     </div>
 
                     <div class="w-full sm:w-auto space-y-1">
-                        <label for="po-filter"
-                            class="block text-xs font-medium text-gray-700 dark:text-gray-300">Purchase Order</label>
-                        <input type="text" id="po-filter" x-model="purchaseOrderId" placeholder="Nomor PO"
-                            class="block w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-sky-500 focus:border-sky-500 transition-colors">
+                        <label for="gudang-filter"
+                            class="block text-xs font-medium text-gray-700 dark:text-gray-300">Gudang</label>
+                        <select id="gudang-filter" x-model="gudangId"
+                            class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-sky-500 focus:border-sky-500 transition-colors">
+                            <option value="">Semua Gudang</option>
+                            @if (isset($gudangs))
+                                @foreach ($gudangs as $gudang)
+                                    <option value="{{ $gudang->id }}">{{ $gudang->nama }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
+
+
+                    <div class="w-full sm:w-auto space-y-1">
+                        <label for="per-page" class="block text-xs font-medium text-gray-700 dark:text-gray-300">Data
+                            per halaman</label>
+                        <select id="per-page" x-model="perPage"
+                            class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-sky-500 focus:border-sky-500 transition-colors">
+                            <option value="15">15</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
                     </div>
 
                     <div class="flex gap-2 items-end">
@@ -254,40 +275,180 @@
         </div>
     </div>
 
+    {{-- Toast Notification System --}}
+    <div x-data="toastSystem()" x-init="init()"
+        class="fixed top-4 right-4 z-50 flex flex-col space-y-4 max-w-md">
+        <template x-for="(toast, index) in toasts" :key="toast.id">
+            <div x-show="toast.visible" x-transition:enter="transform transition ease-out duration-300"
+                x-transition:enter-start="translate-y-2 opacity-0" x-transition:enter-end="translate-y-0 opacity-100"
+                x-transition:leave="transform transition ease-in duration-200"
+                x-transition:leave-start="translate-y-0 opacity-100" x-transition:leave-end="translate-y-2 opacity-0"
+                :class="{
+                    'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800': toast.type === 'error',
+                    'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800': toast
+                        .type === 'success',
+                    'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800': toast.type === 'info',
+                    'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800': toast
+                        .type === 'warning'
+                }"
+                class="w-full shadow-lg rounded-lg border px-4 py-3 pointer-events-auto flex items-start">
+                <div class="flex-shrink-0 mr-3">
+                    <div x-show="toast.type === 'error'"
+                        class="flex items-center justify-center h-8 w-8 rounded-full bg-red-100 dark:bg-red-800">
+                        <svg class="h-5 w-5 text-red-600 dark:text-red-300" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-show="toast.type === 'success'"
+                        class="flex items-center justify-center h-8 w-8 rounded-full bg-green-100 dark:bg-green-800">
+                        <svg class="h-5 w-5 text-green-600 dark:text-green-300" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-show="toast.type === 'info'"
+                        class="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-800">
+                        <svg class="h-5 w-5 text-blue-600 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div x-show="toast.type === 'warning'"
+                        class="flex items-center justify-center h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-800">
+                        <svg class="h-5 w-5 text-amber-600 dark:text-amber-300" xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="flex-1 pr-6">
+                    <h3 x-text="toast.title"
+                        :class="{
+                            'text-red-800 dark:text-red-200': toast.type === 'error',
+                            'text-green-800 dark:text-green-200': toast.type === 'success',
+                            'text-blue-800 dark:text-blue-200': toast.type === 'info',
+                            'text-amber-800 dark:text-amber-200': toast.type === 'warning'
+                        }"
+                        class="text-sm font-medium"></h3>
+                    <template x-if="toast.message">
+                        <div x-html="formatMessage(toast.message)"
+                            class="mt-1 text-sm text-gray-700 dark:text-gray-300"></div>
+                    </template>
+                    <template x-if="toast.list && toast.list.length">
+                        <ul class="mt-1 text-sm text-gray-700 dark:text-gray-300 list-disc pl-5 space-y-1">
+                            <template x-for="(item, itemIndex) in toast.list" :key="itemIndex">
+                                <li x-text="item"></li>
+                            </template>
+                        </ul>
+                    </template>
+                </div>
+                <div class="flex-shrink-0">
+                    <button @click="removeToast(index)"
+                        class="inline-flex text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none">
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </template>
+    </div>
+
     <script>
         // Keep the JS version of the function for other JS usage
         function grStatusColor(status) {
             switch (status) {
-                case 'draft':
-                    return 'gray';
                 case 'parsial':
                     return 'amber';
                 case 'selesai':
                     return 'emerald';
-                case 'dibatalkan':
+                case 'batal':
                     return 'red';
                 default:
                     return 'primary';
             }
         }
 
+        // Document ready event to handle flash messages
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for flash messages and dispatch notify event for global toast system
+            const successMessage = @json(session('success'));
+            if (successMessage) {
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        type: 'success',
+                        title: 'Berhasil',
+                        message: successMessage,
+                        timeout: 5000
+                    }
+                }));
+            }
+
+            const errorMessage = @json(session('error'));
+            if (errorMessage) {
+                window.dispatchEvent(new CustomEvent('notify', {
+                    detail: {
+                        type: 'error',
+                        title: 'Error',
+                        message: errorMessage,
+                        timeout: 5000
+                    }
+                }));
+            }
+        });
+
         function goodsReceiptTableManager() {
             return {
-                tab: 'draft', // Always start with draft tab
+                tab: 'parsial', // Always start with parsial tab
                 search: @json($search ?? ''), // Initialized from controller
                 dateFilter: @json($date_filter ?? ''), // Initialized from controller
                 dateStart: @json($date_start ?? ''), // Initialized from controller
                 dateEnd: @json($date_end ?? ''), // Initialized from controller
                 supplierId: @json($supplier_id ?? ''), // Initialized from controller
                 purchaseOrderId: @json($purchase_order_id ?? ''), // Initialized from controller
+                gudangId: @json($gudang_id ?? ''), // Initialized from controller
+                perPage: @json($per_page ?? '15'), // Initialized from controller
+                sortBy: @json($sort_by ?? 'tanggal'), // Initialized from controller, default to tanggal
+                sortDirection: @json($sort_direction ?? 'desc'), // Initialized from controller, default to desc
                 tableHtml: '',
                 paginationHtml: '',
                 loading: false,
                 init() {
-                    // Force tab to be 'draft' on initialization
-                    this.tab = 'draft';
+                    // Force tab to be 'parsial' on initialization
+                    this.tab = 'parsial';
                     this.fetchTable();
                     // console.log("Alpine component initialized with:", JSON.parse(JSON.stringify(this)));
+
+                    // Set up click event delegation for sorting headers
+                    document.addEventListener('click', (e) => {
+                        const sortLink = e.target.closest('th a[href*="sort_by"]');
+                        if (sortLink) {
+                            e.preventDefault();
+
+                            // Extract sort parameters from the link URL
+                            const url = new URL(sortLink.href);
+                            const sortBy = url.searchParams.get('sort_by');
+                            const sortDirection = url.searchParams.get('sort_direction');
+
+                            if (sortBy && sortDirection) {
+                                this.sortBy = sortBy;
+                                this.sortDirection = sortDirection;
+                                this.fetchTable();
+                            }
+                        }
+                    });
                 },
                 changeTab(status) {
                     this.tab = status;
@@ -303,7 +464,12 @@
                     this.dateEnd = '';
                     this.supplierId = '';
                     this.purchaseOrderId = '';
-                    // this.tab = 'draft'; // Optionally reset tab to default or keep current
+                    this.gudangId = '';
+                    this.perPage = '15';
+                    // Reset sort to default
+                    this.sortBy = 'tanggal';
+                    this.sortDirection = 'desc';
+                    // this.tab = 'parsial'; // Optionally reset tab to default or keep current
                     this.fetchTable();
                 },
                 buildQueryString() {
@@ -317,6 +483,13 @@
                     }
                     if (this.supplierId) params.append('supplier_id', this.supplierId);
                     if (this.purchaseOrderId) params.append('purchase_order_id', this.purchaseOrderId);
+                    if (this.gudangId) params.append('gudang_id', this.gudangId);
+                    if (this.perPage) params.append('per_page', this.perPage);
+
+                    // Always include sort parameters
+                    params.append('sort_by', this.sortBy);
+                    params.append('sort_direction', this.sortDirection);
+
                     return params.toString();
                 },
                 fetchTable() {
@@ -430,6 +603,71 @@
                     });
                 }
             }
+        }
+
+        function toastSystem() {
+            return {
+                toasts: [],
+                init() {
+                    // Listen for session flash messages
+                    this.checkFlashMessages();
+
+                    // Listen for custom notify events
+                    window.addEventListener('notify', (event) => {
+                        this.addToast(event.detail);
+                    });
+                },
+                checkFlashMessages() {
+                    // Check for success message
+                    const successMessage = @json(session('success'));
+                    if (successMessage) {
+                        this.addToast({
+                            type: 'success',
+                            title: 'Berhasil',
+                            message: successMessage,
+                            timeout: 5000
+                        });
+                    }
+
+                    // Check for error message
+                    const errorMessage = @json(session('error'));
+                    if (errorMessage) {
+                        this.addToast({
+                            type: 'error',
+                            title: 'Error',
+                            message: errorMessage,
+                            timeout: 5000
+                        });
+                    }
+                },
+                addToast(toast) {
+                    const newToast = {
+                        ...toast,
+                        id: Date.now(),
+                        visible: true
+                    };
+                    this.toasts.push(newToast);
+
+                    // Auto-remove toast after timeout
+                    if (toast.timeout) {
+                        setTimeout(() => {
+                            const index = this.toasts.findIndex(t => t.id === newToast.id);
+                            if (index !== -1) {
+                                this.removeToast(index);
+                            }
+                        }, toast.timeout);
+                    }
+                },
+                removeToast(index) {
+                    this.toasts[index].visible = false;
+                    setTimeout(() => {
+                        this.toasts.splice(index, 1);
+                    }, 300); // Match transition duration
+                },
+                formatMessage(message) {
+                    return message.replace(/\n/g, '<br>');
+                }
+            };
         }
     </script>
 </x-app-layout>

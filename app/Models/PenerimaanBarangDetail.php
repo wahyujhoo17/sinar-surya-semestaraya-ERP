@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class PenerimaanBarangDetail extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'penerimaan_barang_detail';
-    
+
     protected $fillable = [
         'penerimaan_id',
         'po_detail_id',
@@ -23,7 +23,7 @@ class PenerimaanBarangDetail extends Model
         'tanggal_expired',
         'keterangan'
     ];
-    
+
     /**
      * Relasi ke Penerimaan Barang
      */
@@ -31,7 +31,7 @@ class PenerimaanBarangDetail extends Model
     {
         return $this->belongsTo(PenerimaanBarang::class, 'penerimaan_id');
     }
-    
+
     /**
      * Relasi ke PO Detail
      */
@@ -39,7 +39,7 @@ class PenerimaanBarangDetail extends Model
     {
         return $this->belongsTo(PurchaseOrderDetail::class, 'po_detail_id');
     }
-    
+
     /**
      * Relasi ke Produk
      */
@@ -47,12 +47,23 @@ class PenerimaanBarangDetail extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    
+
     /**
      * Relasi ke Satuan
      */
     public function satuan()
     {
         return $this->belongsTo(Satuan::class, 'satuan_id');
+    }
+
+    /**
+     * Get formatted product name with code (Kode - Nama)
+     */
+    public function getFormattedProductNameAttribute()
+    {
+        if ($this->produk) {
+            return $this->produk->kode . ' - ' . $this->produk->nama;
+        }
+        return $this->nama_item ?? '-';
     }
 }

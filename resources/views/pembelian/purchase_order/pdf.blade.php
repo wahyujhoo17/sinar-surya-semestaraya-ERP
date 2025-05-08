@@ -10,9 +10,27 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
-            color: black;
+            color: #333;
             margin: 0;
             padding: 0;
+        }
+
+        /* Watermark background */
+        .watermark-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            text-align: center;
+            z-index: 0;
+            opacity: 0.07;
+            font-size: 70px;
+            font-weight: bold;
+            color: #4a6fa5;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
         }
 
         /* Simple table-based layout for better printing support */
@@ -24,8 +42,8 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #1f5da0;
-            margin-bottom: 25px;
+            border-bottom: 2px solid #4a6fa5;
+            margin-bottom: 20px;
         }
 
         .info-table {
@@ -48,20 +66,22 @@
 
         .items-table th,
         .items-table td {
-            border: 1px solid #333;
+            border: 1px solid #b8c4d6;
             padding: 6px;
             text-align: left;
         }
 
         .items-table th {
-            background-color: #f0f0f0;
+            background-color: #e8f0fa;
+            color: #2c3e50;
         }
 
         .section-title {
-            background-color: #f0f0f0;
+            background-color: #e8f0fa;
             padding: 5px;
             font-weight: bold;
-            border-left: 3px solid #1f5da0;
+            border-left: 3px solid #4a6fa5;
+            color: #2c3e50;
         }
 
         .summary-table {
@@ -77,7 +97,8 @@
 
         .total-row {
             font-weight: bold;
-            border-top: 1px solid #333;
+            border-top: 1px solid #4a6fa5;
+            color: #2c3e50;
         }
 
         .signature-table {
@@ -93,7 +114,7 @@
         }
 
         .signature-line {
-            border-top: 1px solid #333;
+            border-top: 1px solid #b8c4d6;
             width: 80%;
             margin: 50px auto 10px auto;
         }
@@ -101,7 +122,7 @@
         .footer {
             text-align: center;
             font-size: 10px;
-            color: #666;
+            color: #7f8c8d;
             margin-top: 30px;
         }
 
@@ -119,24 +140,27 @@
 </head>
 
 <body>
+    <div class="watermark-bg">SINAR SURYA SEMESTARAYA</div>
     <!-- Header Section -->
     <table class="header-table">
-        <tr>
+        <tr style="margin-bottom: 10px;">
             <td style="width: 50%; vertical-align: middle;">
                 <img src="{{ public_path('img/logo_nama3.png') }}" alt="Sinar Surya Logo"
                     onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #1f5da0; margin: 0 0 5px 0;">PURCHASE ORDER</h2>
+                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">PURCHASE ORDER</h2>
                 <div>
                     <strong>Nomor:</strong> {{ $purchaseOrder->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($purchaseOrder->tanggal)->format('d/m/Y') }}<br>
                     <strong>Status:</strong> <span
-                        style="text-transform: uppercase;">{{ $purchaseOrder->status }}</span>
+                        style="text-transform: uppercase; color: #3498db;">{{ $purchaseOrder->status }}</span>
+                    <p></p>
                 </div>
             </td>
         </tr>
     </table>
+
 
     <!-- Company and Supplier Info Section -->
     <table class="info-table">
@@ -144,7 +168,7 @@
             <td>
                 <div class="section-title">Info Perusahaan</div>
                 <div style="padding: 5px;">
-                    <strong>PT. SINAR SURYA</strong><br>
+                    <strong>PT. SINAR SURYA SEMESTARAYA</strong><br>
                     Jl. Condet Raya No. 6 Balekambang<br>
                     Jakarta Timur 13530<br>
                     Telp. (021) 80876624 - 80876642<br>
@@ -154,7 +178,7 @@
                 </div>
             </td>
             <td>
-                <div class="section-title">Supplier</div>
+                <div class="section-title">Order Ke</div>
                 <div style="padding: 5px;">
                     <strong>{{ $purchaseOrder->supplier->nama }}</strong><br>
                     {{ $purchaseOrder->supplier->alamat ?? '-' }}<br>
@@ -178,7 +202,7 @@
 
     <!-- Shipping Info if available -->
     @if ($purchaseOrder->alamat_pengiriman)
-        <div style="border: 1px dashed #999; padding: 8px; margin-bottom: 15px; background-color: #f9f9f9;">
+        <div style="border: 1px dashed #b8c4d6; padding: 8px; margin-bottom: 15px; background-color: #f8fafc;">
             <strong>Alamat Pengiriman:</strong> {{ $purchaseOrder->alamat_pengiriman }}
             @if ($purchaseOrder->tanggal_pengiriman)
                 <br><strong>Tanggal Pengiriman:</strong>
@@ -187,12 +211,6 @@
         </div>
     @endif
 
-    <!-- Purchase Request reference if available -->
-    @if ($purchaseOrder->purchaseRequest)
-        <div style="margin-bottom: 15px;">
-            <strong>Berdasarkan Permintaan Pembelian:</strong> {{ $purchaseOrder->purchaseRequest->nomor }}
-        </div>
-    @endif
 
     <!-- Items Table -->
     <table class="items-table">
@@ -262,15 +280,16 @@
 
     <!-- Notes Section -->
     @if ($purchaseOrder->catatan)
-        <div style="margin-bottom: 15px;">
-            <strong>Catatan:</strong>
+        <div
+            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+            <strong style="color: #2c3e50;">Catatan:</strong>
             <p>{{ $purchaseOrder->catatan }}</p>
         </div>
     @endif
 
     <!-- Terms and Conditions -->
-    <div style="margin-bottom: 15px;">
-        <strong>Syarat & Ketentuan:</strong>
+    <div style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+        <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
         @if ($purchaseOrder->syarat_ketentuan)
             <div style="margin-top: 5px;">{{ $purchaseOrder->syarat_ketentuan }}</div>
         @else
@@ -287,13 +306,13 @@
         <tr>
             <td>
                 <div class="signature-line"></div>
-                <div><strong>{{ $purchaseOrder->user->name ?? 'Purchasing' }}</strong></div>
-                <div>Purchasing</div>
+                <div><strong style="color: #2c3e50;">{{ $purchaseOrder->user->name ?? 'Purchasing' }}</strong></div>
+                <div style="color: #7f8c8d;">Purchasing</div>
             </td>
             <td>
                 <div class="signature-line"></div>
-                <div><strong>Mengetahui</strong></div>
-                <div>Direktur</div>
+                <div><strong style="color: #2c3e50;">Mengetahui</strong></div>
+                <div style="color: #7f8c8d;">Direktur</div>
             </td>
         </tr>
     </table>

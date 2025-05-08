@@ -1,336 +1,192 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 
 <head>
     <meta charset="utf-8">
-    <title>Permintaan Pembelian PDF</title>
+    <title>Permintaan Pembelian - {{ $permintaanPembelian->nomor }}</title>
     <style>
         body {
-            font-family: DejaVu Sans, sans-serif;
+            font-family: Arial, sans-serif;
             font-size: 12px;
-            margin: 0;
-            padding: 30px;
+            line-height: 1.4;
             color: #333;
-            background-color: #fff;
-            position: relative;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Page Border */
-        body:before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            bottom: 10px;
-            left: 10px;
-            border: 1px solid #0055aa;
-            z-index: -2;
-        }
-
-        /* Inner Border */
-        body:after {
-            content: '';
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            bottom: 12px;
-            left: 12px;
-            border: 1px solid #ddd;
-            z-index: -2;
-        }
-
-        .header {
-            padding-bottom: 15px;
-            border-bottom: 3px double #0055aa;
-            margin-bottom: 25px;
-            width: 100%;
-            position: relative;
-
-        }
-
-        .logo-container {
-            text-align: center;
-        }
-
-        .logo {
-            width: 100%;
-            max-width: 450px;
-            height: auto;
-            margin: 0 auto;
-            display: block;
-            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.2));
-        }
-
-        .document-title {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin: 30px 0;
-            color: #0052cc;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            position: relative;
-            text-shadow: 0 1px 2px rgba(0, 85, 170, 0.2);
-        }
-
-        .document-meta {
-            background: linear-gradient(to bottom, #fafbff, #f0f5ff);
-            border: 1px solid #d0d9e6;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-            position: relative;
-        }
-
-        .document-meta:before {
-            content: "";
-            position: absolute;
-            top: -1px;
-            left: -1px;
-            right: -1px;
-            height: 8px;
-            background: linear-gradient(90deg, #1a73e8, #0052cc);
-            border-radius: 8px 8px 0 0;
-        }
-
-        .document-meta table {
-            border: none;
-            width: 100%;
-        }
-
-        .document-meta td {
-            border: none;
-            padding: 6px;
-            vertical-align: top;
-        }
-
-        .label {
-            font-weight: bold;
-            color: #0055aa;
-            text-transform: uppercase;
-            font-size: 11px;
-        }
-
-        .value {
-            font-weight: 600;
-        }
-
-        table.items {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-bottom: 25px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #c8d0e0;
-        }
-
-        table.items th {
-            background: linear-gradient(135deg, #1a73e8, #0052cc);
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
-            padding: 14px 10px;
-            text-align: left;
-            font-weight: 800;
-            border: none;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-
-        table.items td {
-            border: none;
-            border-bottom: 1px solid #e0e6f0;
-            padding: 13px 10px;
-            vertical-align: middle;
-        }
-
-        table.items tr:nth-child(odd) {
-            background-color: #f7faff;
-        }
-
-        table.items tr:nth-child(even) {
-            background-color: #ffffff;
-        }
-
-        table.items tr:hover {
-            background-color: #e6f0ff;
-            transition: background-color 0.3s ease;
-        }
-
-        table.items tfoot {
-            font-weight: bold;
-        }
-
-        table.items tfoot th,
-        table.items tfoot td {
-            background: linear-gradient(to bottom, #f0f5ff, #e0ebff);
-            border-top: 2px solid #1a73e8;
-            text-align: right;
-            padding: 14px 10px;
-            color: #0052cc;
-            font-weight: 800;
-            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
-        }
-
-        .notes {
-            margin-top: 30px;
-            background-color: #f9fbff;
-            border-left: 6px solid #1a73e8;
-            padding: 18px 22px;
-            border-radius: 0 8px 8px 0;
-            position: relative;
-            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-        }
-
-        .notes:after {
-            content: "✎";
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            font-size: 18px;
-            color: #ccc;
-        }
-
-        .notes-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #0055aa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 11px;
-        }
-
-        .footer {
-            margin-top: 50px;
-            width: 100%;
-            page-break-inside: avoid;
-            position: relative;
-        }
-
-        .footer:before {
-            content: '';
-            display: block;
-            width: 100%;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #0055aa, transparent);
-            margin-bottom: 20px;
-        }
-
-        .signature-section {
-            width: 100%;
-            display: table;
-            padding-top: 15px;
-        }
-
-        .signature-box {
-            float: left;
-            width: 30%;
-            text-align: center;
-            margin-right: 3%;
-            padding: 15px 0;
-        }
-
-        .signature-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #0055aa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 11px;
-        }
-
-        .signature-line {
-            margin-top: 70px;
-            border-top: 1px solid #333;
-            width: 80%;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .signature-name {
-            margin-top: 8px;
-            font-weight: bold;
-        }
-
-        .signature-date {
-            font-size: 10px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        .watermark {
-            position: absolute;
+        /* Watermark background */
+        .watermark-bg {
+            position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 100px;
+            width: 100%;
+            text-align: center;
+            z-index: 0;
+            opacity: 0.07;
+            font-size: 70px;
             font-weight: bold;
-            letter-spacing: 10px;
-            color: rgba(0, 85, 170, 0.03);
-            z-index: -1;
+            color: #4a6fa5;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            pointer-events: none;
+            user-select: none;
             white-space: nowrap;
         }
 
-        .page-number {
-            text-align: right;
-            font-size: 10px;
-            color: #777;
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 10px;
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid #4a6fa5;
+            margin-bottom: 20px;
         }
 
-        .important-info {
-            background-color: rgba(0, 85, 170, 0.05);
-            border-radius: 5px;
-            padding: 2px 5px;
-            display: inline-block;
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .info-table td {
+            vertical-align: top;
+            padding: 5px;
+            width: 50%;
+        }
+
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #b8c4d6;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #e8f0fa;
+            color: #2c3e50;
+        }
+
+        .section-title {
+            background-color: #e8f0fa;
+            padding: 5px;
+            font-weight: bold;
+            border-left: 3px solid #4a6fa5;
+            color: #2c3e50;
+        }
+
+        .summary-table {
+            border-collapse: collapse;
+            width: 40%;
+            margin-left: 60%;
+            margin-bottom: 15px;
+        }
+
+        .summary-table td {
+            padding: 5px;
+        }
+
+        .total-row {
+            font-weight: bold;
+            border-top: 1px solid #4a6fa5;
+            color: #2c3e50;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+
+        .signature-table td {
+            width: 33%;
+            vertical-align: bottom;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #b8c4d6;
+            width: 80%;
+            margin: 50px auto 10px auto;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 10px;
+            color: #7f8c8d;
+            margin-top: 30px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        @page {
+            size: A4;
+            margin: 1cm;
         }
     </style>
 </head>
 
 <body>
-    <div class="watermark">SINAR SURYA</div>
+    <div class="watermark-bg">SINAR SURYA SEMESTARAYA</div>
+    <!-- Header Section -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 50%; vertical-align: middle;">
+                <img src="{{ public_path('img/logo_nama3.png') }}" alt="Sinar Surya Logo"
+                    onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
+            </td>
+            <td style="width: 50%; text-align: right; vertical-align: middle;">
+                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">PERMINTAAN PEMBELIAN</h2>
+                <div>
+                    <strong>Nomor:</strong> {{ $permintaanPembelian->nomor }}<br>
+                    <strong>Tanggal:</strong>
+                    {{ \Carbon\Carbon::parse($permintaanPembelian->tanggal)->format('d/m/Y') }}<br>
+                    <strong>Status:</strong> <span
+                        style="text-transform: uppercase; color: #3498db;">{{ $permintaanPembelian->status ?? '-' }}</span>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-    <div class="header">
-        <div class="logo-container">
-            <img src="{{ public_path('img/logo_nama3.png') }}" class="logo" alt="PT Sinar Surya Semestaraya">
-        </div>
-    </div>
+    <!-- Company and Pemohon Info Section -->
+    <table class="info-table">
+        <tr>
+            <td>
+                <div class="section-title">Info Perusahaan</div>
+                <div style="padding: 5px;">
+                    <strong>PT. SINAR SURYA SEMESTARAYA</strong><br>
+                    Jl. Condet Raya No. 6 Balekambang<br>
+                    Jakarta Timur 13530<br>
+                    Telp. (021) 80876624 - 80876642<br>
+                    E-mail: admin@kliksinarsurya.com<br>
+                    sinar.surya@hotmail.com<br>
+                    sinarsurya.sr@gmail.com
+                </div>
+            </td>
+            <td>
+                <div class="section-title">Info Permintaan</div>
+                <div style="padding: 5px;">
+                    <strong>Departemen:</strong> {{ $permintaanPembelian->department->nama ?? '-' }}<br>
+                    <strong>Pemohon:</strong> {{ $permintaanPembelian->user->name ?? '-' }}<br>
+                    <strong>Tanggal Permintaan:</strong>
+                    {{ \Carbon\Carbon::parse($permintaanPembelian->tanggal)->format('d/m/Y') }}<br>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-    <div class="document-title">PERMINTAAN PEMBELIAN</div>
-
-    <div class="document-meta">
-        <table>
-            <tr>
-                <td width="15%" class="label">Nomor</td>
-                <td width="2%">:</td>
-                <td width="33%" class="value"><span class="important-info">{{ $permintaanPembelian->nomor }}</span>
-                </td>
-                <td width="15%" class="label">Departemen</td>
-                <td width="2%">:</td>
-                <td class="value">{{ $permintaanPembelian->department->nama }}</td>
-            </tr>
-            <tr>
-                <td class="label">Tanggal</td>
-                <td>:</td>
-                <td class="value">{{ \Carbon\Carbon::parse($permintaanPembelian->tanggal)->format('d F Y') }}</td>
-                <td class="label">Pemohon</td>
-                <td>:</td>
-                <td class="value">{{ $permintaanPembelian->user->name }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <table class="items">
+    <!-- Items Table -->
+    <table class="items-table">
         <thead>
             <tr>
                 <th width="5%">No</th>
-                <th width="20%">Item</th>
-                <th width="30%">Spesifikasi</th>
-                <th width="15%">Jumlah</th>
+                <th width="30%">Item</th>
+                <th width="25%">Spesifikasi</th>
+                <th width="10%">Jumlah</th>
                 <th width="15%">Harga Est.</th>
                 <th width="15%">Subtotal</th>
             </tr>
@@ -349,54 +205,60 @@
                             {{ $detail->deskripsi ?? '-' }}
                         @endif
                     </td>
-                    <td>{{ $detail->quantity }} {{ $detail->satuan->nama }}</td>
+                    <td>{{ $detail->quantity }} {{ $detail->satuan->nama ?? '-' }}</td>
                     <td>Rp {{ number_format($detail->harga_estimasi, 0, ',', '.') }}</td>
                     <td>Rp {{ number_format($detail->quantity * $detail->harga_estimasi, 0, ',', '.') }}</td>
                 </tr>
             @endforeach
         </tbody>
-        <tfoot>
-            <tr>
-                <th colspan="4">Total Estimasi:</th>
-                <th colspan="2">Rp {{ number_format($totalEstimasi, 0, ',', '.') }}</th>
-            </tr>
-        </tfoot>
     </table>
 
+    <!-- Summary Table -->
+    <table class="summary-table">
+        <tr class="total-row">
+            <td><strong>Total Estimasi</strong></td>
+            <td class="text-right"><strong>Rp {{ number_format($totalEstimasi, 0, ',', '.') }}</strong></td>
+        </tr>
+    </table>
+
+    <!-- Notes Section -->
     @if ($permintaanPembelian->catatan)
-        <div class="notes">
-            <div class="notes-title">Catatan:</div>
-            <div>{{ $permintaanPembelian->catatan }}</div>
+        <div
+            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+            <strong style="color: #2c3e50;">Catatan:</strong>
+            <p>{{ $permintaanPembelian->catatan }}</p>
         </div>
     @endif
 
-    <div class="footer">
-        <div class="signature-section">
-            <div class="signature-box">
-                <div class="signature-title">Pemohon</div>
+    <!-- Signatures -->
+    <table class="signature-table">
+        <tr>
+            <td>
                 <div class="signature-line"></div>
-                <div class="signature-name">{{ $permintaanPembelian->user->name }}</div>
-                <div class="signature-date">{{ \Carbon\Carbon::parse($permintaanPembelian->tanggal)->format('d/m/Y') }}
-                </div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-title">Disetujui oleh</div>
+                <div><strong style="color: #2c3e50;">{{ $permintaanPembelian->user->name ?? 'Pemohon' }}</strong></div>
+                <div style="color: #7f8c8d;">Pemohon</div>
+                <div style="font-size:10px;">
+                    {{ \Carbon\Carbon::parse($permintaanPembelian->tanggal)->format('d/m/Y') }}</div>
+            </td>
+            <td>
                 <div class="signature-line"></div>
-                <div class="signature-name">Manager</div>
-                <div class="signature-date">Tanggal: ___/___/______</div>
-            </div>
-            <div class="signature-box">
-                <div class="signature-title">Diketahui oleh</div>
+                <div><strong style="color: #2c3e50;">Disetujui oleh</strong></div>
+                <div style="color: #7f8c8d;">Manager</div>
+                <div style="font-size:10px;">Tanggal: ___/___/______</div>
+            </td>
+            <td>
                 <div class="signature-line"></div>
-                <div class="signature-name">Direktur</div>
-                <div class="signature-date">Tanggal: ___/___/______</div>
-            </div>
-        </div>
-    </div>
+                <div><strong style="color: #2c3e50;">Diketahui oleh</strong></div>
+                <div style="color: #7f8c8d;">Direktur</div>
+                <div style="font-size:10px;">Tanggal: ___/___/______</div>
+            </td>
+        </tr>
+    </table>
 
-    <div class="page-number">
-        Dokumen ini dibuat oleh sistem ERP PT Sinar Surya Semestaraya | Dicetak pada:
-        {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}
+    <!-- Footer -->
+    <div class="footer">
+        <p>Dokumen ini dibuat oleh sistem ERP PT Sinar Surya Semestaraya | Dicetak pada:
+            {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>
 

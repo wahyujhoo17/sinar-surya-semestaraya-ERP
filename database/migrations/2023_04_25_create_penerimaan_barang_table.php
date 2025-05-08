@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('nomor_surat_jalan')->nullable();
             $table->date('tanggal_surat_jalan')->nullable();
             $table->text('catatan')->nullable();
-            $table->enum('status', ['draft', 'selesai'])->default('draft');
+            $table->enum('status', ['parsial', 'selesai', 'batal'])->default('draft');
             $table->timestamps();
         });
 

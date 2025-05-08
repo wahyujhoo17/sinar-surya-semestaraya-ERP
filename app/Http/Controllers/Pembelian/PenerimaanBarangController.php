@@ -8,6 +8,8 @@ use App\Models\PenerimaanBarang;
 use App\Models\PenerimaanBarangDetail;
 use App\Models\Gudang;
 use App\Models\Supplier;
+use App\Models\StokProduk;
+use App\Models\RiwayatStok;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,18 +20,20 @@ class PenerimaanBarangController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PenerimaanBarang::with(['purchaseOrder', 'supplier', 'gudang', 'user'])
-            ->orderBy('tanggal', 'desc');
+        $query = PenerimaanBarang::with(['purchaseOrder', 'supplier', 'gudang', 'user']);
 
-        // --- Bagian Filter --- 
+        // --- Bagian Filter dan Sorting --- 
         $filters = [
             'search' => $request->input('search'),
-            'status' => $request->input('status', 'draft'), // Default status
+            'status' => $request->input('status', ''), // Default all status
             'date_filter' => $request->input('date_filter'),
             'date_start' => $request->input('date_start'),
             'date_end' => $request->input('date_end'),
             'supplier_id' => $request->input('supplier_id'),
             'purchase_order_id' => $request->input('purchase_order_id'),
+            'gudang_id' => $request->input('gudang_id'),
+            'sort_by' => $request->input('sort_by', 'tanggal'), // Default to tanggal
+            'sort_direction' => $request->input('sort_direction', 'desc'), // Default to desc (newest first)
         ];
 
         if ($filters['search']) {
@@ -44,10 +48,13 @@ class PenerimaanBarangController extends Controller
             });
         }
         if ($filters['status']) {
-            $query->where('status', $filters['status']);
+            $query->where('penerimaan_barang.status', $filters['status']);
         }
         if ($filters['supplier_id']) {
             $query->where('supplier_id', $filters['supplier_id']);
+        }
+        if ($filters['gudang_id']) {
+            $query->where('gudang_id', $filters['gudang_id']);
         }
         if ($filters['purchase_order_id']) {
             $query->whereHas('purchaseOrder', function ($poQuery) use ($filters) {
@@ -61,14 +68,27 @@ class PenerimaanBarangController extends Controller
                 case 'today':
                     $query->whereDate('tanggal', today());
                     break;
+                case 'yesterday':
+                    $query->whereDate('tanggal', today()->subDay());
+                    break;
                 case 'this_week':
                     $startOfWeek = now()->startOfWeek();
                     $endOfWeek = now()->endOfWeek();
                     $query->whereBetween('tanggal', [$startOfWeek, $endOfWeek]);
                     break;
+                case 'last_week':
+                    $startOfWeek = now()->subWeek()->startOfWeek();
+                    $endOfWeek = now()->subWeek()->endOfWeek();
+                    $query->whereBetween('tanggal', [$startOfWeek, $endOfWeek]);
+                    break;
                 case 'this_month':
                     $startOfMonth = now()->startOfMonth();
                     $endOfMonth = now()->endOfMonth();
+                    $query->whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
+                    break;
+                case 'last_month':
+                    $startOfMonth = now()->subMonth()->startOfMonth();
+                    $endOfMonth = now()->subMonth()->endOfMonth();
                     $query->whereBetween('tanggal', [$startOfMonth, $endOfMonth]);
                     break;
                 case 'range':
@@ -83,10 +103,45 @@ class PenerimaanBarangController extends Controller
             }
         }
 
-        $penerimaanBarangs = $query->paginate(15)->appends($filters); // appends agar filter terbawa di pagination
+        // Handle column sorting
+        switch ($filters['sort_by']) {
+            case 'nomor':
+                $query->orderBy('nomor', $filters['sort_direction']);
+                break;
+            case 'tanggal':
+                $query->orderBy('tanggal', $filters['sort_direction']);
+                break;
+            case 'supplier':
+                $query->join('supplier', 'penerimaan_barang.supplier_id', '=', 'supplier.id')
+                    ->orderBy('supplier.nama', $filters['sort_direction'])
+                    ->select('penerimaan_barang.*');
+                break;
+            case 'gudang':
+                $query->join('gudang', 'penerimaan_barang.gudang_id', '=', 'gudang.id')
+                    ->orderBy('gudang.nama', $filters['sort_direction'])
+                    ->select('penerimaan_barang.*');
+                break;
+            case 'po_number':
+                $query->join('purchase_order', 'penerimaan_barang.po_id', '=', 'purchase_order.id')
+                    ->orderBy('purchase_order.nomor', $filters['sort_direction'])
+                    ->select('penerimaan_barang.*');
+                break;
+            case 'status':
+                $query->orderBy('status', $filters['sort_direction']);
+                break;
+            default:
+                $query->orderBy('tanggal', 'desc');
+                break;
+        }
+
+        $per_page = $request->input('per_page', 15);
+        $penerimaanBarangs = $query->paginate($per_page)->appends($filters);
 
         if ($request->ajax()) {
-            $tableHtml = view('pembelian.Penerimaan_barang._table', ['penerimaanBarangs' => $penerimaanBarangs])->render();
+            $tableHtml = view('pembelian.Penerimaan_barang._table', [
+                'penerimaanBarangs' => $penerimaanBarangs,
+                'filters' => $filters
+            ])->render();
             $paginationHtml = view('pembelian.Penerimaan_barang._pagination', ['penerimaanBarangs' => $penerimaanBarangs])->render();
             return response()->json([
                 'table_html' => $tableHtml,
@@ -99,12 +154,14 @@ class PenerimaanBarangController extends Controller
             ->groupBy('status')
             ->pluck('total', 'status');
         $suppliers = Supplier::orderBy('nama')->get();
+        $gudangs = Gudang::orderBy('nama')->get();
 
         return view('pembelian.Penerimaan_barang.index', array_merge([
-            'penerimaanBarangs' => $penerimaanBarangs, // Untuk initial load jika ada (meski akan dioverwrite AJAX)
+            'penerimaanBarangs' => $penerimaanBarangs,
             'statusCounts' => $statusCounts,
             'suppliers' => $suppliers,
-        ], $filters)); // Kirim semua filter ke view untuk inisialisasi Alpine.js
+            'gudangs' => $gudangs,
+        ], $filters));
     }
 
     /**
@@ -112,8 +169,10 @@ class PenerimaanBarangController extends Controller
      */
     public function create(Request $request)
     {
-        $poQuery = PurchaseOrder::with(['supplier', 'details'])
-            ->where('status', '!=', 'selesai');
+        $poQuery = PurchaseOrder::with(['supplier', 'details.produk'])
+            ->where('status', '!=', 'selesai')
+            ->where('status', '!=', 'draft')
+            ->where('status', '!=', 'dibatalkan'); // Exclude canceled POs
         if ($request->filled('q')) {
             $poQuery->where('nomor', 'like', '%' . $request->q . '%');
         }
@@ -128,17 +187,23 @@ class PenerimaanBarangController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'po_id' => 'required|exists:purchase_orders,id',
+            'po_id' => 'required|exists:purchase_order,id',
             'gudang_id' => 'required|exists:gudang,id',
             'tanggal' => 'required|date',
             'items' => 'required|array',
-            'items.*.id' => 'required|exists:purchase_order_details,id',
+            'items.*.id' => 'required|exists:purchase_order_detail,id',
             'items.*.qty_diterima' => 'required|numeric|min:0',
+            'items.*.lokasi_rak' => 'nullable|string|max:100', // Add validation for lokasi_rak
         ]);
+
         DB::beginTransaction();
         try {
             $po = PurchaseOrder::with('details')->findOrFail($request->po_id);
-            $nomor = 'GR-' . date('Ymd') . '-' . str_pad((PenerimaanBarang::max('id') + 1), 4, '0', STR_PAD_LEFT);
+
+            // Generate nomor penerimaan barang otomatis
+            $nomor = 'GR-' . date('Ymd') . '-' . str_pad((PenerimaanBarang::max('id') ?? 0) + 1, 4, '0', STR_PAD_LEFT);
+
+            // Buat record penerimaan barang utama
             $penerimaan = PenerimaanBarang::create([
                 'nomor' => $nomor,
                 'tanggal' => $request->tanggal,
@@ -149,38 +214,168 @@ class PenerimaanBarangController extends Controller
                 'nomor_surat_jalan' => $request->nomor_surat_jalan,
                 'tanggal_surat_jalan' => $request->tanggal_surat_jalan,
                 'catatan' => $request->catatan,
-                'status' => 'draft',
+                'status' => 'parsial',  // Default to parsial first, will check if selesai later
             ]);
+
+            $anyItemReceived = false;
+            $allItemsFullyReceived = true;  // Flag to check if all PO items are fully received
+
             foreach ($request->items as $item) {
                 $poDetail = $po->details->where('id', $item['id'])->first();
-                $qtySisa = $poDetail->qty - $poDetail->qty_diterima;
+
+                // Skip jika tidak ada barang yang diterima
+                if ($item['qty_diterima'] <= 0) {
+                    continue;
+                }
+
+                $anyItemReceived = true;
+                $qtySisa = $poDetail->quantity - ($poDetail->quantity_diterima ?? 0);
+
+                // Validasi: qty diterima tidak boleh melebihi sisa PO
                 if ($item['qty_diterima'] > $qtySisa) {
                     throw new \Exception('Qty diterima tidak boleh melebihi sisa PO.');
                 }
+
+                // Buat record detail penerimaan barang (sesuaikan dengan field di database)
                 PenerimaanBarangDetail::create([
                     'penerimaan_id' => $penerimaan->id,
                     'po_detail_id' => $poDetail->id,
                     'produk_id' => $poDetail->produk_id,
-                    'qty_dipesan' => $poDetail->qty,
-                    'qty_diterima' => $item['qty_diterima'],
-                    'catatan' => $item['catatan'] ?? null,
+                    'nama_item' => $poDetail->produk ? $poDetail->produk->nama : ($poDetail->nama_item ?? 'Item #' . $poDetail->id),
+                    'deskripsi' => $poDetail->deskripsi,
+                    'quantity' => $item['qty_diterima'], // Gunakan field quantity sesuai model
+                    'satuan_id' => $poDetail->satuan_id,
+                    'keterangan' => $item['catatan'] ?? null, // Gunakan field keterangan sesuai model
                 ]);
-                // Update qty diterima di PO detail
-                $poDetail->qty_diterima += $item['qty_diterima'];
+
+                // Update qty yang diterima di PO detail
+                $poDetail->quantity_diterima = ($poDetail->quantity_diterima ?? 0) + $item['qty_diterima'];
                 $poDetail->save();
-                // Update stok gudang & inventory
-                // ...panggil helper update stok sesuai modul inventory Anda...
+
+                // Update stok gudang
+                if ($poDetail->produk_id) {
+                    $this->updateStokGudang(
+                        $poDetail->produk_id,
+                        $request->gudang_id,
+                        $item['qty_diterima'],
+                        $penerimaan->id,
+                        $item['lokasi_rak'] ?? null
+                    );
+                }
+
+                // Jika setelah penerimaan ini masih ada sisa yang belum diterima, maka tidak selesai
+                if ($poDetail->quantity_diterima < $poDetail->quantity) {
+                    $allItemsFullyReceived = false;
+                }
             }
-            // Update status PO jika semua item sudah diterima
-            $allReceived = $po->details->every(fn($d) => $d->qty_diterima >= $d->qty);
-            $po->status = $allReceived ? 'selesai' : 'parsial';
-            $po->save();
+
+            // Validasi minimal satu item diterima
+            if (!$anyItemReceived) {
+                throw new \Exception('Minimal harus ada 1 item yang diterima');
+            }
+
+            // Update status penerimaan barang jika semua barang sudah diterima penuh
+            if ($allItemsFullyReceived) {
+                $penerimaan->status = 'selesai';
+                $penerimaan->save();
+            }
+
+            // Update status PO berdasarkan penerimaan barang
+            $this->updatePurchaseOrderStatus($po);
+
             DB::commit();
-            return redirect()->route('pembelian.penerimaan-barang.index')->with('success', 'Penerimaan barang berhasil disimpan.');
+
+            return redirect()->route('pembelian.penerimaan-barang.index')
+                ->with('success', 'Penerimaan barang berhasil disimpan dengan nomor ' . $nomor);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Update status PO berdasarkan status penerimaan
+     */
+    private function updatePurchaseOrderStatus(PurchaseOrder $po)
+    {
+        $po->refresh(); // Refresh model untuk mendapatkan data terbaru
+
+        $allReceived = true;
+        $anyReceived = false;
+
+        foreach ($po->details as $detail) {
+            // Jika ada quantity yang belum diterima, berarti belum selesai
+            if (($detail->quantity_diterima ?? 0) < $detail->quantity) {
+                $allReceived = false;
+            }
+
+            // Jika ada quantity yang sudah diterima, berarti ada sebagian
+            if (($detail->quantity_diterima ?? 0) > 0) {
+                $anyReceived = true;
+            }
+        }
+
+        if ($allReceived) {
+            $po->status_penerimaan = 'diterima';
+        } else if ($anyReceived) {
+            $po->status_penerimaan = 'sebagian';
+        } else {
+            $po->status_penerimaan = 'belum_diterima';
+        }
+
+        // Jika selesai terima dan sudah bayar, maka PO selesai
+        if ($po->status_penerimaan == 'diterima' && $po->status_pembayaran == 'lunas') {
+            $po->status = 'selesai';
+        } else if ($po->status != 'dibatalkan') {
+            // Jika bukan dibatalkan, maka status jadi approved (proses)
+            $po->status = 'dikirim';
+        }
+
+        $po->save();
+    }
+
+    /**
+     * Update stok gudang dan catat history
+     */
+    private function updateStokGudang($produkId, $gudangId, $jumlahMasuk, $referensiId, $lokasiRak = null)
+    {
+        // Cari stok yang sudah ada atau buat baru
+        $stok = StokProduk::firstOrNew([
+            'produk_id' => $produkId,
+            'gudang_id' => $gudangId
+        ]);
+
+        // Catat jumlah sebelumnya untuk history
+        $jumlahSebelum = $stok->jumlah ?? 0;
+
+        // Jika baru dibuat, isi nilai default
+        if (!$stok->exists) {
+            $stok->jumlah = 0;
+            $stok->lokasi_rak = $lokasiRak ?? '-';
+        }
+        // Jika ada nilai lokasi rak baru, update
+        else if ($lokasiRak) {
+            $stok->lokasi_rak = $lokasiRak;
+        }
+
+        // Update jumlah stok
+        $stok->jumlah += $jumlahMasuk;
+        $stok->save();
+
+        // Catat riwayat stok
+        RiwayatStok::create([
+            'stok_id' => $stok->id,
+            'produk_id' => $produkId,
+            'gudang_id' => $gudangId,
+            'user_id' => auth()->id(),
+            'jumlah_sebelum' => $jumlahSebelum,
+            'jumlah_perubahan' => $jumlahMasuk,
+            'jumlah_setelah' => $stok->jumlah,
+            'jenis' => 'masuk',
+            'referensi_tipe' => 'penerimaan_barang',
+            'referensi_id' => $referensiId,
+            'keterangan' => 'Penerimaan barang dari Purchase Order'
+        ]);
     }
 
     /**
@@ -197,7 +392,7 @@ class PenerimaanBarangController extends Controller
      */
     public function edit($id)
     {
-        $penerimaan = PenerimaanBarang::with(['details', 'purchaseOrder', 'gudang'])->findOrFail($id);
+        $penerimaan = PenerimaanBarang::with(['details.produk', 'purchaseOrder', 'gudang'])->findOrFail($id);
         $gudangs = Gudang::all();
         return view('pembelian.Penerimaan_barang.edit', compact('penerimaan', 'gudangs'));
     }
