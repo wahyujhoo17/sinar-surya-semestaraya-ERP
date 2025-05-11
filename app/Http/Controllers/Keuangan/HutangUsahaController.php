@@ -142,7 +142,7 @@ class HutangUsahaController extends Controller
     {
         $query = PurchaseOrder::with(['supplier', 'details'])
             ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
-            ->where('status', '!=', 'batal')
+            ->where('status', '!=', 'dibatalkan')
             ->orderBy('tanggal', 'desc');
 
         // Filter by supplier if provided
