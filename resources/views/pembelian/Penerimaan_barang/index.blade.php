@@ -97,7 +97,8 @@
                         class="relative flex space-x-4 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-px after:bg-gray-200 dark:after:bg-gray-700">
                         @php
                             // Ensure the tabs are always in this specific order
-                            $grStatuses = ['parsial', 'selesai', 'batal'];
+                            // Adding 'semua' as the first tab to show all statuses
+                            $grStatuses = ['semua', 'parsial', 'selesai', 'batal'];
                         @endphp
                         @foreach ($grStatuses as $status)
                             <button type="button"
@@ -107,8 +108,10 @@
                                 class="pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 focus:outline-none whitespace-nowrap relative"
                                 @click="changeTab('{{ $status }}')">
                                 <span class="flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-{{ grStatusColor($status) }}-500"></span>
-                                    {{ ucfirst($status) }}
+                                    @if ($status != 'semua')
+                                        <span class="w-2 h-2 rounded-full bg-{{ grStatusColor($status) }}-500"></span>
+                                    @endif
+                                    {{ $status == 'semua' ? 'Semua' : ucfirst($status) }}
                                 </span>
                             </button>
                         @endforeach
@@ -411,7 +414,7 @@
 
         function goodsReceiptTableManager() {
             return {
-                tab: 'parsial', // Always start with parsial tab
+                tab: 'semua', // Always start with semua tab
                 search: @json($search ?? ''), // Initialized from controller
                 dateFilter: @json($date_filter ?? ''), // Initialized from controller
                 dateStart: @json($date_start ?? ''), // Initialized from controller
@@ -426,8 +429,8 @@
                 paginationHtml: '',
                 loading: false,
                 init() {
-                    // Force tab to be 'parsial' on initialization
-                    this.tab = 'parsial';
+                    // Force tab to be 'semua' on initialization
+                    this.tab = 'semua';
                     this.fetchTable();
                     // console.log("Alpine component initialized with:", JSON.parse(JSON.stringify(this)));
 
@@ -469,7 +472,7 @@
                     // Reset sort to default
                     this.sortBy = 'tanggal';
                     this.sortDirection = 'desc';
-                    // this.tab = 'parsial'; // Optionally reset tab to default or keep current
+                    // this.tab = 'semua'; // Optionally reset tab to default or keep current
                     this.fetchTable();
                 },
                 buildQueryString() {

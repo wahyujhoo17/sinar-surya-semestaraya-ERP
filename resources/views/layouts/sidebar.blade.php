@@ -326,11 +326,11 @@
                     <a href="#"
                         class="{{ request()->is('keuangan/ar') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Piutang
                             Usaha (AR)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('keuangan/ap') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Hutang
+                    <a href="/keuangan/hutang-usaha"
+                        class="{{ request()->is('keuangan/hutang-usaha') || request()->is('keuangan/hutang-usaha/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Hutang
                             Usaha (AP)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('keuangan/kas') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Kas
+                    <a href="/keuangan/kas-dan-bank"
+                        class="{{ request()->is('keuangan/kas-dan-bank') || request()->is('keuangan/kas-dan-bank/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Kas
                             & Bank</span></a>
                     <a href="#"
                         class="{{ request()->is('keuangan/pajak') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Manajemen
@@ -370,7 +370,7 @@
                     <a href="#"
                         class="{{ request()->is('laporan/pembelian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Pembelian</span></a>
-                    <a href="#"
+                    <a href="/laporan/stok"
                         class="{{ request()->is('laporan/stok') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Stok</span></a>
                     <a href="#"

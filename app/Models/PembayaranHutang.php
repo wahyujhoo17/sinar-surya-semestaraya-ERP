@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class PembayaranHutang extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'pembayaran_hutang';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -22,7 +22,7 @@ class PembayaranHutang extends Model
         'catatan',
         'user_id'
     ];
-    
+
     /**
      * Relasi ke Purchase Order
      */
@@ -30,7 +30,7 @@ class PembayaranHutang extends Model
     {
         return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
     }
-    
+
     /**
      * Relasi ke Supplier
      */
@@ -38,12 +38,28 @@ class PembayaranHutang extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
     }
-    
+
     /**
      * Relasi ke User
      */
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the cash transaction associated with this payment
+     */
+    public function transaksiKas()
+    {
+        return $this->morphOne(TransaksiKas::class, 'related');
+    }
+
+    /**
+     * Get the bank transaction associated with this payment
+     */
+    public function transaksiBank()
+    {
+        return $this->morphOne(TransaksiBank::class, 'related');
     }
 }

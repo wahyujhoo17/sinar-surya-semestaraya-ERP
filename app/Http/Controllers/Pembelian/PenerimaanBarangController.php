@@ -25,7 +25,7 @@ class PenerimaanBarangController extends Controller
         // --- Bagian Filter dan Sorting --- 
         $filters = [
             'search' => $request->input('search'),
-            'status' => $request->input('status', ''), // Default all status
+            'status' => $request->input('status', 'semua'), // Default to 'semua' (all statuses)
             'date_filter' => $request->input('date_filter'),
             'date_start' => $request->input('date_start'),
             'date_end' => $request->input('date_end'),
@@ -47,7 +47,8 @@ class PenerimaanBarangController extends Controller
                     });
             });
         }
-        if ($filters['status']) {
+        // Only filter by status if it's not 'semua' (all)
+        if ($filters['status'] && $filters['status'] !== 'semua') {
             $query->where('penerimaan_barang.status', $filters['status']);
         }
         if ($filters['supplier_id']) {

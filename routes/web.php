@@ -17,7 +17,10 @@ use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
 use App\Http\Controllers\Inventaris\StokBarangController;
 use App\Http\Controllers\Pembelian\PenerimaanBarangController;
-
+use App\Http\Controllers\Laporan\LaporanStokController;
+use App\Http\Controllers\Keuangan\KasDanBankController;
+use App\Http\Controllers\Keuangan\HutangUsahaController;
+use App\Http\Controllers\Keuangan\PembayaranHutangController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,8 +103,8 @@ Route::middleware(['auth'])->group(function () {
 
     // --- INVENTARIS ----
     Route::prefix('inventaris')->name('inventaris.')->group(function () {
+        // Stok Barang
         Route::resource('stok', StokBarangController::class);
-        Route::get('/inventaris/stok', [StokBarangController::class, 'index'])->name('inventaris.stok.index');
     });
 
     // --- PEMBELIAN ---
@@ -128,6 +131,46 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
         Route::resource('karyawan', DataKaryawanController::class);
         // Add other HR routes here if needed
+    });
+
+    // -- Keuangan --
+    Route::prefix('keuangan')->name('keuangan.')->group(function () {
+        // Rutas para Kas dan Bank
+        Route::get('/kas-dan-bank', [KasDanBankController::class, 'index'])->name('kas-dan-bank.index');
+        Route::get('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'detailKas'])->name('kas-dan-bank.kas');
+        Route::get('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'detailRekening'])->name('kas-dan-bank.rekening');
+
+        // Kas CRUD
+        Route::post('/kas-dan-bank/kas', [KasDanBankController::class, 'storeKas'])->name('kas-dan-bank.store-kas');
+        Route::put('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'updateKas'])->name('kas-dan-bank.update-kas');
+        Route::delete('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'destroyKas'])->name('kas-dan-bank.destroy-kas');
+
+        // Rekening Bank CRUD
+        Route::post('/kas-dan-bank/rekening', [KasDanBankController::class, 'storeRekening'])->name('kas-dan-bank.store-rekening');
+        Route::put('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'updateRekening'])->name('kas-dan-bank.update-rekening');
+        Route::delete('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'destroyRekening'])->name('kas-dan-bank.destroy-rekening');
+
+        // Hutang Usaha Routes
+        Route::get('hutang-usaha', [HutangUsahaController::class, 'index'])->name('hutang-usaha.index');
+        Route::get('hutang-usaha/show/{id}', [HutangUsahaController::class, 'show'])->name('hutang-usaha.show');
+        Route::get('hutang-usaha/history/{id}', [HutangUsahaController::class, 'history'])->name('hutang-usaha.history');
+        Route::get('hutang-usaha/print/{id}', [HutangUsahaController::class, 'print'])->name('hutang-usaha.print');
+        Route::get('hutang-usaha/export', [HutangUsahaController::class, 'export'])->name('hutang-usaha.export');
+        Route::get('hutang-usaha/pdf', [HutangUsahaController::class, 'generatePdf'])->name('hutang-usaha.pdf');
+
+        // Pembayaran Hutang Routes
+        Route::get('pembayaran-hutang/print/{id}', [PembayaranHutangController::class, 'print'])->name('pembayaran-hutang.print');
+        Route::resource('pembayaran-hutang', PembayaranHutangController::class);
+    });
+
+    // -- Laporan --
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        // Stock Report Routes
+        Route::get('stok', [LaporanStokController::class, 'index'])->name('stok.index');
+        Route::get('stok/data', [LaporanStokController::class, 'getData'])->name('stok.data');
+        Route::get('stok/export/excel', [LaporanStokController::class, 'exportExcel'])->name('stok.export.excel');
+        Route::get('stok/export/pdf', [LaporanStokController::class, 'exportPdf'])->name('stok.export.pdf');
+        Route::get('stok/detail/{produk_id}/{gudang_id?}', [LaporanStokController::class, 'detail'])->name('stok.detail');
     });
 });
 

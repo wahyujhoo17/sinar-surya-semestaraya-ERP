@@ -24,6 +24,76 @@ if (darkMode) {
         [x-cloak] {
             display: none !important;
         }
+
+        /* Alpine.js transition classes untuk tampilan yang lebih halus */
+        .transition-opacity {
+            transition-property: opacity;
+        }
+
+        .transition-transform {
+            transition-property: transform;
+        }
+
+        .transform {
+            transform: translateZ(0);
+        }
+
+        .duration-150 {
+            transition-duration: 150ms;
+        }
+
+        .duration-200 {
+            transition-duration: 200ms;
+        }
+
+        .duration-300 {
+            transition-duration: 300ms;
+        }
+
+        .ease-in {
+            transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+        }
+
+        .ease-out {
+            transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+        }
+
+        .ease-in-out {
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .opacity-0 {
+            opacity: 0;
+        }
+
+        .opacity-100 {
+            opacity: 1;
+        }
+
+        .scale-90 {
+            transform: scale(0.9);
+        }
+
+        .scale-100 {
+            transform: scale(1);
+        }
+
+        .translate-y-4 {
+            transform: translateY(1rem);
+        }
+
+        .translate-y-0 {
+            transform: translateY(0);
+        }
+
+        .hidden-during-load {
+            opacity: 0;
+        }
+
+        .hidden-during-load.loaded {
+            opacity: 1;
+            transition: opacity 0.3s ease-out;
+        }
     </style>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
@@ -33,6 +103,16 @@ if (darkMode) {
         } else {
             document.documentElement.classList.remove('dark');
         }
+
+        // Menambahkan kode untuk memastikan transisi halus saat halaman dimuat
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tambahkan class 'loaded' setelah halaman dimuat
+            setTimeout(function() {
+                document.querySelectorAll('.hidden-during-load').forEach(function(el) {
+                    el.classList.add('loaded');
+                });
+            }, 10);
+        });
     </script>
 
     <meta charset="utf-8">
@@ -102,10 +182,11 @@ if (darkMode) {
     </style>
 </head>
 
-<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900" x-data="{
+<body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 hidden-during-load" x-data="{
     sidebarOpen: false,
     sidebarCollapsed: localStorage.getItem('sidebarCollapsed') === 'true'
-}" x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))">
+}"
+    x-init="$watch('sidebarCollapsed', value => localStorage.setItem('sidebarCollapsed', value))">
     <div class="flex h-screen overflow-hidden">
         <!-- Mobile sidebar overlay -->
         <div x-show="sidebarOpen" x-cloak class="fixed inset-0 z-40 flex md:hidden" style="display: none;">
