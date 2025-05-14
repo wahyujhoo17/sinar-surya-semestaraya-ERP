@@ -182,8 +182,9 @@
                     </button>
 
                     <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
-                        class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-10"
-                        role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                        class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-50"
+                        role="menu" aria-orientation="vertical" aria-labelledby="options-menu"
+                        style="z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
 
                         <div class="py-1" role="none">
                             <span class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">

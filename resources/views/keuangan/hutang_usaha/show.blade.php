@@ -6,14 +6,14 @@
                 <div>
                     <div class="flex items-center">
                         <div
-                            class="flex-shrink-0 bg-gradient-to-br from-blue-600 to-indigo-700 h-12 w-1.5 rounded-full mr-4">
+                            class="flex-shrink-0 bg-gradient-to-br from-violet-500 to-indigo-600 h-12 w-1.5 rounded-full mr-4">
                         </div>
                         <div>
                             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 Detail Hutang Usaha
                             </h1>
                             <p class="mt-1.5 text-sm text-gray-600 dark:text-gray-400 flex items-center">
-                                <span class="font-medium text-blue-600 dark:text-blue-400">{{ $po->nomor }}</span>
+                                <span class="font-medium text-indigo-600 dark:text-indigo-400">{{ $po->nomor }}</span>
                                 <span class="mx-2 text-gray-400">•</span>
                                 <span>{{ $po->supplier->nama }}</span>
                             </p>
@@ -37,7 +37,7 @@
                         {{-- Primary Actions --}}
                         @if ($po->status_pembayaran != 'lunas')
                             <a href="{{ route('keuangan.pembayaran-hutang.create', ['po_id' => $po->id]) }}"
-                                class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-600 hover:to-blue-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1">
+                                class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-indigo-600 hover:to-violet-700 hover:shadow-lg hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:ring-offset-1">
                                 <svg class="h-4 w-4 transition-transform group-hover:scale-110"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -52,7 +52,7 @@
                     <div class="flex items-center gap-2">
                         {{-- Secondary Actions --}}
                         <a href="{{ route('keuangan.hutang-usaha.history', $po->id) }}"
-                            class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:ring-offset-1">
+                            class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-sky-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-sky-600 hover:to-cyan-700 hover:shadow-lg hover:shadow-sky-500/30 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:ring-offset-1">
                             <svg class="h-4 w-4 transition-transform group-hover:rotate-12"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
@@ -63,7 +63,7 @@
                         </a>
 
                         <a href="{{ route('keuangan.hutang-usaha.print', $po->id) }}" target="_blank"
-                            class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-purple-600 hover:to-purple-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-1">
+                            class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-fuchsia-500 to-purple-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-fuchsia-600 hover:to-purple-700 hover:shadow-lg hover:shadow-purple-500/30 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-1">
                             <svg class="h-4 w-4 transition-transform group-hover:scale-110"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
@@ -81,24 +81,24 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {{-- Status Card --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-md hover:shadow-lg rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 relative">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md hover:shadow-xl rounded-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 relative backdrop-blur-sm">
                 <div
                     class="absolute top-0 left-0 w-full h-1 
                     {{ $po->status_pembayaran == 'lunas'
-                        ? 'bg-gradient-to-r from-green-400 to-green-600'
+                        ? 'bg-gradient-to-r from-emerald-400 to-green-500'
                         : ($po->status_pembayaran == 'sebagian'
-                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-600'
-                            : 'bg-gradient-to-r from-red-400 to-red-600') }}">
+                            ? 'bg-gradient-to-r from-amber-400 to-yellow-500'
+                            : 'bg-gradient-to-r from-rose-400 to-red-500') }}">
                 </div>
                 <div class="p-5">
                     <div class="flex items-center">
                         <div
                             class="flex-shrink-0 rounded-lg p-3.5
                             {{ $po->status_pembayaran == 'lunas'
-                                ? 'bg-green-100/80 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100/50 dark:ring-emerald-400/20'
                                 : ($po->status_pembayaran == 'sebagian'
-                                    ? 'bg-yellow-100/80 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400'
-                                    : 'bg-red-100/80 dark:bg-red-900/30 text-red-600 dark:text-red-400') }}">
+                                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 ring-1 ring-amber-100/50 dark:ring-amber-400/20'
+                                    : 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 ring-1 ring-rose-100/50 dark:ring-rose-400/20') }}">
                             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 @if ($po->status_pembayaran == 'lunas')
@@ -117,10 +117,10 @@
                             <div class="mt-1.5 flex items-baseline">
                                 <p
                                     class="text-lg font-semibold {{ $po->status_pembayaran == 'lunas'
-                                        ? 'text-green-600 dark:text-green-400'
+                                        ? 'text-emerald-600 dark:text-emerald-400'
                                         : ($po->status_pembayaran == 'sebagian'
-                                            ? 'text-yellow-600 dark:text-yellow-400'
-                                            : 'text-red-600 dark:text-red-400') }}">
+                                            ? 'text-amber-600 dark:text-amber-400'
+                                            : 'text-rose-600 dark:text-rose-400') }}">
                                     @if ($po->status_pembayaran == 'belum_bayar')
                                         Belum Bayar
                                     @elseif($po->status_pembayaran == 'sebagian')
@@ -137,13 +137,13 @@
 
             {{-- Total Debt Card --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-md hover:shadow-lg rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 relative">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-blue-600">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md hover:shadow-xl rounded-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 relative backdrop-blur-sm">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-400 to-violet-500">
                 </div>
                 <div class="p-5">
                     <div class="flex items-center">
                         <div
-                            class="flex-shrink-0 rounded-lg p-3.5 bg-blue-100/80 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
+                            class="flex-shrink-0 rounded-lg p-3.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-100/50 dark:ring-indigo-400/20">
                             <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -166,13 +166,13 @@
 
             {{-- Paid Amount Card --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-md hover:shadow-lg rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 relative">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md hover:shadow-xl rounded-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 relative backdrop-blur-sm">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-teal-500">
                 </div>
                 <div class="p-5">
                     <div class="flex items-center">
                         <div
-                            class="flex-shrink-0 rounded-lg p-3.5 bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400">
+                            class="flex-shrink-0 rounded-lg p-3.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100/50 dark:ring-emerald-400/20">
                             <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -195,13 +195,13 @@
 
             {{-- Remaining Amount Card --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-md hover:shadow-lg rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 relative">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-400 to-purple-600">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md hover:shadow-xl rounded-xl border border-gray-100 dark:border-gray-700/50 transition-all duration-300 relative backdrop-blur-sm">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-fuchsia-400 to-purple-500">
                 </div>
                 <div class="p-5">
                     <div class="flex items-center">
                         <div
-                            class="flex-shrink-0 rounded-lg p-3.5 bg-purple-100/80 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400">
+                            class="flex-shrink-0 rounded-lg p-3.5 bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 ring-1 ring-fuchsia-100/50 dark:ring-fuchsia-400/20">
                             <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -225,123 +225,203 @@
 
         {{-- Detail Sections --}}
         <div class="grid grid-cols-1 gap-8 mb-8">
-            {{-- Purchase Order Information --}}
+            {{-- Purchase Order Information - Modernized Layout --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
                 <div
-                    class="px-6 py-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/75 dark:border-gray-700/75">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                        Informasi Purchase Order
-                    </h3>
+                    class="px-6 py-4 bg-gradient-to-br from-indigo-50 to-indigo-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
+                    <div class="flex items-center gap-3">
+                        <svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            Informasi Purchase Order
+                        </h3>
+                    </div>
                 </div>
+
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {{-- Left column - Order Details --}}
+                        <div
+                            class="bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl p-5 border border-indigo-100/60 dark:border-indigo-800/20">
                             <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Nomor PO</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">{{ $po->nomor }}</p>
-                        </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Tanggal PO</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->tanggal_po ? $po->tanggal_po->format('d/m/Y') : '-' }}
-                            </p>
-                        </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Jatuh Tempo</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->tanggal_jatuh_tempo ? $po->tanggal_jatuh_tempo->format('d/m/Y') : '-' }}
-                                @if ($po->status_pembayaran != 'lunas' && $po->tanggal_jatuh_tempo)
+                                class="text-sm uppercase font-semibold text-indigo-700 dark:text-indigo-300 mb-4 flex items-center gap-2">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                </svg>
+                                Detail Pesanan
+                            </h4>
+
+                            <div class="space-y-4">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Nomor PO</span>
                                     <span
-                                        class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ now()->gt($po->tanggal_jatuh_tempo)
-                                            ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
-                                            : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' }}">
-                                        {{ now()->gt($po->tanggal_jatuh_tempo)
-                                            ? 'Terlambat ' . now()->diffInDays($po->tanggal_jatuh_tempo) . ' hari'
-                                            : 'Dalam ' . now()->diffInDays($po->tanggal_jatuh_tempo) . ' hari' }}
+                                        class="mt-1 text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        {{ $po->nomor }}
+                                        <span
+                                            class="px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                                            #PO
+                                        </span>
                                     </span>
-                                @endif
-                            </p>
+                                </div>
+
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Tanggal
+                                        PO</span>
+                                    <span class="mt-1 text-base text-gray-900 dark:text-white">
+                                        {{ $po->tanggal_po ? $po->tanggal_po->format('d F Y') : '-' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Jatuh
+                                        Tempo</span>
+                                    <div class="mt-1 flex items-center gap-2">
+                                        <span class="text-base text-gray-900 dark:text-white">
+                                            {{ $po->tanggal_jatuh_tempo ? $po->tanggal_jatuh_tempo->format('d F Y') : '-' }}
+                                        </span>
+                                        @if ($po->status_pembayaran != 'lunas' && $po->tanggal_jatuh_tempo)
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                {{ now()->gt($po->tanggal_jatuh_tempo)
+                                                    ? 'bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 ring-1 ring-rose-100/60 dark:ring-rose-500/20'
+                                                    : 'bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-300 ring-1 ring-sky-100/60 dark:ring-sky-500/20' }}">
+                                                {{ now()->gt($po->tanggal_jatuh_tempo)
+                                                    ? 'Terlambat ' . now()->diffInDays($po->tanggal_jatuh_tempo) . ' hari'
+                                                    : 'Dalam ' . now()->diffInDays($po->tanggal_jatuh_tempo) . ' hari' }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col pt-1">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Status PO</span>
+                                    <span class="mt-1">
+                                        <span
+                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                            {{ $po->status == 'selesai'
+                                                ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-100/60 dark:ring-emerald-500/20'
+                                                : 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 ring-1 ring-amber-100/60 dark:ring-amber-500/20' }}">
+                                            <svg class="h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                @if ($po->status == 'selesai')
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M5 13l4 4L19 7" />
+                                                @else
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                @endif
+                                            </svg>
+                                            {{ $po->status == 'selesai' ? 'Selesai' : 'Proses' }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Right column - Supplier Details --}}
+                        <div
+                            class="bg-violet-50/50 dark:bg-violet-900/10 rounded-xl p-5 border border-violet-100/60 dark:border-violet-800/20">
+                            <h4
+                                class="text-sm uppercase font-semibold text-violet-700 dark:text-violet-300 mb-4 flex items-center gap-2">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                Informasi Supplier
+                            </h4>
+
+                            <div class="space-y-4">
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Nama
+                                        Supplier</span>
+                                    <span class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                                        {{ $po->supplier->nama }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Telepon</span>
+                                    <span class="mt-1 text-base text-gray-900 dark:text-white flex items-center gap-2">
+                                        @if ($po->supplier->telepon)
+                                            <svg class="h-4 w-4 text-gray-400 dark:text-gray-500"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                            </svg>
+                                        @endif
+                                        {{ $po->supplier->telepon ?? '-' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Alamat</span>
+                                    <span class="mt-1 text-base text-gray-900 dark:text-white">
+                                        {{ $po->supplier->alamat ?? '-' }}
+                                    </span>
+                                </div>
+
+                                <div class="flex flex-col pt-1">
+                                    <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Dibuat
+                                        Oleh</span>
+                                    <span class="mt-1 flex items-center gap-2">
+                                        <span
+                                            class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700">
+                                            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                                {{ $po->user ? substr($po->user->name, 0, 2) : 'U' }}
+                                            </span>
+                                        </span>
+                                        <span class="text-base text-gray-900 dark:text-white">
+                                            {{ $po->user->name ?? '-' }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <hr class="my-6 border-gray-200 dark:border-gray-700">
+                    {{-- Additional Information / Notes --}}
+                    @if ($po->keterangan)
+                        <div
+                            class="mt-6 bg-gray-50 dark:bg-gray-900/20 rounded-xl p-5 border border-gray-200/60 dark:border-gray-700/40">
+                            <h4
+                                class="text-sm uppercase font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                </svg>
+                                Keterangan
+                            </h4>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Supplier</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">{{ $po->supplier->nama }}
-                            </p>
+                            <div class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                                {{ $po->keterangan }}
+                            </div>
                         </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Telepon</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->supplier->telepon ?? '-' }}</p>
-                        </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Alamat</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->supplier->alamat ?? '-' }}</p>
-                        </div>
-                    </div>
-
-                    <hr class="my-6 border-gray-200 dark:border-gray-700">
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Status PO</h4>
-                            <span
-                                class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                {{ $po->status == 'selesai'
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                    : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300' }}">
-                                {{ $po->status == 'selesai' ? 'Selesai' : 'Proses' }}
-                            </span>
-                        </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Keterangan</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->keterangan ?? '-' }}</p>
-                        </div>
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                                Dibuat Oleh</h4>
-                            <p class="text-base font-medium text-gray-900 dark:text-white">
-                                {{ $po->user->name ?? '-' }}</p>
-                        </div>
-                    </div>
+                    @endif
                 </div>
             </div>
 
             {{-- Products Table --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
                 <div
-                    class="px-6 py-4 bg-gradient-to-br from-indigo-50 to-indigo-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/75 dark:border-gray-700/75">
+                    class="px-6 py-4 bg-gradient-to-br from-violet-50 to-violet-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
                     <div class="flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Detail Produk
                         </h3>
                         @if ($po->status_pembayaran != 'lunas')
                             <div
-                                class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 ring-1 ring-indigo-100/60 dark:ring-indigo-500/20">
                                 Sisa: Rp {{ number_format($po->total - $po->total_dibayar, 0, ',', '.') }}
                             </div>
                         @endif
@@ -380,8 +460,8 @@
                                         <td class="px-6 py-4">
                                             <div class="flex items-center">
                                                 <div
-                                                    class="flex-shrink-0 h-10 w-10 bg-indigo-100 dark:bg-indigo-900/20 rounded-md flex items-center justify-center">
-                                                    <svg class="h-5 w-5 text-indigo-500 dark:text-indigo-400"
+                                                    class="flex-shrink-0 h-10 w-10 bg-violet-100 dark:bg-violet-900/20 rounded-md flex items-center justify-center ring-1 ring-violet-100/60 dark:ring-violet-500/20">
+                                                    <svg class="h-5 w-5 text-violet-500 dark:text-violet-400"
                                                         xmlns="http://www.w3.org/2000/svg" fill="none"
                                                         viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
@@ -404,7 +484,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
                                                 <span
-                                                    class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 text-sm font-medium">
+                                                    class="inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400 text-sm font-medium ring-1 ring-violet-100/60 dark:ring-violet-500/20">
                                                     {{ $detail->quantity }}
                                                 </span>
                                                 <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">
@@ -437,7 +517,7 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @if ($detail->diskon && $detail->diskon > 0)
                                                 <span
-                                                    class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400">
+                                                    class="inline-flex items-center justify-center px-2 py-1 text-xs font-medium rounded-full bg-teal-100 dark:bg-teal-900/20 text-teal-800 dark:text-teal-400 ring-1 ring-teal-100/60 dark:ring-teal-500/20">
                                                     {{ $detail->diskon }}%
                                                 </span>
                                             @else
@@ -511,9 +591,9 @@
             {{-- Payment History --}}
             @if ($po->payments && count($po->payments) > 0)
                 <div
-                    class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                    class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
                     <div
-                        class="px-6 py-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/75 dark:border-gray-700/75">
+                        class="px-6 py-4 bg-gradient-to-br from-sky-50 to-sky-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                             Riwayat Pembayaran
                         </h3>
@@ -560,8 +640,8 @@
                                             <span
                                                 class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                                 {{ $payment->metode_pembayaran == 'tunai'
-                                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300' }}">
+                                                    ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-100/60 dark:ring-emerald-500/20'
+                                                    : 'bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-300 ring-1 ring-sky-100/60 dark:ring-sky-500/20' }}">
                                                 {{ $payment->metode_pembayaran == 'tunai' ? 'Tunai' : 'Transfer' }}
                                             </span>
                                         </td>
@@ -571,7 +651,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="{{ route('keuangan.pembayaran-hutang.show', $payment->id) }}"
-                                                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium">
+                                                class="text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 font-medium hover:underline">
                                                 Detail
                                             </a>
                                         </td>
@@ -598,15 +678,15 @@
             {{-- Returns Section --}}
             @if (isset($returns) && count($returns) > 0)
                 <div
-                    class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                    class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
                     <div
-                        class="px-6 py-4 bg-gradient-to-br from-rose-50 to-rose-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/75 dark:border-gray-700/75">
+                        class="px-6 py-4 bg-gradient-to-br from-rose-50 to-rose-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
                         <div class="flex justify-between items-center">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                                 Retur Pembelian
                             </h3>
                             <div
-                                class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300">
+                                class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 ring-1 ring-rose-100/60 dark:ring-rose-500/20">
                                 Total: Rp {{ number_format($totalReturValue, 0, ',', '.') }}
                             </div>
                         </div>
@@ -668,7 +748,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <a href="{{ route('pembelian.retur.show', $return->id) }}"
-                                                class="text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 font-medium">
+                                                class="text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 font-medium hover:underline">
                                                 Detail
                                             </a>
                                         </td>
@@ -682,39 +762,39 @@
 
             {{-- Financial Summary Section --}}
             <div
-                class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50">
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
                 <div
-                    class="px-6 py-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/75 dark:border-gray-700/75">
+                    class="px-6 py-4 bg-gradient-to-br from-gray-50 to-gray-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                         Ringkasan Keuangan
                     </h3>
                 </div>
                 <div class="p-6">
-                    <div class="overflow-hidden bg-gray-50 dark:bg-gray-900/30 sm:rounded-lg">
-                        <div class="px-4 py-5 sm:px-6">
-                            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
+                    <div class="overflow-hidden bg-gray-50 dark:bg-gray-900/30 sm:rounded-lg shadow-inner">
+                        <div class="px-6 py-5 sm:px-6">
+                            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                                 <div class="sm:col-span-1">
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Hutang</dt>
-                                    <dd class="mt-1 text-base font-semibold text-gray-900 dark:text-white">
+                                    <dd class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
                                         Rp {{ number_format($po->total, 0, ',', '.') }}
                                     </dd>
                                 </div>
                                 <div class="sm:col-span-1">
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Pembayaran
                                     </dt>
-                                    <dd class="mt-1 text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                                    <dd class="mt-2 text-base font-semibold text-emerald-600 dark:text-emerald-400">
                                         Rp {{ number_format($po->total - $sisaHutang, 0, ',', '.') }}
                                     </dd>
                                 </div>
                                 <div class="sm:col-span-1">
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Retur</dt>
-                                    <dd class="mt-1 text-base font-semibold text-rose-600 dark:text-rose-400">
+                                    <dd class="mt-2 text-base font-semibold text-rose-600 dark:text-rose-400">
                                         Rp {{ number_format($totalReturValue, 0, ',', '.') }}
                                     </dd>
                                 </div>
                                 <div class="sm:col-span-1">
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Sisa Hutang</dt>
-                                    <dd class="mt-1 text-base font-bold text-indigo-600 dark:text-indigo-400">
+                                    <dd class="mt-2 text-base font-bold text-indigo-600 dark:text-indigo-400">
                                         Rp {{ number_format($sisaHutang, 0, ',', '.') }}
                                     </dd>
                                 </div>

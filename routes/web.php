@@ -22,6 +22,7 @@ use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
+use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 
 /*
 |--------------------------------------------------------------------------
@@ -112,6 +113,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('transfer-gudang/{id}/selesai', [TransferGudangController::class, 'selesaikanTransfer'])->name('transfer-gudang.selesai');
         Route::get('transfer-gudang/get-stok', [TransferGudangController::class, 'getStokProduk'])->name('transfer-gudang.get-stok');
         Route::resource('transfer-gudang', TransferGudangController::class);
+
+        // Penyesuaian Stok
+        Route::post('penyesuaian-stok/{id}/proses', [PenyesuaianStokController::class, 'prosesPenyesuaian'])->name('penyesuaian-stok.proses');
+        Route::get('penyesuaian-stok/get-stok', [PenyesuaianStokController::class, 'getStokProduk'])->name('penyesuaian-stok.get-stok');
+        Route::get('gudang/{id}/produks', [PenyesuaianStokController::class, 'getProduksByGudang'])->name('penyesuaian-stok.get-produks');
+        Route::get('penyesuaian-stok/{id}/pdf', [PenyesuaianStokController::class, 'printPdf'])->name('penyesuaian-stok.pdf');
+        Route::get('penyesuaian-stok/pdf/draft', [PenyesuaianStokController::class, 'printDraftPdf'])->name('penyesuaian-stok.pdf.draft');
+        Route::resource('penyesuaian-stok', PenyesuaianStokController::class);
     });
 
     // --- PEMBELIAN ---

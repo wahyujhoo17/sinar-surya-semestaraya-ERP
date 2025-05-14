@@ -109,8 +109,8 @@
                     <a href="#"
                         class="{{ request()->is('inventaris/tracking') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Tracking
                             Serial Number</span></a>
-                    <a href="#"
-                        class="{{ request()->is('inventaris/penyesuaian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penyesuaian
+                    <a href="/inventaris/penyesuaian-stok"
+                        class="{{ request()->is('inventaris/penyesuaian-stok') || request()->is('inventaris/penyesuaian-stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penyesuaian
                             Stok</span></a>
                     <a href="/inventaris/transfer-gudang"
                         class="{{ request()->is('inventaris/transfer-gudang') || request()->is('inventaris/transfer-gudang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Transfer

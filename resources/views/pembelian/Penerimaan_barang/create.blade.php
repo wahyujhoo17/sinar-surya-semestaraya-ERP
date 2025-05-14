@@ -194,10 +194,7 @@
                                             class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Status Terima
                                         </th>
-                                        <th scope="col"
-                                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Status Pembayaran
-                                        </th>
+
                                         <th scope="col"
                                             class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                             Aksi
@@ -329,50 +326,7 @@
                                                     <span x-text="po.status_penerimaan.replace('_', ' ')"></span>
                                                 </span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <span
-                                                    class="px-2.5 py-1 inline-flex items-center gap-1 text-xs leading-5 font-semibold rounded-full border border-transparent group-hover:border-sky-400 transition"
-                                                    :class="{
-                                                        'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-500': po
-                                                            .status_pembayaran == 'belum_bayar',
-                                                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-500': po
-                                                            .status_pembayaran == 'sebagian',
-                                                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-500': po
-                                                            .status_pembayaran == 'lunas'
-                                                    }">
-                                                    <template x-if="po.status_pembayaran == 'belum_bayar'">
-                                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                                                            stroke-width="2" stroke="currentColor">
-                                                            <circle cx="12" cy="12" r="9"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                fill="none" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M8 12h8" />
-                                                        </svg>
-                                                    </template>
-                                                    <template x-if="po.status_pembayaran == 'sebagian'">
-                                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                                                            stroke-width="2" stroke="currentColor">
-                                                            <circle cx="12" cy="12" r="9"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                fill="none" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M8 12h4" />
-                                                        </svg>
-                                                    </template>
-                                                    <template x-if="po.status_pembayaran == 'lunas'">
-                                                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                                                            stroke-width="2" stroke="currentColor">
-                                                            <circle cx="12" cy="12" r="9"
-                                                                stroke="currentColor" stroke-width="2"
-                                                                fill="none" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M9 12.75L11.25 15 15 9.75" />
-                                                        </svg>
-                                                    </template>
-                                                    <span x-text="po.status_pembayaran.replace('_', ' ')"></span>
-                                                </span>
-                                            </td>
+
                                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                                 <button type="button" @click="selectPurchaseOrder(po)"
                                                     class="inline-flex items-center px-3 py-1.5 rounded-md bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 font-semibold text-xs shadow-sm hover:bg-sky-200 dark:hover:bg-sky-800 hover:text-sky-900 dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 dark:focus:ring-offset-gray-800 transition">
@@ -907,7 +861,7 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10"
                                         stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                     </path>
                                 </svg>
                                 Menyimpan...
@@ -937,7 +891,10 @@
                 init() {
                     // Use setTimeout to simulate loading and prevent initial UI flicker
                     setTimeout(() => {
-                        this.filteredPurchaseOrders = [...this.purchaseOrders];
+                        this.filteredPurchaseOrders = [...this.purchaseOrders]
+                            .filter(po => po.status !== 'dibatalkan' &&
+                                po.status !== 'draft' &&
+                                po.status_penerimaan !== 'diterima');
                         this.loading = false;
                     }, 300);
                 },
@@ -951,14 +908,16 @@
                     // Delayed search to prevent UI lockup and show loading state
                     setTimeout(() => {
                         if (!this.poSearch) {
-                            this.filteredPurchaseOrders = [...this.purchaseOrders].filter(po =>
-                                po.status !== 'dibatalkan' && po.status !== 'draft'
-                            );
+                            this.filteredPurchaseOrders = [...this.purchaseOrders]
+                                .filter(po => po.status !== 'dibatalkan' &&
+                                    po.status !== 'draft' &&
+                                    po.status_penerimaan !== 'diterima');
                         } else {
                             const search = this.poSearch.toLowerCase();
                             this.filteredPurchaseOrders = this.purchaseOrders
                                 .filter(po => po.status !== 'dibatalkan')
                                 .filter(po => po.status !== 'draft')
+                                .filter(po => po.status_penerimaan !== 'diterima')
                                 .filter(po =>
                                     po.nomor.toLowerCase().includes(search) ||
                                     po.supplier.nama.toLowerCase().includes(search)
