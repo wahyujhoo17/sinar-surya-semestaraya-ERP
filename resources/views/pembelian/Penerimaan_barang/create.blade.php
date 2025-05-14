@@ -861,7 +861,7 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10"
                                         stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                     </path>
                                 </svg>
                                 Menyimpan...
@@ -891,10 +891,7 @@
                 init() {
                     // Use setTimeout to simulate loading and prevent initial UI flicker
                     setTimeout(() => {
-                        this.filteredPurchaseOrders = [...this.purchaseOrders]
-                            .filter(po => po.status !== 'dibatalkan' &&
-                                po.status !== 'draft' &&
-                                po.status_penerimaan !== 'diterima');
+                        this.filteredPurchaseOrders = [...this.purchaseOrders];
                         this.loading = false;
                     }, 300);
                 },
@@ -908,16 +905,14 @@
                     // Delayed search to prevent UI lockup and show loading state
                     setTimeout(() => {
                         if (!this.poSearch) {
-                            this.filteredPurchaseOrders = [...this.purchaseOrders]
-                                .filter(po => po.status !== 'dibatalkan' &&
-                                    po.status !== 'draft' &&
-                                    po.status_penerimaan !== 'diterima');
+                            this.filteredPurchaseOrders = [...this.purchaseOrders].filter(po =>
+                                po.status !== 'dibatalkan' && po.status !== 'draft'
+                            );
                         } else {
                             const search = this.poSearch.toLowerCase();
                             this.filteredPurchaseOrders = this.purchaseOrders
                                 .filter(po => po.status !== 'dibatalkan')
                                 .filter(po => po.status !== 'draft')
-                                .filter(po => po.status_penerimaan !== 'diterima')
                                 .filter(po =>
                                     po.nomor.toLowerCase().includes(search) ||
                                     po.supplier.nama.toLowerCase().includes(search)
@@ -1106,23 +1101,70 @@
                             method: 'POST',
                             body: formData,
                             headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json' // Explicitly request JSON response
                             }
                         })
                         .then(response => {
+                            // First check if the response is OK
                             if (!response.ok) {
-                                return response.json().then(data => {
-                                    throw new Error(data.message || 'Terjadi kesalahan pada server');
+                                // Try to parse as JSON first
+                                return response.text().then(text => {
+                                    let errorMessage = 'Terjadi kesalahan pada server';
+                                    try {
+                                        // See if it's valid JSON
+                                        const data = JSON.parse(text);
+                                        errorMessage = data.message || 'Terjadi kesalahan pada server';
+                                    } catch (e) {
+                                        // If not JSON, it might be HTML error page
+                                        console.error('Server returned non-JSON response:', text.substring(0, 500));
+                                        if (text.includes('DOCTYPE') || text.includes('<html')) {
+                                            errorMessage = 'Server error: Sesi mungkin kadaluarsa atau kesalahan server';
+                                        }
+                                    }
+                                    throw new Error(errorMessage);
                                 });
                             }
-                            return response.json();
+                            
+                            // If response is OK, try to parse as JSON
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    console.error('Received invalid JSON response:', text.substring(0, 500));
+                                    throw new Error('Format respons tidak valid');
+                                }
+                            });
                         })
                         .then(data => {
-                            // Redirect on success
-                            window.location.href = '{{ route('pembelian.penerimaan-barang.index') }}';
+                            // Show success notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'success',
+                                    title: 'Berhasil',
+                                    message: data.message || 'Penerimaan barang berhasil disimpan',
+                                    timeout: 3000
+                                }
+                            }));
+                            
+                            // Redirect on success after a brief delay
+                            setTimeout(() => {
+                                window.location.href = data.redirect || '{{ route('pembelian.penerimaan-barang.index') }}';
+                            }, 1000);
                         })
                         .catch(error => {
-                            alert('Error: ' + error.message);
+                            console.error('Error submitting form:', error);
+                            
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Gagal',
+                                    message: error.message || 'Terjadi kesalahan saat menyimpan data',
+                                    timeout: 5000
+                                }
+                            }));
+                            
                             this.isSubmitting = false;
                             this.showConfirmModal = false;
                         });
