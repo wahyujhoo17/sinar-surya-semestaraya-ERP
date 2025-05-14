@@ -1117,22 +1117,59 @@
                                         errorMessage = data.message || 'Terjadi kesalahan pada server';
                                     } catch (e) {
                                         // If not JSON, it might be HTML error page
-                                        console.error('Server returned non-JSON response:', text.substring(0, 500));
+                                        console.error('Server returned non-JSON response:', text.substring(0,
+                                            500));
                                         if (text.includes('DOCTYPE') || text.includes('<html')) {
-                                            errorMessage = 'Server error: Sesi mungkin kadaluarsa atau kesalahan server';
+                                            errorMessage =
+                                                'Server error: Sesi mungkin kadaluarsa atau kesalahan server';
                                         }
                                     }
                                     throw new Error(errorMessage);
                                 });
                             }
-                            
+
                             // If response is OK, try to parse as JSON
                             return response.text().then(text => {
+                                // Log the raw response for debugging
+                                console.log('Server response:', text.length > 1000 ? text.substring(0, 1000) +
+                                    '...' : text);
+
+                                // Handle empty response
+                                if (!text || text.trim() === '') {
+                                    return {
+                                        success: true,
+                                        message: 'Penerimaan barang berhasil disimpan'
+                                    };
+                                }
+
                                 try {
                                     return JSON.parse(text);
                                 } catch (e) {
-                                    console.error('Received invalid JSON response:', text.substring(0, 500));
-                                    throw new Error('Format respons tidak valid');
+                                    console.error('Error parsing JSON:', e);
+
+                                    // Check if response is a redirect
+                                    if (text.includes('<html') && text.toLowerCase().includes('redirect')) {
+                                        // If it's a redirect page, treat as success
+                                        return {
+                                            success: true,
+                                            message: 'Penerimaan barang berhasil disimpan',
+                                            redirect: '{{ route('pembelian.penerimaan-barang.index') }}'
+                                        };
+                                    }
+
+                                    // Try to extract message from HTML response
+                                    let errorMessage = 'Format respons tidak valid';
+                                    if (text.includes('class="alert') || text.includes('class="error')) {
+                                        const matches = text.match(
+                                            /<div[^>]*class="[^"]*(?:alert|error)[^"]*"[^>]*>([\s\S]*?)<\/div>/i
+                                            );
+                                        if (matches && matches[1]) {
+                                            errorMessage = matches[1].replace(/<[^>]*>/g, '').trim() ||
+                                                errorMessage;
+                                        }
+                                    }
+
+                                    throw new Error(errorMessage);
                                 }
                             });
                         })
@@ -1146,16 +1183,40 @@
                                     timeout: 3000
                                 }
                             }));
-                            
+
                             // Redirect on success after a brief delay
                             setTimeout(() => {
-                                window.location.href = data.redirect || '{{ route('pembelian.penerimaan-barang.index') }}';
+                                window.location.href = data.redirect ||
+                                    '{{ route('pembelian.penerimaan-barang.index') }}';
                             }, 1000);
                         })
                         .catch(error => {
                             console.error('Error submitting form:', error);
-                            
-                            // Show error notification
+
+                            // Check if we need to reload the page due to session expiration
+                            if (error.message && (
+                                    error.message.includes('Sesi mungkin kadaluarsa') ||
+                                    error.message.includes('CSRF') ||
+                                    error.message.includes('token')
+                                )) {
+                                // Show specific notification for session expiration
+                                window.dispatchEvent(new CustomEvent('notify', {
+                                    detail: {
+                                        type: 'error',
+                                        title: 'Sesi Berakhir',
+                                        message: 'Sesi anda telah berakhir. Halaman akan dimuat ulang dalam 3 detik.',
+                                        timeout: 3000
+                                    }
+                                }));
+
+                                // Reload the page after a brief delay
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 3000);
+                                return;
+                            }
+
+                            // Show error notification for other errors
                             window.dispatchEvent(new CustomEvent('notify', {
                                 detail: {
                                     type: 'error',
@@ -1164,7 +1225,7 @@
                                     timeout: 5000
                                 }
                             }));
-                            
+
                             this.isSubmitting = false;
                             this.showConfirmModal = false;
                         });
