@@ -9,6 +9,18 @@
                 .form-card:hover {
                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
                 }
+
+                /* Hide spinners from number inputs */
+                input[type=number]::-webkit-inner-spin-button,
+                input[type=number]::-webkit-outer-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
+
+                input[type=number] {
+                    -moz-appearance: textfield;
+                    /* Firefox */
+                }
             </style>
         @endpush
 
@@ -267,24 +279,11 @@
                     </div>
 
                     <div x-show="items.length > 0" class="overflow-x-auto">
-                        {{-- Table Header --}}
-                        <div
-                            class="hidden md:grid grid-cols-12 gap-4 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 rounded-t-lg text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <div class="col-span-3">Produk</div>
-                            <div class="col-span-1 text-center">Jumlah</div>
-                            <div class="col-span-1">Satuan</div>
-                            <div class="col-span-2">Harga</div>
-                            <div class="col-span-1">Diskon</div>
-                            <div class="col-span-2">Subtotal</div>
-                            <div class="col-span-1">Deskripsi</div>
-                            <div class="col-span-1 text-right">Aksi</div>
-                        </div>
-
                         {{-- Items --}}
                         <div class="space-y-3 mt-2" id="items-container">
                             <template x-for="(item, index) in items" :key="index">
                                 <div
-                                    class="border dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                    class="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow duration-200">
                                     {{-- Mobile Item Header --}}
                                     <div class="md:hidden flex justify-between items-center mb-4">
                                         <span
@@ -306,13 +305,15 @@
                                             initialProdukId: item.produk_id,
                                             itemIndex: index
                                         })" x-init="init()"
-                                            class="relative md:col-span-3">
+                                            class="relative md:col-span-4">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Produk</label>
                                             <input type="hidden" :name="`items[${index}][produk_id]`"
                                                 x-model="selectedProdukIdProxy">
 
                                             <button type="button" @click="toggleDropdown"
                                                 @keydown.escape="closeDropdown()"
-                                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md text-left relative">
+                                                class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md text-left relative shadow-sm">
                                                 <span x-text="selectedProdukText || 'Pilih Produk'"
                                                     class="block truncate"></span>
                                                 <span
@@ -396,9 +397,9 @@
                                         </div>
 
                                         {{-- Jumlah --}}
-                                        <div class="md:col-span-1">
+                                        <div class="md:col-span-2">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Jumlah</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Jumlah</label>
                                             <input type="number" step="1" min="1"
                                                 :name="`items[${index}][quantity]`" x-model="item.quantity" required
                                                 @input="updateSubtotal(index)" placeholder="0"
@@ -406,9 +407,9 @@
                                         </div>
 
                                         {{-- Satuan --}}
-                                        <div class="md:col-span-1">
+                                        <div class="md:col-span-2">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Satuan</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Satuan</label>
                                             <select :name="`items[${index}][satuan_id]`" x-model="item.satuan_id"
                                                 required
                                                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
@@ -420,9 +421,9 @@
                                         </div>
 
                                         {{-- Harga --}}
-                                        <div class="md:col-span-2">
+                                        <div class="md:col-span-4">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Harga</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Harga</label>
                                             <div class="mt-1 relative rounded-md shadow-sm">
                                                 <div
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -434,11 +435,14 @@
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                             </div>
                                         </div>
+                                    </div>
 
+                                    {{-- Second row for Diskon, Subtotal, Deskripsi, Aksi --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-4 mt-4">
                                         {{-- Diskon --}}
-                                        <div class="md:col-span-1">
+                                        <div class="md:col-span-3">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Diskon</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Diskon</label>
                                             <div class="mt-1 flex items-center gap-2">
                                                 <div class="relative rounded-md shadow-sm flex-1">
                                                     <input type="number" :name="`items[${index}][diskon_persen]`"
@@ -465,9 +469,9 @@
                                         </div>
 
                                         {{-- Subtotal --}}
-                                        <div class="md:col-span-2">
+                                        <div class="md:col-span-3">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Subtotal</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Subtotal</label>
                                             <div class="mt-1 relative rounded-md shadow-sm">
                                                 <div
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -480,24 +484,28 @@
                                         </div>
 
                                         {{-- Deskripsi --}}
-                                        <div class="md:col-span-1">
+                                        <div class="md:col-span-5">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Deskripsi</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
                                             <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="2" placeholder="Deskripsi item"
                                                 class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"></textarea>
                                         </div>
 
                                         {{-- Actions --}}
-                                        <div class="md:col-span-1 flex justify-end items-center">
-                                            <button type="button" @click="removeItem(index)"
-                                                class="hidden md:inline-flex items-center p-1.5 border border-transparent rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                        <div class="md:col-span-1">
+                                            <label
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Aksi</label>
+                                            <div class="mt-1 flex md:justify-end items-start">
+                                                <button type="button" @click="removeItem(index)"
+                                                    class="hidden md:inline-flex items-center p-1.5 border border-transparent rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-500">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

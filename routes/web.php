@@ -21,6 +21,7 @@ use App\Http\Controllers\Laporan\LaporanStokController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
+use App\Http\Controllers\Inventaris\TransferGudangController;
 
 /*
 |--------------------------------------------------------------------------
@@ -105,6 +106,12 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('inventaris')->name('inventaris.')->group(function () {
         // Stok Barang
         Route::resource('stok', StokBarangController::class);
+
+        // Transfer Barang
+        Route::post('transfer-gudang/{id}/proses', [TransferGudangController::class, 'prosesTransfer'])->name('transfer-gudang.proses');
+        Route::post('transfer-gudang/{id}/selesai', [TransferGudangController::class, 'selesaikanTransfer'])->name('transfer-gudang.selesai');
+        Route::get('transfer-gudang/get-stok', [TransferGudangController::class, 'getStokProduk'])->name('transfer-gudang.get-stok');
+        Route::resource('transfer-gudang', TransferGudangController::class);
     });
 
     // --- PEMBELIAN ---

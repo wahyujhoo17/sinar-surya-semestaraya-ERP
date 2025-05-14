@@ -141,7 +141,7 @@
     <div class="header">
         <h1>LAPORAN HUTANG USAHA</h1>
         <div class="company-info">
-            PT. SINAR SURYA | {{ date('d/m/Y') }}
+            PT. SINAR SURYA SEMESTARAYA | {{ date('d/m/Y') }}
         </div>
     </div>
 
