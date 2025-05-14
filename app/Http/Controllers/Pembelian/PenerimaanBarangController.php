@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pembelian;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Pembelian\helpers\PaginationHelper;
 use App\Models\PurchaseOrder;
 use App\Models\PenerimaanBarang;
 use App\Models\PenerimaanBarangDetail;
@@ -139,21 +140,71 @@ class PenerimaanBarangController extends Controller
         $penerimaanBarangs = $query->paginate($per_page)->appends($filters);
 
         if ($request->ajax()) {
-            $tableHtml = view('pembelian.Penerimaan_barang._table', [
-                'penerimaanBarangs' => $penerimaanBarangs,
-                'filters' => $filters
-            ])->render();
-            $paginationHtml = view('pembelian.Penerimaan_barang._pagination', ['penerimaanBarangs' => $penerimaanBarangs])->render();
-            return response()->json([
-                'table_html' => $tableHtml,
-                'pagination_html' => $paginationHtml,
-            ]);
+            try {
+                // Render table HTML
+                $tableHtml = view('pembelian.Penerimaan_barang._table', [
+                    'penerimaanBarangs' => $penerimaanBarangs,
+                    'filters' => $filters
+                ])->render();
+
+                // Try to render pagination, but provide fallback if it fails
+                $paginationHtml = '';
+                try {
+                    $paginationHtml = view('pembelian.Penerimaan_barang._pagination', [
+                        'penerimaanBarangs' => $penerimaanBarangs
+                    ])->render();
+                } catch (\Exception $paginationException) {
+                    // If pagination view fails, create a simple fallback pagination
+                    try {
+                        // First try our controller method
+                        $paginationHtml = $this->generateSimplePagination($penerimaanBarangs);
+                    } catch (\Exception $e) {
+                        // If that fails too, try the helper class
+                        try {
+                            if (class_exists('\\App\\Http\\Controllers\\Pembelian\\helpers\\PaginationHelper')) {
+                                $paginationHtml = \App\Http\Controllers\Pembelian\helpers\PaginationHelper::generateSimplePagination($penerimaanBarangs);
+                            } else {
+                                // Ultimate fallback - very minimal pagination
+                                $paginationHtml = '<div class="alert alert-warning">Error rendering pagination</div>';
+                            }
+                        } catch (\Exception $helperEx) {
+                            $paginationHtml = '<div class="alert alert-warning">Pagination unavailable</div>';
+                        }
+                    }
+
+                    // Log pagination error
+                    \Illuminate\Support\Facades\Log::error('Pagination rendering failed: ' . $paginationException->getMessage(), [
+                        'exception' => $paginationException->getMessage(),
+                        'trace' => $paginationException->getTraceAsString()
+                    ]);
+                }
+
+                return response()->json([
+                    'table_html' => $tableHtml,
+                    'pagination_html' => $paginationHtml,
+                ]);
+            } catch (\Exception $e) {
+                // Return a more graceful error response for AJAX requests
+                return response()->json([
+                    'error' => true,
+                    'message' => $e->getMessage(),
+                    'table_html' => '<div class="p-4 text-center text-red-500">Error loading data: ' . $e->getMessage() . '</div>',
+                    'pagination_html' => '',
+                ], 500);
+            }
         }
 
         // Data untuk view utama (non-AJAX)
         $statusCounts = PenerimaanBarang::select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->pluck('total', 'status');
+
+        /**
+         * Generate a simple HTML pagination as a fallback when view rendering fails
+         *
+         * @param \Illuminate\Pagination\LengthAwarePaginator $paginator
+         * @return string
+         */
         $suppliers = Supplier::orderBy('nama')->get();
         $gudangs = Gudang::orderBy('nama')->get();
 
@@ -210,7 +261,7 @@ class PenerimaanBarangController extends Controller
                 'tanggal' => $request->tanggal,
                 'po_id' => $po->id,
                 'supplier_id' => $po->supplier_id,
-                'user_id' => auth()->id(),
+                'user_id' => \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null,
                 'gudang_id' => $request->gudang_id,
                 'nomor_surat_jalan' => $request->nomor_surat_jalan,
                 'tanggal_surat_jalan' => $request->tanggal_surat_jalan,
@@ -282,14 +333,38 @@ class PenerimaanBarangController extends Controller
             }
 
             // Update status PO berdasarkan penerimaan barang
-            $this->updatePurchaseOrderStatus($po);
+            // Ensure $po is an instance of PurchaseOrder before passing
+            if ($po instanceof PurchaseOrder) {
+                $this->updatePurchaseOrderStatus($po);
+            } else {
+                // Log an error if $po is not the expected type
+                \Illuminate\Support\Facades\Log::error('Expected PurchaseOrder instance but got ' . get_class($po), ['po_id' => $request->po_id]);
+            }
 
             DB::commit();
+
+            // Check if the request wants JSON response
+            if ($request->ajax() || $request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Penerimaan barang berhasil disimpan dengan nomor ' . $nomor,
+                    'redirect' => route('pembelian.penerimaan-barang.index')
+                ]);
+            }
 
             return redirect()->route('pembelian.penerimaan-barang.index')
                 ->with('success', 'Penerimaan barang berhasil disimpan dengan nomor ' . $nomor);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // For AJAX requests, return JSON error
+            if ($request->ajax() || $request->expectsJson() || $request->wantsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
@@ -368,7 +443,7 @@ class PenerimaanBarangController extends Controller
             'stok_id' => $stok->id,
             'produk_id' => $produkId,
             'gudang_id' => $gudangId,
-            'user_id' => auth()->id(),
+            'user_id' => \Illuminate\Support\Facades\Auth::check() ? \Illuminate\Support\Facades\Auth::id() : null,
             'jumlah_sebelum' => $jumlahSebelum,
             'jumlah_perubahan' => $jumlahMasuk,
             'jumlah_setelah' => $stok->jumlah,
@@ -425,5 +500,51 @@ class PenerimaanBarangController extends Controller
         $penerimaan = PenerimaanBarang::findOrFail($id);
         $penerimaan->delete();
         return redirect()->route('pembelian.penerimaan-barang.index')->with('success', 'Data berhasil dihapus.');
+    }
+
+    /**
+     * Generate a simple HTML pagination as a fallback when view rendering fails
+     *
+     * @param \Illuminate\Pagination\LengthAwarePaginator $paginator
+     * @return string
+     */
+    private function generateSimplePagination($paginator)
+    {
+        if (!$paginator->hasPages()) {
+            return '';
+        }
+
+        $current = $paginator->currentPage();
+        $lastPage = $paginator->lastPage();
+        $urlPrefix = $paginator->path() . '?page=';
+
+        // Preserve existing query parameters
+        $existingQuery = request()->query();
+        unset($existingQuery['page']);
+        $queryString = http_build_query($existingQuery);
+        $separator = empty($queryString) ? '' : '&';
+
+        // Build pagination HTML
+        $html = '<div class="mt-4 flex justify-between items-center">';
+        $html .= '<div class="text-sm text-gray-600">Showing page ' . $current . ' of ' . $lastPage . ' (' . $paginator->total() . ' records)</div>';
+        $html .= '<div class="flex space-x-2">';
+
+        // Previous button
+        if ($current > 1) {
+            $html .= '<a href="' . $urlPrefix . ($current - 1) . $separator . $queryString . '" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Previous</a>';
+        } else {
+            $html .= '<span class="px-3 py-1 bg-gray-100 border border-gray-300 rounded text-sm text-gray-400 cursor-not-allowed">Previous</span>';
+        }
+
+        // Next button
+        if ($current < $lastPage) {
+            $html .= '<a href="' . $urlPrefix . ($current + 1) . $separator . $queryString . '" class="px-3 py-1 bg-white border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50">Next</a>';
+        } else {
+            $html .= '<span class="px-3 py-1 bg-gray-100 border border-gray-300 rounded text-sm text-gray-400 cursor-not-allowed">Next</span>';
+        }
+
+        $html .= '</div></div>';
+
+        return $html;
     }
 }

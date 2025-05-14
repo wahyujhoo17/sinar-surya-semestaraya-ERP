@@ -510,26 +510,55 @@
                         .then(response => {
                             if (!response.ok) {
                                 return response.text().then(text => {
-                                    throw new Error(
-                                        `HTTP error ${response.status}: ${text || response.statusText}`);
+                                    let errorMsg = `HTTP error ${response.status}: ${response.statusText}`;
+                                    try {
+                                        // Try to parse as JSON first
+                                        const jsonResponse = JSON.parse(text);
+                                        if (jsonResponse.message) {
+                                            errorMsg = jsonResponse.message;
+                                        }
+                                    } catch (e) {
+                                        // If not JSON, use the raw text (truncated if too long)
+                                        errorMsg = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                                    }
+                                    throw new Error(errorMsg);
                                 });
                             }
                             return response.json();
                         })
                         .then(data => {
                             // console.log("Data received:", data);
-                            if (data && data.table_html !== undefined) {
+
+                            // Check if the response contains an error
+                            if (data.error) {
+                                this.tableHtml = data.table_html ||
+                                    '<div class="p-4 text-center text-red-500">Error loading data</div>';
+                                this.paginationHtml = '';
+
+                                // Show error notification
+                                window.dispatchEvent(new CustomEvent('notify', {
+                                    detail: {
+                                        type: 'error',
+                                        title: 'Error',
+                                        message: data.message || 'Terjadi kesalahan saat memuat data',
+                                        timeout: 5000
+                                    }
+                                }));
+                            } else if (data && data.table_html !== undefined) {
                                 this.tableHtml = data.table_html;
+
+                                if (data && data.pagination_html !== undefined) {
+                                    this.paginationHtml = data.pagination_html;
+                                } else {
+                                    this.paginationHtml = ''; // Clear pagination
+                                }
                             } else {
                                 this.tableHtml =
                                     '<div class="p-4 text-center text-red-500">Format data tabel tidak sesuai.</div>';
                                 console.error('Invalid table_html in response:', data);
+                                this.paginationHtml = '';
                             }
-                            if (data && data.pagination_html !== undefined) {
-                                this.paginationHtml = data.pagination_html;
-                            } else {
-                                this.paginationHtml = ''; // Clear or set error for pagination
-                            }
+
                             this.loading = false;
                             this.attachPaginationListener();
                         })
@@ -539,6 +568,16 @@
                             this.tableHtml =
                                 `<div class="p-4 text-center text-red-500">Gagal memuat data tabel: ${error.message}</div>`;
                             this.paginationHtml = '';
+
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Error',
+                                    message: `Gagal memuat data: ${error.message}`,
+                                    timeout: 5000
+                                }
+                            }));
                         });
                 },
                 attachPaginationListener() {

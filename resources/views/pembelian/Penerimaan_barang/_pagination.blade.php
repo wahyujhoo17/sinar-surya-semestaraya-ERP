@@ -71,6 +71,54 @@
                     @endif
 
                     {{-- Pagination Elements --}}
+                    @php
+                        // Complete rewrite of pagination elements generation
+                        $window = 2; // Pages to show on each side of current page
+                        $current = $penerimaanBarangs->currentPage();
+                        $lastPage = $penerimaanBarangs->lastPage();
+                        $elements = [];
+
+                        // Handle single page case
+                        if ($lastPage <= 1) {
+                            $elements = [];
+                        }
+                        // Simple pagination for few pages
+                        elseif ($lastPage <= 7) {
+                            for ($i = 1; $i <= $lastPage; $i++) {
+                                $elements[$i] = [
+                                    $i => $penerimaanBarangs->url($i),
+                                ];
+                            }
+                        }
+                        // Complex pagination with dots for many pages
+                        else {
+                            // Always include first page
+                            $elements[1] = [1 => $penerimaanBarangs->url(1)];
+
+                            // Calculate start and end of the visible window
+                            $start = max(2, $current - $window);
+                            $end = min($lastPage - 1, $current + $window);
+
+                            // Add dots if needed at the start
+                            if ($start > 2) {
+                                $elements['dots1'] = '...';
+                            }
+
+                            // Add numbered pages in the middle
+                            for ($i = $start; $i <= $end; $i++) {
+                                $elements[$i] = [$i => $penerimaanBarangs->url($i)];
+                            }
+
+                            // Add dots if needed at the end
+                            if ($end < $lastPage - 1) {
+                                $elements['dots2'] = '...';
+                            }
+
+                            // Always include last page
+                            $elements[$lastPage] = [$lastPage => $penerimaanBarangs->url($lastPage)];
+                        }
+                    @endphp
+
                     @foreach ($elements as $element)
                         {{-- "Three Dots" Separator --}}
                         @if (is_string($element))
@@ -83,6 +131,15 @@
                         {{-- Array Of Links --}}
                         @if (is_array($element))
                             @foreach ($element as $page => $url)
+                                @php
+                                    // Check if the structure contains nested arrays (from old format)
+                                    if (is_array($url) && count($url) == 1) {
+                                        // Extract the key and value from the nested array
+                                        $page = key($url);
+                                        $url = reset($url);
+                                    }
+                                @endphp
+
                                 @if ($page == $penerimaanBarangs->currentPage())
                                     <span aria-current="page">
                                         <span
