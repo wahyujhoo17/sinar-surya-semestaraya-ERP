@@ -266,7 +266,7 @@ class PenerimaanBarangController extends Controller
                 'nomor_surat_jalan' => $request->nomor_surat_jalan,
                 'tanggal_surat_jalan' => $request->tanggal_surat_jalan,
                 'catatan' => $request->catatan,
-                'status' => 'parsial',  // Default to parsial first, will check if selesai later
+                'status' => 'parsial', // Default status
             ]);
 
             $anyItemReceived = false;
