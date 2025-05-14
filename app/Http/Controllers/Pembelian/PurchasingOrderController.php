@@ -149,7 +149,7 @@ class PurchasingOrderController extends Controller
     public function create()
     {
         $suppliers = Supplier::orderBy('nama')->get();
-        $purchaseRequests = PurchaseRequest::where('status', 'diajukan')->get();
+        $purchaseRequests = PurchaseRequest::where('status', 'disetujui')->get();
         $produks = Produk::orderBy('nama')->get();
         $satuans = Satuan::orderBy('nama')->get();
 

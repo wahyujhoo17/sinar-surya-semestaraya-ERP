@@ -1096,15 +1096,7 @@
                     // Add the CSRF token
                     formData.append('_token', document.querySelector('input[name="_token"]').value);
 
-                    // Log form data for debugging
-                    console.log('Submitting form with data:');
-                    for (let [key, value] of formData.entries()) {
-                        if (key.includes('items')) {
-                            console.log(`${key}: ${value}`);
-                        } else {
-                            console.log(`${key}: ${value}`);
-                        }
-                    }
+                    // Submit form data
 
                     // Send the request to the server
                     fetch('{{ route('pembelian.penerimaan-barang.store') }}', {
@@ -1141,15 +1133,8 @@
 
                             // Check if response is a redirect (HTTP 302/303) - check the location header
                             if (response.redirected) {
-                                console.log('Server redirected to:', response.url);
-
                                 // Check if redirected URL contains success indicators
                                 const redirectUrl = response.url;
-                                if (redirectUrl.includes('success=') ||
-                                    redirectUrl.includes('status=success') ||
-                                    redirectUrl.includes('message=')) {
-                                    console.log('Success status detected in redirect URL');
-                                }
 
                                 return {
                                     success: true,
@@ -1160,10 +1145,7 @@
 
                             // If response is OK, try to parse as JSON
                             return response.text().then(text => {
-                                // Log the raw response for debugging
-                                console.log('Server response type:', response.headers.get('content-type'));
-                                console.log('Server response:', text.length > 1000 ? text.substring(0, 1000) +
-                                    '...' : text);
+
 
                                 // Handle empty response
                                 if (!text || text.trim() === '') {
@@ -1199,7 +1181,7 @@
                                 try {
                                     return JSON.parse(text);
                                 } catch (e) {
-                                    console.error('Error parsing JSON:', e);
+
 
                                     // Try to extract message from HTML response
                                     let errorMessage = 'Format respons tidak valid';
@@ -1211,7 +1193,7 @@
                                         text.includes('sukses') ||
                                         (text.includes('<title>') && text.includes('index'))) {
 
-                                        console.log('Detected success response in HTML format');
+
                                         return {
                                             success: true,
                                             message: 'Penerimaan barang berhasil disimpan',
@@ -1241,7 +1223,7 @@
                                     // If the error is about format and the text is long HTML, 
                                     // it might actually be a successful submission
                                     if (errorMessage === 'Format respons tidak valid' && text.length > 1000) {
-                                        console.log('Detected possible success response (long HTML)');
+
                                         return {
                                             success: true,
                                             message: 'Penerimaan barang berhasil disimpan',
@@ -1254,7 +1236,7 @@
                             });
                         })
                         .then(data => {
-                            console.log('Processed response data:', data);
+
 
                             // Show success notification
                             window.dispatchEvent(new CustomEvent('notify', {
@@ -1273,14 +1255,14 @@
                             }, 1000);
                         })
                         .catch(error => {
-                            console.error('Error submitting form:', error);
+
 
                             // Special handling for "Format respons tidak valid" error
                             // This error often occurs when the server returns HTML instead of JSON
                             // but the submission was actually successful
                             const errorMessage = error.message || '';
                             if (errorMessage.includes('Format respons tidak valid')) {
-                                console.log('Detected format response error, attempting to recover...');
+
 
                                 window.dispatchEvent(new CustomEvent('notify', {
                                     detail: {
