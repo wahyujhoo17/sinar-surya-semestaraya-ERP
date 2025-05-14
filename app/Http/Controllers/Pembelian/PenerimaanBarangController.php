@@ -270,6 +270,7 @@ class PenerimaanBarangController extends Controller
             ]);
 
             $anyItemReceived = false;
+            $allItemsFullyReceived = true;  // Flag to check if all PO items are fully received
 
             foreach ($request->items as $item) {
                 $poDetail = $po->details->where('id', $item['id'])->first();
@@ -313,20 +314,16 @@ class PenerimaanBarangController extends Controller
                         $item['lokasi_rak'] ?? null
                     );
                 }
+
+                // Jika setelah penerimaan ini masih ada sisa yang belum diterima, maka tidak selesai
+                if ($poDetail->quantity_diterima < $poDetail->quantity) {
+                    $allItemsFullyReceived = false;
+                }
             }
 
             // Validasi minimal satu item diterima
             if (!$anyItemReceived) {
                 throw new \Exception('Minimal harus ada 1 item yang diterima');
-            }
-
-            // Perbaikan logika: cek SEMUA detail PO, bukan hanya yang diterima
-            $allItemsFullyReceived = true;
-            foreach ($po->details as $detail) {
-                if (($detail->quantity_diterima ?? 0) < $detail->quantity) {
-                    $allItemsFullyReceived = false;
-                    break;
-                }
             }
 
             // Update status penerimaan barang jika semua barang sudah diterima penuh

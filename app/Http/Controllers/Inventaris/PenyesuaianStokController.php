@@ -303,7 +303,7 @@ class PenyesuaianStokController extends Controller
             // Loop through all products and save the details
             foreach ($request->produk_id as $index => $produkId) {
                 $detail = new PenyesuaianStokDetail();
-                $detail->penyesuaian_stok_id = $penyesuaianStok->id;
+                $detail->penyesuaian_id = $penyesuaianStok->id; // Ganti dari penyesuaian_stok_id ke penyesuaian_id
                 $detail->produk_id = $produkId;
                 $detail->stok_tercatat = $request->stok_tercatat[$index];
                 $detail->stok_fisik = $request->stok_fisik[$index];
@@ -316,7 +316,8 @@ class PenyesuaianStokController extends Controller
             // Log activity
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Membuat penyesuaian stok baru dengan nomor ' . $penyesuaianStok->nomor
+                'aktivitas' => 'Membuat penyesuaian stok baru dengan nomor ' . $penyesuaianStok->nomor,
+                'modul' => 'Penyesuaian Stok',
             ]);
 
             DB::commit();

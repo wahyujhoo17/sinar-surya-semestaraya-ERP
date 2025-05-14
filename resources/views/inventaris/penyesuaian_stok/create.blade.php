@@ -250,30 +250,105 @@
                                         <template x-for="(item, index) in items" :key="index">
                                             <tr>
                                                 <td class="px-3 py-4">
-                                                    <div class="relative">
-                                                        <select x-model="item.produk_id" :name="`produk_id[${index}]`"
-                                                            @change="updateStokInfo(index)" :disabled="isLoading"
-                                                            :id="`product-select-${index}`"
-                                                            class="product-select shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                                                            <option value="">-- Pilih Produk --</option>
-                                                            <template x-for="produk in produks" :key="produk.id">
-                                                                <option :value="produk.id" x-text="produk.nama">
-                                                                </option>
-                                                            </template>
-                                                        </select>
-                                                        <div x-show="isLoading"
-                                                            class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                            <svg class="animate-spin h-4 w-4 text-gray-400 dark:text-gray-500"
-                                                                xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                                viewBox="0 0 24 24">
-                                                                <circle class="opacity-25" cx="12"
-                                                                    cy="12" r="10" stroke="currentColor"
-                                                                    stroke-width="4"></circle>
-                                                                <path class="opacity-75" fill="currentColor"
-                                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                                                </path>
+                                                    <div class="relative" x-data="{
+                                                        open: false,
+                                                        search: '',
+                                                        dropdownTop: 0,
+                                                        dropdownLeft: 0,
+                                                        dropdownWidth: 0,
+                                                        get filteredProduk() {
+                                                            if (!this.search) return produks;
+                                                            return produks.filter(p => p.nama.toLowerCase().includes(this.search.toLowerCase()));
+                                                        },
+                                                        selectProduk(produk) {
+                                                            item.produk_id = produk.id;
+                                                            item.satuan_id = produk.satuan_id || '';
+                                                            item.satuan_nama = produk.satuan || '';
+                                                            $nextTick(() => { open = false; });
+                                                            $dispatch('input');
+                                                            updateStokInfo(index);
+                                                        },
+                                                        clearProduk() {
+                                                            item.produk_id = '';
+                                                            item.satuan_id = '';
+                                                            item.satuan_nama = '';
+                                                            open = false;
+                                                        },
+                                                        setDropdownPosition() {
+                                                            this.$nextTick(() => {
+                                                                const btn = this.$refs.inputBtn;
+                                                                if (btn) {
+                                                                    const rect = btn.getBoundingClientRect();
+                                                                    this.dropdownTop = rect.bottom + window.scrollY;
+                                                                    this.dropdownLeft = rect.left + window.scrollX;
+                                                                    this.dropdownWidth = rect.width;
+                                                                }
+                                                            });
+                                                        }
+                                                    }"
+                                                        @click.away="open = false"
+                                                        @keydown.escape.window="open = false">
+                                                        <input type="hidden" :name="`produk_id[${index}]`"
+                                                            x-model="item.produk_id">
+                                                        <button type="button"
+                                                            @click="open = !open; if(open) setDropdownPosition()"
+                                                            :disabled="isLoading"
+                                                            class="w-full text-left bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center justify-between"
+                                                            x-ref="inputBtn">
+                                                            <span
+                                                                x-text="produks.find(p => p.id == item.produk_id)?.nama || 'Cari produk...'"
+                                                                class="truncate text-gray-900 dark:text-white"></span>
+                                                            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M19 9l-7 7-7-7" />
                                                             </svg>
-                                                        </div>
+                                                        </button>
+                                                        <template x-if="open">
+                                                            <div class="fixed z-50 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
+                                                                :style="`top: ${dropdownTop}px; left: ${dropdownLeft}px; width: ${dropdownWidth}px`">
+                                                                <div class="p-2">
+                                                                    <input type="text" x-model="search"
+                                                                        placeholder="Ketik untuk mencari produk..."
+                                                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+                                                                        autofocus>
+                                                                </div>
+                                                                <ul>
+                                                                    <template x-for="produk in filteredProduk"
+                                                                        :key="produk.id">
+                                                                        <li>
+                                                                            <button type="button"
+                                                                                @click="selectProduk(produk)"
+                                                                                :class="{ 'bg-primary-100 dark:bg-primary-700 text-primary-700 dark:text-white': produk
+                                                                                        .id == item
+                                                                                        .produk_id, 'hover:bg-primary-50 dark:hover:bg-primary-600': produk
+                                                                                        .id != item.produk_id }"
+                                                                                class="w-full text-left px-3 py-2 text-sm cursor-pointer flex items-center">
+                                                                                <span x-text="produk.nama"></span>
+                                                                            </button>
+                                                                        </li>
+                                                                    </template>
+                                                                    <template x-if="filteredProduk.length === 0">
+                                                                        <li>
+                                                                            <span
+                                                                                class="block px-3 py-2 text-sm text-gray-500">Tidak
+                                                                                ada produk ditemukan</span>
+                                                                        </li>
+                                                                    </template>
+                                                                </ul>
+                                                            </div>
+                                                        </template>
+                                                        <template x-if="item.produk_id">
+                                                            <button type="button" @click="clearProduk()"
+                                                                class="absolute right-2 top-2 text-gray-400 hover:text-red-500 focus:outline-none">
+                                                                <svg class="w-4 h-4" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        </template>
                                                     </div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"
                                                         x-show="item.satuan_nama && item.produk_id">
