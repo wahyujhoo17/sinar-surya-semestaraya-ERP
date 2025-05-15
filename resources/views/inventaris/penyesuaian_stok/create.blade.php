@@ -8,18 +8,48 @@
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-                <div class="flex-1">
-                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary-600" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Buat Penyesuaian Stok Baru
-                    </h1>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+                            <span class="flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary-600" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Buat Penyesuaian Stok Baru
+                            </span>
+                        </h1>
+                        <div class="hidden md:block">
+                            <a href="{{ route('inventaris.penyesuaian-stok.index') }}"
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                    class="-ml-1 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                </svg>
+                                Kembali
+                            </a>
+                        </div>
+                    </div>
                     <p class="mt-2 text-gray-600 dark:text-gray-400 max-w-3xl">
                         Sesuaikan pencatatan stok sistem dengan stok fisik aktual di gudang.
                     </p>
+                </div>
+                <div class="mt-5 md:hidden">
+                    <span class="block">
+                        <a href="{{ route('inventaris.penyesuaian-stok.index') }}"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                class="-ml-1 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Kembali
+                        </a>
+                    </span>
                 </div>
             </div>
         </div>
@@ -95,7 +125,8 @@
                                 <textarea name="catatan" id="catatan" x-model="formData.catatan" rows="3"
                                     class="block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white"
                                     placeholder="Masukkan keterangan tambahan jika ada..."></textarea>
-                                <div x-show="errors.catatan" class="text-red-500 text-sm mt-1" x-text="errors.catatan">
+                                <div x-show="errors.catatan" class="text-red-500 text-sm mt-1"
+                                    x-text="errors.catatan">
                                 </div>
                             </div>
                         </div>
@@ -105,8 +136,8 @@
                         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-between mb-5">
                             <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-500" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-500"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
@@ -126,18 +157,7 @@
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex items-center justify-between pt-4">
-                        <div class="flex space-x-2">
-                            <a href="{{ route('inventaris.penyesuaian-stok.index') }}"
-                                class="inline-flex items-center px-4 py-2 bg-gray-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-4 w-4" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                                </svg>
-                                Kembali
-                            </a>
-                        </div>
+                    <div class="flex items-center justify-end pt-4">
                         <div class="flex space-x-2">
                             <button type="button" id="btn-print-draft" @click="handlePrintDraft"
                                 x-show="validateForm(true)"
@@ -224,19 +244,27 @@
                                                 Produk <span class="text-red-500">*</span>
                                             </th>
                                             <th scope="col"
-                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12">
+                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12 min-w-[120px]">
                                                 Stok Tercatat
                                             </th>
                                             <th scope="col"
-                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12">
+                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12 min-w-[120px]">
                                                 Stok Fisik <span class="text-red-500">*</span>
                                             </th>
                                             <th scope="col"
-                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12">
-                                                Selisih
+                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/12 min-w-[120px] relative">
+                                                <span class="flex items-center">
+                                                    Selisih
+                                                    <svg class="ml-1 h-4 w-4 text-gray-400" fill="none"
+                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                </span>
                                             </th>
                                             <th scope="col"
-                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider w-3/12 min-w-[170px]">
                                                 Keterangan
                                             </th>
                                             <th scope="col"
@@ -281,7 +309,7 @@
                                                                     const rect = btn.getBoundingClientRect();
                                                                     this.dropdownTop = rect.bottom + window.scrollY;
                                                                     this.dropdownLeft = rect.left + window.scrollX;
-                                                                    this.dropdownWidth = rect.width;
+                                                                    this.dropdownWidth = Math.min(rect.width, 350); // Limit to 350px max
                                                                 }
                                                             });
                                                         }
@@ -290,23 +318,46 @@
                                                         @keydown.escape.window="open = false">
                                                         <input type="hidden" :name="`produk_id[${index}]`"
                                                             x-model="item.produk_id">
-                                                        <button type="button"
-                                                            @click="open = !open; if(open) setDropdownPosition()"
-                                                            :disabled="isLoading"
-                                                            class="w-full text-left bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center justify-between"
-                                                            x-ref="inputBtn">
-                                                            <span
-                                                                x-text="produks.find(p => p.id == item.produk_id)?.nama || 'Cari produk...'"
-                                                                class="truncate text-gray-900 dark:text-white"></span>
-                                                            <svg class="w-4 h-4 ml-2 text-gray-400" fill="none"
-                                                                stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                                    stroke-width="2" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        </button>
+                                                        <div class="relative w-full max-w-[300px]">
+                                                            <button type="button"
+                                                                @click="open = !open; if(open) setDropdownPosition()"
+                                                                :disabled="isLoading"
+                                                                class="w-full text-left bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 flex items-center justify-between"
+                                                                x-ref="inputBtn">
+                                                                <span
+                                                                    x-text="(() => { 
+                                                                        const nama = produks.find(p => p.id == item.produk_id)?.nama || 'Cari produk...'; 
+                                                                        return nama.length > 25 ? nama.substring(0, 25) + '...' : nama;
+                                                                    })()"
+                                                                    class="truncate text-gray-900 dark:text-white"
+                                                                    :class="item.produk_id ? 'pr-12' : 'pr-8'"
+                                                                    :title="produks.find(p => p.id == item.produk_id)?.nama ||
+                                                                        ''"></span>
+                                                                <div
+                                                                    class="absolute right-0 inset-y-0 flex items-center pr-3 pointer-events-none">
+                                                                    <svg class="w-4 h-4 text-gray-400" fill="none"
+                                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </div>
+                                                            </button>
+                                                            <template x-if="item.produk_id">
+                                                                <button type="button" @click="clearProduk()"
+                                                                    class="absolute right-8 top-0 bottom-0 flex items-center justify-center px-2 text-gray-400 hover:text-red-500 focus:outline-none">
+                                                                    <svg class="w-4 h-4" fill="none"
+                                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M6 18L18 6M6 6l12 12" />
+                                                                    </svg>
+                                                                </button>
+                                                            </template>
+                                                        </div>
                                                         <template x-if="open">
-                                                            <div class="fixed z-50 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
-                                                                :style="`top: ${dropdownTop}px; left: ${dropdownLeft}px; width: ${dropdownWidth}px`">
+                                                            <div class="fixed z-50 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto max-w-[350px]"
+                                                                :style="`top: ${dropdownTop}px; left: ${dropdownLeft}px; width: ${dropdownWidth > 350 ? '350px' : dropdownWidth + 'px'}`">
                                                                 <div class="p-2">
                                                                     <input type="text" x-model="search"
                                                                         placeholder="Ketik untuk mencari produk..."
@@ -319,12 +370,17 @@
                                                                         <li>
                                                                             <button type="button"
                                                                                 @click="selectProduk(produk)"
-                                                                                :class="{ 'bg-primary-100 dark:bg-primary-700 text-primary-700 dark:text-white': produk
+                                                                                :class="{
+                                                                                    'bg-primary-100 dark:bg-primary-700 text-primary-700 dark:text-white': produk
                                                                                         .id == item
-                                                                                        .produk_id, 'hover:bg-primary-50 dark:hover:bg-primary-600': produk
-                                                                                        .id != item.produk_id }"
+                                                                                        .produk_id,
+                                                                                    'hover:bg-primary-50 dark:hover:bg-primary-600': produk
+                                                                                        .id != item.produk_id
+                                                                                }"
                                                                                 class="w-full text-left px-3 py-2 text-sm cursor-pointer flex items-center">
-                                                                                <span x-text="produk.nama"></span>
+                                                                                <span x-text="produk.nama"
+                                                                                    class="truncate"
+                                                                                    :title="produk.nama"></span>
                                                                             </button>
                                                                         </li>
                                                                     </template>
@@ -337,17 +393,6 @@
                                                                     </template>
                                                                 </ul>
                                                             </div>
-                                                        </template>
-                                                        <template x-if="item.produk_id">
-                                                            <button type="button" @click="clearProduk()"
-                                                                class="absolute right-2 top-2 text-gray-400 hover:text-red-500 focus:outline-none">
-                                                                <svg class="w-4 h-4" fill="none"
-                                                                    stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
                                                         </template>
                                                     </div>
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1"
@@ -362,9 +407,20 @@
                                                 </td>
                                                 <td class="px-3 py-4">
                                                     <div class="flex items-center">
-                                                        <input type="number" :name="`stok_tercatat[${index}]`"
-                                                            x-model="item.stok_tercatat" step="0.01" readonly
-                                                            class="bg-gray-50 dark:bg-gray-700/30 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md">
+                                                        <div class="relative w-full">
+                                                            <input type="number" :name="`stok_tercatat[${index}]`"
+                                                                x-model="item.stok_tercatat" step="0.01" readonly
+                                                                class="bg-gray-50 dark:bg-gray-700/30 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md min-w-[100px]">
+                                                            <div
+                                                                class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                                                <svg class="h-4 w-4 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                                </svg>
+                                                            </div>
+                                                        </div>
                                                         <span class="ml-2 text-sm text-gray-500 dark:text-gray-400"
                                                             x-text="item.satuan_nama"></span>
                                                     </div>
@@ -374,10 +430,13 @@
                                                 </td>
                                                 <td class="px-3 py-4">
                                                     <div class="flex items-center">
-                                                        <input type="number" :name="`stok_fisik[${index}]`"
-                                                            x-model="item.stok_fisik" step="0.01" min="0"
-                                                            @input="calculateSelisih(index)"
-                                                            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                                        <div class="relative w-full">
+                                                            <input type="number" :name="`stok_fisik[${index}]`"
+                                                                x-model="item.stok_fisik" step="0.01"
+                                                                min="0" @input="calculateSelisih(index)"
+                                                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md min-w-[100px]">
+
+                                                        </div>
                                                         <span class="ml-2 text-sm text-gray-500 dark:text-gray-400"
                                                             x-text="item.satuan_nama"></span>
                                                     </div>
@@ -386,8 +445,9 @@
                                                         x-text="errors[`stok_fisik.${index}`]"></div>
                                                 </td>
                                                 <td class="px-3 py-4">
-                                                    <div class="flex items-center">
-                                                        <span
+                                                    <div
+                                                        class="flex items-center min-w-[100px] bg-gray-50 dark:bg-gray-700/30 rounded-md px-3 py-1.5 border border-transparent">
+                                                        <span class="font-medium"
                                                             :class="{
                                                                 'text-green-600 dark:text-green-400': parseFloat(item
                                                                     .selisih) > 0,
@@ -402,10 +462,21 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-3 py-4">
-                                                    <input type="text" :name="`keterangan[${index}]`"
-                                                        x-model="item.keterangan"
-                                                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                                                        placeholder="Keterangan">
+                                                    <div class="relative">
+                                                        <input type="text" :name="`keterangan[${index}]`"
+                                                            x-model="item.keterangan"
+                                                            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md min-w-[150px] pl-2 pr-6"
+                                                            placeholder="Keterangan">
+                                                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none"
+                                                            x-show="item.keterangan">
+                                                            <svg class="h-4 w-4 text-gray-400" fill="none"
+                                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                            </svg>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td class="px-3 py-4 text-right">
                                                     <button type="button" @click="removeItem(index)"

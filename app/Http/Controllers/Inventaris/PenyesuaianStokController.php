@@ -303,7 +303,7 @@ class PenyesuaianStokController extends Controller
             // Loop through all products and save the details
             foreach ($request->produk_id as $index => $produkId) {
                 $detail = new PenyesuaianStokDetail();
-                $detail->penyesuaian_id = $penyesuaianStok->id; // Ganti dari penyesuaian_stok_id ke penyesuaian_id
+                $detail->penyesuaian_stok_id = $penyesuaianStok->id;
                 $detail->produk_id = $produkId;
                 $detail->stok_tercatat = $request->stok_tercatat[$index];
                 $detail->stok_fisik = $request->stok_fisik[$index];
@@ -316,8 +316,7 @@ class PenyesuaianStokController extends Controller
             // Log activity
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Membuat penyesuaian stok baru dengan nomor ' . $penyesuaianStok->nomor,
-                'modul' => 'Penyesuaian Stok',
+                'aktivitas' => 'Membuat penyesuaian stok baru dengan nomor ' . $penyesuaianStok->nomor
             ]);
 
             DB::commit();
@@ -375,8 +374,6 @@ class PenyesuaianStokController extends Controller
         $gudangs = Gudang::where('is_active', true)->orderBy('nama')->get();
         $satuans = Satuan::all();
 
-        // Fetch all stok produk for the form
-        \Log::info('Fetching product stock data for penyesuaian edit form');
 
         $stokProduk = StokProduk::with(['produk', 'produk.satuan'])
             ->where('gudang_id', $penyesuaian->gudang_id)
@@ -389,7 +386,6 @@ class PenyesuaianStokController extends Controller
         $mappedStokProduk = $stokProduk->map(function ($stok) {
             try {
                 if (!$stok->produk) {
-                    \Log::warning("Skipping stock record with missing product relation. StokProduk ID: " . $stok->id);
                     return null;
                 }
 
@@ -411,7 +407,6 @@ class PenyesuaianStokController extends Controller
 
                 return $result;
             } catch (\Exception $e) {
-                \Log::error("Error mapping stock product ID {$stok->id}: " . $e->getMessage());
                 return null;
             }
         })
@@ -419,12 +414,29 @@ class PenyesuaianStokController extends Controller
             ->values();
 
         $allStokProduk = $mappedStokProduk;
+        
+        // Prepare the items array from penyesuaian details
+        $items = $penyesuaian->details->map(function($detail) {
+            $satuan = $detail->satuan;
+            $satuanNama = ($satuan && isset($satuan->nama)) ? $satuan->nama : '-';
+            
+            return [
+                'produk_id' => $detail->produk_id,
+                'stok_tercatat' => (float)$detail->stok_tercatat,
+                'stok_fisik' => (float)$detail->stok_fisik,
+                'selisih' => (float)$detail->selisih,
+                'satuan_id' => $detail->satuan_id,
+                'satuan_nama' => $satuanNama,
+                'keterangan' => $detail->keterangan
+            ];
+        })->toArray();
 
         return view('inventaris.penyesuaian_stok.edit', compact(
             'penyesuaian',
             'gudangs',
             'satuans',
             'allStokProduk',
+            'items',
             'breadcrumbs',
             'currentPage'
         ));
