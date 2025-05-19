@@ -15,7 +15,6 @@ return new class extends Migration
         // jadi kita perlu menggunakan raw SQL queries
 
         // Untuk MySQL/MariaDB, tambahkan nilai enum baru
-        \DB::statement("ALTER TABLE purchase_order MODIFY COLUMN status_pembayaran ENUM('belum_bayar', 'sebagian', 'lunas', 'kelebihan_bayar') NOT NULL DEFAULT 'belum_bayar'");
 
         // Tambahkan kolom untuk menyimpan jumlah kelebihan bayar
         Schema::table('purchase_order', function (Blueprint $table) {
@@ -32,8 +31,5 @@ return new class extends Migration
         Schema::table('purchase_order', function (Blueprint $table) {
             $table->dropColumn('kelebihan_bayar');
         });
-
-        // Kembalikan enum ke nilai aslinya
-        \DB::statement("ALTER TABLE purchase_order MODIFY COLUMN status_pembayaran ENUM('belum_bayar', 'sebagian', 'lunas') NOT NULL DEFAULT 'belum_bayar'");
     }
 };
