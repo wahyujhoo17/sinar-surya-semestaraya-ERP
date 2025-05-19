@@ -35,7 +35,18 @@
                         </a>
 
                         {{-- Primary Actions --}}
-                        @if ($po->status_pembayaran != 'lunas')
+                        @if ($po->status_pembayaran == 'kelebihan_bayar')
+                            <a href="{{ route('keuangan.pengembalian-dana.create', ['po_id' => $po->id]) }}"
+                                class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-blue-600 hover:to-cyan-700 hover:shadow-lg hover:shadow-blue-500/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:ring-offset-1">
+                                <svg class="h-4 w-4 transition-transform group-hover:scale-110"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Proses Pengembalian
+                            </a>
+                        @elseif ($po->status_pembayaran != 'lunas')
                             <a href="{{ route('keuangan.pembayaran-hutang.create', ['po_id' => $po->id]) }}"
                                 class="group inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:from-indigo-600 hover:to-violet-700 hover:shadow-lg hover:shadow-indigo-500/30 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:ring-offset-1">
                                 <svg class="h-4 w-4 transition-transform group-hover:scale-110"
@@ -120,11 +131,15 @@
                                         ? 'text-emerald-600 dark:text-emerald-400'
                                         : ($po->status_pembayaran == 'sebagian'
                                             ? 'text-amber-600 dark:text-amber-400'
-                                            : 'text-rose-600 dark:text-rose-400') }}">
+                                            : ($po->status_pembayaran == 'kelebihan_bayar'
+                                                ? 'text-blue-600 dark:text-blue-400'
+                                                : 'text-rose-600 dark:text-rose-400')) }}">
                                     @if ($po->status_pembayaran == 'belum_bayar')
                                         Belum Bayar
                                     @elseif($po->status_pembayaran == 'sebagian')
                                         Dibayar Sebagian
+                                    @elseif($po->status_pembayaran == 'kelebihan_bayar')
+                                        Kelebihan Bayar
                                     @else
                                         Lunas
                                     @endif
@@ -173,8 +188,8 @@
                     <div class="flex items-center">
                         <div
                             class="flex-shrink-0 rounded-lg p-3.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-100/50 dark:ring-emerald-400/20">
-                            <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
+                            <svg class="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
                                 </path>
@@ -719,6 +734,7 @@
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 @foreach ($returns as $return)
+                                    {{-- {{ $return }} --}}
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-200">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -727,14 +743,24 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900 dark:text-white">
-                                                {{ $return->tanggal ? $return->tanggal->format('d/m/Y') : '-' }}
+                                                {{ $return->tanggal }}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             @php
                                                 $returValue = 0;
-                                                foreach ($return->details as $detail) {
-                                                    $returValue += $detail->harga * $detail->qty;
+                                                $poDetails = $return->purchaseOrder->details;
+
+                                                foreach ($return->details as $returDetail) {
+                                                    // Find matching PO detail for this product
+                                                    $matchingPoDetail = $poDetails
+                                                        ->where('produk_id', $returDetail->produk_id)
+                                                        ->first();
+
+                                                    if ($matchingPoDetail) {
+                                                        $returValue +=
+                                                            $matchingPoDetail->harga * $returDetail->quantity;
+                                                    }
                                                 }
                                             @endphp
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">
@@ -747,7 +773,7 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <a href="{{ route('pembelian.retur.show', $return->id) }}"
+                                            <a href="{{ route('pembelian.retur-pembelian.show', $return->id) }}"
                                                 class="text-rose-600 dark:text-rose-400 hover:text-rose-900 dark:hover:text-rose-300 font-medium hover:underline">
                                                 Detail
                                             </a>

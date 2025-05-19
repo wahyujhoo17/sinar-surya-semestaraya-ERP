@@ -72,9 +72,9 @@
                                         class="block px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700"
                                         :class="{ 'bg-blue-50 dark:bg-blue-900/20': !notification.read_at }">
                                         <p class="text-sm font-medium text-gray-900 dark:text-gray-200"
-                                            x-text="notification.data.title"></p>
+                                            x-text="notification.title"></p>
                                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1"
-                                            x-text="notification.data.message"></p>
+                                            x-text="notification.message"></p>
                                         <p class="text-xs text-gray-400 dark:text-gray-500 mt-1"
                                             x-text="formatDate(notification.created_at)"></p>
                                     </a>
@@ -177,11 +177,19 @@
                 async loadNotifications() {
                     try {
                         const response = await fetch('{{ route('notifications.latest') }}');
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
                         const data = await response.json();
+                        if (data.error) {
+                            throw new Error(data.message || data.error);
+                        }
                         this.notifications = data.notifications;
                         this.unreadCount = data.unread_count;
                     } catch (error) {
                         console.error('Error loading notifications:', error);
+                        this.notifications = [];
+                        this.unreadCount = 0;
                     }
                 },
 
@@ -200,14 +208,21 @@
                             }
                         });
 
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
                         const data = await response.json();
                         if (data.success) {
                             this.unreadCount = data.unread_count;
                             notification.read_at = new Date().toISOString();
                             window.location.href = this.getNotificationUrl(notification);
+                        } else if (data.error) {
+                            throw new Error(data.message || data.error);
                         }
                     } catch (error) {
                         console.error('Error marking notification as read:', error);
+                        alert('Gagal menandai notifikasi sebagai telah dibaca');
                     }
                 },
 
@@ -234,7 +249,7 @@
                 },
 
                 getNotificationUrl(notification) {
-                    return notification.data.link || '{{ route('notifications.index') }}';
+                    return notification.link || '{{ route('notifications.index') }}';
                 },
 
                 formatDate(date) {

@@ -101,6 +101,10 @@
             color: #000;
         }
 
+        .status-kelebihan {
+            background-color: #007bff;
+        }
+
         .status-belum {
             background-color: #dc3545;
         }
@@ -203,6 +207,8 @@
                                 <span class="status-badge status-belum">Belum Bayar</span>
                             @elseif($po->status_pembayaran == 'sebagian')
                                 <span class="status-badge status-sebagian">Sebagian</span>
+                            @elseif($po->status_pembayaran == 'kelebihan_bayar')
+                                <span class="status-badge status-kelebihan">Kelebihan Bayar</span>
                             @else
                                 <span class="status-badge status-lunas">Lunas</span>
                             @endif

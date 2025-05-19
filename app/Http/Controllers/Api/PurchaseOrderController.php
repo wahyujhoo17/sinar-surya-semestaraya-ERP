@@ -29,13 +29,20 @@ class PurchaseOrderController extends Controller
             // Calculate returns
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 

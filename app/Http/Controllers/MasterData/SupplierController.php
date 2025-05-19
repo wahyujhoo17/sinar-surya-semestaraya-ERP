@@ -32,16 +32,30 @@ class SupplierController extends Controller
                 'telepon' => true,
                 'email' => true,
                 'no_hp' => true, // Add no_hp
+                'alamat' => true, // Add alamat
+                'nama_kontak' => true, // Add nama_kontak
                 'type_produksi' => true,
+                'NPWP' => true, // Add NPWP
                 'status' => true,
             ];
         } else {
             // Ensure all keys exist, default to true if missing
-            $defaults = ['kode' => true, 'nama' => true, 'telepon' => true, 'email' => true, 'no_hp' => true, 'type_produksi' => true, 'status' => true]; // Add no_hp
+            $defaults = [
+                'kode' => true,
+                'nama' => true,
+                'telepon' => true,
+                'email' => true,
+                'no_hp' => true,
+                'alamat' => true,
+                'nama_kontak' => true,
+                'type_produksi' => true,
+                'NPWP' => true,
+                'status' => true
+            ];
             $visibleColumns = array_merge($defaults, $visibleColumns);
         }
 
-        $allowedSortFields = ['kode', 'nama', 'type_produksi'];
+        $allowedSortFields = ['kode', 'nama', 'type_produksi', 'NPWP'];
         if (!in_array($sortField, $allowedSortFields)) {
             $sortField = 'nama';
         }
@@ -119,6 +133,7 @@ class SupplierController extends Controller
             'email' => 'nullable|email|max:255',
             'nama_kontak' => 'nullable|string|max:255', // Tambah validasi nama_kontak
             'no_hp' => 'nullable|string|max:20', // Add validation for no_hp
+            'NPWP' => 'nullable|string|max:50', // Add validation for NPWP
             'type_produksi' => 'nullable|string|max:100',
             'catatan' => 'nullable|string',
             'is_active' => 'boolean',
@@ -178,6 +193,7 @@ class SupplierController extends Controller
             'email' => 'nullable|email|max:255',
             'nama_kontak' => 'nullable|string|max:255', // Tambah validasi nama_kontak
             'no_hp' => 'nullable|string|max:20', // Add validation for no_hp
+            'NPWP' => 'nullable|string|max:50', // Add validation for NPWP
             'type_produksi' => 'nullable|string|max:100',
             'catatan' => 'nullable|string',
             'is_active' => 'boolean',

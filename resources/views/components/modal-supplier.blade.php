@@ -47,8 +47,8 @@
                         </div>
                         <div>
                             <label for="nama"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama <span
-                                    class="text-red-600">*</span></label>
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Perusahaan
+                                <span class="text-red-600">*</span></label>
                             <input type="text" name="nama" id="nama" x-model="formData.nama" required
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
@@ -89,6 +89,12 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama
                                 Kontak</label>
                             <input type="text" name="nama_kontak" id="nama_kontak" x-model="formData.nama_kontak"
+                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
+                        </div>
+                        <div>
+                            <label for="npwp"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPWP</label>
+                            <input type="text" name="NPWP" id="npwp" x-model="formData.NPWP"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div class="md:col-span-2">
@@ -145,6 +151,7 @@
                 no_hp: '', // Add no_hp
                 nama_kontak: '',
                 type_produksi: '',
+                NPWP: '', // Add NPWP
                 catatan: '',
                 is_active: true, // Set default ke true
             },
@@ -179,6 +186,7 @@
                     no_hp: '', // Add no_hp
                     nama_kontak: '',
                     type_produksi: '',
+                    NPWP: '', // Add NPWP
                     catatan: '',
                     is_active: true,
                 };

@@ -156,8 +156,6 @@ class PurchasingOrderController extends Controller
         // Generate PO number
         $nomorPO = $this->generatePONumber();
 
-        $this->logUserAktivitas('akses', 'purchase_order', null, 'Akses form tambah Purchase Order');
-
         return view('pembelian.purchase_order.create', compact('suppliers', 'purchaseRequests', 'produks', 'satuans', 'nomorPO'));
     }
 
@@ -351,7 +349,15 @@ class PurchasingOrderController extends Controller
      */
     public function show(string $id)
     {
-        $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
+        $purchaseOrder = PurchaseOrder::with([
+            'supplier',
+            'user',
+            'purchaseRequest',
+            'details.produk',
+            'details.satuan',
+            'retur.details.produk',
+            'retur.details.satuan'
+        ])
             ->findOrFail($id);
 
         // Status information for display

@@ -97,11 +97,15 @@
                                         ? 'text-emerald-600 dark:text-emerald-400'
                                         : ($purchaseOrder->status_pembayaran == 'sebagian'
                                             ? 'text-amber-600 dark:text-amber-400'
-                                            : 'text-rose-600 dark:text-rose-400') }}">
+                                            : ($purchaseOrder->status_pembayaran == 'kelebihan_bayar'
+                                                ? 'text-blue-600 dark:text-blue-400'
+                                                : 'text-rose-600 dark:text-rose-400')) }}">
                                     @if ($purchaseOrder->status_pembayaran == 'belum_bayar')
                                         Belum Bayar
                                     @elseif($purchaseOrder->status_pembayaran == 'sebagian')
                                         Dibayar Sebagian
+                                    @elseif($purchaseOrder->status_pembayaran == 'kelebihan_bayar')
+                                        Kelebihan Bayar
                                     @else
                                         Lunas
                                     @endif
@@ -344,8 +348,17 @@
                                     @php $r = $transaction['data']; @endphp
                                     @php
                                         $totalReturValue = 0;
-                                        foreach ($r->details as $detail) {
-                                            $totalReturValue += $detail->harga * $detail->qty;
+                                        $poDetails = $r->purchaseOrder->details;
+
+                                        foreach ($r->details as $returDetail) {
+                                            // Find matching PO detail for this product
+                                            $matchingPoDetail = $poDetails
+                                                ->where('produk_id', $returDetail->produk_id)
+                                                ->first();
+
+                                            if ($matchingPoDetail) {
+                                                $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                                            }
                                         }
                                     @endphp
                                     <div class="mb-8 flex items-start relative">
@@ -428,7 +441,7 @@
                                                 @endif
                                             </div>
                                             <div class="mt-4 ml-8">
-                                                <a href="{{ route('inventory.retur-pembelian.show', $r->id) }}"
+                                                <a href="{{ route('pembelian.retur-pembelian.show', $r->id) }}"
                                                     class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 transition-colors"
                                                     title="Lihat Detail">
                                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"

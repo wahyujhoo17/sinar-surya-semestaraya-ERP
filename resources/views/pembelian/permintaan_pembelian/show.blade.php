@@ -630,39 +630,219 @@
                     </div>
                 </div>
 
-                <!-- Optional: If you want to add a section for related purchase orders -->
-                @if ($permintaanPembelian->purchaseOrders && $permintaanPembelian->purchaseOrders->count() > 0)
+                <!-- Section for related purchase orders -->
+                <div
+                    class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 mt-6">
                     <div
-                        class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 mt-6">
-                        <div
-                            class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Purchase Order Terkait</h2>
-                        </div>
+                        class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex justify-between items-center">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Purchase Order Terkait</h2>
+                        <span
+                            class="px-2.5 py-1 text-sm font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/20 dark:text-primary-400">
+                            {{ $permintaanPembelian->purchaseOrders->count() }} PO
+                        </span>
+                    </div>
 
-                        <div class="p-6">
+                    <div class="p-6">
+                        @if ($permintaanPembelian->purchaseOrders->count() > 0)
                             <ul class="space-y-3">
                                 @foreach ($permintaanPembelian->purchaseOrders as $po)
-                                    <li>
-                                        <a href="#"
-                                            class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                            <div class="flex-1">
-                                                <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $po->nomor }}</p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                    {{ \Carbon\Carbon::parse($po->tanggal)->format('d M Y') }}</p>
+                                    <li
+                                        class="border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                        <a href="{{ route('pembelian.purchasing-order.show', $po->id) }}"
+                                            class="block">
+                                            <!-- Header with PO number and status badge -->
+                                            <div
+                                                class="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700/70 border-b border-gray-100 dark:border-gray-700">
+                                                <div class="flex items-center">
+                                                    <div
+                                                        class="flex-shrink-0 w-9 h-9 rounded-full bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-600 flex items-center justify-center mr-3">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-5 w-5 text-gray-500 dark:text-gray-400"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $po->nomor }}</p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ \Carbon\Carbon::parse($po->tanggal)->format('d M Y') }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                @php
+                                                    $poStatusColor = match ($po->status) {
+                                                        'draft'
+                                                            => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                                                        'diproses'
+                                                            => 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
+                                                        'dikirim'
+                                                            => 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300',
+                                                        'selesai'
+                                                            => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300',
+                                                        'dibatalkan'
+                                                            => 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300',
+                                                        default
+                                                            => 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                                                    };
+                                                @endphp
+
+                                                <span
+                                                    class="px-2.5 py-1 text-xs font-medium rounded-full {{ $poStatusColor }}">
+                                                    @switch($po->status)
+                                                        @case('draft')
+                                                            Draft
+                                                        @break
+
+                                                        @case('diproses')
+                                                            Diproses
+                                                        @break
+
+                                                        @case('dikirim')
+                                                            Dikirim
+                                                        @break
+
+                                                        @case('selesai')
+                                                            Selesai
+                                                        @break
+
+                                                        @case('dibatalkan')
+                                                            Dibatalkan
+                                                        @break
+
+                                                        @default
+                                                            {{ ucfirst($po->status) }}
+                                                    @endswitch
+                                                </span>
                                             </div>
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M9 5l7 7-7 7" />
-                                            </svg>
+
+                                            <!-- Content with supplier and status info -->
+                                            <div
+                                                class="px-4 py-3 bg-white dark:bg-gray-800 flex flex-col sm:flex-row sm:items-center justify-between">
+                                                <div class="mb-2 sm:mb-0">
+                                                    <p class="text-sm text-gray-800 dark:text-gray-200 font-medium">
+                                                        {{ $po->supplier->nama ?? 'Supplier tidak tercatat' }}
+                                                    </p>
+                                                </div>
+
+                                                <!-- Status indicators -->
+                                                <div class="flex flex-wrap items-center gap-2">
+                                                    @php
+                                                        $paymentStatus = match ($po->status_pembayaran) {
+                                                            'belum_bayar' => [
+                                                                'Belum Bayar',
+                                                                'text-red-500 dark:text-red-400',
+                                                                'bg-red-50 dark:bg-red-900/10',
+                                                            ],
+                                                            'sebagian' => [
+                                                                'Dibayar Sebagian',
+                                                                'text-amber-500 dark:text-amber-400',
+                                                                'bg-amber-50 dark:bg-amber-900/10',
+                                                            ],
+                                                            'lunas' => [
+                                                                'Lunas',
+                                                                'text-emerald-500 dark:text-emerald-400',
+                                                                'bg-emerald-50 dark:bg-emerald-900/10',
+                                                            ],
+                                                            default => [
+                                                                'Belum Bayar',
+                                                                'text-red-500 dark:text-red-400',
+                                                                'bg-red-50 dark:bg-red-900/10',
+                                                            ],
+                                                        };
+
+                                                        $receiptStatus = match ($po->status_penerimaan) {
+                                                            'belum_diterima' => [
+                                                                'Belum Diterima',
+                                                                'text-red-500 dark:text-red-400',
+                                                                'bg-red-50 dark:bg-red-900/10',
+                                                            ],
+                                                            'sebagian' => [
+                                                                'Diterima Sebagian',
+                                                                'text-amber-500 dark:text-amber-400',
+                                                                'bg-amber-50 dark:bg-amber-900/10',
+                                                            ],
+                                                            'diterima' => [
+                                                                'Diterima Penuh',
+                                                                'text-emerald-500 dark:text-emerald-400',
+                                                                'bg-emerald-50 dark:bg-emerald-900/10',
+                                                            ],
+                                                            default => [
+                                                                'Belum Diterima',
+                                                                'text-red-500 dark:text-red-400',
+                                                                'bg-red-50 dark:bg-red-900/10',
+                                                            ],
+                                                        };
+                                                    @endphp
+
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md {{ $paymentStatus[1] }} {{ $paymentStatus[2] }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {{ $paymentStatus[0] }}
+                                                    </span>
+
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-md {{ $receiptStatus[1] }} {{ $receiptStatus[2] }}">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 mr-1"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                                                        </svg>
+                                                        {{ $receiptStatus[0] }}
+                                                    </span>
+
+                                                    <span
+                                                        class="inline-flex items-center text-gray-500 dark:text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </a>
                                     </li>
                                 @endforeach
                             </ul>
-                        </div>
+                        @else
+                            <div class="text-center p-6">
+                                <div class="flex flex-col items-center justify-center space-y-3">
+                                    <div
+                                        class="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-8 w-8 text-gray-400 dark:text-gray-500" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        Belum ada Purchase Order yang dibuat untuk permintaan ini.
+                                    </div>
+                                    <a href="{{ route('pembelian.purchasing-order.create', ['pr_id' => $permintaanPembelian->id]) }}"
+                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        Buat Purchase Order Baru
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
                     </div>
-                @endif
+                </div>
             </div>
         </div>
     </div>

@@ -23,13 +23,15 @@ class PurchaseOrder extends Model
         'ppn',
         'total',
         'status',  // Added missing status field
-        'status_pembayaran', // 'belum_bayar', 'sebagian', 'lunas'
+        'status_pembayaran', // 'belum_bayar', 'sebagian', 'lunas', 'kelebihan_bayar'
+        'kelebihan_bayar', // jumlah kelebihan bayar
         'status_penerimaan', // 'belum_diterima', 'sebagian', 'diterima'
         'tanggal_pengiriman',
         'alamat_pengiriman',
         'catatan',
         'syarat_ketentuan'
     ];
+
 
     /**
      * Relasi ke Supplier
@@ -69,5 +71,29 @@ class PurchaseOrder extends Model
     public function penerimaan()
     {
         return $this->hasMany(PenerimaanBarang::class, 'po_id');
+    }
+
+    /**
+     * Relasi ke Pembayaran Hutang
+     */
+    public function pembayaran()
+    {
+        return $this->hasMany(PembayaranHutang::class, 'purchase_order_id');
+    }
+
+    /**
+     * Relasi ke Retur Pembelian
+     */
+    public function retur()
+    {
+        return $this->hasMany(ReturPembelian::class, 'purchase_order_id');
+    }
+
+    /**
+     * Relasi ke Pengembalian Dana
+     */
+    public function pengembalianDana()
+    {
+        return $this->hasMany(PengembalianDana::class, 'purchase_order_id');
     }
 }

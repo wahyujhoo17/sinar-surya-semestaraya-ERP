@@ -217,6 +217,12 @@
                                             </label>
                                             <label
                                                 class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer">
+                                                <input type="checkbox" x-model="visibleColumns.NPWP"
+                                                    class="mr-2 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
+                                                NPWP
+                                            </label>
+                                            <label
+                                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 cursor-pointer">
                                                 <input type="checkbox" x-model="visibleColumns.status"
                                                     class="mr-2 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
                                                 Status
@@ -351,7 +357,7 @@
                                             <th
                                                 class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                                 <div class="flex items-center">
-                                                    <span>Nama</span>
+                                                    <span>Nama Perusahaan</span>
                                                     <button type="button" @click="sortBy('nama')"
                                                         class="ml-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                                                         <template
@@ -443,6 +449,43 @@
                                                             </svg>
                                                         </template>
                                                         <template x-if="sortField !== 'type_produksi'">
+                                                            <svg class="w-3 h-3 opacity-30" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4">
+                                                                </path>
+                                                            </svg>
+                                                        </template>
+                                                    </button>
+                                                </div>
+                                            </th>
+                                        </template>
+                                        {{-- NPWP --}}
+                                        <template x-if="visibleColumns.NPWP">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                <div class="flex items-center">
+                                                    <span>NPWP</span>
+                                                    <button type="button" @click="sortBy('NPWP')"
+                                                        class="ml-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                                                        <template
+                                                            x-if="sortField === 'NPWP' && sortDirection === 'asc'">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                            </svg>
+                                                        </template>
+                                                        <template
+                                                            x-if="sortField === 'NPWP' && sortDirection === 'desc'">
+                                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                            </svg>
+                                                        </template>
+                                                        <template x-if="sortField !== 'NPWP'">
                                                             <svg class="w-3 h-3 opacity-30" fill="none"
                                                                 stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -608,6 +651,7 @@
                     alamat: true, // Add alamat
                     nama_kontak: true, // Tambah default
                     type_produksi: true,
+                    NPWP: true, // Add NPWP
                     status: true,
                 };
                 try {

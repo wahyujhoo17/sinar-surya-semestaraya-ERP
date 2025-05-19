@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ReturPembelian extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'retur_pembelian';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -20,7 +20,12 @@ class ReturPembelian extends Model
         'catatan',
         'status' // 'draft', 'diproses', 'selesai'
     ];
-    
+
+    protected $casts = [
+        'tanggal' => 'datetime',
+    ];
+
+
     /**
      * Relasi ke Purchase Order
      */
@@ -28,7 +33,7 @@ class ReturPembelian extends Model
     {
         return $this->belongsTo(PurchaseOrder::class, 'purchase_order_id');
     }
-    
+
     /**
      * Relasi ke Supplier
      */
@@ -36,7 +41,7 @@ class ReturPembelian extends Model
     {
         return $this->belongsTo(Supplier::class, 'supplier_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -44,7 +49,7 @@ class ReturPembelian extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Detail Retur Pembelian
      */

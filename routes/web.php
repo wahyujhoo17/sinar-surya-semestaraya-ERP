@@ -17,6 +17,8 @@ use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
 use App\Http\Controllers\Inventaris\StokBarangController;
 use App\Http\Controllers\Pembelian\PenerimaanBarangController;
+use App\Http\Controllers\Pembelian\RiwayatTransaksiController;
+use App\Http\Controllers\Pembelian\ReturPembelianController;
 use App\Http\Controllers\Laporan\LaporanStokController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
@@ -137,9 +139,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('purchasing-order/{id}/pdf', [PurchasingOrderController::class, 'exportPdf'])->name('purchasing-order.pdf');
         Route::resource('purchasing-order', PurchasingOrderController::class);
         Route::get('purchase-order/supplier-produk', [PurchasingOrderController::class, 'getSupplierProduk'])->name('pembelian.purchasing-order.supplier-produk');
+        Route::get('purchase-order/pr-items', [PurchasingOrderController::class, 'getPurchaseRequestItems'])->name('pembelian.purchasing-order.pr-items');
 
         //PENERIMAAN BARANG
         Route::resource('penerimaan-barang', PenerimaanBarangController::class);
+
+        // RETUR PEMBELIAN
+        Route::post('retur-pembelian/{id}/proses', [ReturPembelianController::class, 'prosesRetur'])->name('retur-pembelian.proses');
+        Route::post('retur-pembelian/{id}/selesai', [ReturPembelianController::class, 'selesaikanRetur'])->name('retur-pembelian.selesai');
+        Route::get('retur-pembelian/{id}/create-refund', [ReturPembelianController::class, 'createRefund'])->name('retur-pembelian.create-refund');
+        Route::get('retur-pembelian/{id}/pdf', [ReturPembelianController::class, 'exportPdf'])->name('retur-pembelian.pdf');
+        Route::get('retur-pembelian/get-purchase-orders', [ReturPembelianController::class, 'getPurchaseOrders'])->name('retur-pembelian.get-purchase-orders');
+        Route::get('retur-pembelian/get-purchase-order-items', [ReturPembelianController::class, 'getPurchaseOrderItems'])->name('retur-pembelian.get-purchase-order-items');
+        Route::resource('retur-pembelian', ReturPembelianController::class);
+
+        //RIWAYAT TRANSAKSI
+        Route::get('riwayat-transaksi', [RiwayatTransaksiController::class, 'index'])->name('riwayat-transaksi.index');
+        Route::get('riwayat-transaksi/{id}', [RiwayatTransaksiController::class, 'show'])->name('riwayat-transaksi.show');
     });
 
     // -- HR & Karyawan --
@@ -177,6 +193,12 @@ Route::middleware(['auth'])->group(function () {
         // Pembayaran Hutang Routes
         Route::get('pembayaran-hutang/print/{id}', [PembayaranHutangController::class, 'print'])->name('pembayaran-hutang.print');
         Route::resource('pembayaran-hutang', PembayaranHutangController::class);
+
+        // Pengembalian Dana Routes
+        Route::get('pengembalian-dana/print/{id}', [\App\Http\Controllers\Keuangan\PengembalianDanaController::class, 'print'])->name('pengembalian-dana.print');
+        Route::get('pengembalian-dana/get-po-data', [\App\Http\Controllers\Keuangan\PengembalianDanaController::class, 'getPurchaseOrderData'])->name('pengembalian-dana.get-po-data');
+        Route::get('pengembalian-dana/data', [\App\Http\Controllers\Keuangan\PengembalianDanaController::class, 'data'])->name('pengembalian-dana.data');
+        Route::resource('pengembalian-dana', \App\Http\Controllers\Keuangan\PengembalianDanaController::class);
     });
 
     // -- Laporan --

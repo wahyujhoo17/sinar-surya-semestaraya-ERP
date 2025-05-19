@@ -60,11 +60,68 @@ class KasDanBankController extends Controller
     /**
      * Menampilkan detail kas
      */
-    public function detailKas($id)
+    public function detailKas($id, Request $request)
     {
         $kas = Kas::findOrFail($id);
-        $transaksi = TransaksiKas::where('kas_id', $id)
-            ->orderBy('tanggal', 'desc')
+
+        // Start query builder for filters
+        $baseQuery = TransaksiKas::where('kas_id', $id);
+
+        // Apply filters based on request parameters - clone the base query for reuse
+        $query = clone $baseQuery;
+
+        // Filter by transaction type (masuk/keluar/all)
+        if ($request->has('jenis') && $request->jenis != 'all') {
+            $query->where('jenis', $request->jenis);
+            $baseQuery->where('jenis', $request->jenis);
+        }
+
+        // Filter by time period
+        if ($request->has('periode') && $request->periode != 'all') {
+            $days = (int) $request->periode;
+            $query->where('tanggal', '>=', now()->subDays($days));
+            $baseQuery->where('tanggal', '>=', now()->subDays($days));
+        }
+
+        // Filter by custom date range if provided
+        if ($request->has('tanggal_mulai') && $request->tanggal_mulai) {
+            $query->where('tanggal', '>=', $request->tanggal_mulai);
+            $baseQuery->where('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->has('tanggal_akhir') && $request->tanggal_akhir) {
+            $query->where('tanggal', '<=', $request->tanggal_akhir);
+            $baseQuery->where('tanggal', '<=', $request->tanggal_akhir);
+        }
+
+        // Filter by amount range
+        if ($request->has('nominal_min') && $request->nominal_min) {
+            $query->where('jumlah', '>=', $request->nominal_min);
+            $baseQuery->where('jumlah', '>=', $request->nominal_min);
+        }
+
+        if ($request->has('nominal_max') && $request->nominal_max) {
+            $query->where('jumlah', '<=', $request->nominal_max);
+            $baseQuery->where('jumlah', '<=', $request->nominal_max);
+        }
+
+        // Filter by description (keterangan)
+        if ($request->has('keterangan') && $request->keterangan) {
+            $query->where('keterangan', 'like', '%' . $request->keterangan . '%');
+            $baseQuery->where('keterangan', 'like', '%' . $request->keterangan . '%');
+        }
+
+        // Calculate totals based on the filtered data
+        $totalMasuk = (clone $baseQuery)->where('jenis', 'masuk')->sum('jumlah');
+        $totalKeluar = (clone $baseQuery)->where('jenis', 'keluar')->sum('jumlah');
+
+        // Handle export functionality
+        if ($request->has('export') && $request->export == 'excel') {
+            return $this->exportKasTransaksi($kas, $query->get(), $totalMasuk, $totalKeluar);
+        }
+
+        // Order and paginate results
+        $transaksi = $query->orderBy('tanggal', 'desc')
             ->paginate(10);
 
         $breadcrumbs = [
@@ -77,18 +134,100 @@ class KasDanBankController extends Controller
         return view('keuangan.kas_dan_bank.detail_kas', compact(
             'kas',
             'transaksi',
+            'totalMasuk',
+            'totalKeluar',
             'breadcrumbs'
         ))->with('currentPage', 'Detail Kas');
     }
 
     /**
+     * Export kas transaksi to Excel
+     */
+    private function exportKasTransaksi($kas, $transaksi, $totalMasuk = 0, $totalKeluar = 0)
+    {
+        // For now, return a simple response
+        // In a real implementation, you would use Laravel Excel or a similar package
+        return response()->json([
+            'success' => true,
+            'message' => 'Export functionality would be implemented here',
+            'data' => [
+                'kas' => $kas->nama,
+                'count' => $transaksi->count(),
+                'totalMasuk' => $totalMasuk,
+                'totalKeluar' => $totalKeluar,
+                'netChange' => $totalMasuk - $totalKeluar
+            ]
+        ]);
+
+        // Example with Laravel Excel (you need to implement the export class):
+        // return Excel::download(new TransaksiKasExport($transaksi, $totalMasuk, $totalKeluar), 'transaksi-' . $kas->nama . '.xlsx');
+    }
+
+    /**
      * Menampilkan detail rekening bank
      */
-    public function detailRekening($id)
+    public function detailRekening($id, Request $request)
     {
         $rekening = RekeningBank::findOrFail($id);
-        $transaksi = TransaksiBank::where('rekening_id', $id)
-            ->orderBy('tanggal', 'desc')
+
+        // Start query builder for filters
+        $baseQuery = TransaksiBank::where('rekening_id', $id);
+
+        // Apply filters based on request parameters - clone the base query for reuse
+        $query = clone $baseQuery;
+
+        // Filter by transaction type (masuk/keluar/all)
+        if ($request->has('jenis') && $request->jenis != 'all') {
+            $query->where('jenis', $request->jenis);
+            $baseQuery->where('jenis', $request->jenis);
+        }
+
+        // Filter by time period
+        if ($request->has('periode') && $request->periode != 'all') {
+            $days = (int) $request->periode;
+            $query->where('tanggal', '>=', now()->subDays($days));
+            $baseQuery->where('tanggal', '>=', now()->subDays($days));
+        }
+
+        // Filter by custom date range if provided
+        if ($request->has('tanggal_mulai') && $request->tanggal_mulai) {
+            $query->where('tanggal', '>=', $request->tanggal_mulai);
+            $baseQuery->where('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->has('tanggal_akhir') && $request->tanggal_akhir) {
+            $query->where('tanggal', '<=', $request->tanggal_akhir);
+            $baseQuery->where('tanggal', '<=', $request->tanggal_akhir);
+        }
+
+        // Filter by amount range
+        if ($request->has('nominal_min') && $request->nominal_min) {
+            $query->where('jumlah', '>=', $request->nominal_min);
+            $baseQuery->where('jumlah', '>=', $request->nominal_min);
+        }
+
+        if ($request->has('nominal_max') && $request->nominal_max) {
+            $query->where('jumlah', '<=', $request->nominal_max);
+            $baseQuery->where('jumlah', '<=', $request->nominal_max);
+        }
+
+        // Filter by description (keterangan)
+        if ($request->has('keterangan') && $request->keterangan) {
+            $query->where('keterangan', 'like', '%' . $request->keterangan . '%');
+            $baseQuery->where('keterangan', 'like', '%' . $request->keterangan . '%');
+        }
+
+        // Calculate totals based on the filtered data
+        $totalMasuk = (clone $baseQuery)->where('jenis', 'masuk')->sum('jumlah');
+        $totalKeluar = (clone $baseQuery)->where('jenis', 'keluar')->sum('jumlah');
+
+        // Handle export functionality
+        if ($request->has('export') && $request->export == 'excel') {
+            return $this->exportRekeningTransaksi($rekening, $query->get(), $totalMasuk, $totalKeluar);
+        }
+
+        // Order and paginate results
+        $transaksi = $query->orderBy('tanggal', 'desc')
             ->paginate(10);
 
         $breadcrumbs = [
@@ -101,8 +240,33 @@ class KasDanBankController extends Controller
         return view('keuangan.kas_dan_bank.detail_rekening', compact(
             'rekening',
             'transaksi',
+            'totalMasuk',
+            'totalKeluar',
             'breadcrumbs'
         ))->with('currentPage', 'Detail Rekening');
+    }
+
+    /**
+     * Export rekening transaksi to Excel
+     */
+    private function exportRekeningTransaksi($rekening, $transaksi, $totalMasuk = 0, $totalKeluar = 0)
+    {
+        // For now, return a simple response
+        // In a real implementation, you would use Laravel Excel or a similar package
+        return response()->json([
+            'success' => true,
+            'message' => 'Export functionality would be implemented here',
+            'data' => [
+                'rekening' => $rekening->nama_bank . ' - ' . $rekening->nomor_rekening,
+                'count' => $transaksi->count(),
+                'totalMasuk' => $totalMasuk,
+                'totalKeluar' => $totalKeluar,
+                'netChange' => $totalMasuk - $totalKeluar
+            ]
+        ]);
+
+        // Example with Laravel Excel (you need to implement the export class):
+        // return Excel::download(new TransaksiRekeningExport($transaksi, $totalMasuk, $totalKeluar), 'transaksi-' . $rekening->nama_bank . '.xlsx');
     }
 
     /**

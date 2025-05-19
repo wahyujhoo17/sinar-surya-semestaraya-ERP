@@ -51,13 +51,20 @@ class PembayaranHutangController extends Controller
             // Calculate returns
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
@@ -67,12 +74,12 @@ class PembayaranHutangController extends Controller
         // Generate a unique payment number
         $today = date('Ymd');
         $prefix = 'BYR-' . $today . '-';
-        
+
         // Find the last payment number for today
         $lastPayment = PembayaranHutang::where('nomor', 'like', $prefix . '%')
-                                       ->orderBy('id', 'desc')
-                                       ->first();
-        
+            ->orderBy('id', 'desc')
+            ->first();
+
         $lastNumber = 0;
         if ($lastPayment) {
             // Extract number from format BYR-YYYYMMDD-XXXX
@@ -119,12 +126,12 @@ class PembayaranHutangController extends Controller
             // Generate a fresh payment number based on the payment date
             $paymentDate = date('Ymd', strtotime($request->tanggal));
             $prefix = 'BYR-' . $paymentDate . '-';
-            
+
             // Find the last payment number for this date
             $lastPayment = PembayaranHutang::where('nomor', 'like', $prefix . '%')
-                                          ->orderBy('id', 'desc')
-                                          ->first();
-            
+                ->orderBy('id', 'desc')
+                ->first();
+
             $lastNumber = 0;
             if ($lastPayment) {
                 // Extract number from format BYR-YYYYMMDD-XXXX
@@ -136,7 +143,7 @@ class PembayaranHutangController extends Controller
 
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
             $validated['nomor'] = $prefix . $newNumber;
-            
+
             // Add current user_id to data
             $validated['user_id'] = Auth::id();
 
@@ -156,7 +163,7 @@ class PembayaranHutangController extends Controller
                 // Get PO number
                 $po = PurchaseOrder::findOrFail($request->purchase_order_id);
                 $supplierName = Supplier::find($request->supplier_id)->nama;
-                
+
                 TransaksiKas::create([
                     'tanggal' => $request->tanggal,
                     'kas_id' => $request->kas_id,
@@ -208,18 +215,31 @@ class PembayaranHutangController extends Controller
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;  // Ambil detail PO
+
+                foreach ($retur->details as $returDetail) {
+                    // Cari detail PO yang sesuai dengan produk di retur
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
             $sisaHutang = $po->total - $totalPayments - $totalReturValue;
 
             // Update PO status
-            if ($sisaHutang <= 0) {
+            if ($sisaHutang < 0) {
+                // Kelebihan bayar situation
+                $po->status_pembayaran = 'kelebihan_bayar';
+                $po->kelebihan_bayar = abs($sisaHutang);
+            } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
+                $po->kelebihan_bayar = 0;
             } else {
                 $po->status_pembayaran = 'sebagian';
+                $po->kelebihan_bayar = 0;
             }
 
             $po->save();
@@ -269,13 +289,20 @@ class PembayaranHutangController extends Controller
         // Calculate returns
         $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
             ->where('status', 'selesai')
-            ->with('details')
+            ->with(['details', 'purchaseOrder.details'])
             ->get();
 
         $totalReturValue = 0;
         foreach ($returPembelian as $retur) {
-            foreach ($retur->details as $detail) {
-                $totalReturValue += $detail->harga * $detail->qty;
+            $poDetails = $retur->purchaseOrder->details;
+
+            foreach ($retur->details as $returDetail) {
+                // Find matching PO detail for this product
+                $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                if ($matchingPoDetail) {
+                    $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                }
             }
         }
 
@@ -404,23 +431,36 @@ class PembayaranHutangController extends Controller
             // Calculate returns
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
             $sisaHutang = $po->total - $totalPayments - $totalReturValue;
 
             // Update PO status
-            if ($sisaHutang <= 0) {
+            if ($sisaHutang < 0) {
+                // Kelebihan bayar situation
+                $po->status_pembayaran = 'kelebihan_bayar';
+                $po->kelebihan_bayar = abs($sisaHutang);
+            } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
+                $po->kelebihan_bayar = 0;
             } else {
                 $po->status_pembayaran = 'sebagian';
+                $po->kelebihan_bayar = 0;
             }
 
             $po->save();
@@ -491,25 +531,39 @@ class PembayaranHutangController extends Controller
             // Calculate returns
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
             $sisaHutang = $po->total - $totalPayments - $totalReturValue;
 
             // Update PO status
-            if ($sisaHutang <= 0) {
+            if ($sisaHutang < 0) {
+                // Kelebihan bayar situation
+                $po->status_pembayaran = 'kelebihan_bayar';
+                $po->kelebihan_bayar = abs($sisaHutang);
+            } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
-            } elseif ($totalPayments > 0) {
+                $po->kelebihan_bayar = 0;
+            } else if ($totalPayments > 0) {
                 $po->status_pembayaran = 'sebagian';
+                $po->kelebihan_bayar = 0;
             } else {
                 $po->status_pembayaran = 'belum_bayar';
+                $po->kelebihan_bayar = 0;
             }
 
             $po->save();

@@ -145,6 +145,8 @@
                             Belum Bayar
                         @elseif($po->status_pembayaran == 'sebagian')
                             Sebagian
+                        @elseif($po->status_pembayaran == 'kelebihan_bayar')
+                            Kelebihan Bayar
                         @else
                             Lunas
                         @endif
@@ -279,8 +281,15 @@
                     @forelse($returns as $index => $return)
                         @php
                             $nilaiRetur = 0;
-                            foreach ($return->details as $detail) {
-                                $nilaiRetur += $detail->harga * $detail->qty;
+                            $poDetails = $return->purchaseOrder->details;
+
+                            foreach ($return->details as $returDetail) {
+                                // Find matching PO detail for this product
+                                $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                                if ($matchingPoDetail) {
+                                    $nilaiRetur += $matchingPoDetail->harga * $returDetail->quantity;
+                                }
                             }
                         @endphp
                         <tr>

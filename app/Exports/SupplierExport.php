@@ -30,6 +30,7 @@ class SupplierExport implements FromCollection, WithHeadings, WithMapping
             'Email',
             'Nama Kontak',
             'No. HP',
+            'NPWP',
             'Tipe Produksi',
             'Catatan',
             'Status',
@@ -49,7 +50,8 @@ class SupplierExport implements FromCollection, WithHeadings, WithMapping
             $supplier->telepon,
             $supplier->email,
             $supplier->nama_kontak,
-            $supplier->no_hp, // Add no_hp mapping
+            $supplier->no_hp,
+            $supplier->NPWP,
             $supplier->type_produksi,
             $supplier->catatan,
             $supplier->is_active ? 'Aktif' : 'Nonaktif',

@@ -967,7 +967,7 @@
                         </div>
 
                         <div class="pt-2 flex flex-col gap-2">
-                            <a href="#"
+                            <a href="{{ route('pembelian.penerimaan-barang.create', ['po_id' => $purchaseOrder->id]) }}"
                                 class="status-transition w-full inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-primary-500"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -977,7 +977,7 @@
                                 Catat Penerimaan Barang
                             </a>
 
-                            <a href="#"
+                            <a href="{{ route('keuangan.pembayaran-hutang.create', ['po_id' => $purchaseOrder->id]) }}"
                                 class="status-transition w-full inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-primary-500 dark:hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-primary-500"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -986,6 +986,18 @@
                                 </svg>
                                 Catat Pembayaran
                             </a>
+
+                            @if ($purchaseOrder->status !== 'draft' && in_array($purchaseOrder->status_penerimaan, ['sebagian', 'diterima']))
+                                <a href="{{ route('pembelian.retur-pembelian.create', ['po_id' => $purchaseOrder->id]) }}"
+                                    class="status-transition w-full inline-flex items-center justify-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-amber-500 dark:hover:border-amber-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-amber-500"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                                    </svg>
+                                    Buat Retur Pembelian
+                                </a>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -997,6 +1009,98 @@
                         {!! nl2br(e($purchaseOrder->syarat_ketentuan ?? 'Tidak ada syarat dan ketentuan yang ditentukan.')) !!}
                     </div>
                 </div>
+
+                <!-- Retur Pembelian Panel -->
+                @if ($purchaseOrder->retur && $purchaseOrder->retur->count() > 0)
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mt-6">
+                        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                            <div class="flex items-center justify-between">
+                                <span>Retur Pembelian</span>
+                                <span
+                                    class="px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400">
+                                    {{ $purchaseOrder->retur->count() }} Retur
+                                </span>
+                            </div>
+                        </h2>
+
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Nomor
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Tanggal
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Status
+                                        </th>
+
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Aksi
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    @foreach ($purchaseOrder->retur as $retur)
+                                        <tr>
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $retur->nomor }}
+                                            </td>
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                {{ \Carbon\Carbon::parse($retur->tanggal)->format('d M Y') }}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                @php
+                                                    $statusColor = match ($retur->status) {
+                                                        'draft'
+                                                            => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                                        'diproses'
+                                                            => 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+                                                        'selesai'
+                                                            => 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400',
+                                                        default
+                                                            => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                                    };
+                                                @endphp
+                                                <span
+                                                    class="px-2 py-1 text-xs font-medium rounded-full {{ $statusColor }}">
+                                                    {{ ucfirst($retur->status) }}
+                                                </span>
+                                            </td>
+
+                                            <td class="px-4 py-3 whitespace-nowrap text-center">
+                                                <a href="{{ route('pembelian.retur-pembelian.show', $retur->id) }}"
+                                                    class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">
+                                                    <span
+                                                        class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 dark:hover:bg-primary-900/30 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                        </svg>
+                                                        Detail
+                                                    </span>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Activity Log -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">

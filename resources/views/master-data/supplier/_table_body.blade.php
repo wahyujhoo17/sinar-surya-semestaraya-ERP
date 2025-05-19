@@ -45,6 +45,11 @@
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                 {{ $supplier->type_produksi ?? '-' }}</td>
         @endif
+        {{-- NPWP --}}
+        @if ($visibleColumns['NPWP'] ?? true)
+            <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                {{ $supplier->NPWP ?? '-' }}</td>
+        @endif
         {{-- Status --}}
         @if ($visibleColumns['status'] ?? true)
             <td class="px-5 py-4 whitespace-nowrap">

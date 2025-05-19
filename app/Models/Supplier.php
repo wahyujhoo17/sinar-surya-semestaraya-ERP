@@ -20,6 +20,7 @@ class Supplier extends Model
         'no_hp',
         'email',
         'type_produksi',
+        'NPWP',
         'catatan',
         'is_active'
     ];

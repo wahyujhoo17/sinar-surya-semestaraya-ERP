@@ -51,13 +51,20 @@ class HutangUsahaController extends Controller
             // Get total returns for this PO
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
@@ -95,7 +102,7 @@ class HutangUsahaController extends Controller
 
         // Get returns for this PO
         $returns = ReturPembelian::where('purchase_order_id', $id)
-            ->with(['details', 'details.produk', 'user'])
+            ->with(['details', 'details.produk', 'user', 'purchaseOrder.details'])
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -104,8 +111,15 @@ class HutangUsahaController extends Controller
 
         $totalReturValue = 0;
         foreach ($returns as $return) {
-            foreach ($return->details as $detail) {
-                $totalReturValue += $detail->harga * $detail->qty;
+            $poDetails = $return->purchaseOrder->details;
+
+            foreach ($return->details as $returDetail) {
+                // Find matching PO detail for this product
+                $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                if ($matchingPoDetail) {
+                    $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                }
             }
         }
 
@@ -167,13 +181,20 @@ class HutangUsahaController extends Controller
 
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
-                ->with('details')
+                ->with(['details', 'purchaseOrder.details'])
                 ->get();
 
             $totalReturValue = 0;
             foreach ($returPembelian as $retur) {
-                foreach ($retur->details as $detail) {
-                    $totalReturValue += $detail->harga * $detail->qty;
+                $poDetails = $retur->purchaseOrder->details;
+
+                foreach ($retur->details as $returDetail) {
+                    // Find matching PO detail for this product
+                    $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                    if ($matchingPoDetail) {
+                        $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                    }
                 }
             }
 
@@ -219,7 +240,7 @@ class HutangUsahaController extends Controller
 
         // Get returns for this PO
         $returns = ReturPembelian::where('purchase_order_id', $id)
-            ->with(['details', 'details.produk', 'user'])
+            ->with(['details', 'details.produk', 'user', 'purchaseOrder.details'])
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -228,8 +249,15 @@ class HutangUsahaController extends Controller
 
         $totalReturValue = 0;
         foreach ($returns as $return) {
-            foreach ($return->details as $detail) {
-                $totalReturValue += $detail->harga * $detail->qty;
+            $poDetails = $return->purchaseOrder->details;
+
+            foreach ($return->details as $returDetail) {
+                // Find matching PO detail for this product
+                $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                if ($matchingPoDetail) {
+                    $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                }
             }
         }
 
@@ -266,7 +294,7 @@ class HutangUsahaController extends Controller
 
         // Get returns for this PO
         $retur = ReturPembelian::where('purchase_order_id', $id)
-            ->with(['details', 'details.produk', 'user'])
+            ->with(['details', 'details.produk', 'user', 'purchaseOrder.details'])
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -275,8 +303,15 @@ class HutangUsahaController extends Controller
 
         $totalReturValue = 0;
         foreach ($retur as $return) {
-            foreach ($return->details as $detail) {
-                $totalReturValue += $detail->harga * $detail->qty;
+            $poDetails = $return->purchaseOrder->details;
+
+            foreach ($return->details as $returDetail) {
+                // Find matching PO detail for this product
+                $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
+
+                if ($matchingPoDetail) {
+                    $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
+                }
             }
         }
 

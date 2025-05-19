@@ -239,14 +239,14 @@
                     <a href="/pembelian/penerimaan-barang"
                         class="{{ request()->is('pembelian/penerimaan-barang') || request()->is('pembelian/penerimaan-barang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penerimaan
                             Barang (GRN)</span></a>
-                    <a href="#"
+                    {{-- <a href="#"
                         class="{{ request()->is('pembelian/invoice') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Invoice
+                            Pembelian</span></a> --}}
+                    <a href="/pembelian/retur-pembelian"
+                        class="{{ request()->is('pembelian/retur-pembelian') || request()->is('pembelian/retur-pembelian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Retur
                             Pembelian</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pembelian/retur') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Retur
-                            Pembelian</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pembelian/riwayat') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Riwayat
+                    <a href="/pembelian/riwayat-transaksi"
+                        class="{{ request()->is('pembelian/riwayat-transaksi') || request()->is('pembelian/riwayat-transaksi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Riwayat
                             Transaksi</span></a>
                 </div>
             </div>
@@ -337,6 +337,9 @@
                             Pajak</span></a>
                     <a href="#"
                         class="{{ request()->is('keuangan/rekonsiliasi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Rekonsiliasi</span></a>
+                    <a href="/keuangan/pengembalian-dana"
+                        class="{{ request()->is('keuangan/pengembalian-dana') || request()->is('keuangan/pengembalian-dana/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pengembalian
+                            Dana</span></a>
                 </div>
             </div>
 

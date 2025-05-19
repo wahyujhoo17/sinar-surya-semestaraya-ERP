@@ -150,6 +150,7 @@
                         </label>
                         <div class="relative rounded-md shadow-sm">
                             <select name="pr_id" id="pr_id"
+                                @change="loadItemsFromPurchaseRequest($event.target.value)"
                                 class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                 <option value="">Tidak Berdasarkan PR</option>
                                 @foreach ($purchaseRequests ?? [] as $pr)
@@ -841,6 +842,29 @@
                             this.fetchSupplierProduk(supplierSelect.value);
                         } else {}
                     }
+
+                    // Check if PR ID is pre-filled or in URL
+                    const prSelect = document.getElementById('pr_id');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const prIdFromUrl = urlParams.get('pr_id');
+
+                    if (prIdFromUrl) {
+                        // Set the select box value if PR ID is in the URL
+                        if (prSelect) {
+                            prSelect.value = prIdFromUrl;
+                        }
+
+                        // Show a loading notification
+                        window.notify('Memuat item dari permintaan pembelian...', 'info', 'Memuat Data');
+
+                        // Delay slightly for better UX
+                        setTimeout(() => {
+                            this.loadItemsFromPurchaseRequest(prIdFromUrl);
+                        }, 500);
+                    } else if (prSelect && prSelect.value) {
+                        // Otherwise use the selected value if it exists
+                        this.loadItemsFromPurchaseRequest(prSelect.value);
+                    }
                 },
 
                 fetchSupplierProduk(supplierId) {
@@ -870,6 +894,75 @@
                             console.error('Error fetching supplier produk:', error);
                             this.produksData = [];
                         });
+                },
+
+                loadItemsFromPurchaseRequest(prId) {
+                    if (!prId) return;
+
+                    fetch(`/pembelian/purchase-order/pr-items?pr_id=${prId}`)
+                        .then(res => {
+                            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                            return res.json();
+                        })
+                        .then(data => {
+                            if (data && data.items && data.items.length > 0) {
+                                // Menampilkan konfirmasi sebelum mengganti item yang sudah ada
+                                if (this.items.length > 0 && this.items[0].produk_id) {
+                                    // Gunakan modal konfirmasi alih-alih alert/confirm
+                                    window.showAlert({
+                                        title: 'Konfirmasi Pergantian Item',
+                                        message: 'Item sudah ada dalam daftar. Apakah Anda ingin mengganti item yang sudah ada dengan item dari permintaan pembelian?',
+                                        type: 'info',
+                                        confirmText: 'Ya, Ganti',
+                                        cancelText: 'Batalkan',
+                                        showConfirm: true,
+                                        showCancel: true,
+                                        onConfirm: () => {
+                                            this.replaceItemsWithPrItems(data.items);
+                                        },
+                                    });
+                                    return;
+                                }
+
+                                this.replaceItemsWithPrItems(data.items);
+                            } else {
+                                // Tampilkan toast notification untuk tidak ada item
+                                window.notify('Tidak ada item ditemukan pada permintaan pembelian ini.', 'warning',
+                                    'Permintaan Pembelian Kosong');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching purchase request items:', error);
+                            window.notify('Terjadi kesalahan saat memuat item dari permintaan pembelian.', 'error',
+                                'Gagal Memuat Data');
+                        });
+                },
+
+                replaceItemsWithPrItems(prItems) {
+                    // Mengganti item yang ada dengan item dari PR
+                    this.items = prItems.map(item => ({
+                        produk_id: item.produk_id,
+                        nama_item: item.nama_item,
+                        deskripsi: item.deskripsi || '',
+                        quantity: item.quantity,
+                        satuan_id: item.satuan_id,
+                        harga: item.harga || 0,
+                        diskon_persen: item.diskon_persen || 0,
+                        diskon_nominal: item.diskon_nominal || 0,
+                        subtotal: item.subtotal || 0
+                    }));
+
+                    // Update subtotal dan total
+                    this.updateTotals();
+
+                    // Tampilkan toast notification untuk sukses
+                    const message = `
+                        <div class="flex flex-col">
+                            <span>${prItems.length} item berhasil dimuat dari permintaan pembelian.</span>
+                            <span class="text-xs mt-1">Total: ${this.formatRupiah(this.calculateSubtotal())}</span>
+                        </div>
+                    `;
+                    window.notify(message, 'success', 'Item Berhasil Dimuat');
                 },
 
                 addItem() {

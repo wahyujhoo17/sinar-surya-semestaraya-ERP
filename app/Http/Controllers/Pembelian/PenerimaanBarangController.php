@@ -11,11 +11,28 @@ use App\Models\Gudang;
 use App\Models\Supplier;
 use App\Models\StokProduk;
 use App\Models\RiwayatStok;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class PenerimaanBarangController extends Controller
 {
+    /**
+     * Helper untuk mencatat log aktivitas user
+     */
+    private function logUserAktivitas($aktivitas, $modul, $data_id = null, $detail = null)
+    {
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => $aktivitas,
+            'modul' => $modul,
+            'data_id' => $data_id,
+            'ip_address' => request()->ip(),
+            'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
+        ]);
+    }
+
     /**
      * Tampilkan daftar penerimaan barang
      */
@@ -276,9 +293,6 @@ class PenerimaanBarangController extends Controller
                 $poDetail = $po->details->where('id', $item['id'])->first();
 
                 // Skip jika tidak ada barang yang diterima
-                if ($item['qty_diterima'] <= 0) {
-                    continue;
-                }
 
                 $anyItemReceived = true;
                 $qtySisa = $poDetail->quantity - ($poDetail->quantity_diterima ?? 0);
@@ -340,6 +354,10 @@ class PenerimaanBarangController extends Controller
                 // Log an error if $po is not the expected type
                 \Illuminate\Support\Facades\Log::error('Expected PurchaseOrder instance but got ' . get_class($po), ['po_id' => $request->po_id]);
             }
+
+
+            $this->logUserAktivitas('tambah', 'penerimaan_barang', $penerimaan->id, 'Membuat penerimaan barang: ' . $penerimaan->nomor);
+            $this->logUserAktivitas('tambah', 'purchase_order', $po->id, 'Membuat penerimaan barang: ' . $penerimaan->nomor);
 
             DB::commit();
 
@@ -489,6 +507,15 @@ class PenerimaanBarangController extends Controller
             'tanggal' => $request->tanggal,
             'catatan' => $request->catatan,
         ]);
+
+        // Log aktivitas user - update penerimaan barang
+        $this->logUserAktivitas(
+            'Mengupdate penerimaan barang',
+            'Penerimaan Barang',
+            $penerimaan->id,
+            'Nomor: ' . $penerimaan->nomor
+        );
+
         return redirect()->route('pembelian.penerimaan-barang.index')->with('success', 'Data berhasil diupdate.');
     }
 
@@ -498,6 +525,16 @@ class PenerimaanBarangController extends Controller
     public function destroy($id)
     {
         $penerimaan = PenerimaanBarang::findOrFail($id);
+        $nomor = $penerimaan->nomor; // Save the number before deleting
+
+        // Log aktivitas user - hapus penerimaan barang
+        $this->logUserAktivitas(
+            'Menghapus penerimaan barang',
+            'Penerimaan Barang',
+            $id,
+            'Nomor: ' . $nomor
+        );
+
         $penerimaan->delete();
         return redirect()->route('pembelian.penerimaan-barang.index')->with('success', 'Data berhasil dihapus.');
     }

@@ -39,6 +39,7 @@ class SupplierImport implements ToModel, WithHeadingRow, WithValidation, WithChu
             'catatan'       => $row['catatan'] ?? null,
             'is_active'     => isset($row['aktif']) ? filter_var($row['aktif'], FILTER_VALIDATE_BOOLEAN) : true, // Use filter_var for boolean
             'no_hp'         => $noHp,
+            'NPWP'          => $row['npwp'] ?? null,
         ]);
     }
 

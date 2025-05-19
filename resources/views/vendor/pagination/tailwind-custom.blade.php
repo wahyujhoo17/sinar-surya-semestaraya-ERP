@@ -27,6 +27,7 @@
                     </span>
                 @else
                     <a href="{{ $paginator->previousPageUrl() }}"
+                        @click.prevent="handlePaginationClick('{{ $paginator->previousPageUrl() }}')"
                         class="pagination-link relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-l-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-10 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
@@ -44,7 +45,7 @@
                             {{ $page }}
                         </span>
                     @else
-                        <a href="{{ $url }}"
+                        <a href="{{ $url }}" @click.prevent="handlePaginationClick('{{ $url }}')"
                             class="pagination-link relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-10 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500">
                             {{ $page }}
                         </a>
@@ -54,6 +55,7 @@
                 {{-- Tombol Next --}}
                 @if ($paginator->hasMorePages())
                     <a href="{{ $paginator->nextPageUrl() }}"
+                        @click.prevent="handlePaginationClick('{{ $paginator->nextPageUrl() }}')"
                         class="pagination-link relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-r-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:z-10 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"

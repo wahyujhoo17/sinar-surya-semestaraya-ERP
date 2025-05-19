@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Notifications\DatabaseNotification;
+use App\Models\Notification;
 
 class User extends Authenticatable
 {
@@ -98,15 +98,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the entity's notifications.
+     * Get the user's notifications.
      */
     public function notifications()
     {
-        return $this->morphMany(DatabaseNotification::class, 'notifiable')->orderBy('created_at', 'desc');
+        return $this->hasMany(Notification::class, 'user_id')->orderBy('created_at', 'desc');
     }
 
     /**
-     * Get the entity's unread notifications.
+     * Get the user's unread notifications.
      */
     public function unreadNotifications()
     {
