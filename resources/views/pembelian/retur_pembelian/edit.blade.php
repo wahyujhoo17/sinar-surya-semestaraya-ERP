@@ -118,6 +118,27 @@
                             @enderror
                         </div>
 
+                        <!-- Tipe Retur -->
+                        <div class="mb-4">
+                            <label for="tipe_retur"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe
+                                Retur</label>
+                            <select name="tipe_retur" id="tipe_retur"
+                                class="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm">
+                                <option value="pengembalian_dana"
+                                    {{ old('tipe_retur', $returPembelian->tipe_retur) == 'pengembalian_dana' ? 'selected' : '' }}>
+                                    Pengembalian Dana
+                                </option>
+                                <option value="tukar_barang"
+                                    {{ old('tipe_retur', $returPembelian->tipe_retur) == 'tukar_barang' ? 'selected' : '' }}>
+                                    Tukar Barang
+                                </option>
+                            </select>
+                            @error('tipe_retur')
+                                <span class="text-sm text-red-600 dark:text-red-400">{{ $message }}</span>
+                            @enderror
+                        </div>
+
                         <!-- Catatan -->
                         <div class="mb-4">
                             <label for="catatan"

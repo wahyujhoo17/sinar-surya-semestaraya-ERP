@@ -148,6 +148,8 @@ Route::middleware(['auth'])->group(function () {
         // RETUR PEMBELIAN
         Route::post('retur-pembelian/{id}/proses', [ReturPembelianController::class, 'prosesRetur'])->name('retur-pembelian.proses');
         Route::post('retur-pembelian/{id}/selesai', [ReturPembelianController::class, 'selesaikanRetur'])->name('retur-pembelian.selesai');
+        Route::get('retur-pembelian/{id}/terima-barang-pengganti', [ReturPembelianController::class, 'showTerimaBarangPengganti'])->name('retur-pembelian.terima-barang-pengganti');
+        Route::post('retur-pembelian/{id}/terima-barang-pengganti', [ReturPembelianController::class, 'terimaBarangPengganti'])->name('retur-pembelian.proses-terima-barang-pengganti');
         Route::get('retur-pembelian/{id}/create-refund', [ReturPembelianController::class, 'createRefund'])->name('retur-pembelian.create-refund');
         Route::get('retur-pembelian/{id}/pdf', [ReturPembelianController::class, 'exportPdf'])->name('retur-pembelian.pdf');
         Route::get('retur-pembelian/get-purchase-orders', [ReturPembelianController::class, 'getPurchaseOrders'])->name('retur-pembelian.get-purchase-orders');

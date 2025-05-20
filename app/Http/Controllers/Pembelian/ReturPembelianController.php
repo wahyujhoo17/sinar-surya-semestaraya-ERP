@@ -27,7 +27,7 @@ class ReturPembelianController extends Controller
      */
     public function index(Request $request)
     {
-        $validStatuses = ['draft', 'diproses', 'selesai'];
+        $validStatuses = ['draft', 'diproses', 'menunggu_barang_pengganti', 'selesai'];
         $status = $request->input('status', 'semua');
         $search = $request->input('search');
         $supplier_id = $request->input('supplier_id');
@@ -319,6 +319,7 @@ class ReturPembelianController extends Controller
             'purchase_order_id' => 'required|exists:purchase_order,id',
             'supplier_id' => 'required|exists:supplier,id',
             'gudang_id' => 'required|exists:gudang,id',
+            'tipe_retur' => 'required|in:pengembalian_dana,tukar_barang',
             'catatan' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.produk_id' => 'required|exists:produk,id',
@@ -340,6 +341,7 @@ class ReturPembelianController extends Controller
                 'user_id' => Auth::id(),
                 'catatan' => $validated['catatan'] ?? null,
                 'status' => 'draft',
+                'tipe_retur' => $validated['tipe_retur'],
             ]);
 
             // Create retur pembelian details
@@ -458,6 +460,7 @@ class ReturPembelianController extends Controller
             'purchase_order_id' => 'required|exists:purchase_order,id',
             'supplier_id' => 'required|exists:supplier,id',
             'gudang_id' => 'required|exists:gudang,id',
+            'tipe_retur' => 'required|in:pengembalian_dana,tukar_barang',
             'catatan' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.produk_id' => 'required|exists:produk,id',
@@ -477,6 +480,7 @@ class ReturPembelianController extends Controller
                 'purchase_order_id' => $validated['purchase_order_id'],
                 'supplier_id' => $validated['supplier_id'],
                 'catatan' => $validated['catatan'] ?? null,
+                'tipe_retur' => $validated['tipe_retur'],
             ]);
 
             // Get existing detail IDs
@@ -657,35 +661,46 @@ class ReturPembelianController extends Controller
                 $totalNilaiRetur += $matchingPoDetail->harga * $detail->quantity;
             }
 
-            // Update PO payment status based on the return value
+            // Update PO payment status based on the return type and value
             $po = $returPembelian->purchaseOrder;
             $refundNeeded = false;
 
-            if ($po->status_pembayaran == 'lunas') {
-                // If PO was already paid in full, create overpayment for refund
-                $po->kelebihan_bayar = ($po->kelebihan_bayar ?? 0) + $totalNilaiRetur;
-                $po->status_pembayaran = 'kelebihan_bayar';
-                $po->save();
-                $refundNeeded = true;
-            } elseif ($po->status_pembayaran == 'belum_lunas') {
-                // If PO wasn't fully paid, reduce the debt
-                $po->sisa_hutang -= $totalNilaiRetur;
-                if ($po->sisa_hutang <= 0) {
-                    // If we now have overpayment
-                    if ($po->sisa_hutang < 0) {
-                        $po->kelebihan_bayar = abs($po->sisa_hutang);
-                        $po->sisa_hutang = 0;
-                        $po->status_pembayaran = 'kelebihan_bayar';
-                        $refundNeeded = true;
-                    } else {
-                        $po->status_pembayaran = 'lunas';
+            // Handle different behavior based on tipe_retur
+            if ($returPembelian->tipe_retur === 'pengembalian_dana') {
+                // For cash refund type, update financial status
+                if ($po->status_pembayaran == 'lunas') {
+                    // If PO was already paid in full, create overpayment for refund
+                    $po->kelebihan_bayar = ($po->kelebihan_bayar ?? 0) + $totalNilaiRetur;
+                    $po->status_pembayaran = 'kelebihan_bayar';
+                    $po->save();
+                    $refundNeeded = true;
+                } elseif ($po->status_pembayaran == 'belum_lunas') {
+                    // If PO wasn't fully paid, reduce the debt
+                    $po->sisa_hutang -= $totalNilaiRetur;
+                    if ($po->sisa_hutang <= 0) {
+                        // If we now have overpayment
+                        if ($po->sisa_hutang < 0) {
+                            $po->kelebihan_bayar = abs($po->sisa_hutang);
+                            $po->sisa_hutang = 0;
+                            $po->status_pembayaran = 'kelebihan_bayar';
+                            $refundNeeded = true;
+                        } else {
+                            $po->status_pembayaran = 'lunas';
+                        }
                     }
+                    $po->save();
                 }
-                $po->save();
+
+                // Update status to completed for pengembalian_dana
+                $returPembelian->status = 'selesai';
+            } else if ($returPembelian->tipe_retur === 'tukar_barang') {
+                // For product exchange type, set to waiting for replacement
+                $returPembelian->status = 'menunggu_barang_pengganti';
+
+                // No changes to PO financial status for tukar_barang
             }
 
-            // Update status
-            $returPembelian->status = 'selesai';
+            // Save changes to retur_pembelian
             $returPembelian->save();
 
             // Log aktivitas
@@ -694,11 +709,14 @@ class ReturPembelianController extends Controller
             DB::commit();
 
             // If refund is needed, redirect to create refund page with a message
-            if ($refundNeeded) {
+            if ($returPembelian->tipe_retur === 'pengembalian_dana' && $refundNeeded) {
                 return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
                     ->with('success', 'Retur pembelian berhasil diselesaikan. Kelebihan bayar sebesar Rp ' . number_format($po->kelebihan_bayar, 0, ',', '.') . ' tersedia untuk pengembalian dana.')
                     ->with('refundNeeded', true)
                     ->with('poId', $po->id);
+            } elseif ($returPembelian->tipe_retur === 'tukar_barang') {
+                return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
+                    ->with('success', 'Retur pembelian untuk tukar barang telah diproses. Status diubah menjadi menunggu barang pengganti. Silakan koordinasikan dengan supplier untuk penggantian barang.');
             }
 
             return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
@@ -732,6 +750,134 @@ class ReturPembelianController extends Controller
         // Redirect to create refund form with PO ID
         return redirect()->route('keuangan.pengembalian-dana.create', ['po_id' => $po->id])
             ->with('info', 'Silakan lengkapi form pengembalian dana untuk retur pembelian #' . $returPembelian->nomor);
+    }
+
+    /**
+     * Show form to record receipt of replacement products
+     */
+    public function showTerimaBarangPengganti($id)
+    {
+        $returPembelian = ReturPembelian::with([
+            'details.produk',
+            'details.satuan',
+            'supplier',
+            'purchaseOrder'
+        ])->findOrFail($id);
+
+        // Only return with status "menunggu_barang_pengganti" can receive replacement
+        if ($returPembelian->status !== 'menunggu_barang_pengganti') {
+            return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
+                ->with('error', 'Hanya retur dengan status menunggu barang pengganti yang dapat diproses.');
+        }
+
+        // Get products from supplier
+        $produks = Produk::with('satuan')
+            ->whereHas('supplierProduks', function ($query) use ($returPembelian) {
+                $query->where('supplier_id', $returPembelian->supplier_id);
+            })
+            ->orWhereIn('id', $returPembelian->details->pluck('produk_id')->toArray())
+            ->orderBy('nama')
+            ->get();
+
+        $gudangs = Gudang::where('is_active', true)->orderBy('nama')->get();
+
+        // Log aktivitas
+        $this->logActivity('akses', $returPembelian->id, 'Mengakses form penerimaan barang pengganti untuk retur: ' . $returPembelian->nomor);
+
+        return view('pembelian.retur_pembelian.terima_barang_pengganti', compact(
+            'returPembelian',
+            'produks',
+            'gudangs'
+        ));
+    }
+
+    /**
+     * Process receipt of replacement products
+     */
+    public function terimaBarangPengganti(Request $request, $id)
+    {
+        $request->validate([
+            'tanggal_penerimaan' => 'required|date',
+            'gudang_id' => 'required|exists:gudang,id',
+            'no_referensi' => 'nullable|string|max:50',
+            'catatan_penerimaan' => 'nullable|string',
+            'items' => 'required|array|min:1',
+            'items.*.produk_id' => 'required|exists:produk,id',
+            'items.*.quantity' => 'required|numeric|min:0.01',
+            'items.*.satuan_id' => 'required|exists:satuan,id'
+        ]);
+
+        $returPembelian = ReturPembelian::findOrFail($id);
+
+        // Only return with status "menunggu_barang_pengganti" can receive replacement
+        if ($returPembelian->status !== 'menunggu_barang_pengganti') {
+            return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
+                ->with('error', 'Hanya retur dengan status menunggu barang pengganti yang dapat diproses.');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Process each replacement item
+            foreach ($request->items as $item) {
+                // Find stock record for this product in the warehouse
+                $stok = StokProduk::firstOrCreate(
+                    [
+                        'produk_id' => $item['produk_id'],
+                        'gudang_id' => $request->gudang_id,
+                    ],
+                    [
+                        'jumlah' => 0,
+                        'nilai' => 0,
+                    ]
+                );
+
+                // Record current stock level
+                $jumlahSebelum = $stok->jumlah;
+
+                // Add stock - increase inventory
+                $stok->jumlah += $item['quantity'];
+                $stok->save();
+
+                // Get product name for record
+                $produk = Produk::find($item['produk_id']);
+                $produkNama = $produk ? $produk->nama : 'Produk #' . $item['produk_id'];
+
+                // Record stock history
+                RiwayatStok::create([
+                    'stok_id' => $stok->id,
+                    'produk_id' => $item['produk_id'],
+                    'gudang_id' => $request->gudang_id,
+                    'jumlah_sebelum' => $jumlahSebelum,
+                    'jumlah_perubahan' => $item['quantity'],
+                    'jumlah_setelah' => $stok->jumlah,
+                    'jenis' => 'masuk',
+                    'referensi_tipe' => 'retur_pembelian_pengganti',
+                    'referensi_id' => $returPembelian->nomor,
+                    'tanggal' => $request->tanggal_penerimaan,
+                    'keterangan' => "Penerimaan barang pengganti {$produkNama} untuk retur #{$returPembelian->nomor}",
+                    'user_id' => Auth::id()
+                ]);
+            }
+
+            // Update status to complete
+            $returPembelian->status = 'selesai';
+            $returPembelian->save();
+
+            // Log aktivitas
+            $this->logActivity(
+                'terima_barang_pengganti',
+                $returPembelian->id,
+                'Menerima barang pengganti untuk retur pembelian: ' . $returPembelian->nomor
+            );
+
+            DB::commit();
+
+            return redirect()->route('pembelian.retur-pembelian.show', $returPembelian->id)
+                ->with('success', 'Penerimaan barang pengganti berhasil diproses.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 
     /**

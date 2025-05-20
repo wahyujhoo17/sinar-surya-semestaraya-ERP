@@ -77,10 +77,21 @@
                             </svg>
                             <span>Selesaikan</span>
                         </button>
+                    @elseif($returPembelian->status === 'menunggu_barang_pengganti')
+                        <a href="{{ route('pembelian.retur-pembelian.terima-barang-pengganti', $returPembelian->id) }}"
+                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-purple-50 dark:bg-purple-900/30 text-sm font-semibold text-purple-700 dark:text-purple-400 shadow-sm ring-1 ring-inset ring-purple-600/20 dark:ring-purple-400/20 hover:bg-purple-100 dark:hover:bg-purple-900/40">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8 4m0 0l-8-4m8 4v10m-8-4l8 4 8-4" />
+                            </svg>
+                            <span>Terima Barang Pengganti</span>
+                        </a>
                     @elseif(
                         $returPembelian->status === 'selesai' &&
                             isset($returPembelian->purchaseOrder) &&
-                            $returPembelian->purchaseOrder->status_pembayaran === 'kelebihan_bayar')
+                            $returPembelian->purchaseOrder->status_pembayaran === 'kelebihan_bayar' &&
+                            $returPembelian->tipe_retur === 'pengembalian_dana')
                         <a href="{{ route('pembelian.retur-pembelian.create-refund', $returPembelian->id) }}"
                             class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/30 text-sm font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm ring-1 ring-inset ring-emerald-600/20 dark:ring-emerald-400/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -133,6 +144,30 @@
                         <div class="ml-3">
                             <p class="text-sm text-red-700 dark:text-red-300">
                                 {{ session('error') }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($returPembelian->status === 'selesai' && $returPembelian->tipe_retur === 'tukar_barang')
+            <div class="mb-6">
+                <div
+                    class="bg-purple-50 dark:bg-purple-900/30 border-l-4 border-purple-500 dark:border-purple-400 p-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-purple-400" xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-purple-700 dark:text-purple-300">
+                                Retur pembelian jenis tukar barang. Silakan koordinasikan dengan supplier untuk
+                                penggantian barang.
                             </p>
                         </div>
                     </div>
@@ -215,6 +250,10 @@
                                         $statusColor = 'blue';
                                         $statusText = 'Diproses';
                                         break;
+                                    case 'menunggu_barang_pengganti':
+                                        $statusColor = 'purple';
+                                        $statusText = 'Menunggu Barang Pengganti';
+                                        break;
                                     case 'selesai':
                                         $statusColor = 'emerald';
                                         $statusText = 'Selesai';
@@ -258,6 +297,16 @@
                                     </dd>
                                 </div>
                                 {{-- Removed Gudang section as there's no relationship defined --}}
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipe Retur</dt>
+                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
+                                        <span
+                                            class="inline-flex items-center rounded-md px-2 py-1 text-sm font-medium {{ $returPembelian->tipe_retur === 'pengembalian_dana' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 ring-1 ring-inset ring-purple-600/20 dark:ring-purple-400/20' }}">
+                                            {{ $returPembelian->tipe_retur === 'pengembalian_dana' ? 'Pengembalian Dana' : 'Tukar Barang' }}
+                                        </span>
+                                    </dd>
+                                </div>
+
                                 <div class="grid grid-cols-3 gap-2 py-3">
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Catatan</dt>
                                     <dd class="col-span-2 text-sm text-gray-900 dark:text-white">

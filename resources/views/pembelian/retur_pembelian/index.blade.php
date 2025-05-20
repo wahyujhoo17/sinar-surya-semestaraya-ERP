@@ -7,6 +7,8 @@
                 return 'gray';
             case 'diproses':
                 return 'blue';
+            case 'menunggu_barang_pengganti':
+                return 'purple';
             case 'selesai':
                 return 'emerald';
             default:
@@ -22,10 +24,31 @@
                 return '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>';
             case 'diproses':
                 return '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>';
+            case 'menunggu_barang_pengganti':
+                return '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
             case 'selesai':
                 return '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
             default:
                 return '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+        }
+    }
+
+    // Helper function to format status text to display version (without underscores)
+    function formatStatusText($status)
+    {
+        switch ($status) {
+            case 'draft':
+                return 'Draft';
+            case 'diproses':
+                return 'Diproses';
+            case 'menunggu_barang_pengganti':
+                return 'Menunggu Barang Pengganti';
+            case 'selesai':
+                return 'Selesai';
+            case 'semua':
+                return 'Semua';
+            default:
+                return ucfirst($status);
         }
     }
 @endphp
@@ -74,7 +97,7 @@
                     </div>
                     <div class="p-4">
                         <p class="text-sm font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                            {{ ucfirst($status) }}</p>
+                            {{ formatStatusText($status) }}</p>
                         <div class="mt-2 flex items-baseline">
                             <p class="text-2xl font-bold text-gray-900 dark:text-white">
                                 {{ $statusCounts[$status] ?? 0 }}
@@ -117,7 +140,7 @@
                                         <span
                                             class="w-2 h-2 rounded-full bg-{{ returStatusColor($status) }}-500"></span>
                                     @endif
-                                    {{ $status == 'semua' ? 'Semua' : ucfirst($status) }}
+                                    {{ formatStatusText($status) }}
                                 </span>
                             </button>
                         @endforeach

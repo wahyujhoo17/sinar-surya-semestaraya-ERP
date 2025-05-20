@@ -106,6 +106,10 @@
             </th>
             <th
                 class="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                Tipe Retur
+            </th>
+            <th
+                class="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                 Status
             </th>
             <th
@@ -140,6 +144,12 @@
                     </div>
                 </td>
                 <td class="px-5 py-4 whitespace-nowrap">
+                    <span
+                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium {{ $retur->tipe_retur === 'pengembalian_dana' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-400 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400 ring-1 ring-inset ring-purple-600/20 dark:ring-purple-400/20' }}">
+                        {{ $retur->tipe_retur === 'pengembalian_dana' ? 'Pengembalian Dana' : 'Tukar Barang' }}
+                    </span>
+                </td>
+                <td class="px-5 py-4 whitespace-nowrap">
                     @php
                         $statusColor = '';
                         $statusText = '';
@@ -152,6 +162,10 @@
                             case 'diproses':
                                 $statusColor = 'blue';
                                 $statusText = 'Diproses';
+                                break;
+                            case 'menunggu_barang_pengganti':
+                                $statusColor = 'purple';
+                                $statusText = 'Menunggu Barang Pengganti';
                                 break;
                             case 'selesai':
                                 $statusColor = 'emerald';

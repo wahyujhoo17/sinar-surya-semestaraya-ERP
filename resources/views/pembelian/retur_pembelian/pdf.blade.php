@@ -243,6 +243,15 @@
         ({{ \Carbon\Carbon::parse($returPembelian->purchaseOrder->tanggal)->format('d/m/Y') }})
     </div>
 
+    <!-- Tipe Retur Info -->
+    <div class="notes-box">
+        <strong>Tipe Retur:</strong>
+        <span
+            style="color: {{ $returPembelian->tipe_retur === 'pengembalian_dana' ? '#c2410c' : '#7e22ce' }}; font-weight: bold;">
+            {{ $returPembelian->tipe_retur === 'pengembalian_dana' ? 'Pengembalian Dana' : 'Tukar Barang' }}
+        </span>
+    </div>
+
     @if ($returPembelian->catatan)
         <div class="notes-box">
             <strong>Catatan:</strong> {{ $returPembelian->catatan }}

@@ -18,7 +18,8 @@ class ReturPembelian extends Model
         'supplier_id',
         'user_id',
         'catatan',
-        'status' // 'draft', 'diproses', 'selesai'
+        'status', // 'draft', 'diproses', 'menunggu_barang_pengganti', 'selesai'
+        'tipe_retur' // 'pengembalian_dana', 'tukar_barang'
     ];
 
     protected $casts = [
