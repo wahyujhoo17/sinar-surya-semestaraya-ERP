@@ -12,17 +12,37 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // For PostgreSQL, we need to drop existing check constraint and create a new type
+        // First, get info about any existing check constraints on the status column
+        $checkConstraintName = DB::select("
+            SELECT con.conname
+            FROM pg_constraint con
+            INNER JOIN pg_class rel ON rel.oid = con.conrelid
+            INNER JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+            INNER JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ANY(con.conkey)
+            WHERE rel.relname = 'retur_pembelian'
+            AND att.attname = 'status'
+            AND con.contype = 'c'
+        ");
+
+        // Drop any existing check constraint
+        if (!empty($checkConstraintName)) {
+            $constraintName = $checkConstraintName[0]->conname;
+            DB::statement("ALTER TABLE retur_pembelian DROP CONSTRAINT IF EXISTS {$constraintName}");
+        }
+
+        // For PostgreSQL, we need to modify the column properly
         Schema::table('retur_pembelian', function (Blueprint $table) {
             // First, drop the default constraint
             DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status DROP DEFAULT");
 
-            // Create a new ENUM type if it doesn't exist yet
-            DB::statement("DROP TYPE IF EXISTS retur_pembelian_status_enum CASCADE");
-            DB::statement("CREATE TYPE retur_pembelian_status_enum AS ENUM('draft', 'diproses', 'menunggu_barang_pengganti', 'selesai')");
+            // Convert status to text type temporarily to remove any enum constraints
+            DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status TYPE TEXT");
 
-            // Change the column type to use the new enum and set the default
-            DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status TYPE retur_pembelian_status_enum USING status::text::retur_pembelian_status_enum");
+            // Now add the check constraint to match our enum values
+            DB::statement("ALTER TABLE retur_pembelian ADD CONSTRAINT retur_pembelian_status_check 
+                CHECK (status IN ('draft', 'diproses', 'menunggu_barang_pengganti', 'selesai'))");
+
+            // Set the default back
             DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status SET DEFAULT 'draft'");
         });
     }
@@ -32,26 +52,38 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // For PostgreSQL, we need to revert back to the previous enum values
+        // Get any existing check constraint on the status column
+        $checkConstraintName = DB::select("
+            SELECT con.conname
+            FROM pg_constraint con
+            INNER JOIN pg_class rel ON rel.oid = con.conrelid
+            INNER JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
+            INNER JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ANY(con.conkey)
+            WHERE rel.relname = 'retur_pembelian'
+            AND att.attname = 'status'
+            AND con.contype = 'c'
+        ");
+
+        // Drop any existing check constraint
+        if (!empty($checkConstraintName)) {
+            $constraintName = $checkConstraintName[0]->conname;
+            DB::statement("ALTER TABLE retur_pembelian DROP CONSTRAINT IF EXISTS {$constraintName}");
+        }
+
+        // For PostgreSQL, revert back to previous check constraint
         Schema::table('retur_pembelian', function (Blueprint $table) {
             // First, drop the default constraint
             DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status DROP DEFAULT");
 
-            // Create a new ENUM type for the previous version
-            DB::statement("DROP TYPE IF EXISTS retur_pembelian_status_enum_old CASCADE");
-            DB::statement("CREATE TYPE retur_pembelian_status_enum_old AS ENUM('draft', 'diproses', 'selesai')");
+            // Update any 'menunggu_barang_pengganti' values to 'diproses'
+            DB::statement("UPDATE retur_pembelian SET status = 'diproses' WHERE status = 'menunggu_barang_pengganti'");
 
-            // Change the column type to use the previous enum and set the default
-            DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status TYPE retur_pembelian_status_enum_old USING 
-                CASE 
-                    WHEN status::text = 'menunggu_barang_pengganti' THEN 'diproses'::text
-                    ELSE status::text
-                END::retur_pembelian_status_enum_old");
+            // Add back the original constraint
+            DB::statement("ALTER TABLE retur_pembelian ADD CONSTRAINT retur_pembelian_status_check 
+                CHECK (status IN ('draft', 'diproses', 'selesai'))");
+
+            // Set default back
             DB::statement("ALTER TABLE retur_pembelian ALTER COLUMN status SET DEFAULT 'draft'");
-
-            // Rename the type to match the original name
-            DB::statement("DROP TYPE IF EXISTS retur_pembelian_status_enum CASCADE");
-            DB::statement("ALTER TYPE retur_pembelian_status_enum_old RENAME TO retur_pembelian_status_enum");
         });
     }
 };
