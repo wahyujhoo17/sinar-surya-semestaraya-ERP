@@ -242,6 +242,7 @@ class PurchasingOrderController extends Controller
             'diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0',
+            'ongkos_kirim' => 'nullable|numeric|min:0',
             'include_ppn' => 'nullable|boolean',
             'total' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
@@ -273,7 +274,12 @@ class PurchasingOrderController extends Controller
         $ppn_persen = 11; // default 11%
         $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
-        $total = $after_discount + $ppn_nominal;
+
+        // Ongkos kirim
+        $ongkos_kirim = floatval($request->input('ongkos_kirim', 0));
+
+        // Total = Subtotal setelah diskon + PPN + Ongkos kirim
+        $total = $after_discount + $ppn_nominal + $ongkos_kirim;
 
         try {
             DB::beginTransaction();
@@ -293,6 +299,7 @@ class PurchasingOrderController extends Controller
                 'diskon_persen' => $validated['diskon_persen'] ?? 0,
                 'diskon_nominal' => $diskon_nominal,
                 'ppn' => $includePPN ? $ppn_persen : 0, // simpan persentase PPN
+                'ongkos_kirim' => $ongkos_kirim,
                 'total' => $total,
                 'status' => $validated['status'],
                 'status_pembayaran' => 'belum_bayar',
@@ -425,6 +432,7 @@ class PurchasingOrderController extends Controller
             'diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0',
+            'ongkos_kirim' => 'nullable|numeric|min:0',
             'include_ppn' => 'nullable|boolean',
             'total' => 'required|numeric|min:0',
             'items' => 'required|array|min:1',
@@ -455,7 +463,12 @@ class PurchasingOrderController extends Controller
         $ppn_persen = 11; // default 11%
         $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
-        $total = $after_discount + $ppn_nominal;
+
+        // Ongkos kirim
+        $ongkos_kirim = floatval($request->input('ongkos_kirim', 0));
+
+        // Total = Subtotal setelah diskon + PPN + Ongkos kirim
+        $total = $after_discount + $ppn_nominal + $ongkos_kirim;
 
         try {
             DB::beginTransaction();
@@ -473,6 +486,7 @@ class PurchasingOrderController extends Controller
                 'diskon_persen' => $validated['diskon_persen'] ?? 0,
                 'diskon_nominal' => $diskon_nominal,
                 'ppn' => $includePPN ? $ppn_persen : 0, // simpan persentase PPN
+                'ongkos_kirim' => $ongkos_kirim,
                 'total' => $total,
                 'status' => $validated['status'],
             ]);

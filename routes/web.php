@@ -25,6 +25,7 @@ use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
+use App\Http\Controllers\Produksi\BOMController;
 
 /*
 |--------------------------------------------------------------------------
@@ -156,6 +157,17 @@ Route::middleware(['auth'])->group(function () {
         //RIWAYAT TRANSAKSI
         Route::get('riwayat-transaksi', [RiwayatTransaksiController::class, 'index'])->name('riwayat-transaksi.index');
         Route::get('riwayat-transaksi/{id}', [RiwayatTransaksiController::class, 'show'])->name('riwayat-transaksi.show');
+    });
+
+    Route::prefix('produksi')->name('produksi.')->group(function () {
+        // Bill of Material (BOM) Routes
+        Route::get('bom/{id}/get', [BOMController::class, 'getById'])->name('bom.get');
+        Route::get('bom-data', [BOMController::class, 'data'])->name('bom.data');
+        Route::post('bom/{id}/components', [BOMController::class, 'addComponent'])->name('bom.add-component');
+        Route::put('bom-component/{id}', [BOMController::class, 'updateComponent'])->name('bom.update-component');
+        Route::delete('bom-component/{id}', [BOMController::class, 'deleteComponent'])->name('bom.delete-component');
+        Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');
+        Route::resource('bom', BOMController::class);
     });
 
     // -- HR & Karyawan --

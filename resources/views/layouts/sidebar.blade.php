@@ -147,8 +147,8 @@
                     <a href="#"
                         class="{{ request()->is('produksi/wo') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perintah
                             Produksi (WO)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('produksi/bom') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Bill
+                    <a href="/produksi/bom"
+                        class="{{ request()->is('produksi/bom') || request()->is('produksi/bom/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Bill
                             of Materials (BOM)</span></a>
                     <a href="#"
                         class="{{ request()->is('produksi/perencanaan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perencanaan

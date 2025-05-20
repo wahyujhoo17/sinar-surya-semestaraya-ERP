@@ -272,6 +272,12 @@
                     {{ number_format($purchaseOrder->subtotal * ($purchaseOrder->ppn / 100), 0, ',', '.') }}</td>
             </tr>
         @endif
+        @if ($purchaseOrder->ongkos_kirim > 0)
+            <tr>
+                <td>Ongkos Kirim</td>
+                <td class="text-right">Rp {{ number_format($purchaseOrder->ongkos_kirim, 0, ',', '.') }}</td>
+            </tr>
+        @endif
         <tr class="total-row">
             <td><strong>Total</strong></td>
             <td class="text-right"><strong>Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}</strong></td>

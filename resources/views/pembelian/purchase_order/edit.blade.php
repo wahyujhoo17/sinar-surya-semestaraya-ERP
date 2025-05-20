@@ -624,9 +624,23 @@
                                                 <div
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                                                </div>
-                                                <input type="number" name="ppn" x-model="ppn" readonly
+                                                </div> <input type="number" name="ppn" x-model="ppn" readonly
                                                     class="bg-gray-50 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md">
+                                            </div>
+                                        </div>
+
+                                        {{-- Ongkos Kirim --}}
+                                        <div class="flex justify-between items-center space-x-4">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Ongkos Kirim:</span>
+                                            <div class="relative">
+                                                <div
+                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                                </div>
+                                                <input type="number" name="ongkos_kirim" x-model="ongkosKirim"
+                                                    @input="updateTotals()" min="0" placeholder="0"
+                                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                                                    @if ($purchaseOrder->status !== 'draft') readonly @endif>
                                             </div>
                                         </div>
 
@@ -874,6 +888,7 @@
                 diskonPersen: {{ $purchaseOrder->diskon_persen ?? 0 }},
                 diskonNominal: {{ $purchaseOrder->diskon_nominal ?? 0 }},
                 ppn: {{ $purchaseOrder->ppn ? $purchaseOrder->ppn : 0 }}, // Use actual PPN value if stored, else 0
+                ongkosKirim: {{ $purchaseOrder->ongkos_kirim ?? 0 }},
                 includePPN: {{ $purchaseOrder->ppn > 0 ? 'true' : 'false' }},
                 produksData: @json($produks ?? []),
                 isDraftStatus: {{ $purchaseOrder->status === 'draft' ? 'true' : 'false' }},
@@ -1062,13 +1077,18 @@
                         this.ppn = 0;
                     }
                     if (isNaN(this.ppn)) this.ppn = 0;
+
+                    // Ensure ongkos kirim is a valid number
+                    this.ongkosKirim = parseFloat(this.ongkosKirim || 0);
+                    if (isNaN(this.ongkosKirim) || this.ongkosKirim < 0) this.ongkosKirim = 0;
                 },
 
                 calculateTotal() {
                     const subtotal = this.calculateSubtotal();
                     const diskon = parseFloat(this.diskonNominal || 0);
                     const ppnAmount = parseFloat(this.ppn || 0);
-                    let total = subtotal - diskon + ppnAmount;
+                    const ongkosKirim = parseFloat(this.ongkosKirim || 0);
+                    let total = subtotal - diskon + ppnAmount + ongkosKirim;
                     return isNaN(total) ? 0 : total;
                 },
 

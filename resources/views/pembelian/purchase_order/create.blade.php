@@ -596,6 +596,20 @@
                                             </div>
                                         </div>
 
+                                        {{-- Ongkos Kirim --}}
+                                        <div class="flex justify-between items-center space-x-4">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300">Ongkos Kirim:</span>
+                                            <div class="relative">
+                                                <div
+                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                                </div>
+                                                <input type="number" name="ongkos_kirim" x-model="ongkosKirim"
+                                                    @input="updateTotals()" min="0" placeholder="0"
+                                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                            </div>
+                                        </div>
+
                                         {{-- Divider --}}
                                         <div class="border-t border-gray-200 dark:border-gray-600 my-3"></div>
 
@@ -812,6 +826,7 @@
                 diskonPersen: 0,
                 diskonNominal: 0,
                 ppn: 0,
+                ongkosKirim: 0,
                 includePPN: true,
                 produksData: @json($produks ?? []),
 
@@ -1084,13 +1099,18 @@
                         this.ppn = 0;
                     }
                     if (isNaN(this.ppn)) this.ppn = 0;
+
+                    // Ensure ongkos kirim is a valid number
+                    this.ongkosKirim = parseFloat(this.ongkosKirim || 0);
+                    if (isNaN(this.ongkosKirim) || this.ongkosKirim < 0) this.ongkosKirim = 0;
                 },
 
                 calculateTotal() {
                     const subtotal = this.calculateSubtotal();
                     const diskon = parseFloat(this.diskonNominal || 0);
                     const ppnAmount = parseFloat(this.ppn || 0);
-                    let total = subtotal - diskon + ppnAmount;
+                    const ongkosKirim = parseFloat(this.ongkosKirim || 0);
+                    let total = subtotal - diskon + ppnAmount + ongkosKirim;
                     return isNaN(total) ? 0 : total;
                 },
 

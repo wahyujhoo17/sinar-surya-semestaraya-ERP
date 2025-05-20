@@ -591,6 +591,15 @@
                             </tr>
                             <tr>
                                 <th colspan="4"
+                                    class="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                    Ongkos Kirim:
+                                </th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ $po->ongkos_kirim > 0 ? 'Rp ' . number_format($po->ongkos_kirim, 0, ',', '.') : '-' }}
+                                </th>
+                            </tr>
+                            <tr>
+                                <th colspan="4"
                                     class="px-6 py-3 text-right text-sm font-bold text-gray-900 dark:text-white">
                                     Total:
                                 </th>
@@ -803,6 +812,12 @@
                                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Hutang</dt>
                                     <dd class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
                                         Rp {{ number_format($po->total, 0, ',', '.') }}
+                                    </dd>
+                                </div>
+                                <div class="sm:col-span-1">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Ongkos Kirim</dt>
+                                    <dd class="mt-2 text-base font-semibold text-gray-900 dark:text-white">
+                                        {{ $po->ongkos_kirim > 0 ? 'Rp ' . number_format($po->ongkos_kirim, 0, ',', '.') : '-' }}
                                     </dd>
                                 </div>
                                 <div class="sm:col-span-1">

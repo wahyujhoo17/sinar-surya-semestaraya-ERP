@@ -248,6 +248,11 @@
             <span class="summary-value">Rp {{ number_format($totalRetur, 0, ',', '.') }}</span>
         </div>
         <div class="summary-item">
+            <span class="summary-label">Total Ongkos Kirim:</span>
+            <span class="summary-value">Rp
+                {{ number_format($purchaseOrders->sum('ongkos_kirim'), 0, ',', '.') }}</span>
+        </div>
+        <div class="summary-item">
             <span class="summary-label">Total Sisa Hutang:</span>
             <span class="summary-value">Rp {{ number_format($totalSisaHutang, 0, ',', '.') }}</span>
         </div>

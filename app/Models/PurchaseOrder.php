@@ -21,6 +21,7 @@ class PurchaseOrder extends Model
         'diskon_persen',
         'diskon_nominal',
         'ppn',
+        'ongkos_kirim',
         'total',
         'status',  // Added missing status field
         'status_pembayaran', // 'belum_bayar', 'sebagian', 'lunas', 'kelebihan_bayar'

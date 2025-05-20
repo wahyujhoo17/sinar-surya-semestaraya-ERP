@@ -780,6 +780,11 @@ class ReturPembelianController extends Controller
      */
     public function exportPdf(string $id)
     {
+        // Increase the execution time limit for PDF generation
+        ini_set('max_execution_time', 300); // Set to 5 minutes (300 seconds)
+        // Increase memory limit for larger PDF generation
+        ini_set('memory_limit', '512M');
+
         $returPembelian = ReturPembelian::with([
             'purchaseOrder',
             'supplier',
@@ -788,8 +793,37 @@ class ReturPembelianController extends Controller
             'details.satuan'
         ])->findOrFail($id);
 
-        $pdf = Pdf::loadView('pembelian.retur_pembelian.pdf', compact('returPembelian'));
-        return $pdf->download('Retur-Pembelian-' . $returPembelian->nomor . '.pdf');
+        // Fix the typo in the namespace, it should be Models not Modals
+        $company = \App\Models\Company::first();
+
+        // Cache key based on retur pembelian ID and its updated timestamp to ensure fresh data
+        $cacheKey = 'retur_pembelian_pdf_' . $id . '_' . $returPembelian->updated_at->timestamp;
+        $cacheDuration = 60; // Cache for 1 hour (60 minutes)
+
+        // Try to get PDF from cache first
+        if (\Illuminate\Support\Facades\Cache::has($cacheKey) && config('app.env') !== 'local') {
+            $pdf = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        } else {
+            // Generate PDF if not in cache
+            $pdf = Pdf::loadView('pembelian.retur_pembelian.pdf', compact('returPembelian', 'company'));
+            // Set paper size and optimize for the PDF
+            $pdf->setPaper('a4');
+
+            // Store in cache if not in local environment
+            if (config('app.env') !== 'local') {
+                \Illuminate\Support\Facades\Cache::put($cacheKey, $pdf, $cacheDuration);
+            }
+        }
+
+        // Check if we should stream or download the PDF
+        $action = request()->query('action', 'download');
+        $filename = 'Retur-Pembelian-' . $returPembelian->nomor . '.pdf';
+
+        if ($action === 'stream') {
+            return $pdf->stream($filename);
+        } else {
+            return $pdf->download($filename);
+        }
     }
 
     /**

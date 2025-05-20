@@ -221,6 +221,10 @@
                 <td>Rp {{ number_format($po->ppn, 0, ',', '.') }}</td>
             </tr>
             <tr>
+                <th>Ongkos Kirim:</th>
+                <td>{{ $po->ongkos_kirim > 0 ? 'Rp ' . number_format($po->ongkos_kirim, 0, ',', '.') : '-' }}</td>
+            </tr>
+            <tr>
                 <th class="font-bold">Total:</th>
                 <td class="font-bold">Rp {{ number_format($po->total, 0, ',', '.') }}</td>
             </tr>

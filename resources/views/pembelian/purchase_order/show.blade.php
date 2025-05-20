@@ -698,6 +698,13 @@
                                     </span>
                                 @endif
 
+                                @if ($purchaseOrder->ongkos_kirim > 0)
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">Ongkos Kirim:</span>
+                                    <span class="text-sm text-gray-900 dark:text-white font-medium">
+                                        {{ number_format($purchaseOrder->ongkos_kirim, 0, ',', '.') }}
+                                    </span>
+                                @endif
+
                                 <span class="text-base text-gray-800 dark:text-gray-200 font-semibold">Total:</span>
                                 <span
                                     class="text-base text-gray-900 dark:text-white font-bold">{{ number_format($purchaseOrder->total, 0, ',', '.') }}</span>
