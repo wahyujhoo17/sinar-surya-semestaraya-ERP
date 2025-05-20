@@ -852,7 +852,7 @@ class ReturPembelianController extends Controller
                     'jumlah_setelah' => $stok->jumlah,
                     'jenis' => 'masuk',
                     'referensi_tipe' => 'retur_pembelian_pengganti',
-                    'referensi_id' => $returPembelian->nomor,
+                    'referensi_id' => $returPembelian->id, // Using numerical ID instead of nomor string
                     'tanggal' => $request->tanggal_penerimaan,
                     'keterangan' => "Penerimaan barang pengganti {$produkNama} untuk retur #{$returPembelian->nomor}",
                     'user_id' => Auth::id()
