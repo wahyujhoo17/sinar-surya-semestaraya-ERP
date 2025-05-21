@@ -41,15 +41,16 @@
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kode akan dibuat otomatis</p>
                         </div>
                         <div>
-                            <label for="company"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perusahaan</label>
-                            <input type="text" name="company" id="company" x-model="formData.company"
+                            <label for="nama"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama <span
+                                    class="text-red-600">*</span></label>
+                            <input type="text" name="nama" id="nama" x-model="formData.nama"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
-                            <label for="nama"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama</label>
-                            <input type="text" name="nama" id="nama" x-model="formData.nama"
+                            <label for="company"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perusahaan</label>
+                            <input type="text" name="company" id="company" x-model="formData.company"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
@@ -138,7 +139,16 @@
                             </select>
                         </div>
                     </div>
-                    <!-- Input alamat dihapus karena terisi otomatis -->
+                    <div class="mb-4">
+                        <label for="alamat"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat
+                            Perusahaan</label>
+                        <textarea name="alamat" id="alamat" x-model="formData.alamat" rows="2" readonly
+                            class="w-full rounded-md bg-gray-50 dark:bg-gray-600 border-gray-300 dark:border-gray-600 dark:text-gray-300 shadow-sm"></textarea>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Alamat akan dibuat otomatis dari
+                            Jalan, Kota, Provinsi, Kode Pos, dan Negara</p>
+                    </div>
+
                     <div class="mb-4">
                         <label for="alamat_pengiriman"
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat

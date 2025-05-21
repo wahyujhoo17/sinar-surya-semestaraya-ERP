@@ -309,6 +309,53 @@
                                             </dd>
                                         </div>
 
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">NPWP
+                                            </dt>
+                                            <dd class="mt-1 text-sm text-gray-900 dark:text-white flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                {{ $customer->npwp ?: 'Tidak ada' }}
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kontak
+                                                Person
+                                            </dt>
+                                            <dd class="mt-1 text-sm text-gray-900 dark:text-white flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                </svg>
+                                                {{ $customer->kontak_person ?: 'Tidak ada' }}
+                                            </dd>
+                                        </div>
+
+                                        <div>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">No HP
+                                                Kontak
+                                            </dt>
+                                            <dd class="mt-1 text-sm text-gray-900 dark:text-white flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                    class="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                </svg>
+                                                {{ $customer->no_hp_kontak ?: 'Tidak ada' }}
+                                            </dd>
+                                        </div>
+
                                         <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
                                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status
                                                 Pelanggan</dt>
@@ -324,6 +371,16 @@
                                                         Nonaktif
                                                     </span>
                                                 @endif
+                                            </dd>
+                                        </div>
+
+                                        <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat
+                                                Pengiriman
+                                            </dt>
+                                            <dd
+                                                class="mt-2 text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md border border-gray-200 dark:border-gray-700 max-h-32 overflow-y-auto">
+                                                {!! nl2br(e($customer->alamat_pengiriman ?: 'Tidak ada alamat pengiriman.')) !!}
                                             </dd>
                                         </div>
 

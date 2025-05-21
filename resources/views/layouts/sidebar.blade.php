@@ -183,8 +183,8 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'penjualan'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('penjualan/quotation') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Quotation</span></a>
+                    <a href="/penjualan/quotation"
+                        class="{{ request()->is('penjualan/quotation') || request()->is('penjualan/quotation/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Quotation</span></a>
                     <a href="#"
                         class="{{ request()->is('penjualan/so') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Sales
                             Order (SO)</span></a>
@@ -290,6 +290,45 @@
                     <a href="#"
                         class="{{ request()->is('hr/struktur') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Struktur
                             Organisasi</span></a>
+                </div>
+            </div>
+
+            <!-- CRM -->
+            <div>
+                <button @click="toggleDropdown('crm')"
+                    class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
+                    :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'crm' }">
+                    <div class="flex items-center">
+                        <div
+                            class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <svg class="h-5 w-5 {{ request()->routeIs('crm.*') ? 'text-blue-600' : '' }}"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <span>CRM</span>
+                    </div>
+                    <svg class="h-5 w-5"
+                        :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'crm' }"
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div x-show="activeDropdown === 'crm'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <a href="#"
+                        class="{{ request()->is('crm/prospek') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Prospek
+                            & Lead</span></a>
+                    <a href="#"
+                        class="{{ request()->is('crm/aktivitas') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Aktivitas
+                            & Follow-up</span></a>
+                    <a href="#"
+                        class="{{ request()->is('crm/pipeline') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pipeline
+                            Penjualan</span></a>
+                    <a href="#"
+                        class="{{ request()->is('crm/laporan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                            CRM</span></a>
                 </div>
             </div>
 

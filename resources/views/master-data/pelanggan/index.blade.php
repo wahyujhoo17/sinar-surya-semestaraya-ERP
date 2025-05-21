@@ -175,7 +175,21 @@
                                                     <input type="checkbox" x-model="visibleColumns[column]"
                                                         class="mr-2 rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
                                                     <span
-                                                        x-text="column.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())"></span>
+                                                        x-text="{
+                                                            kode: 'Kode',
+                                                            nama: 'Nama',
+                                                            tipe: 'Tipe',
+                                                            company: 'Perusahaan',
+                                                            telepon: 'Telepon',
+                                                            email: 'Email',
+                                                            npwp: 'NPWP',
+                                                            no_hp_kontak: 'No HP Kontak',
+                                                            nama_kontak: 'Nama Kontak', // Tambahkan label ini
+                                                            alamat_pengiriman: 'Alamat Pengiriman',
+                                                            alamat: 'Alamat',
+                                                            sales_name: 'Sales',
+                                                            status: 'Status',
+                                                        }[column] || column"></span>
                                                 </label>
                                             </template>
                                         </div>
@@ -400,6 +414,34 @@
                                                 Email
                                             </th>
                                         </template>
+                                        {{-- NPWP --}}
+                                        <template x-if="visibleColumns.npwp">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                NPWP
+                                            </th>
+                                        </template>
+                                        {{-- No HP Kontak --}}
+                                        <template x-if="visibleColumns.no_hp_kontak">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                No HP
+                                            </th>
+                                        </template>
+                                        {{-- Nama Kontak --}}
+                                        <template x-if="visibleColumns.nama_kontak">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                Nama Kontak
+                                            </th>
+                                        </template>
+                                        {{-- Alamat Pengiriman --}}
+                                        <template x-if="visibleColumns.alamat_pengiriman">
+                                            <th
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                Alamat Pengiriman
+                                            </th>
+                                        </template>
                                         {{-- Alamat --}}
                                         <template x-if="visibleColumns.alamat">
                                             <th
@@ -559,9 +601,11 @@
                     company: true,
                     telepon: true,
                     email: true,
+                    npwp: true, // Added
+                    no_hp_kontak: true, // Added
+                    nama_kontak: false, // Default hidden
+                    alamat_pengiriman: true, // Added
                     alamat: true, // Add alamat back, set default to true
-                    // kota: false, // Removed
-                    // provinsi: false, // Removed
                     sales_name: false, // Default hidden
                     status: true, // is_active
                 };

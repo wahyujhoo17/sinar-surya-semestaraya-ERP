@@ -26,6 +26,7 @@ use App\Http\Controllers\Keuangan\PembayaranHutangController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
+use App\Http\Controllers\Penjualan\QuotationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -124,6 +125,12 @@ Route::middleware(['auth'])->group(function () {
         Route::get('penyesuaian-stok/{id}/pdf', [PenyesuaianStokController::class, 'printPdf'])->name('penyesuaian-stok.pdf');
         Route::get('penyesuaian-stok/pdf/draft', [PenyesuaianStokController::class, 'printDraftPdf'])->name('penyesuaian-stok.pdf.draft');
         Route::resource('penyesuaian-stok', PenyesuaianStokController::class);
+    });
+
+    Route::prefix('penjualan')->name('penjualan.')->group(function () {
+        Route::resource('quotation', QuotationController::class);
+        Route::post('quotation/{quotation}/change-status', [QuotationController::class, 'changeStatus'])->name('quotation.changeStatus');
+        Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
     });
 
     // --- PEMBELIAN ---

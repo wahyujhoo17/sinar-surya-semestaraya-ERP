@@ -43,6 +43,30 @@
                 <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->email ?? '-' }}</span>
             </td>
         @endif
+        {{-- NPWP --}}
+        @if ($visibleColumns['npwp'] ?? true)
+            <td class="px-5 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->npwp ?? '-' }}</span>
+            </td>
+        @endif
+        {{-- No HP Kontak --}}
+        @if ($visibleColumns['no_hp_kontak'] ?? true)
+            <td class="px-5 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->no_hp_kontak ?? '-' }}</span>
+            </td>
+        @endif
+        {{-- Nama Kontak --}}
+        @if ($visibleColumns['nama_kontak'] ?? false)
+            <td class="px-5 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->kontak_person ?? '-' }}</span>
+            </td>
+        @endif
+        {{-- Alamat Pengiriman --}}
+        @if ($visibleColumns['alamat_pengiriman'] ?? true)
+            <td class="px-5 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->alamat_pengiriman ?? '-' }}</span>
+            </td>
+        @endif
         {{-- Alamat --}}
         @if ($visibleColumns['alamat'] ?? true)
             {{-- Match default visibility --}}

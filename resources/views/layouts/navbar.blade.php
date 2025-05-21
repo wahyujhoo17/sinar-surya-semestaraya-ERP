@@ -160,7 +160,7 @@
             return {
                 isOpen: false,
                 notifications: [],
-
+                unreadCount: 0,
 
                 init() {
                     this.loadNotifications();

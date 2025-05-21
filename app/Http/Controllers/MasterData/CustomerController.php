@@ -256,7 +256,7 @@ class CustomerController extends Controller
     {
         return [
             'kode' => 'required|unique:customer,kode,' . $id . '|max:50',
-            'nama' => 'required|max:255',
+            'nama' => 'nullable|max:255',
             'tipe' => 'nullable|max:50',
             'jalan' => 'nullable|max:255',
             'kota' => 'nullable|max:100',
@@ -268,6 +268,7 @@ class CustomerController extends Controller
             'industri' => 'nullable|max:100',
             'sales_name' => 'nullable|max:100',
             'alamat' => 'nullable|max:255',
+            'alamat_pengiriman' => 'nullable|max:255',
             'telepon' => 'nullable|max:50',
             'email' => 'nullable|email|max:100',
             'npwp' => 'nullable|max:50',

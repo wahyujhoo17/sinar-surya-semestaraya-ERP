@@ -39,8 +39,12 @@ class CustomerImport implements ToModel, WithHeadingRow
             'industri'      => $row['industri'] ?? null,
             'sales_name'    => $row['sales_name'] ?? null,
             'alamat'        => $row['alamat'] ?? null,
+            'alamat_pengiriman' => $row['alamat_pengiriman'] ?? null,
             'telepon'       => $row['telepon'] ?? null,
             'email'         => $row['email'] ?? null,
+            'npwp'          => $row['npwp'] ?? null,
+            'kontak_person' => $row['kontak_person'] ?? null,
+            'no_hp_kontak'  => $row['no_hp_kontak'] ?? null,
             'catatan'       => $row['catatan'] ?? null,
             'is_active'     => isset($row['is_active']) ? (bool)$row['is_active'] : true,
         ]);

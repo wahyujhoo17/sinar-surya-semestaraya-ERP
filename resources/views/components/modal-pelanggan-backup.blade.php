@@ -41,15 +41,16 @@
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kode akan dibuat otomatis</p>
                         </div>
                         <div>
-                            <label for="company"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perusahaan</label>
-                            <input type="text" name="company" id="company" x-model="formData.company"
+                            <label for="nama"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama <span
+                                    class="text-red-600">*</span></label>
+                            <input type="text" name="nama" id="nama" x-model="formData.nama"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
-                            <label for="nama"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama</label>
-                            <input type="text" name="nama" id="nama" x-model="formData.nama"
+                            <label for="company"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Perusahaan</label>
+                            <input type="text" name="company" id="company" x-model="formData.company"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
@@ -74,21 +75,18 @@
                             <label for="jalan"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Jalan</label>
                             <input type="text" name="jalan" id="jalan" x-model="formData.jalan"
-                                @input="updateAddress()"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
                             <label for="kota"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kota</label>
                             <input type="text" name="kota" id="kota" x-model="formData.kota"
-                                @input="updateAddress()"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
                             <label for="provinsi"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Provinsi</label>
                             <input type="text" name="provinsi" id="provinsi" x-model="formData.provinsi"
-                                @input="updateAddress()"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
@@ -96,14 +94,12 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode
                                 Pos</label>
                             <input type="text" name="kode_pos" id="kode_pos" x-model="formData.kode_pos"
-                                @input="updateAddress()"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
                             <label for="negara"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Negara</label>
                             <input type="text" name="negara" id="negara" x-model="formData.negara"
-                                @input="updateAddress()"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
@@ -114,18 +110,14 @@
                         </div>
                         <div>
                             <label for="kontak_person"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama
-                                Kontak</label>
-                            <input type="text" name="kontak_person" id="kontak_person"
-                                x-model="formData.kontak_person"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Kontak</label>
+                            <input type="text" name="kontak_person" id="kontak_person" x-model="formData.kontak_person"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
                             <label for="no_hp_kontak"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP
-                                Kontak</label>
-                            <input type="text" name="no_hp_kontak" id="no_hp_kontak"
-                                x-model="formData.no_hp_kontak"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">No. HP Kontak</label>
+                            <input type="text" name="no_hp_kontak" id="no_hp_kontak" x-model="formData.no_hp_kontak"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
                         </div>
                         <div>
@@ -138,15 +130,21 @@
                             </select>
                         </div>
                     </div>
-                    <!-- Input alamat dihapus karena terisi otomatis -->
+                    <div class="mb-4">
+                        <label for="alamat"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat Perusahaan</label>
+                        <textarea name="alamat" id="alamat" x-model="formData.alamat" rows="2" readonly
+                            class="w-full rounded-md bg-gray-50 dark:bg-gray-600 border-gray-300 dark:border-gray-600 dark:text-gray-300 shadow-sm"></textarea>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Alamat akan dibuat otomatis dari Jalan, Kota, Provinsi, Kode Pos, dan Negara</p>
+                    </div>
+                    
                     <div class="mb-4">
                         <label for="alamat_pengiriman"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat
-                            Pengiriman</label>
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alamat Pengiriman</label>
                         <textarea name="alamat_pengiriman" id="alamat_pengiriman" x-model="formData.alamat_pengiriman" rows="2"
                             class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50"></textarea>
                     </div>
-
+                    
                     <div class="mb-4">
                         <label for="catatan"
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan</label>
@@ -200,7 +198,6 @@
                 industri: '',
                 sales_name: '',
                 alamat: '',
-                alamat_pengiriman: '',
                 telepon: '',
                 email: '',
                 npwp: '',
@@ -211,20 +208,6 @@
                 is_active: 1,
             },
             errors: {},
-
-            // Metode untuk memperbarui alamat otomatis berdasarkan komponen-komponennya
-            updateAddress() {
-                const parts = [
-                    this.formData.jalan,
-                    this.formData.kota,
-                    this.formData.provinsi,
-                    this.formData.kode_pos,
-                    this.formData.negara
-                ].filter(part => part && part.trim() !== '');
-
-                this.formData.alamat = parts.length > 0 ? parts.join(', ') : '';
-            },
-
             async generateCustomerCode() {
                 try {
                     const response = await fetch('/master-data/pelanggan/generate-code');
@@ -249,8 +232,6 @@
                     this.generateCustomerCode();
                 }
                 this.isOpen = true;
-                // Pastikan alamat diupdate
-                this.updateAddress();
             },
             closeModal() {
                 this.isOpen = false;
@@ -285,9 +266,6 @@
                 this.loading = false;
             },
             submitForm() {
-                // Pastikan alamat diupdate sebelum submit
-                this.updateAddress();
-
                 this.loading = true;
                 this.errors = {};
                 const form = document.getElementById('pelanggan-form');
