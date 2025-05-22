@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class SalesOrder extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'sales_order';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -22,6 +22,7 @@ class SalesOrder extends Model
         'diskon_nominal',
         'ppn',
         'total',
+        'ongkos_kirim',
         'status_pembayaran',
         'status_pengiriman',
         'tanggal_kirim',
@@ -29,7 +30,7 @@ class SalesOrder extends Model
         'catatan',
         'syarat_ketentuan'
     ];
-    
+
     /**
      * Relasi ke Customer
      */
@@ -37,7 +38,7 @@ class SalesOrder extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
-    
+
     /**
      * Relasi ke Quotation
      */
@@ -45,7 +46,7 @@ class SalesOrder extends Model
     {
         return $this->belongsTo(Quotation::class, 'quotation_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -53,7 +54,7 @@ class SalesOrder extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Detail Sales Order
      */
@@ -61,7 +62,7 @@ class SalesOrder extends Model
     {
         return $this->hasMany(SalesOrderDetail::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Work Order
      */
@@ -69,7 +70,7 @@ class SalesOrder extends Model
     {
         return $this->hasMany(WorkOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Delivery Order
      */
@@ -77,12 +78,20 @@ class SalesOrder extends Model
     {
         return $this->hasMany(DeliveryOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Invoice
      */
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'sales_order_id');
+    }
+
+    /**
+     * Relasi ke Log Aktivitas
+     */
+    public function logAktivitas()
+    {
+        return $this->hasMany(LogAktivitas::class, 'data_id')->where('modul', 'sales_order');
     }
 }

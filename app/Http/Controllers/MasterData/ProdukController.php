@@ -32,11 +32,23 @@ class ProdukController extends Controller
         $visibleColumns = json_decode($visibleColumnsInput, true);
         // Define defaults matching the JS defaults
         $defaults = [
-            'gambar' => true, 'produk' => true, 'kategori' => true, 'jenis' => true,
-            'stok' => true, 'satuan' => true, 'harga_jual' => true, 'harga_beli' => false,
-            'merek' => false, 'sku' => false, 'ukuran' => false, 'material' => false,
-            'kualitas' => false, 'sub_kategori' => false, 'deskripsi' => false,
-            'bahan' => false, 'status' => true,
+            'gambar' => true,
+            'produk' => true,
+            'kategori' => true,
+            'jenis' => true,
+            'stok' => true,
+            'satuan' => true,
+            'harga_jual' => true,
+            'harga_beli' => false,
+            'merek' => false,
+            'sku' => false,
+            'ukuran' => false,
+            'material' => false,
+            'kualitas' => false,
+            'sub_kategori' => false,
+            'deskripsi' => false,
+            'bahan' => false,
+            'status' => true,
         ];
         if (!is_array($visibleColumns)) {
             $visibleColumns = $defaults;
@@ -142,8 +154,15 @@ class ProdukController extends Controller
         $currentPage = 'Produk';
         // Pass sort, direction, and visible columns to the main view for initial Alpine state
         return view('master-data.produk.index', compact(
-            'produks', 'breadcrumbs', 'currentPage', 'kategoris', 'satuans', 'jenisProduks',
-            'sortField', 'sortDirection', 'visibleColumns' // Pass for initial state
+            'produks',
+            'breadcrumbs',
+            'currentPage',
+            'kategoris',
+            'satuans',
+            'jenisProduks',
+            'sortField',
+            'sortDirection',
+            'visibleColumns' // Pass for initial state
         ));
     }
 
@@ -435,6 +454,31 @@ class ProdukController extends Controller
             'success' => true,
             'product' => $produk
         ]);
+    }
+
+    public function apiGetById($id)
+    {
+        try {
+            $produk = Produk::with('satuan')->find($id); // Eager load satuan if needed
+
+            if (!$produk) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Produk tidak ditemukan.'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $produk
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error in ProdukController apiGetById for ID {$id}: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengambil data produk.'
+            ], 500);
+        }
     }
 
     public function export()

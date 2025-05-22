@@ -687,4 +687,41 @@ class QuotationController extends Controller
         // Download the PDF with a specific filename
         return $pdf->download('Quotation-' . $quotation->nomor . '.pdf');
     }
+
+    /**
+     * Get quotations for select2 dropdown.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getQuotationsForSelect(Request $request)
+    {
+        $search = $request->search;
+        $status = $request->status ?? 'disetujui';
+        $page = $request->page ?? 1;
+        $perPage = 10;
+
+        $query = Quotation::with('customer')
+            ->where('status', $status);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($q2) use ($search) {
+                        $q2->where('nama', 'like', "%{$search}%")
+                            ->orWhere('company', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        $quotations = $query->orderBy('tanggal', 'desc')
+            ->paginate($perPage);
+
+        return response()->json([
+            'data' => $quotations->items(),
+            'current_page' => $quotations->currentPage(),
+            'last_page' => $quotations->lastPage(),
+            'total' => $quotations->total(),
+        ]);
+    }
 }

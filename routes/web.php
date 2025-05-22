@@ -27,6 +27,7 @@ use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
 use App\Http\Controllers\Penjualan\QuotationController;
+use App\Http\Controllers\Penjualan\SalesOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
 
         // SATUAN
         Route::delete('satuan/bulk-destroy', [SatuanController::class, 'bulkDestroy'])->name('satuan.bulk-destroy');
-        Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSatuan'])->name('satuan.get');
+        Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSSatuan'])->name('satuan.get');
         Route::resource('satuan', SatuanController::class);
     });
 
@@ -131,7 +132,28 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('quotation', QuotationController::class);
         Route::post('quotation/{quotation}/change-status', [QuotationController::class, 'changeStatus'])->name('quotation.changeStatus');
         Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
+        Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
+
+        Route::resource('sales-order', SalesOrderController::class);
+        Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
+        Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
+        Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
     });
+
+    // API route for product details (used in Sales Order form)
+    Route::get('/api/products/{id}', [ProdukController::class, 'apiGetById'])->name('api.products.show');
+
+    // API route for customer details (used in Sales Order form)
+    Route::get('/api/customers/{id}', function ($id) {
+        $customer = \App\Models\Customer::findOrFail($id);
+        return response()->json([
+            'id' => $customer->id,
+            'nama' => $customer->nama,
+            'company' => $customer->company,
+            'alamat_utama' => $customer->alamat_utama,
+            'alamat_pengiriman' => $customer->alamat_pengiriman
+        ]);
+    })->name('api.customers.show');
 
     // --- PEMBELIAN ---
     Route::prefix('pembelian')->name('pembelian.')->group(function () {

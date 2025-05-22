@@ -185,8 +185,8 @@
                 <div x-show="activeDropdown === 'penjualan'" x-cloak class="mt-1 space-y-1 pl-11">
                     <a href="/penjualan/quotation"
                         class="{{ request()->is('penjualan/quotation') || request()->is('penjualan/quotation/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Quotation</span></a>
-                    <a href="#"
-                        class="{{ request()->is('penjualan/so') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Sales
+                    <a href="/penjualan/sales-order"
+                        class="{{ request()->is('penjualan/sales-order') || request()->is('penjualan/sales-order/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Sales
                             Order (SO)</span></a>
                     <a href="#"
                         class="{{ request()->is('penjualan/do') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Delivery
