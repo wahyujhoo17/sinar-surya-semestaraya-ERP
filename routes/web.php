@@ -131,15 +131,18 @@ Route::middleware(['auth'])->group(function () {
 
     Route::prefix('penjualan')->name('penjualan.')->group(function () {
 
+        // Quotation routes
         Route::post('quotation/{quotation}/change-status', [QuotationController::class, 'changeStatus'])->name('quotation.changeStatus');
         Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
         Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
         Route::resource('quotation', QuotationController::class);
 
+        // Sales Order routes
         Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
         Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
         Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
         Route::resource('sales-order', SalesOrderController::class);
+        
         // Delivery Order routes
         Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
         Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');

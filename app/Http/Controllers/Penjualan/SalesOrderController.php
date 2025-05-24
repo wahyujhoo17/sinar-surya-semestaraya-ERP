@@ -20,6 +20,24 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class SalesOrderController extends Controller
 {
+
+    private function generateNewSalesOrderNumber()
+    {
+        $prefix = 'SO-';
+        $date = now()->format('Ymd');
+
+        $lastSalesOrder = DB::table('sales_order')
+            ->where('nomor', 'like', $prefix . $date . '-%')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
+            ->first();
+
+        $newNumberSuffix = '001';
+        if ($lastSalesOrder && !is_null($lastSalesOrder->last_num)) {
+            $newNumberSuffix = str_pad($lastSalesOrder->last_num + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        return $prefix . $date . '-' . $newNumberSuffix;
+    }
     public function index(Request $request)
     {
         $query = SalesOrder::with('customer');
@@ -173,23 +191,7 @@ class SalesOrderController extends Controller
         }
     }
 
-    private function generateNewSalesOrderNumber()
-    {
-        $prefix = 'SO-';
-        $date = now()->format('Ymd');
 
-        $lastSalesOrder = DB::table('sales_order')
-            ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
-            ->first();
-
-        $newNumberSuffix = '001';
-        if ($lastSalesOrder && !is_null($lastSalesOrder->last_num)) {
-            $newNumberSuffix = str_pad($lastSalesOrder->last_num + 1, 3, '0', STR_PAD_LEFT);
-        }
-
-        return $prefix . $date . '-' . $newNumberSuffix;
-    }
 
     public function create(Request $request)
     {

@@ -25,9 +25,13 @@ class QuotationController extends Controller
         $prefix = 'QO-';
         $date = now()->format('Ymd');
 
+        // Determine the starting position for SUBSTRING dynamically based on prefix and date length
+        $substringStartPosition = strlen($prefix . $date . '-') + 1;
+
         $lastQuotation = DB::table('quotation')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
+            // Changed CAST to INTEGER for PostgreSQL compatibility
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . $substringStartPosition . ') AS INTEGER)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
@@ -183,9 +187,6 @@ class QuotationController extends Controller
             ]);
         }
     }
-
-
-
     public function create()
     {
         $customers = Customer::orderBy('nama', 'asc')->get();
