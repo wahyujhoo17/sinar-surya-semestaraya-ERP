@@ -184,7 +184,7 @@ class QuotationController extends Controller
     }
     public function create()
     {
-        dd('Create Quotation');
+        // dd('Create Quotation');
         $customers = Customer::orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
