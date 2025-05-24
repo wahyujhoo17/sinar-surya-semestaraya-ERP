@@ -24,14 +24,14 @@ class QuotationController extends Controller
         $prefix = 'QO-';
         $date = now()->format('Ymd');
 
-        $lastSalesOrder = DB::table('quotation')
+        $lastQuotation = DB::table('quotation')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
-        if ($lastSalesOrder && !is_null($lastSalesOrder->last_num)) {
-            $newNumberSuffix = str_pad($lastSalesOrder->last_num + 1, 3, '0', STR_PAD_LEFT);
+        if ($lastQuotation && !is_null($lastQuotation->last_num)) {
+            $newNumberSuffix = str_pad($lastQuotation->last_num + 1, 3, '0', STR_PAD_LEFT);
         }
 
         return $prefix . $date . '-' . $newNumberSuffix;
@@ -184,6 +184,7 @@ class QuotationController extends Controller
     }
     public function create()
     {
+        dd('Create Quotation');
         $customers = Customer::orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
