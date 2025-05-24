@@ -28,6 +28,7 @@ use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
 use App\Http\Controllers\Penjualan\QuotationController;
 use App\Http\Controllers\Penjualan\SalesOrderController;
+use App\Http\Controllers\Penjualan\DeliveryOrderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +139,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
         Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
         Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
+
+        // Delivery Order routes
+        Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
+        Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');
+        Route::post('delivery-order/{id}/selesai', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesai');
+        Route::post('delivery-order/{id}/batalkan', [DeliveryOrderController::class, 'batalkanDelivery'])->name('delivery-order.batalkan');
+        Route::get('delivery-order/get-sales-order-data/{id}', [DeliveryOrderController::class, 'getSalesOrderData'])->name('delivery-order.get-sales-order-data');
+        Route::get('delivery-order/get-stock-info', [DeliveryOrderController::class, 'getStockInformation'])->name('delivery-order.get-stock-info');
+        Route::get('delivery-orders/ajax/table', [DeliveryOrderController::class, 'table'])->name('delivery-order.table');
+        Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
+        Route::resource('delivery-order', DeliveryOrderController::class);
     });
 
     // API route for product details (used in Sales Order form)

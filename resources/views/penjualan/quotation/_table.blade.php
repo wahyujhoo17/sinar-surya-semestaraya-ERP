@@ -91,7 +91,7 @@
             @endif
             @if ($valid_until)
                 <div class="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                    <span class="bg-amber-50 dark:bg-amber-900/20 px-1.5 py-0.5 rounded text-xs">
+                    <span class="bg-amber-50 dark:bg-amber-900/30 px-1.5 py-0.5 rounded text-xs border border-amber-200 dark:border-amber-800">
                         Berlaku sampai: {{ $valid_until }}
                     </span>
                 </div>
@@ -208,21 +208,6 @@
                 @endif
 
                 @if ($quotation->status === 'draft')
-                    {{-- <form action="{{ route('penjualan.quotation.destroy', $quotation->id) }}" method="POST"
-                        class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" onclick="return confirm('Yakin hapus quotation ini?')"
-                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
-                            title="Hapus">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                class="w-4 h-4">
-                                <path fill-rule="evenodd"
-                                    d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </form> --}}
                     <div x-data="{ quotationOrderId: {{ $quotation->id }}, quotationOrderNo: '{{ $quotation->nomor }}' }">
                         <button type="button"
                             @click="confirmDelete(`Apakah Anda yakin ingin menghapus Quotation <strong>${quotationOrderNo}</strong>?<br><br>Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait dengan Quotation ini.`, () => {

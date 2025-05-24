@@ -730,7 +730,7 @@
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <td colspan="6"
+                                    <td colspan="7"
                                         class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
                                         Subtotal:</td>
                                     <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
@@ -750,7 +750,7 @@
                                 @endif
                                 @if ($quotation->ppn > 0)
                                     <tr>
-                                        <td colspan="6"
+                                        <td colspan="7"
                                             class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
                                             PPN ({{ $quotation->ppn }}%):</td>
                                         <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
@@ -759,7 +759,7 @@
                                     </tr>
                                 @endif
                                 <tr>
-                                    <td colspan="6"
+                                    <td colspan="7"
                                         class="px-6 py-4 font-medium text-lg text-gray-900 dark:text-white text-right">
                                         Total:</td>
                                     <td colspan="2"

@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryOrder extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'delivery_order';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -25,7 +25,7 @@ class DeliveryOrder extends Model
         'nama_penerima',
         'tanggal_diterima'
     ];
-    
+
     /**
      * Relasi ke Sales Order
      */
@@ -33,7 +33,7 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo(SalesOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Customer
      */
@@ -41,7 +41,7 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -49,7 +49,7 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Gudang
      */
@@ -57,12 +57,20 @@ class DeliveryOrder extends Model
     {
         return $this->belongsTo(Gudang::class, 'gudang_id');
     }
-    
+
     /**
      * Relasi ke Detail Delivery Order
      */
     public function details()
     {
         return $this->hasMany(DeliveryOrderDetail::class, 'delivery_id');
+    }
+
+    /**
+     * Accessor for backward compatibility with existing views
+     */
+    public function getDeliveryOrderDetailAttribute()
+    {
+        return $this->details;
     }
 }

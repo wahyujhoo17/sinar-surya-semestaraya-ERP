@@ -79,7 +79,7 @@
                                 </span>
                             </div>
                             <div class="relative mt-1">
-                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400"
                                         viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -89,7 +89,7 @@
                                 </div>
                                 <input type="text" name="search"
                                     placeholder="Cari nama, perusahaan, atau no. quotation" x-model="search"
-                                    class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
+                                    class="pl-10 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
                             </div>
                         </div>
 
@@ -103,7 +103,7 @@
                                 </span>
                             </div>
                             <div class="relative mt-1">
-                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400"
                                         viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -112,7 +112,7 @@
                                     </svg>
                                 </div>
                                 <select name="status" x-model="status"
-                                    class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white appearance-none">
+                                    class="pl-10 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
                                     <option value="">Semua Status</option>
                                     <option value="draft">Draft</option>
                                     <option value="dikirim">Dikirim</option>
@@ -134,7 +134,7 @@
                                 </span>
                             </div>
                             <div class="relative mt-1">
-                                <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400"
                                         viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd"
@@ -143,7 +143,7 @@
                                     </svg>
                                 </div>
                                 <select name="periode" x-model="periode" @change="setPeriode()"
-                                    class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white appearance-none">
+                                    class="pl-10 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
                                     <option value="">Semua Tanggal</option>
                                     <option value="today">Hari Ini</option>
                                     <option value="yesterday">Kemarin</option>
