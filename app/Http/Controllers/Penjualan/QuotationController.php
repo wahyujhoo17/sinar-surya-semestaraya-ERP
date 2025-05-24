@@ -19,24 +19,19 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotationController extends Controller
 {
-
     private function generateNewQuotationNumber()
     {
         $prefix = 'QO-';
         $date = now()->format('Ymd');
 
-        // Determine the starting position for SUBSTRING dynamically based on prefix and date length
-        $substringStartPosition = strlen($prefix . $date . '-') + 1;
-
-        $lastQuotation = DB::table('quotation')
+        $lastSalesOrder = DB::table('quotation')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            // Changed CAST to INTEGER for PostgreSQL compatibility
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . $substringStartPosition . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
-        if ($lastQuotation && !is_null($lastQuotation->last_num)) {
-            $newNumberSuffix = str_pad($lastQuotation->last_num + 1, 3, '0', STR_PAD_LEFT);
+        if ($lastSalesOrder && !is_null($lastSalesOrder->last_num)) {
+            $newNumberSuffix = str_pad($lastSalesOrder->last_num + 1, 3, '0', STR_PAD_LEFT);
         }
 
         return $prefix . $date . '-' . $newNumberSuffix;
