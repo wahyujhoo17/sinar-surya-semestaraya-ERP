@@ -19,6 +19,24 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotationController extends Controller
 {
+
+    private function generateNewQuotationNumber()
+    {
+        $prefix = 'QO-';
+        $date = now()->format('Ymd');
+
+        $lastQuotation = DB::table('quotation')
+            ->where('nomor', 'like', $prefix . $date . '-%')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
+            ->first();
+
+        $newNumberSuffix = '001';
+        if ($lastQuotation && !is_null($lastQuotation->last_num)) {
+            $newNumberSuffix = str_pad($lastQuotation->last_num + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        return $prefix . $date . '-' . $newNumberSuffix;
+    }
     public function index(Request $request)
     {
         $query = Quotation::with('customer');
@@ -166,23 +184,7 @@ class QuotationController extends Controller
         }
     }
 
-    private function generateNewQuotationNumber()
-    {
-        $prefix = 'QO-';
-        $date = now()->format('Ymd');
 
-        $lastQuotation = DB::table('quotation')
-            ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
-            ->first();
-
-        $newNumberSuffix = '001';
-        if ($lastQuotation && !is_null($lastQuotation->last_num)) {
-            $newNumberSuffix = str_pad($lastQuotation->last_num + 1, 3, '0', STR_PAD_LEFT);
-        }
-
-        return $prefix . $date . '-' . $newNumberSuffix;
-    }
 
     public function create()
     {
