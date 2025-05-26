@@ -191,15 +191,15 @@
                     <a href="/penjualan/delivery-order"
                         class="{{ request()->is('penjualan/delivery-order') || request()->is('penjualan/delivery-order/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Delivery
                             Order (DO)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('penjualan/invoice') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Invoice
+                    <a href="/penjualan/invoice"
+                        class="{{ request()->is('penjualan/invoice') || request()->is('penjualan/invoice/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Invoice
                             Penjualan</span></a>
                     <a href="#"
                         class="{{ request()->is('penjualan/retur') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Retur
                             Penjualan</span></a>
-                    <a href="#"
+                    {{-- <a href="#"
                         class="{{ request()->is('penjualan/tracking') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Tracking
-                            Pengiriman</span></a>
+                            Pengiriman</span></a> --}}
                     <a href="#"
                         class="{{ request()->is('penjualan/riwayat') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Riwayat
                             Transaksi</span></a>

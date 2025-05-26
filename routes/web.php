@@ -29,6 +29,7 @@ use App\Http\Controllers\Produksi\BOMController;
 use App\Http\Controllers\Penjualan\QuotationController;
 use App\Http\Controllers\Penjualan\SalesOrderController;
 use App\Http\Controllers\Penjualan\DeliveryOrderController;
+use App\Http\Controllers\Penjualan\InvoiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -142,7 +143,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
         Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
         Route::resource('sales-order', SalesOrderController::class);
-        
+
+        // Invoice routes
+        Route::get('invoice/get-sales-order/{id}', [InvoiceController::class, 'getSalesOrderData'])->name('invoice.get-sales-order');
+        Route::get('invoice/{invoice}/print', [InvoiceController::class, 'print'])->name('invoice.print');
+        Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
+        Route::resource('invoice', InvoiceController::class);
+
         // Delivery Order routes
         Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
         Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');

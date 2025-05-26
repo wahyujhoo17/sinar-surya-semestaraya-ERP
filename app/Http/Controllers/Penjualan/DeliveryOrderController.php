@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DeliveryOrderController extends Controller
 {
@@ -1064,6 +1065,12 @@ class DeliveryOrderController extends Controller
             'details.produk'
         ])->findOrFail($id);
 
+        // Load the PDF view
+        $pdf = Pdf::loadView('penjualan.delivery-order.print', ['deliveryOrder' => $deliveryOrder]);
+
+        $pdf->setPaper('a4', 'portrait');
+
+        // return $pdf->download('SalesOrder-' . $deliveryOrder->nomor . '.pdf');
         return view('penjualan.delivery-order.print', compact('deliveryOrder'));
     }
 }

@@ -8,21 +8,25 @@ use Illuminate\Database\Eloquent\Model;
 class InvoiceDetail extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'invoice_detail';
-    
+
     protected $fillable = [
         'invoice_id',
         'produk_id',
+        'nama_produk',
         'deskripsi',
         'quantity',
+        'qty',
+        'satuan',
         'satuan_id',
         'harga',
+        'diskon',
         'diskon_persen',
         'diskon_nominal',
         'subtotal'
     ];
-    
+
     /**
      * Relasi ke Invoice
      */
@@ -30,7 +34,7 @@ class InvoiceDetail extends Model
     {
         return $this->belongsTo(Invoice::class, 'invoice_id');
     }
-    
+
     /**
      * Relasi ke Produk
      */
@@ -38,7 +42,7 @@ class InvoiceDetail extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    
+
     /**
      * Relasi ke Satuan
      */

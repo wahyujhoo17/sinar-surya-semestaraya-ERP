@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Invoice extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'invoice';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -21,13 +21,14 @@ class Invoice extends Model
         'diskon_persen',
         'diskon_nominal',
         'ppn',
+        'ongkos_kirim',
         'total',
         'jatuh_tempo',
         'status', // 'belum_bayar', 'sebagian', 'lunas'
         'catatan',
         'syarat_ketentuan'
     ];
-    
+
     /**
      * Relasi ke Sales Order
      */
@@ -35,7 +36,7 @@ class Invoice extends Model
     {
         return $this->belongsTo(SalesOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Customer
      */
@@ -43,7 +44,7 @@ class Invoice extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -51,7 +52,7 @@ class Invoice extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Detail Invoice
      */
@@ -59,7 +60,7 @@ class Invoice extends Model
     {
         return $this->hasMany(InvoiceDetail::class, 'invoice_id');
     }
-    
+
     /**
      * Relasi ke Pembayaran
      */
