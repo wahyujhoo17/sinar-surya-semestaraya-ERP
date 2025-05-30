@@ -105,6 +105,8 @@ class PembayaranPiutangController extends Controller
 
 
         DB::beginTransaction();
+
+        dd(PembayaranPiutang::all());
         try {
             $pembayaran = new PembayaranPiutang();
             // Manually map fields that differ from validatedData keys or need specific handling
