@@ -158,7 +158,7 @@
                                 @if ($invoice)
                                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                         Invoice: <span
-                                            class="font-semibold text-green-600 dark:text-green-400">{{ $invoice->nomor_invoice }}</span>
+                                            class="font-semibold text-green-600 dark:text-green-400">{{ $invoice->nomor }}</span>
                                         | Customer: {{ $invoice->customer->company ?? $invoice->customer->nama }}
                                     </p>
                                 @endif
