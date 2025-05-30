@@ -23,6 +23,8 @@ use App\Http\Controllers\Laporan\LaporanStokController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
+use App\Http\Controllers\Keuangan\PiutangUsahaController; // Import PiutangUsahaController
+use App\Http\Controllers\Keuangan\PembayaranPiutangController; // Import PembayaranPiutangController
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
@@ -30,6 +32,9 @@ use App\Http\Controllers\Penjualan\QuotationController;
 use App\Http\Controllers\Penjualan\SalesOrderController;
 use App\Http\Controllers\Penjualan\DeliveryOrderController;
 use App\Http\Controllers\Penjualan\InvoiceController;
+use App\Http\Controllers\Penjualan\ReturPenjualanController;
+use App\Http\Controllers\Penjualan\NotaKreditController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -160,6 +165,35 @@ Route::middleware(['auth'])->group(function () {
         Route::get('delivery-orders/ajax/table', [DeliveryOrderController::class, 'table'])->name('delivery-order.table');
         Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
         Route::resource('delivery-order', DeliveryOrderController::class);
+
+        // Retur Penjualan routes
+        Route::post('retur/{id}/proses', [ReturPenjualanController::class, 'prosesRetur'])->name('retur.proses');
+        Route::post('retur/{id}/selesai', [ReturPenjualanController::class, 'selesaikanRetur'])->name('retur.selesai');
+        Route::post('retur/{id}/kirim-pengganti', [ReturPenjualanController::class, 'prosesKirimPengganti'])->name('retur.kirim-pengganti');
+        Route::get('retur/{id}/pdf', [ReturPenjualanController::class, 'exportPdf'])->name('retur.pdf');
+        Route::get('retur/get-sales-orders', [ReturPenjualanController::class, 'getSalesOrders'])->name('retur.get-sales-orders');
+        Route::get('retur/get-sales-order-details', [ReturPenjualanController::class, 'getSalesOrderDetails'])->name('retur.get-sales-order-details');
+        Route::get('retur/analyze', [ReturPenjualanController::class, 'analyzeReturns'])->name('retur.analyze');
+        Route::post('retur/{id}/submit-approval', [ReturPenjualanController::class, 'submitForApproval'])->name('retur.submit-approval');
+        Route::post('retur/{id}/approve', [ReturPenjualanController::class, 'approveReturn'])->name('retur.approve');
+        Route::post('retur/{id}/reject', [ReturPenjualanController::class, 'rejectReturn'])->name('retur.reject');
+        Route::get('retur/{id}/quality-control', [ReturPenjualanController::class, 'showQualityControlForm'])->name('retur.quality-control');
+        Route::post('retur/{id}/quality-control', [ReturPenjualanController::class, 'processQualityControl'])->name('retur.process-quality-control');
+        Route::get('retur/{id}/quality-control-detail', [ReturPenjualanController::class, 'showQualityControlDetail'])->name('retur.quality-control-detail');
+        Route::get('retur/{id}/create-credit-note', [ReturPenjualanController::class, 'createCreditNote'])->name('retur.create-credit-note');
+        Route::get('retur/qc-report', [ReturPenjualanController::class, 'qcReport'])->name('retur.qc-report');
+        Route::get('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'showTerimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
+        Route::post('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'terimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
+        Route::get('retur/get-stok', [ReturPenjualanController::class, 'getStokProduk'])->name('retur.get-stok');
+        Route::resource('retur', ReturPenjualanController::class);
+
+        // Nota Kredit routes
+        Route::post('nota-kredit/{notaKredit}/finalize', [NotaKreditController::class, 'finalize'])->name('nota-kredit.finalize');
+
+        // Nota Kredit (Credit Note) routes
+        Route::get('nota-kredit/{id}/pdf', [NotaKreditController::class, 'exportPdf'])->name('nota-kredit.pdf');
+        Route::post('nota-kredit/{notaKredit}/complete', [NotaKreditController::class, 'completeNotaKredit'])->name('nota-kredit.complete');
+        Route::resource('nota-kredit', NotaKreditController::class);
     });
 
     // API route for product details (used in Sales Order form)
@@ -254,6 +288,19 @@ Route::middleware(['auth'])->group(function () {
         Route::get('hutang-usaha/print/{id}', [HutangUsahaController::class, 'print'])->name('hutang-usaha.print');
         Route::get('hutang-usaha/export', [HutangUsahaController::class, 'export'])->name('hutang-usaha.export');
         Route::get('hutang-usaha/pdf', [HutangUsahaController::class, 'generatePdf'])->name('hutang-usaha.pdf');
+
+        // Piutang Usaha Routes
+        Route::get('piutang-usaha', [PiutangUsahaController::class, 'index'])->name('piutang-usaha.index');
+        Route::get('piutang-usaha/show/{id}', [PiutangUsahaController::class, 'show'])->name('piutang-usaha.show');
+        Route::get('piutang-usaha/history/{id}', [PiutangUsahaController::class, 'history'])->name('piutang-usaha.history');
+        Route::get('piutang-usaha/print/{id}', [PiutangUsahaController::class, 'print'])->name('piutang-usaha.print');
+        Route::get('piutang-usaha/export', [PiutangUsahaController::class, 'export'])->name('piutang-usaha.export');
+        Route::get('piutang-usaha/pdf', [PiutangUsahaController::class, 'generatePdf'])->name('piutang-usaha.pdf');
+
+        // Pembayaran Piutang Routes
+        Route::get('pembayaran-piutang/print/{id}', [PembayaranPiutangController::class, 'print'])->name('pembayaran-piutang.print');
+        Route::resource('pembayaran-piutang', PembayaranPiutangController::class);
+        Route::get('customers/{customer}/invoices', [PembayaranPiutangController::class, 'getCustomerInvoices'])->name('customers.invoices'); // New route
 
         // Pembayaran Hutang Routes
         Route::get('pembayaran-hutang/print/{id}', [PembayaranHutangController::class, 'print'])->name('pembayaran-hutang.print');

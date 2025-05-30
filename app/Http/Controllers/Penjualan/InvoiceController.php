@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceDetail;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderDetail;
+use App\Models\PembayaranPiutang;
 use App\Models\Customer;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
@@ -314,7 +315,7 @@ class InvoiceController extends Controller
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['customer', 'salesOrder', 'details', 'pembayaran']);
+        $invoice->load(['customer', 'salesOrder', 'details', 'pembayaranPiutang']); // Changed 'pembayaran' to 'pembayaranPiutang'
         return view('penjualan.invoice.show', compact('invoice'));
     }
 
@@ -392,7 +393,7 @@ class InvoiceController extends Controller
                 'salesOrder',
                 'details.barang',
                 'details.barang.satuan',
-                'pembayaran'
+                'pembayaranPiutang' // Changed 'pembayaran' to 'pembayaranPiutang'
             ]);
 
             // Set paper size and orientation
@@ -476,17 +477,25 @@ class InvoiceController extends Controller
         // Get the total amount invoiced
         $totalInvoiced = Invoice::where('sales_order_id', $salesOrderId)->sum('total');
 
+        // Get the total amount from sales order
+        $totalSalesOrder = $salesOrder->total;
+
         // Check if sales order has been invoiced fully or partially
-        if ($totalInvoiced >= $salesOrder->total) {
-            // When invoice is created, only mark as "fully invoiced" 
-            // Status should remain "belum_bayar" until payment is recorded in pembayaran_piutang
-            // We're not changing status to "lunas" here, that will be done in PembayaranPiutangController
-            $salesOrder->status_pembayaran = 'belum_bayar';
+        if ($totalInvoiced >= $totalSalesOrder) {
+            // Sales order is fully invoiced
+            $salesOrder->status_invoice = 'fully_invoiced';
         } elseif ($totalInvoiced > 0) {
-            // Partially invoiced, status should be "belum_bayar"
-            $salesOrder->status_pembayaran = 'belum_bayar';
+            // Partially invoiced
+            $salesOrder->status_invoice = 'partially_invoiced';
         } else {
             // No invoice created yet
+            $salesOrder->status_invoice = 'not_invoiced';
+        }
+
+        // Status pembayaran is separate from invoice status
+        // Status should remain "belum_bayar" until payment is recorded in pembayaran_piutang
+        // We're not changing status to "lunas" here, that will be done in PembayaranPiutangController
+        if ($salesOrder->status_pembayaran != 'lunas' && $salesOrder->status_pembayaran != 'sebagian') {
             $salesOrder->status_pembayaran = 'belum_bayar';
         }
 

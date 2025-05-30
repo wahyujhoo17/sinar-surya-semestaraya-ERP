@@ -20,6 +20,8 @@ class DatabaseSeeder extends Seeder
             SatuanSeeder::class,
             GudangSeeder::class,
             JenisProdukSeeder::class,
+            ReturPenjualanSeeder::class, // Seeder untuk Retur Penjualan
+            NotaKreditSeeder::class,     // Seeder untuk Nota Kredit
         ]);
     }
 }

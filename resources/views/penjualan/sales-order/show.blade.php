@@ -810,7 +810,6 @@
                     </div>
                 </div>
 
-                <!-- Payment Summary -->
                 <div
                     class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card">
                     <div class="border-b border-gray-200 dark:border-gray-700 px-5 py-4">
@@ -830,11 +829,30 @@
                                     Dibayar</div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
                                     @php
-                                        $totalDibayar = $salesOrder->invoices
-                                            ->where('status_pembayaran', 'lunas')
-                                            ->sum('total');
+                                        // Get all invoices for this sales order
+                                        $invoices = $salesOrder->invoices;
+                                        // Calculate total payments from all invoices
+                                        $totalDibayar = 0;
+                                        foreach ($invoices as $invoice) {
+                                            $totalDibayar += $invoice->pembayaranPiutang->sum('jumlah');
+                                        }
                                     @endphp
                                     Rp {{ number_format($totalDibayar, 0, ',', '.') }}
+                                </div>
+                            </div>
+
+                            <div class="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
+                                <div class="text-purple-500 dark:text-purple-400 font-medium mb-1 text-sm">Total
+                                    Kredit</div>
+                                <div class="text-gray-900 dark:text-white font-bold text-lg">
+                                    @php
+                                        // Calculate total credit notes applied
+                                        $totalKredit = 0;
+                                        foreach ($invoices as $invoice) {
+                                            $totalKredit += $invoice->kredit_terapkan ?? 0;
+                                        }
+                                    @endphp
+                                    Rp {{ number_format($totalKredit, 0, ',', '.') }}
                                 </div>
                             </div>
 
@@ -842,7 +860,11 @@
                                 <div class="text-amber-500 dark:text-amber-400 font-medium mb-1 text-sm">Sisa Tagihan
                                 </div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
-                                    Rp {{ number_format($salesOrder->total - $totalDibayar, 0, ',', '.') }}
+                                    @php
+                                        $totalSeluruhPembayaran = $totalDibayar + $totalKredit;
+                                        $sisaTagihan = $salesOrder->total - $totalSeluruhPembayaran;
+                                    @endphp
+                                    Rp {{ number_format($sisaTagihan, 0, ',', '.') }}
                                 </div>
                             </div>
 
@@ -851,11 +873,16 @@
                                     Pengiriman</div>
                                 <div class="text-gray-900 dark:text-white font-semibold flex items-center">
                                     <span
-                                        class="badge-dot bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-500 mr-1"></span>
-                                    {{ statusLabel($salesOrder->status_pengiriman, 'delivery') }}
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                        {{ $salesOrder->status_pengiriman === 'belum_dikirim' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' : '' }}
+                                        {{ $salesOrder->status_pengiriman === 'dikirim_sebagian' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' : '' }}
+                                        {{ $salesOrder->status_pengiriman === 'selesai' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : '' }}">
+                                        {{ $salesOrder->status_pengiriman === 'belum_dikirim' ? 'Belum Dikirim' : ($salesOrder->status_pengiriman === 'dikirim_sebagian' ? 'Dikirim Sebagian' : 'Selesai') }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -1090,12 +1117,12 @@
                                                         <div>
                                                             <span
                                                                 class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                                                                {{ $invoice->status_pembayaran == 'lunas'
+                                                                {{ $invoice->status == 'lunas'
                                                                     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                                    : ($invoice->status_pembayaran == 'sebagian'
+                                                                    : ($invoice->status == 'sebagian'
                                                                         ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400'
                                                                         : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400') }}">
-                                                                {{ statusLabel($invoice->status_pembayaran, 'payment') }}
+                                                                {{ statusLabel($invoice->status, 'payment') }}
                                                             </span>
                                                         </div>
                                                     </div>

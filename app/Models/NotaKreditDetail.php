@@ -5,33 +5,27 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class ReturPenjualanDetail extends Model
+class NotaKreditDetail extends Model
 {
     use HasFactory;
 
-    protected $table = 'retur_penjualan_detail';
+    protected $table = 'nota_kredit_detail';
 
     protected $fillable = [
-        'retur_id',
+        'nota_kredit_id',
         'produk_id',
         'quantity',
         'satuan_id',
-        'alasan',
-        'keterangan',
-        'reason_analysis',
-        'qc_checked',
-        'qc_passed',
-        'qc_notes',
-        'defect_type',
-        'qc_images'
+        'harga',
+        'subtotal'
     ];
 
     /**
-     * Relasi ke Retur Penjualan
+     * Relasi ke Nota Kredit
      */
-    public function returPenjualan()
+    public function notaKredit()
     {
-        return $this->belongsTo(ReturPenjualan::class, 'retur_id');
+        return $this->belongsTo(NotaKredit::class, 'nota_kredit_id');
     }
 
     /**

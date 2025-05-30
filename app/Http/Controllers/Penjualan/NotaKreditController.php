@@ -1,0 +1,681 @@
+<?php
+
+namespace App\Http\Controllers\Penjualan;
+
+use App\Http\Controllers\Controller;
+use App\Models\NotaKredit;
+use App\Models\NotaKreditDetail;
+use App\Models\ReturPenjualan;
+use App\Models\Customer;
+use App\Models\SalesOrder;
+use App\Models\SalesOrderDetail;
+use App\Models\Invoice;
+use App\Models\LogAktivitas;
+use App\Helpers\ReturPenjualanDebugger;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+
+class NotaKreditController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request)
+    {
+        $query = NotaKredit::with(['customer', 'returPenjualan', 'user'])
+            ->orderBy('created_at', 'desc');
+
+        // Status filter
+        $status = $request->input('status', 'semua');
+        $validStatuses = ['draft', 'diproses', 'selesai'];
+
+        if ($status !== 'semua' && in_array($status, $validStatuses)) {
+            $query->where('status', $status);
+        }
+
+        // Search functionality
+        $search = $request->input('search', '');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', "%{$search}%")
+                    ->orWhereHas('customer', function ($sq) use ($search) {
+                        $sq->where('nama', 'like', "%{$search}%")
+                            ->orWhere('company', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Date filter
+        $dateFilter = $request->input('date_filter', '');
+        if ($dateFilter) {
+            $today = Carbon::today();
+
+            switch ($dateFilter) {
+                case 'today':
+                    $query->whereDate('tanggal', $today);
+                    break;
+                case 'this_week':
+                    $query->whereBetween('tanggal', [$today->startOfWeek(), $today->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $query->whereMonth('tanggal', $today->month)
+                        ->whereYear('tanggal', $today->year);
+                    break;
+                case 'range':
+                    $dateStart = $request->input('date_start', '');
+                    $dateEnd = $request->input('date_end', '');
+                    if ($dateStart && $dateEnd) {
+                        $query->whereBetween('tanggal', [$dateStart, $dateEnd]);
+                    }
+                    break;
+            }
+        }
+
+        // Customer filter
+        $customerId = $request->input('customer_id', '');
+        if ($customerId) {
+            $query->where('customer_id', $customerId);
+        }
+
+        $notaKredits = $query->paginate(15)->withQueryString();
+        $customers = Customer::where('is_active', true)->orderBy('nama')->get();
+
+        // Status counts for summary cards
+        $statusCounts = [
+            'draft' => NotaKredit::where('status', 'draft')->count(),
+            'diproses' => NotaKredit::where('status', 'diproses')->count(),
+            'selesai' => NotaKredit::where('status', 'selesai')->count(),
+            'semua' => NotaKredit::count()
+        ];
+
+        // Log activity
+        // LogAktivitas::create([
+        //     'user_id' => Auth::id(),
+        //     'aktivitas' => 'lihat',
+        //     'modul' => 'nota_kredit',
+        //     'data_id' => null,
+        //     'ip_address' => request()->ip(),
+        //     'detail' => 'Melihat daftar nota kredit'
+        // ]);
+
+        return view('penjualan.nota_kredit.index', compact(
+            'notaKredits',
+            'statusCounts',
+            'validStatuses',
+            'customers',
+            'status',
+            'search',
+            'dateFilter',
+            'customerId'
+        ));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(Request $request)
+    {
+
+
+        $returId = $request->input('retur_id');
+        $returPenjualan = null;
+
+        if ($returId) {
+            $returPenjualan = ReturPenjualan::with(['customer', 'salesOrder', 'details.produk', 'details.satuan'])
+                ->findOrFail($returId);
+
+            // Validate return status - only completed returns can have credit notes
+            if ($returPenjualan->status !== 'selesai') {
+                return redirect()->route('penjualan.retur.show', $returId)
+                    ->with('error', 'Hanya retur penjualan dengan status selesai yang dapat dibuatkan nota kredit.');
+            }
+
+            // Check if credit note already exists
+            if ($returPenjualan->nota_kredit_id) {
+                return redirect()->route('penjualan.nota-kredit.show', $returPenjualan->nota_kredit_id)
+                    ->with('error', 'Nota kredit sudah ada untuk retur penjualan ini.');
+            }
+        }
+
+        // Generate nomor nota kredit
+        $today = date('Ymd');
+        $lastNota = NotaKredit::where('nomor', 'like', "NK-{$today}%")
+            ->orderBy('nomor', 'desc')
+            ->first();
+
+        $sequence = '001';
+        if ($lastNota) {
+            $lastSequence = (int) substr($lastNota->nomor, -3);
+            $sequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
+        }
+
+        $nomorNotaKredit = "NK-{$today}-{$sequence}";
+        $customers = Customer::where('is_active', true)->get();
+
+        return view('penjualan.nota_kredit.create', compact(
+            'returPenjualan',
+            'nomorNotaKredit',
+            'customers'
+        ));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+
+        $validated = $request->validate([
+            'nomor' => 'required|string|unique:nota_kredit,nomor',
+            'tanggal' => 'required|date',
+            'retur_penjualan_id' => 'required|exists:retur_penjualan,id',
+            'customer_id' => 'required|exists:customer,id',
+            'sales_order_id' => 'required|exists:sales_order,id',
+            'catatan' => 'nullable|string',
+            'total' => 'required|numeric|min:0',
+            'details' => 'required|array|min:1',
+            'details.*.produk_id' => 'required|exists:produk,id',
+            'details.*.quantity' => 'required|numeric|min:0.01',
+            'details.*.satuan_id' => 'required|exists:satuan,id',
+            'details.*.harga' => 'required|numeric|min:0',
+            'details.*.subtotal' => 'required|numeric|min:0',
+        ]);
+
+
+
+        // Check if retur is valid
+        $returPenjualan = ReturPenjualan::with(['customer', 'salesOrder', 'details.produk'])
+            ->findOrFail($validated['retur_penjualan_id']);
+
+        if ($returPenjualan->status !== 'selesai') {
+            return back()->withInput()->with('error', 'Hanya retur penjualan dengan status selesai yang dapat dibuatkan nota kredit.');
+        }
+
+        if ($returPenjualan->nota_kredit_id) {
+            return back()->withInput()->with('error', 'Nota kredit sudah ada untuk retur penjualan ini.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Create nota kredit header
+            $notaKredit = NotaKredit::create([
+                'nomor' => $validated['nomor'],
+                'tanggal' => $validated['tanggal'],
+                'retur_penjualan_id' => $validated['retur_penjualan_id'],
+                'customer_id' => $validated['customer_id'],
+                'sales_order_id' => $validated['sales_order_id'],
+                'user_id' => Auth::id(),
+                'total' => $validated['total'],
+                'status' => 'draft',
+                'catatan' => $validated['catatan'] ?? null,
+            ]);
+
+            // Create nota kredit details
+            foreach ($validated['details'] as $detail) {
+                NotaKreditDetail::create([
+                    'nota_kredit_id' => $notaKredit->id,
+                    'produk_id' => $detail['produk_id'],
+                    'quantity' => $detail['quantity'],
+                    'satuan_id' => $detail['satuan_id'],
+                    'harga' => $detail['harga'],
+                    'subtotal' => $detail['subtotal']
+                ]);
+            }
+
+            // Update retur penjualan with nota_kredit_id
+            $returPenjualan->nota_kredit_id = $notaKredit->id;
+            $returPenjualan->save();
+
+            // Log activity
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'tambah',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Membuat nota kredit {$notaKredit->nomor} untuk retur penjualan {$returPenjualan->nomor} dengan total Rp " . number_format($validated['total'], 0, ',', '.')
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Nota Kredit berhasil dibuat.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error creating nota kredit: ' . $e->getMessage());
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $notaKredit = NotaKredit::with([
+            'returPenjualan',
+            'customer',
+            'salesOrder',
+            'user',
+            'details.produk',
+            'details.satuan'
+        ])->findOrFail($id);
+
+        // Get log aktivitas
+        $logAktivitas = LogAktivitas::with('user')
+            ->where('modul', 'nota_kredit')
+            ->where('data_id', $notaKredit->id)
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // START: New logic to get applied invoices
+        $appliedInvoiceNumbers = [];
+        foreach ($logAktivitas as $log) {
+            if ($log->aktivitas === 'terapkan_kredit' && !empty($log->detail)) {
+                // Extract invoice number from detail: "Menerapkan kredit sebesar Rp X ke invoice INV-NUMBER"
+                if (preg_match('/ke invoice (.*)$/', $log->detail, $matches)) {
+                    $invoiceNomor = trim($matches[1]);
+                    if (!in_array($invoiceNomor, $appliedInvoiceNumbers)) {
+                        $appliedInvoiceNumbers[] = $invoiceNomor;
+                    }
+                }
+            }
+        }
+
+        $appliedToInvoices = collect(); // Initialize as an empty Illuminate\\Support\\Collection
+        if (!empty($appliedInvoiceNumbers)) {
+            // Invoice model is already imported via 'use App\\Models\\Invoice;'
+            $appliedToInvoices = Invoice::whereIn('nomor', $appliedInvoiceNumbers)
+                ->get();
+        }
+        // END: New logic
+
+        // Log activity (viewing detail)
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => 'detail',
+            'modul' => 'nota_kredit',
+            'data_id' => $notaKredit->id,
+            'ip_address' => request()->ip(),
+            'detail' => "Melihat detail nota kredit {$notaKredit->nomor}"
+        ]);
+
+        return view('penjualan.nota_kredit.show', compact(
+            'notaKredit',
+            'logAktivitas',
+            'appliedToInvoices' // Add the new variable here
+        ));
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        $notaKredit = NotaKredit::with([
+            'customer',
+            'returPenjualan',
+            'salesOrder',
+            'user',
+            'details.produk',
+            'details.satuan'
+        ])->findOrFail($id);
+
+        if ($notaKredit->status !== 'draft') {
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('error', 'Hanya nota kredit dengan status draft yang dapat diedit.');
+        }
+
+        $customers = Customer::where('is_active', true)->orderBy('nama')->get();
+
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => 'buka_form_edit',
+            'modul' => 'nota_kredit',
+            'data_id' => $notaKredit->id,
+            'ip_address' => request()->ip(),
+            'detail' => "Membuka form edit untuk nota kredit {$notaKredit->nomor}"
+        ]);
+
+        return view('penjualan.nota_kredit.edit', compact('notaKredit', 'customers'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        $notaKredit = NotaKredit::with(['details'])->findOrFail($id);
+
+        // Validate that the nota kredit is still in draft status
+        if ($notaKredit->status !== 'draft') {
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('error', 'Hanya nota kredit dengan status draft yang dapat diedit.');
+        }
+
+        $validated = $request->validate([
+            'tanggal' => 'required|date',
+            'customer_id' => 'required|exists:customer,id',
+            'sales_order_id' => 'required|exists:sales_order,id',
+            'catatan' => 'nullable|string',
+            'total' => 'required|numeric|min:0',
+            'details' => 'required|array|min:1',
+            'details.*.produk_id' => 'required|exists:produk,id',
+            'details.*.quantity' => 'required|numeric|min:0.01',
+            'details.*.satuan_id' => 'required|exists:satuan,id',
+            'details.*.harga' => 'required|numeric|min:0',
+            'details.*.subtotal' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Update nota kredit header
+            $notaKredit->update([
+                'tanggal' => $validated['tanggal'],
+                'customer_id' => $validated['customer_id'],
+                'sales_order_id' => $validated['sales_order_id'],
+                'total' => $validated['total'],
+                'catatan' => $validated['catatan'] ?? null,
+            ]);
+
+            // Delete existing details
+            NotaKreditDetail::where('nota_kredit_id', $notaKredit->id)->delete();
+
+            // Create new nota kredit details
+            foreach ($validated['details'] as $detail) {
+                NotaKreditDetail::create([
+                    'nota_kredit_id' => $notaKredit->id,
+                    'produk_id' => $detail['produk_id'],
+                    'quantity' => $detail['quantity'],
+                    'satuan_id' => $detail['satuan_id'],
+                    'harga' => $detail['harga'],
+                    'subtotal' => $detail['subtotal']
+                ]);
+            }
+
+            // Log activity
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'edit',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Mengubah nota kredit {$notaKredit->nomor} dengan total Rp " . number_format($validated['total'], 0, ',', '.')
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Nota Kredit berhasil diperbarui.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating nota kredit: ' . $e->getMessage());
+
+            return back()->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Process the credit note
+     */
+    public function processNotaKredit($id)
+    {
+        $notaKredit = NotaKredit::with([
+            'returPenjualan',
+            'customer',
+            'salesOrder',
+            'details.produk'
+        ])->findOrFail($id);
+
+        // Validate status
+        if ($notaKredit->status !== 'draft') {
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('error', 'Hanya nota kredit dengan status draft yang dapat diproses.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update credit note status
+            $notaKredit->update(['status' => 'diproses']);
+
+            // Apply credit to sales order
+            $salesOrder = $notaKredit->salesOrder;
+
+            $remainingCredit = $this->applyCreditToInvoices($notaKredit);
+
+            if ($salesOrder) {
+                // If status is lunas, create overpayment
+                if ($salesOrder->status_pembayaran === 'lunas') {
+                    $salesOrder->kelebihan_bayar = ($salesOrder->kelebihan_bayar ?? 0) + $remainingCredit;
+                    $salesOrder->status_pembayaran = 'kelebihan_bayar';
+                }
+                // If status is sebagian, reduce outstanding amount
+                else if ($salesOrder->status_pembayaran === 'sebagian') {
+                    $outstandingAmount = $salesOrder->total - ($salesOrder->total_pembayaran ?? 0);
+
+                    if ($remainingCredit >= $outstandingAmount) {
+                        // Credit note covers the entire outstanding amount
+                        $salesOrder->kelebihan_bayar = $remainingCredit - $outstandingAmount;
+                        $salesOrder->status_pembayaran = $salesOrder->kelebihan_bayar > 0 ? 'kelebihan_bayar' : 'lunas';
+                    } else {
+                        // Partial credit applied
+                        $salesOrder->total_pembayaran = ($salesOrder->total_pembayaran ?? 0) + $remainingCredit;
+                    }
+                }
+
+                $salesOrder->save();
+            }
+
+            // Log activity
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'proses',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Memproses nota kredit {$notaKredit->nomor} dengan total Rp " . number_format($notaKredit->total, 0, ',', '.')
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Nota Kredit berhasil diproses.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Complete the credit note
+     */
+    public function completeNotaKredit($id)
+    {
+        $notaKredit = NotaKredit::findOrFail($id);
+
+        // Validate status
+        if ($notaKredit->status !== 'diproses') {
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('error', 'Hanya nota kredit dengan status diproses yang dapat diselesaikan.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update credit note status
+            $notaKredit->update(['status' => 'selesai']);
+
+            // Log activity
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'selesai',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Menyelesaikan nota kredit {$notaKredit->nomor}"
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Nota Kredit berhasil diselesaikan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export PDF
+     */
+    public function exportPdf(string $id)
+    {
+        // Increase the execution time limit for PDF generation
+        ini_set('max_execution_time', 300); // Set to 5 minutes (300 seconds)
+        // Increase memory limit for larger PDF generation
+        ini_set('memory_limit', '512M');
+
+        $notaKredit = NotaKredit::with([
+            'returPenjualan',
+            'customer',
+            'salesOrder',
+            'user',
+            'details.produk',
+            'details.satuan'
+        ])->findOrFail($id);
+
+
+        $pdf = Pdf::loadView('penjualan.nota_kredit.pdf', compact('notaKredit'));
+        $pdf->setPaper('A4', 'portrait');
+
+        return $pdf->download('Nota-Kredit-' . $notaKredit->nomor . '.pdf');
+    }
+
+    /**
+     * Finalize the credit note, changing status from draft to diproses.
+     * This is equivalent to processing the credit note.
+     */
+    public function finalize($id)
+    {
+        $notaKredit = NotaKredit::with([
+            'returPenjualan',
+            'customer',
+            'salesOrder',
+            'details.produk'
+        ])->findOrFail($id);
+
+        // Validate status
+        if ($notaKredit->status !== 'draft') {
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('error', 'Hanya nota kredit dengan status draft yang dapat difinalisasi.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Update credit note status
+            $notaKredit->update(['status' => 'diproses']);
+
+            // Apply credit to sales order
+            $salesOrder = $notaKredit->salesOrder;
+
+            $remainingCredit = $this->applyCreditToInvoices($notaKredit);
+
+            if ($salesOrder) {
+                // If status is lunas, create overpayment
+                if ($salesOrder->status_pembayaran === 'lunas') {
+                    $salesOrder->kelebihan_bayar = ($salesOrder->kelebihan_bayar ?? 0) + $remainingCredit;
+                    $salesOrder->status_pembayaran = 'kelebihan_bayar';
+                }
+                // If status is sebagian, reduce outstanding amount
+                else if ($salesOrder->status_pembayaran === 'sebagian') {
+                    $outstandingAmount = $salesOrder->total - ($salesOrder->total_pembayaran ?? 0);
+
+                    if ($remainingCredit >= $outstandingAmount) {
+                        // Credit note covers the entire outstanding amount
+                        $salesOrder->kelebihan_bayar = $remainingCredit - $outstandingAmount;
+                        $salesOrder->status_pembayaran = $salesOrder->kelebihan_bayar > 0 ? 'kelebihan_bayar' : 'lunas';
+                    } else {
+                        // Partial credit applied
+                        $salesOrder->total_pembayaran = ($salesOrder->total_pembayaran ?? 0) + $remainingCredit;
+                    }
+                }
+
+                $salesOrder->save();
+            }
+
+            // Log activity
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'finalisasi',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Memfinalisasi nota kredit {$notaKredit->nomor} dengan total Rp " . number_format($notaKredit->total, 0, ',', '.')
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Nota Kredit berhasil difinalisasi.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Helper method to apply credit to invoices
+     * 
+     * @param NotaKredit $notaKredit
+     * @return float Remaining credit after applying to invoices
+     */
+    private function applyCreditToInvoices(NotaKredit $notaKredit)
+    {
+        // Find related invoices and apply credit to them first
+        $relatedInvoices = Invoice::where('sales_order_id', $notaKredit->sales_order_id)
+            ->where('status', '!=', 'lunas')
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        $remainingCredit = $notaKredit->total;
+
+        foreach ($relatedInvoices as $invoice) {
+            if ($remainingCredit <= 0) break;
+
+            $sisaPiutang = $invoice->sisa_piutang;
+
+            if ($sisaPiutang > 0) {
+                $creditToApply = min($remainingCredit, $sisaPiutang);
+
+                // Apply credit to invoice using the applyCredit method
+                $invoice->applyCredit($creditToApply);
+
+                // Reduce remaining credit
+                $remainingCredit -= $creditToApply;
+
+                // Log the credit application
+                LogAktivitas::create([
+                    'user_id' => Auth::id(),
+                    'aktivitas' => 'terapkan_kredit',
+                    'modul' => 'nota_kredit',
+                    'data_id' => $notaKredit->id,
+                    'ip_address' => request()->ip(),
+                    'detail' => "Menerapkan kredit sebesar Rp " . number_format($creditToApply, 0, ',', '.') . " ke invoice " . $invoice->nomor
+                ]);
+            }
+        }
+
+        return $remainingCredit;
+    }
+}

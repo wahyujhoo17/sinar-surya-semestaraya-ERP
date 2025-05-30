@@ -23,6 +23,8 @@ class SalesOrder extends Model
         'ppn',
         'total',
         'ongkos_kirim',
+        'total_pembayaran',
+        'kelebihan_bayar',
         'status_pembayaran',
         'status_pengiriman',
         'tanggal_kirim',
@@ -85,6 +87,14 @@ class SalesOrder extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'sales_order_id');
+    }
+
+    /**
+     * Relasi ke Retur Penjualan
+     */
+    public function returPenjualan()
+    {
+        return $this->hasMany(ReturPenjualan::class, 'sales_order_id');
     }
 
     /**

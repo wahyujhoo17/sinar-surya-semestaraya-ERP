@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class ReturPenjualan extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'retur_penjualan';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
@@ -18,9 +18,16 @@ class ReturPenjualan extends Model
         'customer_id',
         'user_id',
         'catatan',
-        'status' // 'draft', 'diproses', 'selesai'
+        'total',
+        'status', // 'draft', 'menunggu_persetujuan', 'disetujui', 'ditolak', 'diproses', 'menunggu_pengiriman', 'menunggu_barang_pengganti', 'selesai'
+        'tipe_retur', // 'pengembalian_dana', 'tukar_barang'
+        'requires_qc',
+        'qc_passed',
+        'qc_notes',
+        'qc_by_user_id',
+        'qc_at'
     ];
-    
+
     /**
      * Relasi ke Sales Order
      */
@@ -28,7 +35,7 @@ class ReturPenjualan extends Model
     {
         return $this->belongsTo(SalesOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Customer
      */
@@ -36,7 +43,7 @@ class ReturPenjualan extends Model
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -44,12 +51,36 @@ class ReturPenjualan extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Detail Retur Penjualan
      */
     public function details()
     {
         return $this->hasMany(ReturPenjualanDetail::class, 'retur_id');
+    }
+
+    /**
+     * Relasi ke User yang melakukan QC
+     */
+    public function qcByUser()
+    {
+        return $this->belongsTo(User::class, 'qc_by_user_id');
+    }
+
+    /**
+     * Relasi ke Nota Kredit
+     */
+    public function notaKredit()
+    {
+        return $this->hasOne(NotaKredit::class, 'retur_penjualan_id');
+    }
+
+    /**
+     * Relasi ke Item Pengganti
+     */
+    public function barangPengganti()
+    {
+        return $this->hasMany(ReturPenjualanPengganti::class, 'retur_id');
     }
 }

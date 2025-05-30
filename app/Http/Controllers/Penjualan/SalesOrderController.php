@@ -422,6 +422,7 @@ class SalesOrderController extends Controller
             'deliveryOrders',
             'invoices'
         ])->findOrFail($id);
+        
 
         return view('penjualan.sales-order.show', compact('salesOrder'));
     }
