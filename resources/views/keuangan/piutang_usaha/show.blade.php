@@ -399,29 +399,33 @@
                                                     $currentReturValue = $return->total_nilai_retur;
                                                 }
                                             @endphp
-                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                                <td class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                                    {{ \Carbon\Carbon::parse($return->tanggal)->translatedFormat('d M Y') }}
-                                                </td>
-                                                <td
-                                                    class="px-4 lg:px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                    <a href="{{ route('penjualan.retur.show', $return->id) }}"
-                                                        target="_blank"
-                                                        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
-                                                        {{ $return->nomor_retur ?? $return->nomor }}
-                                                    </a>
-                                                </td>
-                                                <td
-                                                    class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100 text-right font-mono">
-                                                    Rp {{ number_format($currentReturValue, 0, ',', '.') }}
-                                                </td>
-                                                <td class="px-4 lg:px-6 py-4">
-                                                    <span
-                                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $return->status === 'selesai' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' }}">
-                                                        {{ ucfirst($return->status) }}
-                                                    </span>
-                                                </td>
-                                            </tr>
+                                            @if ($return->tipe_retur == 'pengembalian_dana')
+                                                <tr
+                                                    class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                    <td
+                                                        class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                                        {{ \Carbon\Carbon::parse($return->tanggal)->translatedFormat('d M Y') }}
+                                                    </td>
+                                                    <td
+                                                        class="px-4 lg:px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                        <a href="{{ route('penjualan.retur.show', $return->id) }}"
+                                                            target="_blank"
+                                                            class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
+                                                            {{ $return->nomor_retur ?? $return->nomor }}
+                                                        </a>
+                                                    </td>
+                                                    <td
+                                                        class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100 text-right font-mono">
+                                                        Rp {{ number_format($currentReturValue, 0, ',', '.') }}
+                                                    </td>
+                                                    <td class="px-4 lg:px-6 py-4">
+                                                        <span
+                                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $return->status === 'selesai' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300' }}">
+                                                            {{ ucfirst($return->status) }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>

@@ -10,6 +10,7 @@ use App\Models\SalesOrder; // Added SalesOrder
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Models\Kas;
 use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
@@ -85,6 +86,10 @@ class PembayaranPiutangController extends Controller
      */
     public function store(Request $request)
     {
+        // Enable query logging for debugging in development environments
+        if (config('app.debug')) {
+            DB::enableQueryLog();
+        }
 
         $validatedData = $request->validate([
             'invoice_id' => 'nullable|exists:invoice,id', // Changed invoices to invoice
@@ -97,7 +102,6 @@ class PembayaranPiutangController extends Controller
             'catatan' => 'nullable|string|max:255',
             'no_referensi' => 'nullable|string|max:100',
         ]);
-        dd($validatedData); // Debugging line, remove in production
 
 
         DB::beginTransaction();
@@ -129,9 +133,6 @@ class PembayaranPiutangController extends Controller
             $pembayaran->no_referensi = $validatedData['no_referensi'] ?? null;
             $pembayaran->invoice_id = $validatedData['invoice_id'] ?? null;
 
-
-
-
             $paymentDate = date('Ymd', strtotime($request->tanggal_pembayaran));
             $prefix = 'BPP-' . $paymentDate . '-';
             $lastPaymentOnDate = PembayaranPiutang::where('nomor', 'like', $prefix . '%') // Changed nomor_pembayaran to nomor
@@ -150,48 +151,55 @@ class PembayaranPiutangController extends Controller
             $pembayaran->nomor = $prefix . $newNum; // Changed nomor_pembayaran to nomor
             $pembayaran->user_id = Auth::id();
 
-
-
             $invoice = null;
             if ($request->invoice_id) {
                 $invoice = Invoice::findOrFail($request->invoice_id);
-                $salesOrder = SalesOrder::find($invoice->sales_order_id);
+                // Check if sales_order_id exists before accessing it
+                $salesOrder = null;
+                if ($invoice->sales_order_id) {
+                    $salesOrder = SalesOrder::find($invoice->sales_order_id);
+                }
 
                 $pembayaran->customer_id = $invoice->customer_id;
 
                 // Calculate sisa_piutang by subtracting total payments from invoice total
                 $totalPaymentsBefore = $invoice->pembayaranPiutang()->sum('jumlah');
-                $sisaPiutang = $invoice->total - $totalPaymentsBefore;
+                $sisaPiutang = (float)$invoice->total - (float)$totalPaymentsBefore;
 
-                if (round($pembayaran->jumlah, 2) > round($sisaPiutang, 2) + 0.001) { // Use $pembayaran->jumlah
+                if (round((float)$pembayaran->jumlah, 2) > round((float)$sisaPiutang, 2) + 0.001) { // Use $pembayaran->jumlah
                     DB::rollBack();
                     return back()->withInput()->withErrors(['jumlah_pembayaran' => 'Jumlah pembayaran (Rp ' . number_format($pembayaran->jumlah, 2, ',', '.') . ') melebihi sisa piutang (Rp ' . number_format($sisaPiutang, 2, ',', '.') . ') untuk invoice ini.']);
                 }
 
                 // Calculate remaining amount after this payment
-                $sisaPiutangAfterPayment = $sisaPiutang - $pembayaran->jumlah;
+                $sisaPiutangAfterPayment = (float)$sisaPiutang - (float)$pembayaran->jumlah;
 
                 if ($sisaPiutangAfterPayment <= 0.009) { // Tolerance for zero
                     $invoice->status = 'lunas'; // Changed from status_pembayaran to status
-                    $salesOrder->status_pembayaran = 'lunas';
-                    $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
+                    if ($salesOrder) {
+                        $salesOrder->status_pembayaran = 'lunas';
+                        $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
+                    }
                 } else {
                     $invoice->status = 'sebagian'; // Changed from status_pembayaran to status
-                    $salesOrder->status_pembayaran = 'sebagian';
-                    $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
+                    if ($salesOrder) {
+                        $salesOrder->status_pembayaran = 'sebagian';
+                        $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
+                    }
                 }
 
                 $invoice->save();
-                $salesOrder->save();
+                if ($salesOrder) {
+                    $salesOrder->save();
+                }
             } else {
                 $pembayaran->customer_id = $validatedData['customer_id'];
             }
 
             $pembayaran->save();
 
-
-
-            $customerName = Customer::find($pembayaran->customer_id)->company ?? Customer::find($pembayaran->customer_id)->nama;
+            $customerName = Customer::find($pembayaran->customer_id);
+            $customerName = $customerName ? ($customerName->company ?? $customerName->nama) : 'Unknown';
             $invoiceNumber = $invoice ? $invoice->nomor : 'Tanpa Invoice';
 
             if ($pembayaran->metode_pembayaran === 'Kas' && $pembayaran->kas_id) {
@@ -233,10 +241,18 @@ class PembayaranPiutangController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+            if (config('app.debug')) {
+                Log::debug('Validation error in PembayaranPiutang store: ' . json_encode($e->errors()));
+            }
             return back()->withInput()->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log::error('Error saving payment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+            if (config('app.debug')) {
+                Log::error('Error saving payment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
+                if (method_exists(DB::class, 'getQueryLog')) {
+                    Log::debug('Query log: ' . json_encode(DB::getQueryLog()));
+                }
+            }
             return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan pembayaran: ' . $e->getMessage()]);
         }
     }
