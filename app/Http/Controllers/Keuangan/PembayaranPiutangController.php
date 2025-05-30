@@ -85,7 +85,7 @@ class PembayaranPiutangController extends Controller
      */
     public function store(Request $request)
     {
-
+        dd($request->all()); // Debugging line to check request data
         $validatedData = $request->validate([
             'invoice_id' => 'nullable|exists:invoice,id', // Changed invoices to invoice
             'customer_id' => 'required_without:invoice_id|exists:customer,id',
