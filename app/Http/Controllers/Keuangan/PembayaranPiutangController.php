@@ -89,6 +89,7 @@ class PembayaranPiutangController extends Controller
         // Enable query logging for debugging in development environments
         if (config('app.debug')) {
             DB::enableQueryLog();
+            Log::info('PembayaranPiutang store: Starting transaction process');
         }
 
         $validatedData = $request->validate([
@@ -105,9 +106,28 @@ class PembayaranPiutangController extends Controller
 
 
         DB::beginTransaction();
-
-        dd(PembayaranPiutang::all());
+        
+        if (config('app.debug')) {
+            try {
+                // Log database driver for debugging
+                $driver = DB::connection()->getDriverName();
+                Log::info('PembayaranPiutang store: Database driver', [
+                    'driver' => $driver,
+                    'version' => DB::connection()->getPdo()->getAttribute(\PDO::ATTR_SERVER_VERSION)
+                ]);
+            } catch (\Exception $e) {
+                Log::warning('PembayaranPiutang store: Unable to identify database driver', [
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        // dd($validatedData);
         try {
+            if (config('app.debug')) {
+                Log::info('PembayaranPiutang store: Creating new payment record', ['data' => $validatedData]);
+            }
+            
             $pembayaran = new PembayaranPiutang();
             // Manually map fields that differ from validatedData keys or need specific handling
             $pembayaran->tanggal = $validatedData['tanggal_pembayaran'];
@@ -137,6 +157,11 @@ class PembayaranPiutangController extends Controller
 
             $paymentDate = date('Ymd', strtotime($request->tanggal_pembayaran));
             $prefix = 'BPP-' . $paymentDate . '-';
+            
+            if (config('app.debug')) {
+                Log::info('PembayaranPiutang store: Generating payment number');
+            }
+            
             $lastPaymentOnDate = PembayaranPiutang::where('nomor', 'like', $prefix . '%') // Changed nomor_pembayaran to nomor
                 ->orderBy('id', 'desc')
                 ->first();
@@ -153,8 +178,16 @@ class PembayaranPiutangController extends Controller
             $pembayaran->nomor = $prefix . $newNum; // Changed nomor_pembayaran to nomor
             $pembayaran->user_id = Auth::id();
 
+            if (config('app.debug')) {
+                Log::info('PembayaranPiutang store: Generated payment number', ['nomor' => $pembayaran->nomor]);
+            }
+
             $invoice = null;
             if ($request->invoice_id) {
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Processing invoice-related payment', ['invoice_id' => $request->invoice_id]);
+                }
+                
                 $invoice = Invoice::findOrFail($request->invoice_id);
                 // Check if sales_order_id exists before accessing it
                 $salesOrder = null;
@@ -167,14 +200,49 @@ class PembayaranPiutangController extends Controller
                 // Calculate sisa_piutang by subtracting total payments from invoice total
                 $totalPaymentsBefore = $invoice->pembayaranPiutang()->sum('jumlah');
                 $sisaPiutang = (float)$invoice->total - (float)$totalPaymentsBefore;
+                
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Calculating payment amounts', [
+                        'invoice_total' => $invoice->total,
+                        'total_payments_before' => $totalPaymentsBefore,
+                        'sisa_piutang' => $sisaPiutang,
+                        'jumlah_pembayaran' => $pembayaran->jumlah
+                    ]);
+                }
 
                 if (round((float)$pembayaran->jumlah, 2) > round((float)$sisaPiutang, 2) + 0.001) { // Use $pembayaran->jumlah
+                    if (config('app.debug')) {
+                        Log::warning('PembayaranPiutang store: Payment amount exceeds remaining balance', [
+                            'payment_amount' => $pembayaran->jumlah,
+                            'sisa_piutang' => $sisaPiutang
+                        ]);
+                    }
                     DB::rollBack();
                     return back()->withInput()->withErrors(['jumlah_pembayaran' => 'Jumlah pembayaran (Rp ' . number_format($pembayaran->jumlah, 2, ',', '.') . ') melebihi sisa piutang (Rp ' . number_format($sisaPiutang, 2, ',', '.') . ') untuk invoice ini.']);
                 }
 
                 // Calculate remaining amount after this payment
                 $sisaPiutangAfterPayment = (float)$sisaPiutang - (float)$pembayaran->jumlah;
+                
+                // Log detailed numeric calculations for debugging
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Detailed numeric calculations', [
+                        'invoice_total_type' => gettype($invoice->total),
+                        'invoice_total_raw' => $invoice->total,
+                        'invoice_total_float' => (float)$invoice->total,
+                        'total_payments_type' => gettype($totalPaymentsBefore),
+                        'total_payments_raw' => $totalPaymentsBefore,
+                        'total_payments_float' => (float)$totalPaymentsBefore,
+                        'sisa_piutang_raw' => $sisaPiutang,
+                        'sisa_piutang_rounded' => round((float)$sisaPiutang, 2),
+                        'payment_amount_type' => gettype($pembayaran->jumlah),
+                        'payment_amount_raw' => $pembayaran->jumlah,
+                        'payment_amount_float' => (float)$pembayaran->jumlah,
+                        'sisa_after_payment_raw' => $sisaPiutangAfterPayment,
+                        'sisa_after_payment_rounded' => round($sisaPiutangAfterPayment, 2),
+                        'zero_comparison' => $sisaPiutangAfterPayment <= 0.009 ? 'true' : 'false'
+                    ]);
+                }
 
                 if ($sisaPiutangAfterPayment <= 0.009) { // Tolerance for zero
                     $invoice->status = 'lunas'; // Changed from status_pembayaran to status
@@ -193,22 +261,55 @@ class PembayaranPiutangController extends Controller
                 $invoice->save();
                 if ($salesOrder) {
                     $salesOrder->save();
+                    if (config('app.debug')) {
+                        Log::info('PembayaranPiutang store: Sales order updated', [
+                            'sales_order_id' => $salesOrder->id,
+                            'status_pembayaran' => $salesOrder->status_pembayaran
+                        ]);
+                    }
                 }
             } else {
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Processing direct customer payment (no invoice)', [
+                        'customer_id' => $validatedData['customer_id']
+                    ]);
+                }
                 $pembayaran->customer_id = $validatedData['customer_id'];
             }
 
             $pembayaran->save();
+            
+            if (config('app.debug')) {
+                Log::info('PembayaranPiutang store: Payment record saved', [
+                    'id' => $pembayaran->id,
+                    'nomor' => $pembayaran->nomor
+                ]);
+            }
 
             $customerName = Customer::find($pembayaran->customer_id);
             $customerName = $customerName ? ($customerName->company ?? $customerName->nama) : 'Unknown';
             $invoiceNumber = $invoice ? $invoice->nomor : 'Tanpa Invoice';
 
             if ($pembayaran->metode_pembayaran === 'Kas' && $pembayaran->kas_id) {
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Processing Kas payment', [
+                        'kas_id' => $pembayaran->kas_id,
+                        'jumlah' => $pembayaran->jumlah
+                    ]);
+                }
+                
                 $kas = Kas::findOrFail($pembayaran->kas_id);
                 $kas->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
                 $kas->save();
-                TransaksiKas::create([
+                
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Kas balance updated', [
+                        'kas_id' => $kas->id,
+                        'new_saldo' => $kas->saldo
+                    ]);
+                }
+                
+                $kasTransaction = TransaksiKas::create([
                     'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
                     'kas_id' => $pembayaran->kas_id,
                     'jenis' => 'masuk',
@@ -219,11 +320,32 @@ class PembayaranPiutangController extends Controller
                     'related_type' => PembayaranPiutang::class,
                     'user_id' => Auth::id()
                 ]);
+                
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Kas transaction record created', [
+                        'transaction_id' => $kasTransaction->id
+                    ]);
+                }
             } elseif ($pembayaran->metode_pembayaran === 'Bank Transfer' && $pembayaran->rekening_bank_id) {
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Processing Bank Transfer payment', [
+                        'rekening_bank_id' => $pembayaran->rekening_bank_id,
+                        'jumlah' => $pembayaran->jumlah
+                    ]);
+                }
+                
                 $rekening = RekeningBank::findOrFail($pembayaran->rekening_bank_id);
                 $rekening->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
                 $rekening->save();
-                TransaksiBank::create([
+                
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Bank account balance updated', [
+                        'rekening_id' => $rekening->id,
+                        'new_saldo' => $rekening->saldo
+                    ]);
+                }
+                
+                $bankTransaction = TransaksiBank::create([
                     'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
                     'rekening_id' => $pembayaran->rekening_bank_id,
                     'jenis' => 'masuk',
@@ -235,25 +357,46 @@ class PembayaranPiutangController extends Controller
                     'related_type' => PembayaranPiutang::class,
                     'user_id' => Auth::id()
                 ]);
+                
+                if (config('app.debug')) {
+                    Log::info('PembayaranPiutang store: Bank transaction record created', [
+                        'transaction_id' => $bankTransaction->id
+                    ]);
+                }
             }
 
             DB::commit();
+            
+            if (config('app.debug')) {
+                Log::info('PembayaranPiutang store: Transaction committed successfully', [
+                    'payment_id' => $pembayaran->id,
+                    'payment_number' => $pembayaran->nomor
+                ]);
+            }
+            
             $redirectRoute = $request->invoice_id ? route('keuangan.piutang-usaha.show', $request->invoice_id) : route('keuangan.pembayaran-piutang.show', $pembayaran->id);
             return redirect($redirectRoute)->with('success', 'Pembayaran piutang berhasil dicatat. Nomor: ' . $pembayaran->nomor); // Changed nomor_pembayaran to nomor
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             if (config('app.debug')) {
-                Log::debug('Validation error in PembayaranPiutang store: ' . json_encode($e->errors()));
+                Log::error('PembayaranPiutang store: Validation error', [
+                    'errors' => $e->errors(),
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
             }
             return back()->withInput()->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollBack();
             if (config('app.debug')) {
-                Log::error('Error saving payment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
-                if (method_exists(DB::class, 'getQueryLog')) {
-                    Log::debug('Query log: ' . json_encode(DB::getQueryLog()));
-                }
+                Log::error('PembayaranPiutang store: Exception occurred', [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'query_log' => method_exists(DB::class, 'getQueryLog') ? DB::getQueryLog() : 'Query log not available'
+                ]);
             }
             return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan pembayaran: ' . $e->getMessage()]);
         }
