@@ -23,9 +23,10 @@ class InvoiceController extends Controller
         $prefix = 'INV-';
         $date = now()->format('Ymd');
 
+        // PostgreSQL compatible query - convert substring to integer instead of UNSIGNED
         $lastInvoice = DB::table('invoice')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
@@ -35,6 +36,8 @@ class InvoiceController extends Controller
 
         return $prefix . $date . '-' . $newNumberSuffix;
     }
+
+
 
     public function index(Request $request)
     {

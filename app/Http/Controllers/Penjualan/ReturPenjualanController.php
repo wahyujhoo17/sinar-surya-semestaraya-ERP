@@ -105,7 +105,7 @@ class ReturPenjualanController extends Controller
                                 $endDate = Carbon::parse($dateEnd)->endOfDay()->toDateString();
                                 $query->whereBetween('tanggal', [$startDate, $endDate]);
                             } catch (\Exception $e) {
-                                \Log::error('Error parsing date range: ' . $e->getMessage());
+                                Log::error('Error parsing date range: ' . $e->getMessage());
                             }
                         }
                         break;
@@ -121,7 +121,7 @@ class ReturPenjualanController extends Controller
                     );
                 }
             } catch (\Exception $e) {
-                \Log::error('Error in date filtering: ' . $e->getMessage(), [
+                Log::error('Error in date filtering: ' . $e->getMessage(), [
                     'date_filter' => $dateFilter,
                     'date_start' => $dateStart,
                     'date_end' => $dateEnd,
@@ -300,7 +300,7 @@ class ReturPenjualanController extends Controller
             });
 
         // Log the details for debugging
-        \Log::debug('Sales Order Details for Return', [
+        Log::debug('Sales Order Details for Return', [
             'sales_order_id' => $salesOrderId,
             'details_count' => $details->count(),
             'first_item' => $details->first(),
@@ -537,7 +537,7 @@ class ReturPenjualanController extends Controller
         );
 
         // Log the debug data
-        \Log::debug('Retur Penjualan Edit - Quantity Debug', [
+        Log::debug('Retur Penjualan Edit - Quantity Debug', [
             'retur_id' => $returPenjualan->id,
             'details_count' => $returPenjualan->details->count(),
             'quantity_debug' => $quantityDebug
@@ -1538,7 +1538,7 @@ class ReturPenjualanController extends Controller
 
             return response()->json($responseData);
         } catch (\Exception $e) {
-            \Log::error('Error in getStokProduk: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error('Error in getStokProduk: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Terjadi kesalahan saat mengambil data stok produk: ' . $e->getMessage()
             ], 500);
