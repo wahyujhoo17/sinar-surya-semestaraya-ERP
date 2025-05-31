@@ -703,21 +703,15 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
                                     Ajukan Persetujuan
                                 </button>
 
-                                <form action="{{ route('penjualan.retur.destroy', $returPenjualan) }}" method="POST"
-                                    onsubmit="return confirm('Yakin ingin menghapus retur ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                            </path>
-                                        </svg>
-                                        Hapus Retur
-                                    </button>
-                                </form>
+                                <button type="button" onclick="showDeleteModal()"
+                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                    Hapus Retur
+                                </button>
                             @endif
 
                             @if ($returPenjualan->status === 'menunggu_persetujuan')
@@ -1303,7 +1297,8 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
             const modals = [
                 'submitApprovalModal',
                 'approvalModal',
-                'rejectionModal'
+                'rejectionModal',
+                'deleteModal'
             ];
 
             modals.forEach(modalId => {
@@ -1315,6 +1310,7 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
                             if (modalId === 'submitApprovalModal') closeSubmitApprovalModal();
                             if (modalId === 'approvalModal') closeApprovalModal();
                             if (modalId === 'rejectionModal') closeRejectionModal();
+                            if (modalId === 'deleteModal') closeDeleteModal();
                         }
                     });
                 }
@@ -1329,10 +1325,60 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
                             if (modalId === 'submitApprovalModal') closeSubmitApprovalModal();
                             if (modalId === 'approvalModal') closeApprovalModal();
                             if (modalId === 'rejectionModal') closeRejectionModal();
+                            if (modalId === 'deleteModal') closeDeleteModal();
                         }
                     });
                 }
             });
         });
+
+        // Delete Modal
+        function showDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
     </script>
+
+    {{-- Delete Confirmation Modal --}}
+    <div id="deleteModal" tabindex="-1" aria-hidden="true"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-auto mt-28">
+            <div class="p-6">
+                <div class="flex items-start mb-4">
+                    <div
+                        class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Hapus Retur Penjualan</h3>
+                        <p class="text-gray-700 dark:text-gray-300 mt-2">
+                            Apakah Anda yakin ingin menghapus retur penjualan ini? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-300 rounded-lg transition-colors duration-200">Batal</button>
+                    <form id="delete-form" action="{{ route('penjualan.retur.destroy', $returPenjualan) }}"
+                        method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200">Hapus</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>

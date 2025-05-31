@@ -44,7 +44,7 @@
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                 <div class="text-sm">
                     <div class="font-medium text-gray-900 dark:text-white">
-                        {{ $invoice->customer->company ?? 'Unknown' }}
+                        {{ $invoice->customer->company ?? ($invoice->customer->nama ?? 'Unknown') }}
                     </div>
                     <div class="text-gray-500 dark:text-gray-400">
                         {{ $invoice->customer->kode ?? '' }}

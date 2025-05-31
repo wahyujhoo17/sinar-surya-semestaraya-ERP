@@ -410,7 +410,7 @@
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                 class="h-5 w-5 mr-2 text-primary-500 dark:text-primary-400" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
+                                viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
@@ -447,7 +447,7 @@
                                                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $quotation->nomor_quotation }}</td>
+                                                    {{ $quotation->nomor }}</td>
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {{ \Carbon\Carbon::parse($quotation->tanggal_quotation)->format('d/m/Y') }}
@@ -455,7 +455,7 @@
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
                                                     Rp
-                                                    {{ number_format($quotation->total_harga_setelah_diskon_pajak ?? 0, 0, ',', '.') }}
+                                                    {{ number_format($quotation->total ?? 0, 0, ',', '.') }}
                                                 </td>
                                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
                                                     <span
@@ -525,6 +525,9 @@
                                                 class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                                 Total</th>
                                             <th
+                                                class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                Total Pembayaran</th>
+                                            <th
                                                 class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                                 Status</th>
                                             <th
@@ -532,6 +535,7 @@
                                                 Aksi</th>
                                         </tr>
                                     </thead>
+
                                     <tbody
                                         class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         @foreach ($customer->salesOrders as $salesOrder)
@@ -539,7 +543,7 @@
                                                 class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                    {{ $salesOrder->nomor_so }}</td>
+                                                    {{ $salesOrder->nomor }}</td>
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                     {{ \Carbon\Carbon::parse($salesOrder->tanggal_so)->format('d/m/Y') }}
@@ -547,14 +551,26 @@
                                                 <td
                                                     class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
                                                     Rp
-                                                    {{ number_format($salesOrder->total_harga_setelah_diskon_pajak ?? 0, 0, ',', '.') }}
+                                                    {{ number_format($salesOrder->total ?? 0, 0, ',', '.') }}
+                                                </td>
+                                                <td
+                                                    class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                                    @if ($salesOrder->status_pembayaran == 'lunas')
+                                                        Rp
+                                                        {{ number_format($salesOrder->total ?? 0, 0, ',', '.') }}
+                                                    @else
+                                                        Rp
+                                                        {{ number_format($salesOrder->total_pembayaran ?? 0, 0, ',', '.') }}
+                                                    @endif
+
                                                 </td>
                                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
                                                     <span
                                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                                                        {{ $salesOrder->status ?? 'Open' }}
+                                                        {{ $salesOrder->status_pembayaran ?? 'Open' }}
                                                     </span>
                                                 </td>
+
                                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium">
                                                     <a href="{{ route('penjualan.sales-order.show', $salesOrder->id) }}"
                                                         class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300">Detail</a>
@@ -563,6 +579,83 @@
                                         @endforeach
                                     </tbody>
                                 </table>
+                            </div>
+
+                            <!-- Ringkasan Total Pembelian -->
+                            <div
+                                class="mt-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <h4
+                                    class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                        class="h-5 w-5 mr-2 text-primary-500 dark:text-primary-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    Ringkasan Total Pembelian
+                                </h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div
+                                        class="bg-white dark:bg-gray-800 rounded-md p-4 border border-gray-200 dark:border-gray-700">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Nilai Pesanan
+                                        </p>
+                                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Rp
+                                            {{ number_format($customer->salesOrders->sum('total') ?? 0, 0, ',', '.') }}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="bg-white dark:bg-gray-800 rounded-md p-4 border border-gray-200 dark:border-gray-700">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Pembayaran</p>
+                                        <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Rp
+                                            {{ number_format($customer->salesOrders->sum('total_pembayaran') ?? 0, 0, ',', '.') }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-4 bg-white dark:bg-gray-800 rounded-md p-4 border border-gray-200 dark:border-gray-700">
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Status Pembayaran
+                                            </p>
+                                            <div class="flex space-x-2 mt-1">
+                                                @php
+                                                    $totalLunas = $customer->salesOrders
+                                                        ->where('status_pembayaran', 'lunas')
+                                                        ->count();
+                                                    $totalPending = $customer->salesOrders
+                                                        ->whereNotIn('status_pembayaran', ['lunas'])
+                                                        ->count();
+                                                @endphp
+                                                @if ($totalLunas > 0)
+                                                    <span
+                                                        class="px-2 py-1 text-xs font-medium rounded-md bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                                        {{ $totalLunas }} Lunas
+                                                    </span>
+                                                @endif
+                                                @if ($totalPending > 0)
+                                                    <span
+                                                        class="px-2 py-1 text-xs font-medium rounded-md bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">
+                                                        {{ $totalPending }} Belum Lunas
+                                                    </span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Persentase
+                                                Pembayaran</p>
+                                            @php
+                                                $totalNilai = $customer->salesOrders->sum('total');
+                                                $totalBayar = $customer->salesOrders->sum('total_pembayaran');
+                                                $persentase = $totalNilai > 0 ? ($totalBayar / $totalNilai) * 100 : 0;
+                                            @endphp
+                                            <p class="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {{ number_format($persentase, 1) }}%
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         @else
                             <div class="text-center py-8 text-gray-500 dark:text-gray-400">

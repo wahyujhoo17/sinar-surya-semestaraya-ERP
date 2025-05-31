@@ -37,8 +37,45 @@ class ReturPenjualanController extends Controller
             $status = 'semua';
         }
 
-        $query = ReturPenjualan::with(['salesOrder', 'customer', 'user'])
-            ->orderBy('created_at', 'desc');
+        $query = ReturPenjualan::with(['salesOrder', 'customer', 'user']);
+
+        // Get sorting parameters
+        $sortBy = $request->input('sort_by', 'tanggal');
+        $sortDir = $request->input('sort_dir', 'desc');
+
+        // Apply appropriate sorting based on field
+        switch ($sortBy) {
+            case 'nomor':
+                $query->orderBy('nomor', $sortDir);
+                break;
+            case 'tanggal':
+                $query->orderBy('tanggal', $sortDir);
+                break;
+            case 'customer':
+                $query->join('customer', 'retur_penjualan.customer_id', '=', 'customer.id')
+                    ->orderBy('customer.nama', $sortDir)
+                    ->select('retur_penjualan.*');
+                break;
+            case 'sales_order':
+                $query->join('sales_order', 'retur_penjualan.sales_order_id', '=', 'sales_order.id')
+                    ->orderBy('sales_order.nomor', $sortDir)
+                    ->select('retur_penjualan.*');
+                break;
+            case 'total':
+                $query->orderBy('total', $sortDir);
+                break;
+            case 'status':
+                $query->orderBy('status', $sortDir);
+                break;
+            case 'created_by':
+                $query->join('users', 'retur_penjualan.user_id', '=', 'users.id')
+                    ->orderBy('users.name', $sortDir)
+                    ->select('retur_penjualan.*');
+                break;
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
 
         if ($status !== 'semua') {
             $query->where('status', $status);
@@ -141,8 +178,6 @@ class ReturPenjualanController extends Controller
                         'sql_bindings' => $query->getBindings()
                     ], 500);
                 }
-
-                // If date filtering fails, we'll just ignore it rather than breaking the whole request
             }
         }
 
@@ -151,7 +186,7 @@ class ReturPenjualanController extends Controller
             $query->where('customer_id', $customerId);
         }
 
-        $returPenjualan = $query->paginate(15);
+        $returPenjualan = $query->paginate(10);
 
         // Get status counts for summary cards
         $statusCounts = [
@@ -580,13 +615,13 @@ class ReturPenjualanController extends Controller
             'sales_order_id' => 'required|exists:sales_order,id',
             'customer_id' => 'required|exists:customer,id',
             'catatan' => 'nullable|string',
-            'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.quantity' => 'required|numeric|min:0.01',
-            'items.*.satuan_id' => 'required|exists:satuan,id',
-            'items.*.alasan' => 'required|string',
-            'items.*.keterangan' => 'nullable|string',
-            'items.*.id' => 'nullable|exists:retur_penjualan_detail,id',
+            'details' => 'required|array|min:1',
+            'details.*.produk_id' => 'required|exists:produk,id',
+            'details.*.quantity' => 'required|numeric|min:0.01',
+            'details.*.satuan_id' => 'required|exists:satuan,id',
+            'details.*.alasan' => 'required|string',
+            'details.*.keterangan' => 'nullable|string',
+            'details.*.id' => 'nullable|exists:retur_penjualan_detail,id',
         ]);
 
         try {
@@ -594,7 +629,7 @@ class ReturPenjualanController extends Controller
 
             // Calculate total value
             $totalNilaiRetur = 0;
-            foreach ($validated['items'] as $item) {
+            foreach ($validated['details'] as $item) {
                 if (empty($item['quantity']) || $item['quantity'] <= 0) {
                     continue; // Skip items with zero or negative quantity
                 }
@@ -619,7 +654,7 @@ class ReturPenjualanController extends Controller
             ]);
 
             // Get existing detail IDs
-            $existingIds = collect($validated['items'])
+            $existingIds = collect($validated['details'])
                 ->pluck('id')
                 ->filter()
                 ->toArray();
@@ -630,7 +665,7 @@ class ReturPenjualanController extends Controller
                 ->delete();
 
             // Update or create details
-            foreach ($validated['items'] as $item) {
+            foreach ($validated['details'] as $item) {
                 if (empty($item['quantity']) || $item['quantity'] <= 0) {
                     continue; // Skip items with zero or negative quantity
                 }
@@ -662,7 +697,7 @@ class ReturPenjualanController extends Controller
                 ' | Customer: ' . $returPenjualan->customer->nama .
                 ' | Sales Order: ' . $returPenjualan->salesOrder->nomor .
                 ' | Total Baru: Rp ' . number_format($totalNilaiRetur, 0, ',', '.') .
-                ' | Jumlah Item: ' . count(array_filter($validated['items'], function ($i) {
+                ' | Jumlah Item: ' . count(array_filter($validated['details'], function ($i) {
                     return !empty($i['quantity']) && $i['quantity'] > 0;
                 }));
 

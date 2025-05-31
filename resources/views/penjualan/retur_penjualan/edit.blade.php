@@ -674,6 +674,13 @@
                     totalValue: 0,
                     isSubmitting: false, // Initialize with a quick check for NaN/undefined values
                     init() {
+                        console.log('Initializing ReturPenjualanEditForm...');
+                        console.log('Initial data state:', {
+                            selectedCustomer: this.selectedCustomer,
+                            selectedSalesOrder: this.selectedSalesOrder,
+                            itemsCount: this.items.length
+                        });
+
                         this.calculateTotals();
                         // Debug any item with potential quantity issues and normalize all quantity values
                         this.items.forEach((item, idx) => {
@@ -736,17 +743,56 @@
                             this.salesOrders = [];
                             this.selectedSalesOrder = '';
                             this.soDetails = [];
-                            this.updateSalesOrderSelect();
+                            // Update Select2 for sales order
+                            $(this.$refs.salesOrderSelect).empty().prop('disabled', true);
+                            $(this.$refs.salesOrderSelect).select2({
+                                placeholder: 'Pilih Sales Order',
+                                disabled: true
+                            });
                             return;
                         }
 
                         fetch(`{{ route('penjualan.retur.get-sales-orders') }}?customer_id=${this.selectedCustomer}`)
                             .then(response => response.json())
                             .then(data => {
-                                this.salesOrders = data;
+                                // Handle both formats: direct array or {salesOrders: [...]} format
+                                let salesOrdersArray;
+
+                                if (Array.isArray(data)) {
+                                    salesOrdersArray = data;
+                                } else if (data && data.salesOrders && Array.isArray(data.salesOrders)) {
+                                    salesOrdersArray = data.salesOrders;
+                                } else {
+                                    console.error('Invalid data format received:', data);
+                                    this.salesOrders = [];
+                                    return;
+                                }
+
+                                // Tambahkan tanggal_formatted pada setiap sales order
+                                this.salesOrders = salesOrdersArray.map(so => ({
+                                    ...so,
+                                    tanggal_formatted: new Date(so.tanggal).toLocaleDateString('id-ID')
+                                }));
+
+                                // Reset selected sales order and details
                                 this.selectedSalesOrder = '';
                                 this.soDetails = [];
-                                this.updateSalesOrderSelect();
+
+                                // Update Select2 for sales order
+                                $(this.$refs.salesOrderSelect).empty().prop('disabled', false);
+                                $(this.$refs.salesOrderSelect).append(new Option('Pilih Sales Order', '', true, true));
+
+                                this.salesOrders.forEach(so => {
+                                    const option = new Option(
+                                        `${so.nomor} - ${so.tanggal_formatted}`,
+                                        so.id,
+                                        false,
+                                        false
+                                    );
+                                    $(this.$refs.salesOrderSelect).append(option);
+                                });
+
+                                $(this.$refs.salesOrderSelect).trigger('change');
                             })
                             .catch(error => {
                                 console.error('Error loading sales orders:', error);
@@ -765,11 +811,29 @@
                             )
                             .then(response => response.json())
                             .then(data => {
-                                // Ensure we have a valid array
-                                let details = Array.isArray(data) ? data : [];
+                                // Handle both formats: direct array or {details: [...]} format
+                                let detailsArray;
+
+                                if (Array.isArray(data)) {
+                                    // API returned a direct array of details
+                                    detailsArray = data;
+                                    console.log('API returned array format:', data);
+                                } else if (data && data.details && Array.isArray(data.details)) {
+                                    // API returned {details: [...]} format
+                                    detailsArray = data.details;
+                                    console.log('API returned object.details format:', data.details);
+                                } else {
+                                    console.error('Invalid data format received:', data);
+                                    // Set empty arrays if no valid data format found
+                                    this.soDetails = [];
+
+                                    // Show notification to user
+                                    alert('Sales order ini tidak memiliki detail produk atau data tidak valid.');
+                                    return;
+                                }
 
                                 // Pre-process the details to ensure consistent data
-                                details = details.map(detail => {
+                                this.soDetails = detailsArray.map(detail => {
                                     // Make sure all quantity values are properly set as numbers
                                     // First, extract all relevant numeric values
                                     const qtyTerkirim = parseFloat(detail.qty_terkirim || 0);
@@ -785,15 +849,14 @@
                                     else if (qtySo > 0) deliveredQty = qtySo;
 
                                     // Ensure all quantity fields are set consistently
-                                    detail.qty_terkirim = deliveredQty;
-                                    detail.quantity_terkirim = deliveredQty;
-                                    detail.qty_so = qtySo > 0 ? qtySo : deliveredQty;
-                                    detail.qty = deliveredQty;
-
-                                    return detail;
+                                    return {
+                                        ...detail,
+                                        qty_terkirim: deliveredQty,
+                                        quantity_terkirim: deliveredQty,
+                                        qty_so: qtySo > 0 ? qtySo : deliveredQty,
+                                        qty: deliveredQty
+                                    };
                                 });
-
-                                this.soDetails = details;
 
                                 // Debug - log data structure to console
                                 console.log('Sales Order Details after processing:', this.soDetails);
@@ -810,33 +873,25 @@
                             })
                             .catch(error => {
                                 console.error('Error loading sales order details:', error);
+                                alert('Terjadi kesalahan saat memuat detail sales order. Silakan coba lagi.');
                                 this.soDetails = [];
                             });
                     },
 
-                    updateSalesOrderSelect() {
-                        const salesOrderSelect = $('#sales_order_id');
-                        salesOrderSelect.empty();
-                        salesOrderSelect.append('<option value="">Pilih Sales Order</option>');
-
-                        this.salesOrders.forEach(so => {
-                            const option = new Option(
-                                `${so.nomor} - ${so.tanggal_formatted}`,
-                                so.id,
-                                false,
-                                so.id == this.selectedSalesOrder
-                            );
-                            salesOrderSelect.append(option);
-                        });
-
-                        salesOrderSelect.trigger('change.select2');
-                    },
-
                     addItemFromSalesOrder() {
+                        if (!this.soDetails || this.soDetails.length === 0) {
+                            alert('Tidak ada detail produk yang tersedia dari sales order. Pilih sales order terlebih dahulu.');
+                            return;
+                        }
+
+                        console.log('Sales order details available:', this.soDetails.length);
+
                         // Filter produk yang belum ada di items
                         const existingProdukIds = this.items.map(item => item.produk_id);
                         const availableProducts = this.soDetails.filter(detail => !existingProdukIds.includes(detail
-                            .produk_id));
+                        .produk_id));
+
+                        console.log('Available products after filtering:', availableProducts.length);
 
                         if (availableProducts.length === 0) {
                             alert('Semua produk dari sales order sudah ditambahkan.');
@@ -851,6 +906,11 @@
                         // Use our helper function to get the delivered quantity
                         const deliveredQty = this.getDeliveredQty(available);
                         console.log('Delivered quantity:', deliveredQty);
+
+                        if (deliveredQty <= 0) {
+                            alert(`Produk ${available.produk_nama} tidak memiliki kuantitas terkirim yang valid.`);
+                            return;
+                        }
 
                         // Tambahkan produk baru ke items
                         const newItem = {
@@ -870,6 +930,8 @@
 
                         this.items.push(newItem);
                         this.calculateTotals();
+
+                        console.log('Item added successfully. Total items:', this.items.length);
 
                         // Inisialisasi Select2 alasan setelah tambah item
                         setTimeout(() => {
@@ -919,26 +981,50 @@
 
                     // Helper function to get the delivered quantity with fallbacks
                     getDeliveredQty(item) {
-                        // Jika sudah ada nilai yang dinormalisasi, gunakan nilai tersebut
-                        // (ini terjadi di init() atau saat mengambil data dari server)
-                        if (item.qty_terkirim && parseFloat(item.qty_terkirim) > 0) {
-                            return parseFloat(item.qty_terkirim);
+                        if (!item) {
+                            console.error('getDeliveredQty called with null/undefined item');
+                            return 0;
                         }
 
-                        // Jika tidak ada atau 0, coba fallback ke nilai lain
-                        let qty = 0;
+                        // Extract all quantity values, ensuring they're proper numbers
+                        const qtyTerkirim = parseFloat(item.qty_terkirim || 0);
+                        const quantityTerkirim = parseFloat(item.quantity_terkirim || 0);
+                        const qtySo = parseFloat(item.qty_so || 0);
+                        const qty = parseFloat(item.qty || 0);
 
-                        // Prioritas sama dengan yang digunakan saat inisialisasi items
-                        if (item.quantity_terkirim && parseFloat(item.quantity_terkirim) > 0) {
-                            qty = parseFloat(item.quantity_terkirim);
-                        } else if (item.qty_so && parseFloat(item.qty_so) > 0) {
-                            qty = parseFloat(item.qty_so);
-                        } else if (item.qty && parseFloat(item.qty) > 0) {
-                            qty = parseFloat(item.qty);
+                        // For debugging
+                        const itemId = item.produk_id || 'unknown';
+                        const itemName = item.produk_nama || 'unnamed';
+
+                        // Use the first non-zero value, in order of priority
+                        let result = 0;
+                        let source = 'default';
+
+                        if (qtyTerkirim > 0) {
+                            result = qtyTerkirim;
+                            source = 'qty_terkirim';
+                        } else if (quantityTerkirim > 0) {
+                            result = quantityTerkirim;
+                            source = 'quantity_terkirim';
+                        } else if (qtySo > 0) {
+                            result = qtySo;
+                            source = 'qty_so';
+                        } else if (qty > 0) {
+                            result = qty;
+                            source = 'qty';
                         }
 
-                        // Always return a valid number, never undefined or NaN
-                        return parseFloat(qty) || 0;
+                        // Log the decision process for debugging
+                        console.log(`getDeliveredQty for ${itemName} (ID: ${itemId}):`, {
+                            qtyTerkirim,
+                            quantityTerkirim,
+                            qtySo,
+                            qty,
+                            result,
+                            source
+                        });
+
+                        return result;
                     },
 
                     formatNumber(number) {

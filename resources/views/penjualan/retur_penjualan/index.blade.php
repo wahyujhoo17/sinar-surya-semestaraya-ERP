@@ -173,6 +173,41 @@
         .dark .select2-results__option[aria-selected="true"] {
             background-color: #374151;
         }
+
+        /* Sortable table styles */
+        .sortable {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+
+        .sortable:hover {
+            background-color: rgba(243, 244, 246, 0.6);
+        }
+
+        .dark .sortable:hover {
+            background-color: rgba(55, 65, 81, 0.6);
+        }
+
+        .sort-icon {
+            transition: transform 0.2s ease;
+        }
+
+        .sort-asc .sort-icon {
+            opacity: 1 !important;
+            transform: rotate(180deg);
+        }
+
+        .sort-desc .sort-icon {
+            opacity: 1 !important;
+        }
+
+        .sortable-active {
+            background-color: rgba(219, 234, 254, 0.4);
+        }
+
+        .dark .sortable-active {
+            background-color: rgba(30, 58, 138, 0.4);
+        }
     </style>
     <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
         {{-- Modern Header with Stats and Summary --}}
@@ -415,6 +450,10 @@
                     loading: false,
                     tableHtml: '',
                     paginationHtml: '',
+                    currentSort: {
+                        field: 'tanggal', // Default sort field
+                        direction: 'desc' // Default sort direction
+                    },
                     init() {
                         // Initialize Select2 for customer dropdown
                         $(document).ready(() => {
@@ -440,6 +479,7 @@
 
                         // Initial table HTML already rendered server-side
                         this.attachPaginationListener();
+                        this.attachSortableListeners();
 
                         // Listen for back/forward browser navigation to update filters
                         window.addEventListener('popstate', (event) => {
@@ -460,6 +500,14 @@
                         this.dateEnd = url.searchParams.get('date_end') || '';
                         this.customerId = url.searchParams.get('customer_id') || '';
                         this.tab = url.searchParams.get('status') || '{{ $currentStatus }}';
+
+                        // Also get sort parameters if available
+                        const sortField = url.searchParams.get('sort_by') || 'tanggal';
+                        const sortDirection = url.searchParams.get('sort_dir') || 'desc';
+                        this.currentSort = {
+                            field: sortField,
+                            direction: sortDirection
+                        };
                     },
                     applyFilters() {
                         this.loading = true;
@@ -473,11 +521,72 @@
                         this.customerId = '';
                         this.applyFilters();
                     },
+                    attachSortableListeners() {
+                        this.$nextTick(() => {
+                            const sortableHeaders = document.querySelectorAll('.sortable');
+                            sortableHeaders.forEach(header => {
+                                header.addEventListener('click', () => {
+                                    const sortField = header.getAttribute('data-sort');
+                                    if (!sortField) return;
+
+                                    // Add visual indication of clicked state
+                                    header.classList.add('bg-blue-50', 'dark:bg-blue-900/20');
+                                    setTimeout(() => {
+                                        header.classList.remove('bg-blue-50',
+                                            'dark:bg-blue-900/20');
+                                    }, 150);
+
+                                    // Toggle direction if clicking the same column
+                                    if (this.currentSort.field === sortField) {
+                                        this.currentSort.direction = this.currentSort.direction ===
+                                            'asc' ? 'desc' : 'asc';
+                                    } else {
+                                        this.currentSort.field = sortField;
+                                        this.currentSort.direction = 'asc';
+                                    }
+
+                                    // Update sort indicators
+                                    sortableHeaders.forEach(h => {
+                                        h.classList.remove('sort-asc', 'sort-desc',
+                                            'sortable-active');
+                                    });
+
+                                    header.classList.add(
+                                        this.currentSort.direction === 'asc' ? 'sort-asc' :
+                                        'sort-desc',
+                                        'sortable-active'
+                                    );
+
+                                    // Fetch sorted data
+                                    this.loading = true;
+                                    this.fetchTable(true);
+                                });
+                            });
+
+                            // Apply current sort indicator on initial load or after AJAX update
+                            if (this.currentSort.field) {
+                                const activeHeader = document.querySelector(
+                                    `.sortable[data-sort="${this.currentSort.field}"]`);
+                                if (activeHeader) {
+                                    sortableHeaders.forEach(h => {
+                                        h.classList.remove('sort-asc', 'sort-desc', 'sortable-active');
+                                    });
+
+                                    activeHeader.classList.add(
+                                        this.currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc',
+                                        'sortable-active'
+                                    );
+                                }
+                            }
+                        });
+                    },
                     fetchTable(updateUrl = true) {
                         // Build params object, only include non-empty values
                         const paramsObj = {
                             status: this.tab,
-                            ajax: '1'
+                            ajax: '1',
+                            sort_by: this.currentSort.field,
+                            sort_dir: this.currentSort.direction
                         };
 
                         if (this.search) paramsObj.search = this.search;
@@ -528,6 +637,7 @@
                                 this.tableHtml = data.html;
                                 this.paginationHtml = data.pagination;
                                 this.attachPaginationListener();
+                                this.attachSortableListeners();
                             })
                             .catch(error => {
                                 console.error('Error:', error);
@@ -568,7 +678,9 @@
                                         const paramsObj = {
                                             status: this.tab,
                                             page: page,
-                                            ajax: '1'
+                                            ajax: '1',
+                                            sort_by: this.currentSort.field,
+                                            sort_dir: this.currentSort.direction
                                         };
 
                                         if (this.search) paramsObj.search = this.search;
@@ -625,6 +737,7 @@
                                                 this.tableHtml = data.html;
                                                 this.paginationHtml = data.pagination;
                                                 this.attachPaginationListener();
+                                                this.attachSortableListeners();
                                             })
                                             .catch(error => {
                                                 console.error('Error:', error);

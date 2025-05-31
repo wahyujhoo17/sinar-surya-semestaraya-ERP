@@ -3,33 +3,89 @@
     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-800">
             <tr>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
-                    No. Retur
+                <th scope="col" data-sort="nomor"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
+                    <div class="flex items-center group">
+                        <span>No. Retur</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
-                    Tanggal
+                <th scope="col" data-sort="tanggal"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
+                    <div class="flex items-center group">
+                        <span>Tanggal</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Customer
+                <th scope="col" data-sort="customer"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <div class="flex items-center group">
+                        <span>Customer</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
-                    No. SO
+                <th scope="col" data-sort="sales_order"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden md:table-cell">
+                    <div class="flex items-center group">
+                        <span>No. SO</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
-                    Total Retur
+                <th scope="col" data-sort="total"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden sm:table-cell">
+                    <div class="flex items-center group">
+                        <span>Total Retur</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
+                <th scope="col" data-sort="status"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    <div class="flex items-center group">
+                        <span>Status</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
-                <th scope="col"
-                    class="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
-                    Dibuat oleh
+                <th scope="col" data-sort="created_by"
+                    class="sortable px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider hidden lg:table-cell">
+                    <div class="flex items-center group">
+                        <span>Dibuat oleh</span>
+                        <span class="sort-icon ml-1 opacity-50 group-hover:opacity-100">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                            </svg>
+                        </span>
+                    </div>
                 </th>
                 <th scope="col" class="relative px-3 sm:px-6 py-3">
                     <span class="sr-only">Aksi</span>
@@ -135,7 +191,8 @@
                                 <a href="{{ route('penjualan.retur.edit', $retur) }}"
                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-900/50 transition-colors duration-150"
                                     title="Edit Retur">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
                                         </path>
@@ -157,7 +214,8 @@
 
                             @if ($retur->status === 'draft')
                                 <form action="{{ route('penjualan.retur.destroy', $retur) }}" method="POST"
-                                    class="inline-block" onsubmit="return confirm('Yakin ingin menghapus retur ini?')">
+                                    class="inline-block"
+                                    onsubmit="return confirm('Yakin ingin menghapus retur ini?')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit"
