@@ -197,11 +197,11 @@
                     <a href="/penjualan/retur"
                         class="{{ request()->is('penjualan/retur') || request()->is('penjualan/retur/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Retur
                             Penjualan</span></a>
-                    {{-- <a href="#"
-                        class="{{ request()->is('penjualan/tracking') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Tracking
-                            Pengiriman</span></a> --}}
-                    <a href="#"
-                        class="{{ request()->is('penjualan/riwayat') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Riwayat
+                    <a href="/penjualan/nota-kredit"
+                        class="{{ request()->is('penjualan/nota-kredit') || request()->is('penjualan/nota-kredit/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Nota
+                            Kredit</span></a>
+                    <a href="/penjualan/riwayat-transaksi"
+                        class="{{ request()->is('penjualan/riwayat-transaksi') || request()->is('penjualan/riwayat-transaksi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Riwayat
                             Transaksi</span></a>
                 </div>
             </div>

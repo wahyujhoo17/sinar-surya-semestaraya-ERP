@@ -34,6 +34,7 @@ use App\Http\Controllers\Penjualan\DeliveryOrderController;
 use App\Http\Controllers\Penjualan\InvoiceController;
 use App\Http\Controllers\Penjualan\ReturPenjualanController;
 use App\Http\Controllers\Penjualan\NotaKreditController;
+use App\Http\Controllers\Penjualan\RiwayatTransaksiPenjualanController;
 
 
 /*
@@ -194,6 +195,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('nota-kredit/{id}/pdf', [NotaKreditController::class, 'exportPdf'])->name('nota-kredit.pdf');
         Route::post('nota-kredit/{notaKredit}/complete', [NotaKreditController::class, 'completeNotaKredit'])->name('nota-kredit.complete');
         Route::resource('nota-kredit', NotaKreditController::class);
+
+        // Riwayat Transaksi routes
+        Route::get('riwayat-transaksi', [RiwayatTransaksiPenjualanController::class, 'index'])->name('riwayat-transaksi.index');
+        Route::get('riwayat-transaksi/data', [RiwayatTransaksiPenjualanController::class, 'getData'])->name('riwayat-transaksi.data');
+        Route::get('riwayat-transaksi/export/{type}', [RiwayatTransaksiPenjualanController::class, 'export'])->name('riwayat-transaksi.export');
     });
 
     // API route for product details (used in Sales Order form)
