@@ -242,6 +242,7 @@ class SalesOrderController extends Controller
 
         $request->validate([
             'nomor' => 'required|string|unique:sales_order,nomor',
+            'nomor_po' => 'nullable|string',
             'tanggal' => 'required|date',
             'customer_id' => 'required|exists:customer,id',
             'quotation_id' => 'nullable|exists:quotation,id',
@@ -304,6 +305,7 @@ class SalesOrderController extends Controller
             // Create Sales Order
             $salesOrder = new SalesOrder();
             $salesOrder->nomor = $request->nomor;
+            $salesOrder->nomor_po = $request->nomor_po;
             $salesOrder->tanggal = $request->tanggal;
             $salesOrder->customer_id = $request->customer_id;
             $salesOrder->quotation_id = $request->quotation_id;
@@ -357,6 +359,7 @@ class SalesOrderController extends Controller
                 'ip_address' => request()->ip(),
                 'detail' => json_encode([
                     'nomor' => $salesOrder->nomor,
+                    'nomor_po' => $salesOrder->nomor_po,
                     'tanggal' => $salesOrder->tanggal,
                     'customer' => $salesOrder->customer->nama ?? $salesOrder->customer->company ?? 'Customer tidak ditemukan',
                     'customer_id' => $salesOrder->customer_id,
@@ -478,6 +481,7 @@ class SalesOrderController extends Controller
 
         $request->validate([
             'nomor' => 'required|string|unique:sales_order,nomor,' . $id . ',id',
+            'nomor_po' => 'nullable|string',
             'tanggal' => 'required|date',
             'customer_id' => 'required|exists:customer,id',
             'quotation_id' => 'nullable|exists:quotation,id',
@@ -505,6 +509,7 @@ class SalesOrderController extends Controller
             // Simpan data lama untuk log
             $oldData = [
                 'nomor' => $salesOrder->nomor,
+                'nomor_po' => $salesOrder->nomor_po,
                 'tanggal' => $salesOrder->tanggal,
                 'customer_id' => $salesOrder->customer_id,
                 'customer' => $salesOrder->customer->nama ?? $salesOrder->customer->company ?? 'Customer tidak ditemukan',
@@ -557,6 +562,7 @@ class SalesOrderController extends Controller
 
             // Update Sales Order
             $salesOrder->nomor = $request->nomor;
+            $salesOrder->nomor_po = $request->nomor_po;
             $salesOrder->tanggal = $request->tanggal;
             $salesOrder->customer_id = $request->customer_id;
             $salesOrder->quotation_id = $request->quotation_id;
@@ -614,6 +620,7 @@ class SalesOrderController extends Controller
                     'before' => $oldData,
                     'after' => [
                         'nomor' => $salesOrder->nomor,
+                        'nomor_po' => $salesOrder->nomor_po,
                         'tanggal' => $salesOrder->tanggal,
                         'customer_id' => $salesOrder->customer_id,
                         'customer' => $salesOrder->customer->nama ?? $salesOrder->customer->company ?? 'Customer tidak ditemukan',

@@ -383,7 +383,7 @@ class RiwayatTransaksiPenjualanController extends Controller
     private function getReturPenjualans($search, $startDate, $endDate, $status)
     {
         $query = ReturPenjualan::with(['customer', 'user'])
-            ->select('id', 'nomor', 'tanggal', 'customer_id', 'status', 'user_id');
+            ->select('id', 'nomor', 'tanggal', 'customer_id', 'total', 'status', 'user_id');
 
         // Apply search filter
         if ($search) {

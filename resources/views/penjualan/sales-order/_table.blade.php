@@ -68,6 +68,11 @@
                     class="text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition duration-150">
                     {{ $salesOrder->nomor }}
                 </div>
+                @if ($salesOrder->nomor_po)
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                        PO: {{ $salesOrder->nomor_po }}
+                    </div>
+                @endif
                 <div class="text-xs text-gray-500 dark:text-gray-400">
                     {{ $salesOrder->catatan ?? 'Tidak ada catatan' }}
                 </div>

@@ -226,6 +226,9 @@
                     <div style="margin-top: 5px;"><strong>Nomor:</strong> {{ $salesOrder->nomor }}</div>
                     <div><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}
                     </div>
+                    @if ($salesOrder->nomor_po)
+                        <div><strong>Nomor PO Customer:</strong> {{ $salesOrder->nomor_po }}</div>
+                    @endif
                     @if ($salesOrder->quotation)
                         <div><strong>Berdasarkan Quotation:</strong> {{ $salesOrder->quotation->nomor }}</div>
                     @endif

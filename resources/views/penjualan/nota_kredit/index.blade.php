@@ -184,7 +184,7 @@
                                     {{ $notaKredit->tanggal ? \Carbon\Carbon::parse($notaKredit->tanggal)->format('d/m/Y') : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $notaKredit->customer->nama ?? 'N/A' }}
+                                    {{ $notaKredit->customer->company ?? $notaKredit->customer->nama ?? 'N/A' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                     {{ $notaKredit->returPenjualan->nomor ?? 'N/A' }}

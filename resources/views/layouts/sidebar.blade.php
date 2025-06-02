@@ -115,6 +115,9 @@
                     <a href="/inventaris/transfer-gudang"
                         class="{{ request()->is('inventaris/transfer-gudang') || request()->is('inventaris/transfer-gudang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Transfer
                             Gudang</span></a>
+                    <a href="/inventaris/permintaan-barang"
+                        class="{{ request()->is('inventaris/permintaan-barang') || request()->is('inventaris/permintaan-barang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>
+                            Permintaan Barang dari Sales Order</span></a>
                 </div>
             </div>
 
