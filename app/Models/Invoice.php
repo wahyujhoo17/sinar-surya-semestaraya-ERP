@@ -165,4 +165,37 @@ class Invoice extends Model
 
         return $this;
     }
+
+    /**
+     * Relasi ke Nota Kredit (yang telah diterapkan ke invoice ini)
+     */
+    public function notaKredits()
+    {
+        return $this->belongsToMany(NotaKredit::class, 'nota_kredit_invoice')
+            ->withPivot('applied_amount')
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if this invoice has received credit from a specific nota kredit
+     * 
+     * @param int $notaKreditId The ID of the nota kredit to check
+     * @return bool True if this invoice has received credit from the specified nota kredit
+     */
+    public function hasReceivedCreditFrom($notaKreditId)
+    {
+        return $this->notaKredits()->where('nota_kredit_id', $notaKreditId)->exists();
+    }
+
+    /**
+     * Get the amount of credit applied from a specific nota kredit
+     * 
+     * @param int $notaKreditId The ID of the nota kredit
+     * @return float The amount of credit applied from the specified nota kredit
+     */
+    public function getCreditAmountFrom($notaKreditId)
+    {
+        $notaKredit = $this->notaKredits()->where('nota_kredit_id', $notaKreditId)->first();
+        return $notaKredit ? $notaKredit->pivot->applied_amount : 0;
+    }
 }

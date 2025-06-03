@@ -166,6 +166,9 @@
 
         <form action="{{ route('penjualan.delivery-order.store') }}" method="POST" id="formDeliveryOrder">
             @csrf
+            @if (isset($permintaanBarang))
+                <input type="hidden" name="permintaan_barang_id" value="{{ $permintaanBarang->id }}">
+            @endif
 
             <!-- Form Section -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -432,6 +435,12 @@
                     width: '100%',
                     placeholder: 'Pilih...',
                 });
+
+                // If coming from permintaan barang, pre-fill data
+                @if (isset($permintaanBarang))
+                    // Set gudang if coming from permintaan barang
+                    $('#gudang_id').val('{{ $permintaanBarang->gudang_id }}').trigger('change');
+                @endif
 
                 // Add event listener for after page fully loads
                 $(window).on('load', function() {

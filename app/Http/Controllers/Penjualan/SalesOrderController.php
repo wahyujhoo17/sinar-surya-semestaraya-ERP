@@ -402,6 +402,32 @@ class SalesOrderController extends Controller
                 }
             }
 
+            // Cek apakah user ingin otomatis membuat permintaan barang
+            if ($request->has('buat_permintaan_barang') && $request->buat_permintaan_barang == 1 && $request->gudang_id) {
+                try {
+                    // Panggil controller PermintaanBarang untuk generate permintaan barang
+                    $permintaanController = new \App\Http\Controllers\Inventaris\PermintaanBarangController();
+                    $permintaanRequest = new Request([
+                        'sales_order_id' => $salesOrder->id,
+                        'gudang_id' => $request->gudang_id,
+                    ]);
+                    $permintaanController->generateFromSalesOrder($permintaanRequest);
+
+                    // Log aktivitas pembuatan permintaan barang otomatis
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'create',
+                        'modul' => 'permintaan_barang_auto',
+                        'data_id' => $salesOrder->id,
+                        'ip_address' => request()->ip(),
+                        'detail' => 'Permintaan barang otomatis dibuat dari Sales Order #' . $salesOrder->nomor
+                    ]);
+                } catch (\Exception $e) {
+                    // Hanya log error tapi tidak rollback transaksi SO
+                    Log::error('Error creating permintaan barang otomatis: ' . $e->getMessage());
+                }
+            }
+
             DB::commit();
 
             return redirect()->route('penjualan.sales-order.index')

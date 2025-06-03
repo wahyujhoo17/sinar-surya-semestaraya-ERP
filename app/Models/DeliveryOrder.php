@@ -18,6 +18,7 @@ class DeliveryOrder extends Model
         'customer_id',
         'user_id',
         'gudang_id',
+        'permintaan_barang_id',
         'alamat_pengiriman',
         'status', // 'draft', 'dikirim', 'diterima', 'dibatalkan'
         'catatan',
@@ -56,6 +57,14 @@ class DeliveryOrder extends Model
     public function gudang()
     {
         return $this->belongsTo(Gudang::class, 'gudang_id');
+    }
+
+    /**
+     * Relasi ke Permintaan Barang
+     */
+    public function permintaanBarang()
+    {
+        return $this->belongsTo(PermintaanBarang::class, 'permintaan_barang_id');
     }
 
     /**

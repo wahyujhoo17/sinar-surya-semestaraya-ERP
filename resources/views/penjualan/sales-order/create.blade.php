@@ -679,6 +679,24 @@
             </div>
 
             <div class="flex items-center justify-end space-x-3">
+                <div class="flex items-center mr-4">
+                    <input type="checkbox" id="buat_permintaan_barang" name="buat_permintaan_barang" value="1"
+                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
+                    <label for="buat_permintaan_barang" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                        Buat Permintaan Barang Otomatis
+                    </label>
+                </div>
+
+                <div id="gudang_selection" class="hidden">
+                    <select name="gudang_id" id="gudang_id"
+                        class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
+                        <option value="">Pilih Gudang</option>
+                        @foreach (\App\Models\Gudang::orderBy('nama')->get() as $gudang)
+                            <option value="{{ $gudang->id }}">{{ $gudang->nama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <a href="{{ route('penjualan.sales-order.index') }}"
                     class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                     Batal
@@ -702,6 +720,19 @@
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
         <script>
+            // Show gudang selection when checkbox is checked
+            $(document).ready(function() {
+                $('#buat_permintaan_barang').change(function() {
+                    if (this.checked) {
+                        $('#gudang_selection').removeClass('hidden');
+                        $('#gudang_id').prop('required', true);
+                    } else {
+                        $('#gudang_selection').addClass('hidden');
+                        $('#gudang_id').prop('required', false);
+                    }
+                });
+            });
+
             function salesOrderForm() {
                 return {
                     items: [],

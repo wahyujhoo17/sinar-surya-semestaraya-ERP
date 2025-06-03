@@ -114,11 +114,25 @@ class DeliveryOrderController extends Controller
     public function create(Request $request)
     {
         $salesOrderId = $request->input('sales_order_id');
+        $permintaanBarangId = $request->input('permintaan_barang_id');
         $salesOrder = null;
+        $permintaanBarang = null;
 
         if ($salesOrderId) {
             $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'customer'])
                 ->findOrFail($salesOrderId);
+        }
+
+        if ($permintaanBarangId) {
+            $permintaanBarang = \App\Models\PermintaanBarang::with(['details.produk', 'details.satuan'])
+                ->findOrFail($permintaanBarangId);
+
+            // Ensure sales order is loaded if coming from permintaan barang
+            if (!$salesOrder && $permintaanBarang->sales_order_id) {
+                $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'customer'])
+                    ->findOrFail($permintaanBarang->sales_order_id);
+                $salesOrderId = $salesOrder->id;
+            }
         }
 
         $salesOrders = SalesOrder::where('status_pengiriman', '!=', 'dikirim')
@@ -140,6 +154,7 @@ class DeliveryOrderController extends Controller
             'customers',
             'gudangs',
             'salesOrder',
+            'permintaanBarang',
             'nomor'
         ));
     }
@@ -197,6 +212,7 @@ class DeliveryOrderController extends Controller
                 'customer_id' => $request->customer_id,
                 'user_id' => Auth::id(),
                 'gudang_id' => $request->gudang_id,
+                'permintaan_barang_id' => $request->permintaan_barang_id,
                 'alamat_pengiriman' => $request->alamat_pengiriman,
                 'status' => 'draft',
                 'catatan' => $request->catatan,
@@ -269,6 +285,17 @@ class DeliveryOrderController extends Controller
                 $deliveryOrder->id,
                 "Membuat Delivery Order dengan nomor {$deliveryOrder->nomor} untuk Sales Order {$salesOrder->nomor}"
             );
+
+            // Update permintaan barang status if created from permintaan barang
+            if ($request->has('permintaan_barang_id') && $request->permintaan_barang_id) {
+                try {
+                    // Use our automatic status checker
+                    $this->updatePermintaanBarangStatus($request->permintaan_barang_id, $deliveryOrder->id);
+                } catch (\Exception $e) {
+                    // Just log the error but don't rollback
+                    Log::error('Error updating permintaan barang status: ' . $e->getMessage());
+                }
+            }
 
             DB::commit();
 
@@ -592,6 +619,16 @@ class DeliveryOrderController extends Controller
             // Update sales order status if all items are delivered
             // $this->updateSalesOrderStatus($deliveryOrder->sales_order_id);
 
+            // Update permintaan barang status if it exists
+            if ($deliveryOrder->permintaan_barang_id) {
+                try {
+                    $this->updatePermintaanBarangStatus($deliveryOrder->permintaan_barang_id, $deliveryOrder->id);
+                } catch (\Exception $e) {
+                    // Just log the error but don't rollback
+                    Log::error('Error updating permintaan barang status: ' . $e->getMessage());
+                }
+            }
+
             // Log aktivitas
             $this->logUserAktivitas(
                 'Memproses pengiriman Delivery Order',
@@ -649,6 +686,16 @@ class DeliveryOrderController extends Controller
                 "Menyelesaikan Delivery Order dengan nomor {$deliveryOrder->nomor}. Diterima oleh: {$request->nama_penerima}"
             );
 
+            // Update permintaan barang status if it exists using our auto-status checker
+            if ($deliveryOrder->permintaan_barang_id) {
+                try {
+                    $this->updatePermintaanBarangStatus($deliveryOrder->permintaan_barang_id, $deliveryOrder->id);
+                } catch (\Exception $e) {
+                    // Just log the error but don't rollback
+                    Log::error('Error updating permintaan barang status: ' . $e->getMessage());
+                }
+            }
+
             DB::commit();
             $this->updateSalesOrderStatus($deliveryOrder->sales_order_id);
 
@@ -705,6 +752,34 @@ class DeliveryOrderController extends Controller
             // Update delivery order status
             $deliveryOrder->status = 'dibatalkan';
             $deliveryOrder->save();
+
+            // If this DO is connected to a permintaan barang, update its status
+            if ($deliveryOrder->permintaan_barang_id) {
+                try {
+                    $permintaanBarang = \App\Models\PermintaanBarang::find($deliveryOrder->permintaan_barang_id);
+                    if ($permintaanBarang) {
+                        // For cancelation, we need specific logic to revert the status to 'menunggu'
+                        // rather than using the automatic status detection
+                        if (in_array($permintaanBarang->status, ['selesai', 'diproses'])) {
+                            $oldStatus = $permintaanBarang->status;
+                            $permintaanBarang->status = 'menunggu';
+                            $permintaanBarang->updated_by = Auth::id();
+                            $permintaanBarang->save();
+
+                            // Log the status change
+                            $this->logUserAktivitas(
+                                'mengubah status permintaan barang',
+                                'permintaan_barang',
+                                $permintaanBarang->id,
+                                "dari {$oldStatus} menjadi menunggu karena Delivery Order #{$deliveryOrder->nomor} dibatalkan"
+                            );
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Just log the error but don't rollback
+                    Log::error('Error updating permintaan barang status: ' . $e->getMessage());
+                }
+            }
 
             // Log aktivitas
             $this->logUserAktivitas(
@@ -859,6 +934,100 @@ class DeliveryOrderController extends Controller
             $salesOrder->id,
             "Mengubah status pengiriman Sales Order {$salesOrder->nomor} menjadi {$salesOrder->status_pengiriman} melalui Delivery Order"
         );
+    }
+
+    /**
+     * Check if all items in a PermintaanBarang have been delivered and update status accordingly
+     */
+    private function updatePermintaanBarangStatus($permintaanBarangId, $deliveryOrderId)
+    {
+        $permintaanBarang = \App\Models\PermintaanBarang::with(['details'])->find($permintaanBarangId);
+
+        if (!$permintaanBarang) {
+            throw new \Exception("Permintaan Barang tidak ditemukan");
+        }
+
+        $deliveryOrder = DeliveryOrder::findOrFail($deliveryOrderId);
+
+        // Check if all items from permintaan barang have been delivered
+        $allItemsDelivered = true;
+        $totalItemsShipped = 0;
+
+        // Get all delivery orders related to this permintaan barang
+        $deliveryOrders = DeliveryOrder::where('permintaan_barang_id', $permintaanBarangId)
+            ->whereIn('status', ['dikirim', 'diterima'])
+            ->with(['details'])
+            ->get();
+
+        // Create a map of product IDs to shipped quantities
+        $shippedQuantities = [];
+        foreach ($deliveryOrders as $do) {
+            foreach ($do->details as $detail) {
+                if (!isset($shippedQuantities[$detail->produk_id])) {
+                    $shippedQuantities[$detail->produk_id] = 0;
+                }
+                $shippedQuantities[$detail->produk_id] += $detail->quantity;
+            }
+        }
+
+        // Check if all items have been fully shipped
+        foreach ($permintaanBarang->details as $detail) {
+            $shipped = $shippedQuantities[$detail->produk_id] ?? 0;
+
+            if ($shipped < $detail->jumlah) {
+                $allItemsDelivered = false;
+                break;
+            }
+
+            $totalItemsShipped++;
+        }
+
+        // If no items have been shipped yet, but we're processing a delivery order,
+        // set status to 'diproses'
+        if ($totalItemsShipped == 0 && $permintaanBarang->status == 'menunggu') {
+            $oldStatus = $permintaanBarang->status;
+            $permintaanBarang->status = 'diproses';
+            $permintaanBarang->updated_by = Auth::id();
+            $permintaanBarang->save();
+
+            // Log the status change
+            $this->logUserAktivitas(
+                'mengubah status permintaan barang',
+                'permintaan_barang',
+                $permintaanBarang->id,
+                "dari {$oldStatus} menjadi diproses karena Delivery Order #{$deliveryOrder->nomor} diproses"
+            );
+        }
+        // If all items have been fully shipped, set status to 'selesai'
+        elseif ($allItemsDelivered && $totalItemsShipped > 0 && $permintaanBarang->status != 'selesai') {
+            $oldStatus = $permintaanBarang->status;
+            $permintaanBarang->status = 'selesai';
+            $permintaanBarang->updated_by = Auth::id();
+            $permintaanBarang->save();
+
+            // Log the status change
+            $this->logUserAktivitas(
+                'mengubah status permintaan barang',
+                'permintaan_barang',
+                $permintaanBarang->id,
+                "dari {$oldStatus} menjadi selesai karena semua barang telah dikirimkan melalui Delivery Order"
+            );
+        }
+        // If some items have been shipped but not all, set status to 'diproses'
+        elseif ($totalItemsShipped > 0 && !$allItemsDelivered && $permintaanBarang->status == 'menunggu') {
+            $oldStatus = $permintaanBarang->status;
+            $permintaanBarang->status = 'diproses';
+            $permintaanBarang->updated_by = Auth::id();
+            $permintaanBarang->save();
+
+            // Log the status change
+            $this->logUserAktivitas(
+                'mengubah status permintaan barang',
+                'permintaan_barang',
+                $permintaanBarang->id,
+                "dari {$oldStatus} menjadi diproses karena sebagian barang telah dikirimkan melalui Delivery Order"
+            );
+        }
     }
 
     /**

@@ -17,15 +17,33 @@
                                     d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                             Invoice
+                            @if (request()->filled('nota_kredit_id'))
+                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400 font-normal">
+                                    (Untuk Aplikasi Kredit)
+                                </span>
+                            @endif
                         </h1>
-                        <a href="{{ route('penjualan.invoice.create') }}"
-                            class="ml-4 inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Tambah Invoice
-                        </a>
+                        <div class="flex items-center space-x-3">
+                            @if (request()->filled('nota_kredit_id'))
+                                <a href="{{ route('penjualan.nota-kredit.show', request()->nota_kredit_id) }}"
+                                    class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                    </svg>
+                                    Kembali ke Nota Kredit
+                                </a>
+                            @endif
+                            <a href="{{ route('penjualan.invoice.create') }}"
+                                class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Tambah Invoice
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -168,7 +186,6 @@
                                         <path fill-rule="evenodd"
                                             d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
                                             clip-rule="evenodd" />
-                                    </svg>
                                 </div>
                                 <input type="date" name="tanggal_awal" x-model="tanggal_awal"
                                     class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
@@ -185,7 +202,6 @@
                                         <path fill-rule="evenodd"
                                             d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
                                             clip-rule="evenodd" />
-                                    </svg>
                                 </div>
                                 <input type="date" name="tanggal_akhir" x-model="tanggal_akhir"
                                     class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
@@ -497,6 +513,9 @@
                         this.attachPaginationListeners();
                     }
 
+                    // Initialize modal functionality for initial content
+                    this.initializeModals();
+
                     // Listen for popstate (browser back/forward buttons)
                     window.addEventListener('popstate', () => {
                         const params = new URLSearchParams(window.location.search);
@@ -512,6 +531,55 @@
 
                     // Initial table fetch after initialization
                     this.fetchTable();
+                },
+
+                // Initialize modal functionality
+                initializeModals() {
+                    this.$nextTick(() => {
+                        console.log('Initializing modals for dynamic content');
+                        // Handle opening modals
+                        const modalToggles = document.querySelectorAll('[data-modal-toggle]');
+                        modalToggles.forEach(toggle => {
+                            // Remove existing event listeners to prevent duplicates
+                            const newToggle = toggle.cloneNode(true);
+                            toggle.parentNode.replaceChild(newToggle, toggle);
+
+                            newToggle.addEventListener('click', function() {
+                                const targetId = this.getAttribute('data-modal-toggle');
+                                console.log('Opening modal:', targetId);
+                                const modal = document.getElementById(targetId);
+                                if (modal) {
+                                    modal.classList.remove('hidden');
+                                    modal.classList.add('flex', 'justify-center', 'items-center');
+                                    document.body.classList.add('overflow-hidden');
+                                } else {
+                                    console.error('Modal not found:', targetId);
+                                }
+                            });
+                        });
+
+                        // Handle closing modals
+                        const modalHides = document.querySelectorAll('[data-modal-hide]');
+                        modalHides.forEach(hide => {
+                            // Remove existing event listeners to prevent duplicates
+                            const newHide = hide.cloneNode(true);
+                            hide.parentNode.replaceChild(newHide, hide);
+
+                            newHide.addEventListener('click', function() {
+                                const targetId = this.getAttribute('data-modal-hide');
+                                console.log('Closing modal:', targetId);
+                                const modal = document.getElementById(targetId);
+                                if (modal) {
+                                    modal.classList.add('hidden');
+                                    modal.classList.remove('flex', 'justify-center',
+                                    'items-center');
+                                    document.body.classList.remove('overflow-hidden');
+                                } else {
+                                    console.error('Modal not found:', targetId);
+                                }
+                            });
+                        });
+                    });
                 },
 
                 attachPaginationListeners() {
@@ -584,6 +652,14 @@
                     // Handle URLs that already have query parameters
                     let url = new URL(baseUrl, window.location.origin);
 
+                    // Check if we're in credit application mode
+                    @if (request()->filled('nota_kredit_id'))
+                        if (!url.searchParams.has('nota_kredit_id')) {
+                            url.searchParams.append('nota_kredit_id', '{{ request()->nota_kredit_id }}');
+                        }
+                        console.log('Credit application mode - nota_kredit_id:', '{{ request()->nota_kredit_id }}');
+                    @endif
+
                     // Merge existing query parameters with our new ones
                     params.forEach((value, key) => {
                         url.searchParams.append(key, value);
@@ -645,6 +721,9 @@
                                         this.fetchTable(link.href);
                                     });
                                 });
+
+                                // Initialize modal functionality for dynamically loaded content
+                                this.initializeModals();
                             });
 
                             // Push state to update URL without refreshing page
@@ -714,5 +793,6 @@
             };
         }
     </script>
-    </script>
+    @push('scripts')
+    @endpush
 </x-app-layout>

@@ -16,6 +16,7 @@ use App\Http\Controllers\Pembelian\PermintaanPembelianController;
 use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
 use App\Http\Controllers\Inventaris\StokBarangController;
+use App\Http\Controllers\Inventaris\PermintaanBarangController;
 use App\Http\Controllers\Pembelian\PenerimaanBarangController;
 use App\Http\Controllers\Pembelian\RiwayatTransaksiController;
 use App\Http\Controllers\Pembelian\ReturPembelianController;
@@ -134,6 +135,13 @@ Route::middleware(['auth'])->group(function () {
         Route::get('penyesuaian-stok/{id}/pdf', [PenyesuaianStokController::class, 'printPdf'])->name('penyesuaian-stok.pdf');
         Route::get('penyesuaian-stok/pdf/draft', [PenyesuaianStokController::class, 'printDraftPdf'])->name('penyesuaian-stok.pdf.draft');
         Route::resource('penyesuaian-stok', PenyesuaianStokController::class);
+
+        // Permintaan Barang
+        Route::post('permintaan-barang/auto-generate', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'generateFromSalesOrder'])->name('permintaan-barang.auto-generate');
+        Route::post('permintaan-barang/auto-proses', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'autoProsesFromSalesOrder'])->name('permintaan-barang.auto-proses');
+        Route::put('permintaan-barang/{permintaanBarang}/update-status', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'updateStatus'])->name('permintaan-barang.update-status');
+        Route::get('permintaan-barang/{permintaanBarang}/create-do', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'createDeliveryOrder'])->name('permintaan-barang.create-do');
+        Route::resource('permintaan-barang', App\Http\Controllers\Inventaris\PermintaanBarangController::class);
     });
 
     Route::prefix('penjualan')->name('penjualan.')->group(function () {
@@ -194,6 +202,7 @@ Route::middleware(['auth'])->group(function () {
         // Nota Kredit (Credit Note) routes
         Route::get('nota-kredit/{id}/pdf', [NotaKreditController::class, 'exportPdf'])->name('nota-kredit.pdf');
         Route::post('nota-kredit/{notaKredit}/complete', [NotaKreditController::class, 'completeNotaKredit'])->name('nota-kredit.complete');
+        Route::post('nota-kredit/{notaKredit}/apply-to-invoice/{invoice}', [NotaKreditController::class, 'applyToInvoice'])->name('nota-kredit.apply-to-invoice');
         Route::resource('nota-kredit', NotaKreditController::class);
 
         // Riwayat Transaksi routes

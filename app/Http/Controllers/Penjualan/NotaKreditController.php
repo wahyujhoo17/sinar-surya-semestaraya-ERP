@@ -265,7 +265,8 @@ class NotaKreditController extends Controller
             'salesOrder',
             'user',
             'details.produk',
-            'details.satuan'
+            'details.satuan',
+            'invoices'  // Add relationship to get invoices with pivot data
         ])->findOrFail($id);
 
         // Get log aktivitas
@@ -275,27 +276,8 @@ class NotaKreditController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
-        // START: New logic to get applied invoices
-        $appliedInvoiceNumbers = [];
-        foreach ($logAktivitas as $log) {
-            if ($log->aktivitas === 'terapkan_kredit' && !empty($log->detail)) {
-                // Extract invoice number from detail: "Menerapkan kredit sebesar Rp X ke invoice INV-NUMBER"
-                if (preg_match('/ke invoice (.*)$/', $log->detail, $matches)) {
-                    $invoiceNomor = trim($matches[1]);
-                    if (!in_array($invoiceNomor, $appliedInvoiceNumbers)) {
-                        $appliedInvoiceNumbers[] = $invoiceNomor;
-                    }
-                }
-            }
-        }
-
-        $appliedToInvoices = collect(); // Initialize as an empty Illuminate\\Support\\Collection
-        if (!empty($appliedInvoiceNumbers)) {
-            // Invoice model is already imported via 'use App\\Models\\Invoice;'
-            $appliedToInvoices = Invoice::whereIn('nomor', $appliedInvoiceNumbers)
-                ->get();
-        }
-        // END: New logic
+        // Use the relationship to get applied invoices
+        $appliedToInvoices = $notaKredit->invoices;
 
         // Log activity (viewing detail)
         LogAktivitas::create([
@@ -310,7 +292,7 @@ class NotaKreditController extends Controller
         return view('penjualan.nota_kredit.show', compact(
             'notaKredit',
             'logAktivitas',
-            'appliedToInvoices' // Add the new variable here
+            'appliedToInvoices'
         ));
     }
 
@@ -429,12 +411,18 @@ class NotaKreditController extends Controller
      */
     public function processNotaKredit($id)
     {
+        // Get a single NotaKredit model instance, not a collection
         $notaKredit = NotaKredit::with([
             'returPenjualan',
             'customer',
             'salesOrder',
             'details.produk'
-        ])->findOrFail($id);
+        ])->where('id', $id)->first();
+
+        if (!$notaKredit) {
+            return redirect()->route('penjualan.nota-kredit.index')
+                ->with('error', 'Nota kredit tidak ditemukan.');
+        }
 
         // Validate status
         if ($notaKredit->status !== 'draft') {
@@ -567,12 +555,18 @@ class NotaKreditController extends Controller
      */
     public function finalize($id)
     {
+        // Get a single NotaKredit model instance, not a collection
         $notaKredit = NotaKredit::with([
             'returPenjualan',
             'customer',
             'salesOrder',
             'details.produk'
-        ])->findOrFail($id);
+        ])->where('id', $id)->first();
+
+        if (!$notaKredit) {
+            return redirect()->route('penjualan.nota-kredit.index')
+                ->with('error', 'Nota kredit tidak ditemukan.');
+        }
 
         // Validate status
         if ($notaKredit->status !== 'draft') {
@@ -661,6 +655,11 @@ class NotaKreditController extends Controller
                 // Apply credit to invoice using the applyCredit method
                 $invoice->applyCredit($creditToApply);
 
+                // Create or update the relationship in the pivot table
+                $notaKredit->invoices()->syncWithoutDetaching([
+                    $invoice->id => ['applied_amount' => $creditToApply]
+                ]);
+
                 // Reduce remaining credit
                 $remainingCredit -= $creditToApply;
 
@@ -677,5 +676,126 @@ class NotaKreditController extends Controller
         }
 
         return $remainingCredit;
+    }
+
+    /**
+     * Apply a credit note to an invoice
+     * 
+     * @param int $notaKreditId
+     * @param int $invoiceId
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function applyToInvoice(Request $request, $notaKreditId, $invoiceId)
+    {
+        // Validate the request
+        $request->validate([
+            'amount' => 'required|numeric|min:0'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Find the nota kredit
+            $notaKredit = NotaKredit::where('id', $notaKreditId)->first();
+
+            if (!$notaKredit) {
+                return redirect()->route('penjualan.nota-kredit.index')
+                    ->with('error', 'Nota kredit tidak ditemukan.');
+            }
+
+            // Check if the nota kredit has available credit
+            $appliedTotal = $notaKredit->invoices()->sum('nota_kredit_invoice.applied_amount');
+            $availableCredit = $notaKredit->total - $appliedTotal;
+
+            if ($availableCredit <= 0) {
+                return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                    ->with('error', 'Nota kredit ini tidak memiliki sisa kredit untuk diaplikasikan.');
+            }
+
+            // Find the invoice
+            $invoice = Invoice::where('id', $invoiceId)->first();
+
+
+
+            if (!$invoice) {
+                return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                    ->with('error', 'Invoice tidak ditemukan.');
+            }
+
+            // Make sure the amount doesn't exceed the available credit or invoice balance
+            $creditAmount = min($request->amount, $availableCredit, $invoice->sisa_piutang);
+
+            if ($creditAmount <= 0) {
+                return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                    ->with('error', 'Jumlah kredit tidak valid.');
+            }
+
+            // Apply the credit to the invoice
+            $invoice->applyCredit($creditAmount);
+
+            // Create or update the relationship in the pivot table
+            $existingCredit = $notaKredit->invoices()->where('invoice_id', $invoice->id)->first();
+
+            if ($existingCredit) {
+                // Update existing credit application
+                $newAmount = $existingCredit->pivot->applied_amount + $creditAmount;
+                $notaKredit->invoices()->updateExistingPivot($invoice->id, ['applied_amount' => $newAmount]);
+            } else {
+                // Create new credit application
+                $notaKredit->invoices()->attach($invoice->id, ['applied_amount' => $creditAmount]);
+            }
+
+            // Check if related sales order exists and update its status if needed
+            if ($notaKredit->salesOrder->id) {
+                $salesOrder = SalesOrder::find($notaKredit->salesOrder->id);
+                if ($salesOrder && $salesOrder->status_pembayaran === 'kelebihan_bayar') {
+                    $salesOrder->status_pembayaran = 'lunas';
+                    $salesOrder->kelebihan_bayar = 0;
+                    $salesOrder->save();
+
+                    // Log sales order status change
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'ubah_status',
+                        'modul' => 'sales_order',
+                        'data_id' => $salesOrder->id,
+                        'ip_address' => request()->ip(),
+                        'detail' => "Mengubah status pembayaran sales order {$salesOrder->nomor} dari kelebihan_bayar menjadi lunas"
+                    ]);
+                }
+            }
+
+            // Log the credit application
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'terapkan_kredit',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Menerapkan kredit sebesar Rp " . number_format($creditAmount, 0, ',', '.') . " ke invoice " . $invoice->nomor
+            ]);
+
+            // Update nota kredit status to selesai after applying credit
+            $notaKredit->status = 'selesai';
+            $notaKredit->save();
+
+            // Log the status change
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'ubah_status',
+                'modul' => 'nota_kredit',
+                'data_id' => $notaKredit->id,
+                'ip_address' => request()->ip(),
+                'detail' => "Mengubah status nota kredit {$notaKredit->nomor} menjadi selesai setelah diaplikasikan ke invoice"
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('penjualan.nota-kredit.show', $notaKredit->id)
+                ->with('success', 'Kredit berhasil diaplikasikan ke invoice ' . $invoice->nomor);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
     }
 }

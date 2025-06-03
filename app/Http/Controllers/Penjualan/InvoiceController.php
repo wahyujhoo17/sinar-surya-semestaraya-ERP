@@ -43,6 +43,32 @@ class InvoiceController extends Controller
     {
         $query = Invoice::with('customer');
 
+        // Check if this is for credit application
+        $notaKreditId = $request->filled('nota_kredit_id') ? $request->nota_kredit_id : null;
+        $notaKredit = null;
+
+        if ($notaKreditId) {
+            $notaKredit = \App\Models\NotaKredit::find($notaKreditId);
+            // Filter by customer if nota kredit is found
+            if ($notaKredit && $notaKredit->customer_id) {
+                $query->where('customer_id', $notaKredit->customer_id);
+
+                // Only show invoices that are not fully paid
+                $query->where('status', '!=', 'lunas');
+
+                // Only show invoices that haven't received the full credit from this nota kredit
+                $query->whereRaw('(invoice.total - COALESCE(invoice.kredit_terapkan, 0)) > 0');
+
+                // Debug log to verify filter is applied
+                \Illuminate\Support\Facades\Log::info('Filtering invoices for nota kredit', [
+                    'nota_kredit_id' => $notaKreditId,
+                    'customer_id' => $notaKredit->customer_id,
+                    'query' => $query->toSql(),
+                    'query_bindings' => $query->getBindings()
+                ]);
+            }
+        }
+
         $sort = $request->get('sort', 'tanggal');
         $direction = $request->get('direction', 'desc');
 
@@ -147,14 +173,14 @@ class InvoiceController extends Controller
 
             if ($request->ajax()) {
                 return response()->json([
-                    'table_html' => view('penjualan.invoice._table', compact('invoices', 'sort', 'direction'))->render(),
+                    'table_html' => view('penjualan.invoice._table', compact('invoices', 'sort', 'direction', 'notaKreditId'))->render(),
                     'pagination_html' => view('penjualan.invoice._pagination', ['paginator' => $invoices])->render(),
                     'sort_field' => $sort,
                     'sort_direction' => $direction,
                 ]);
             }
 
-            return view('penjualan.invoice.index', compact('invoices', 'sort', 'direction'));
+            return view('penjualan.invoice.index', compact('invoices', 'sort', 'direction', 'notaKreditId', 'notaKredit'));
         } catch (\Exception $e) {
             Log::error('Error in invoice index: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
 

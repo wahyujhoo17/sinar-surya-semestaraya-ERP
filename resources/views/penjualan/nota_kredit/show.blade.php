@@ -1,5 +1,20 @@
 <x-app-layout>
     <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
+        {{-- Flash Messages --}}
+        @if (session('success'))
+            <div class="mb-6 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-sm dark:bg-green-800/30 dark:border-green-600 dark:text-green-400"
+                role="alert">
+                <p class="font-medium">{{ session('success') }}</p>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="mb-6 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-sm dark:bg-red-800/30 dark:border-red-600 dark:text-red-400"
+                role="alert">
+                <p class="font-medium">{{ session('error') }}</p>
+            </div>
+        @endif
+
         {{-- Header Section --}}
         <div class="mb-6">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -50,16 +65,6 @@
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             Finalisasi
-                        </button>
-                    @endif
-                    @if ($notaKredit->status == 'diproses')
-                        <button type="button" data-modal-target="completeModal" data-modal-toggle="completeModal"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Selesaikan
                         </button>
                     @endif
                     <a href="{{ route('penjualan.nota-kredit.pdf', $notaKredit->id) }}" target="_blank"
@@ -450,6 +455,10 @@
                                         Jumlah Kredit
                                     </th>
                                     <th scope="col"
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Sisa Piutang
+                                    </th>
+                                    <th scope="col"
                                         class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Status
                                     </th>
@@ -470,22 +479,57 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
-                                            {{-- This should ideally be the amount applied to *this* specific invoice from the credit note. --}}
-                                            {{-- For now, displaying the total NK amount as a placeholder. --}}
-                                            {{-- To get the exact applied amount, we might need to store it or calculate it based on logs or a pivot table. --}}
-                                            Rp
-                                            {{ number_format($invoice->pivot->applied_amount ?? $notaKredit->total, 0, ',', '.') }}
+                                            {{-- Display the amount from the pivot table --}}
+                                            Rp {{ number_format($invoice->pivot->applied_amount, 0, ',', '.') }}
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-right">
+                                            Rp {{ number_format($invoice->sisa_piutang, 0, ',', '.') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <span
                                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                Diterapkan
+                                                {{ $invoice->status_display }}
                                             </span>
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
+                            <tfoot class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th colspan="2"
+                                        class="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                        Total Kredit Diterapkan:
+                                    </th>
+                                    <th
+                                        class="px-6 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
+                                        Rp
+                                        {{ number_format($appliedToInvoices->sum('pivot.applied_amount'), 0, ',', '.') }}
+                                    </th>
+                                    <th colspan="2"></th>
+                                </tr>
+                            </tfoot>
                         </table>
+                        <div
+                            class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="font-medium">Total Nota Kredit:</span>
+                                    Rp {{ number_format($notaKredit->total, 0, ',', '.') }}
+                                </div>
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    <span class="font-medium">Total Diterapkan:</span>
+                                    Rp
+                                    {{ number_format($appliedToInvoices->sum('pivot.applied_amount'), 0, ',', '.') }}
+                                </div>
+                                <div
+                                    class="text-sm font-semibold {{ $notaKredit->total - $appliedToInvoices->sum('pivot.applied_amount') > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                    <span class="font-medium">Sisa Kredit:</span>
+                                    Rp
+                                    {{ number_format($notaKredit->total - $appliedToInvoices->sum('pivot.applied_amount'), 0, ',', '.') }}
+                                </div>
+                            </div>
+                        </div>
                     @else
                         <div class="py-10 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor"
@@ -498,8 +542,21 @@
                                 manapun</p>
 
                             @if ($notaKredit->status !== 'selesai')
+                                <div
+                                    class="mt-6 bg-amber-50 dark:bg-amber-900/30 p-4 rounded-lg border border-amber-200 dark:border-amber-800">
+                                    <h4 class="text-sm font-medium text-amber-800 dark:text-amber-300">Cara Aplikasi
+                                        Kredit ke Invoice</h4>
+                                    <ol
+                                        class="mt-2 text-sm text-amber-700 dark:text-amber-400 list-decimal list-inside space-y-1">
+                                        <li>Klik tombol "Cari Invoice untuk Aplikasi Kredit" di bawah</li>
+                                        <li>Pilih invoice yang ingin diberi kredit dari daftar</li>
+                                        <li>Klik tombol "Aplikasi Kredit" pada invoice yang dipilih</li>
+                                        <li>Masukkan jumlah kredit yang ingin diterapkan</li>
+                                        <li>Klik "Terapkan Kredit" untuk menyelesaikan proses</li>
+                                    </ol>
+                                </div>
                                 <p class="mt-4">
-                                    <a href="{{ route('penjualan.invoice.index') }}"
+                                    <a href="{{ route('penjualan.invoice.index', ['customer_id' => $notaKredit->customer_id, 'nota_kredit_id' => $notaKredit->id]) }}"
                                         class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                                         Cari Invoice untuk Aplikasi Kredit
                                     </a>

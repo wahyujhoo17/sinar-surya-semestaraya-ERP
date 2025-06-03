@@ -85,3 +85,52 @@ if (!function_exists('format_rupiah')) {
         return $withRpPrefix ? 'Rp ' . $formatted : $formatted;
     }
 }
+
+if (!function_exists('terbilang')) {
+    /**
+     * Convert number to Indonesian words
+     * 
+     * @param float $number
+     * @return string
+     */
+    function terbilang($number)
+    {
+        if (!is_numeric($number)) {
+            return 'bukan angka';
+        }
+
+        if ($number < 0) {
+            return 'minus ' . terbilang(abs($number));
+        }
+
+        $number = floor($number);
+
+        $words = '';
+
+        $digits = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'];
+
+        if ($number < 12) {
+            $words = $digits[$number];
+        } elseif ($number < 20) {
+            $words = $digits[$number - 10] . ' belas';
+        } elseif ($number < 100) {
+            $words = $digits[floor($number / 10)] . ' puluh ' . $digits[$number % 10];
+        } elseif ($number < 200) {
+            $words = 'seratus ' . terbilang($number - 100);
+        } elseif ($number < 1000) {
+            $words = $digits[floor($number / 100)] . ' ratus ' . terbilang($number % 100);
+        } elseif ($number < 2000) {
+            $words = 'seribu ' . terbilang($number - 1000);
+        } elseif ($number < 1000000) {
+            $words = terbilang(floor($number / 1000)) . ' ribu ' . terbilang($number % 1000);
+        } elseif ($number < 1000000000) {
+            $words = terbilang(floor($number / 1000000)) . ' juta ' . terbilang($number % 1000000);
+        } elseif ($number < 1000000000000) {
+            $words = terbilang(floor($number / 1000000000)) . ' milyar ' . terbilang($number % 1000000000);
+        } elseif ($number < 1000000000000000) {
+            $words = terbilang(floor($number / 1000000000000)) . ' trilyun ' . terbilang($number % 1000000000000);
+        }
+
+        return trim($words);
+    }
+}

@@ -66,4 +66,14 @@ class NotaKredit extends Model
     {
         return $this->hasMany(NotaKreditDetail::class, 'nota_kredit_id');
     }
+
+    /**
+     * Relasi ke Invoice (yang telah menerima kredit dari nota kredit ini)
+     */
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'nota_kredit_invoice')
+            ->withPivot('applied_amount')
+            ->withTimestamps();
+    }
 }

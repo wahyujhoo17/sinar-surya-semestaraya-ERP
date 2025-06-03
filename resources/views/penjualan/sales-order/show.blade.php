@@ -320,7 +320,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
-                                {{ $salesOrder->customer->nama }}
+                                {{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}
                             </div>
                             <div class="flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
@@ -330,6 +330,16 @@
                                 </svg>
                                 Total: Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
                             </div>
+                            @if ($salesOrder->ongkos_kirim > 0)
+                                <div class="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                    </svg>
+                                    Ongkos Kirim: Rp {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}
+                                </div>
+                            @endif
                             <div class="flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -833,6 +843,15 @@
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">Rp
                                     {{ number_format($salesOrder->total, 0, ',', '.') }}</div>
                             </div>
+
+                            @if ($salesOrder->ongkos_kirim > 0)
+                                <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+                                    <div class="text-blue-500 dark:text-blue-400 font-medium mb-1 text-sm">Ongkos Kirim
+                                    </div>
+                                    <div class="text-gray-900 dark:text-white font-bold text-lg">Rp
+                                        {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</div>
+                                </div>
+                            @endif
 
                             <div class="p-4 bg-emerald-50 dark:bg-emerald-900/30 rounded-lg">
                                 <div class="text-emerald-500 dark:text-emerald-400 font-medium mb-1 text-sm">Total
