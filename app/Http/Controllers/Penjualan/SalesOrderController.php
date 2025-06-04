@@ -252,6 +252,8 @@ class SalesOrderController extends Controller
             'status_pengiriman' => 'required|string|in:belum_dikirim,sebagian,dikirim',
             'catatan' => 'nullable|string',
             'syarat_ketentuan' => 'nullable|string',
+            'terms_pembayaran' => 'nullable|string',
+            'terms_pembayaran_hari' => 'nullable|integer|min:0',
             'items' => 'required|array|min:1',
             'items.*.produk_id' => 'required|exists:produk,id',
             'items.*.kuantitas' => 'required_without:items.*.quantity|numeric|min:0.01',
@@ -322,6 +324,8 @@ class SalesOrderController extends Controller
             $salesOrder->alamat_pengiriman = $request->alamat_pengiriman;
             $salesOrder->catatan = $request->catatan;
             $salesOrder->syarat_ketentuan = $request->syarat_ketentuan;
+            $salesOrder->terms_pembayaran = $request->terms_pembayaran;
+            $salesOrder->terms_pembayaran_hari = $request->terms_pembayaran_hari;
             $salesOrder->save();
 
             // Create Sales Order Details
@@ -604,6 +608,8 @@ class SalesOrderController extends Controller
             $salesOrder->ongkos_kirim = $ongkosKirim;
             $salesOrder->catatan = $request->catatan;
             $salesOrder->syarat_ketentuan = $request->syarat_ketentuan;
+            $salesOrder->terms_pembayaran = $request->terms_pembayaran;
+            $salesOrder->terms_pembayaran_hari = $request->terms_pembayaran_hari;
             $salesOrder->save();
 
             // Delete existing details and create new ones

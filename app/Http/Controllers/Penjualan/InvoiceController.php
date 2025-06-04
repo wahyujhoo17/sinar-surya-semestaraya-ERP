@@ -239,10 +239,18 @@ class InvoiceController extends Controller
                     ];
                 });
 
+            // Hitung tanggal jatuh tempo berdasarkan terms pembayaran dari sales order
+            $jatuhTempo = now()->format('Y-m-d');
+            if ($salesOrder->terms_pembayaran_hari) {
+                $jatuhTempo = now()->addDays($salesOrder->terms_pembayaran_hari)->format('Y-m-d');
+            }
+
             return response()->json([
                 'success' => true,
                 'sales_order' => $salesOrder,
-                'details' => $details
+                'details' => $details,
+                'jatuh_tempo' => $jatuhTempo,
+                'terms_pembayaran' => $salesOrder->terms_pembayaran
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -489,10 +497,18 @@ class InvoiceController extends Controller
         // Generate invoice number
         $nomor = $this->generateNewInvoiceNumber();
 
+        // Hitung tanggal jatuh tempo berdasarkan terms pembayaran dari sales order
+        $jatuhTempo = now()->format('Y-m-d');
+        if ($salesOrder->terms_pembayaran_hari) {
+            $jatuhTempo = now()->addDays($salesOrder->terms_pembayaran_hari)->format('Y-m-d');
+        }
+
         return view('penjualan.invoice.create', [
             'nomor' => $nomor,
             'salesOrders' => [$salesOrder],
-            'preselectedSalesOrder' => $salesOrder->id
+            'preselectedSalesOrder' => $salesOrder->id,
+            'jatuhTempo' => $jatuhTempo,
+            'termsPembayaran' => $salesOrder->terms_pembayaran
         ]);
     }
 

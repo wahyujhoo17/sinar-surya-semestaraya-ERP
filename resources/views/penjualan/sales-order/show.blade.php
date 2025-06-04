@@ -644,6 +644,16 @@
                                         <span class="w-24 text-gray-500 dark:text-gray-400">Tanggal Kirim:</span>
                                         <span>{{ $salesOrder->tanggal_kirim ? \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('d/m/Y') : '-' }}</span>
                                     </p>
+                                    @if ($salesOrder->terms_pembayaran)
+                                        <p class="flex items-center mb-1">
+                                            <span class="w-24 text-gray-500 dark:text-gray-400">Terms:</span>
+                                            <span>{{ $salesOrder->terms_pembayaran }}
+                                                @if ($salesOrder->terms_pembayaran_hari)
+                                                    ({{ $salesOrder->terms_pembayaran_hari }} hari)
+                                                @endif
+                                            </span>
+                                        </p>
+                                    @endif
                                     @if ($salesOrder->quotation)
                                         <p class="flex items-center">
                                             <span class="w-24 text-gray-500 dark:text-gray-400">Quotation:</span>

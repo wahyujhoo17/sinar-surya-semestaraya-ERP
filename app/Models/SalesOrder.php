@@ -31,7 +31,9 @@ class SalesOrder extends Model
         'tanggal_kirim',
         'alamat_pengiriman',
         'catatan',
-        'syarat_ketentuan'
+        'syarat_ketentuan',
+        'terms_pembayaran',
+        'terms_pembayaran_hari'
     ];
 
     /**

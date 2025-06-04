@@ -669,6 +669,52 @@
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">{{ old('catatan', $salesOrder->catatan) }}</textarea>
                         </div>
 
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="input-group">
+                                <label for="terms_pembayaran" class="text-gray-700 dark:text-gray-300">Terms
+                                    Pembayaran</label>
+                                <select name="terms_pembayaran" id="terms_pembayaran"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
+                                    <option value="">Pilih Terms Pembayaran</option>
+                                    <option value="COD"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'COD' ? 'selected' : '' }}>
+                                        COD (Cash On Delivery)</option>
+                                    <option value="PIA"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'PIA' ? 'selected' : '' }}>
+                                        PIA (Payment In Advance)</option>
+                                    <option value="Net 7"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'Net 7' ? 'selected' : '' }}>
+                                        Net 7 (7 hari)</option>
+                                    <option value="Net 14"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'Net 14' ? 'selected' : '' }}>
+                                        Net 14 (14 hari)</option>
+                                    <option value="Net 30"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'Net 30' ? 'selected' : '' }}>
+                                        Net 30 (30 hari)</option>
+                                    <option value="Net 60"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'Net 60' ? 'selected' : '' }}>
+                                        Net 60 (60 hari)</option>
+                                    <option value="2/10 Net 30"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == '2/10 Net 30' ? 'selected' : '' }}>
+                                        2/10 Net 30 (Diskon 2% jika dibayar dalam 10 hari)</option>
+                                    <option value="custom"
+                                        {{ old('terms_pembayaran', $salesOrder->terms_pembayaran) == 'custom' ? 'selected' : '' }}>
+                                        Kustom</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="terms_pembayaran_hari" class="text-gray-700 dark:text-gray-300">Jatuh
+                                    Tempo (Hari)</label>
+                                <input type="number" name="terms_pembayaran_hari" id="terms_pembayaran_hari"
+                                    min="0"
+                                    value="{{ old('terms_pembayaran_hari', $salesOrder->terms_pembayaran_hari) }}"
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
+                                <p class="text-xs text-gray-500 mt-1">Masukkan jumlah hari untuk jatuh tempo
+                                    pembayaran.</p>
+                            </div>
+                        </div>
+
                         <div class="input-group">
                             <label for="syarat_ketentuan" class="text-gray-700 dark:text-gray-300">Syarat dan
                                 Ketentuan</label>
@@ -703,6 +749,42 @@
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
         <script>
+            $(document).ready(function() {
+                // Handle terms pembayaran changes
+                $('#terms_pembayaran').change(function() {
+                    const selectedTerms = $(this).val();
+                    let days = 0;
+
+                    switch (selectedTerms) {
+                        case 'COD':
+                            days = 0;
+                            break;
+                        case 'PIA':
+                            days = 0;
+                            break;
+                        case 'Net 7':
+                            days = 7;
+                            break;
+                        case 'Net 14':
+                            days = 14;
+                            break;
+                        case 'Net 30':
+                            days = 30;
+                            break;
+                        case 'Net 60':
+                            days = 60;
+                            break;
+                        case '2/10 Net 30':
+                            days = 30;
+                            break;
+                    }
+
+                    if (days > 0 || selectedTerms === '') {
+                        $('#terms_pembayaran_hari').val(days);
+                    }
+                });
+            });
+
             function salesOrderForm() {
                 return {
                     items: [],

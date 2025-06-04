@@ -267,6 +267,13 @@
                                         <input type="date" name="jatuh_tempo" id="jatuh_tempo"
                                             :value="calculateDueDate()" required
                                             class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
+                                        <!-- Payment Terms Info -->
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400"
+                                            x-show="termsPembayaran">
+                                            <span class="font-medium text-primary-600 dark:text-primary-400">Terms
+                                                Pembayaran:</span>
+                                            <span x-text="termsPembayaran"></span>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -612,6 +619,7 @@
                     ppnNominal: 0,
                     ongkosKirim: 0,
                     total: 0,
+                    termsPembayaran: '', // Track terms pembayaran from sales order
 
                     init() {
                         // Initialize select2
@@ -668,6 +676,18 @@
                                     // Get diskon from sales order
                                     this.diskonPersen = data.sales_order.diskon_persen || 0;
 
+                                    // Set jatuh tempo based on terms pembayaran from sales order
+                                    if (data.jatuh_tempo) {
+                                        document.getElementById('jatuh_tempo').value = data.jatuh_tempo;
+                                        console.log('Setting due date from sales order terms:', data.jatuh_tempo);
+                                    } else {
+                                        document.getElementById('jatuh_tempo').value = this.calculateDueDate();
+                                        console.log('No payment terms in sales order, using default 30 days');
+                                    }
+
+                                    // Save the terms_pembayaran for reference
+                                    this.termsPembayaran = data.terms_pembayaran;
+
                                     // Set items data
                                     this.items = data.details.map(item => ({
                                         produk_id: item.produk_id,
@@ -703,6 +723,9 @@
                         this.ppnNominal = 0;
                         this.ongkosKirim = 0;
                         this.total = 0;
+                        this.termsPembayaran = '';
+                        // Reset jatuh_tempo to default (30 days)
+                        document.getElementById('jatuh_tempo').value = this.calculateDueDate();
                     },
 
                     calculateSubtotal() {
@@ -726,7 +749,8 @@
                     },
 
                     calculateDueDate() {
-                        // Default jatuh tempo 30 hari
+                        // This is a fallback method that sets a default due date (30 days)
+                        // Only used when no terms_pembayaran_hari is available from sales order
                         const today = new Date();
                         const dueDate = new Date(today);
                         dueDate.setDate(today.getDate() + 30);
