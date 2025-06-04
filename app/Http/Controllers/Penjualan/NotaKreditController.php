@@ -26,8 +26,19 @@ class NotaKreditController extends Controller
      */
     public function index(Request $request)
     {
-        $query = NotaKredit::with(['customer', 'returPenjualan', 'user'])
-            ->orderBy('created_at', 'desc');
+        $query = NotaKredit::with(['customer', 'returPenjualan', 'user']);
+
+        // Apply sorting
+        $sortField = $request->input('sort', 'tanggal');
+        $sortDirection = $request->input('direction', 'desc');
+
+        // Validate sort field to prevent SQL injection
+        $allowedSortFields = ['nomor', 'tanggal', 'customer_id', 'retur_penjualan_id', 'total', 'status', 'created_at'];
+        if (in_array($sortField, $allowedSortFields)) {
+            $query->orderBy($sortField, $sortDirection === 'asc' ? 'asc' : 'desc');
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
 
         // Status filter
         $status = $request->input('status', 'semua');
@@ -50,29 +61,14 @@ class NotaKreditController extends Controller
         }
 
         // Date filter
-        $dateFilter = $request->input('date_filter', '');
-        if ($dateFilter) {
-            $today = Carbon::today();
-
-            switch ($dateFilter) {
-                case 'today':
-                    $query->whereDate('tanggal', $today);
-                    break;
-                case 'this_week':
-                    $query->whereBetween('tanggal', [$today->startOfWeek(), $today->endOfWeek()]);
-                    break;
-                case 'this_month':
-                    $query->whereMonth('tanggal', $today->month)
-                        ->whereYear('tanggal', $today->year);
-                    break;
-                case 'range':
-                    $dateStart = $request->input('date_start', '');
-                    $dateEnd = $request->input('date_end', '');
-                    if ($dateStart && $dateEnd) {
-                        $query->whereBetween('tanggal', [$dateStart, $dateEnd]);
-                    }
-                    break;
-            }
+        $dateStart = $request->input('date_start', '');
+        $dateEnd = $request->input('date_end', '');
+        if ($dateStart && $dateEnd) {
+            $query->whereBetween('tanggal', [$dateStart, $dateEnd]);
+        } elseif ($dateStart) {
+            $query->whereDate('tanggal', '>=', $dateStart);
+        } elseif ($dateEnd) {
+            $query->whereDate('tanggal', '<=', $dateEnd);
         }
 
         // Customer filter
@@ -92,15 +88,13 @@ class NotaKreditController extends Controller
             'semua' => NotaKredit::count()
         ];
 
-        // Log activity
-        // LogAktivitas::create([
-        //     'user_id' => Auth::id(),
-        //     'aktivitas' => 'lihat',
-        //     'modul' => 'nota_kredit',
-        //     'data_id' => null,
-        //     'ip_address' => request()->ip(),
-        //     'detail' => 'Melihat daftar nota kredit'
-        // ]);
+        // Check if this is an AJAX request
+        if ($request->ajax()) {
+            return response()->json([
+                'table' => view('penjualan.nota_kredit.partials.table', compact('notaKredits'))->render(),
+                'pagination' => view('penjualan.nota_kredit.partials.pagination', compact('notaKredits'))->render(),
+            ]);
+        }
 
         return view('penjualan.nota_kredit.index', compact(
             'notaKredits',
@@ -109,8 +103,11 @@ class NotaKreditController extends Controller
             'customers',
             'status',
             'search',
-            'dateFilter',
-            'customerId'
+            'dateStart',
+            'dateEnd',
+            'customerId',
+            'sortField',
+            'sortDirection'
         ));
     }
 

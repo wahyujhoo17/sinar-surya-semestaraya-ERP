@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sales Order {{ $salesOrder->nomor }}</title>
     <style>
         body {
@@ -10,86 +11,81 @@
             font-size: 12px;
             line-height: 1.4;
             color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Watermark background */
+        .watermark-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            text-align: center;
+            z-index: 0;
+            opacity: 0.07;
+            font-size: 70px;
+            font-weight: bold;
+            color: #4a6fa5;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
         }
 
         .page-break {
             page-break-after: always;
         }
 
-        .container {
+        /* Simple table-based layout for better printing support */
+        .main-table {
             width: 100%;
-            margin: 0 auto;
-            padding: 20px 10px;
+            border-collapse: collapse;
         }
 
-        .header {
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 2px solid #4a6fa5;
             margin-bottom: 20px;
-            border-bottom: 2px solid #444;
-            padding-bottom: 10px;
         }
 
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .company-info {
-            text-align: left;
-        }
-
-        .company-name {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        .company-address {
-            font-size: 11px;
-        }
-
-        .document-title {
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-
-        .document-info {
-            margin-bottom: 15px;
-        }
-
-        .row {
-            display: flex;
-            margin-bottom: 15px;
-        }
-
-        .col-6 {
-            width: 50%;
-        }
-
-        .label {
-            font-weight: bold;
-            margin-right: 5px;
-        }
-
-        table {
+        .info-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
         }
 
-        th {
-            background-color: #f2f2f2;
-            text-align: left;
-            padding: 8px;
-            border: 1px solid #ddd;
-            font-size: 11px;
+        .info-table td {
+            vertical-align: top;
+            padding: 5px;
+            width: 50%;
         }
 
-        td {
-            padding: 8px;
-            border: 1px solid #ddd;
-            font-size: 11px;
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        .items-table th,
+        .items-table td {
+            border: 1px solid #b8c4d6;
+            padding: 6px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #e8f0fa;
+            color: #2c3e50;
+        }
+
+        .section-title {
+            background-color: #e8f0fa;
+            padding: 5px;
+            font-weight: bold;
+            border-left: 3px solid #4a6fa5;
+            color: #2c3e50;
         }
 
         .text-right {
@@ -100,59 +96,39 @@
             text-align: center;
         }
 
-        .totals {
+        .summary-table {
+            border-collapse: collapse;
             width: 40%;
-            margin-left: auto;
-            margin-bottom: 30px;
+            margin-left: 60%;
+            margin-bottom: 15px;
+        }
+
+        .summary-table td {
+            padding: 5px;
         }
 
         .total-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        .total-label {
             font-weight: bold;
+            border-top: 1px solid #4a6fa5;
+            color: #2c3e50;
         }
 
-        .grand-total {
-            font-weight: bold;
-            font-size: 14px;
-            border-top: 1px solid #ddd;
-            padding-top: 5px;
-            margin-top: 5px;
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
         }
 
-        .notes {
-            margin-bottom: 30px;
-        }
-
-        .terms {
-            margin-bottom: 30px;
-        }
-
-        .section-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 13px;
-        }
-
-        .signatures {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 40px;
-        }
-
-        .signature-box {
-            width: 45%;
+        .signature-table td {
+            width: 50%;
+            vertical-align: bottom;
             text-align: center;
         }
 
         .signature-line {
-            border-bottom: 1px solid #333;
-            margin-top: 60px;
-            margin-bottom: 5px;
+            border-top: 1px solid #b8c4d6;
+            width: 80%;
+            margin: 50px auto 10px auto;
         }
 
         .status-badge {
@@ -181,256 +157,232 @@
             color: #059669;
         }
 
-        .info-box {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 15px;
-        }
-
-        .info-title {
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 12px;
-        }
-
         .text-amount {
             text-transform: uppercase;
             font-style: italic;
             font-size: 11px;
             margin-top: 5px;
+            color: #4a6fa5;
         }
 
-        .page-number {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            font-size: 10px;
+        .footer {
+            text-align: center;
+            margin-top: 45px;
+            border-top: 1.5px solid #e0e6ed;
+            padding-top: 22px;
+            background-color: #f9fafb;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .footer-text {
+            font-size: 9.5px;
+            color: #6b7280;
+            margin-top: 15px;
+            padding-bottom: 12px;
+        }
+
+        /* Print-specific styling */
+        @page {
+            size: A4;
+            margin: 1cm;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="company-info">
-                    <div class="company-name">PT. SINAR SURYA</div>
-                    <div class="company-address">
-                        Jl. Raya Sukabumi KM 5, Ciawi, Bogor<br>
-                        Telepon: (021) 12345678<br>
-                        Email: info@sinarsurya.com
-                    </div>
-                </div>
-                <div class="document-info" style="text-align: right;">
-                    <div style="font-size: 14px;"><strong>SALES ORDER</strong></div>
-                    <div style="margin-top: 5px;"><strong>Nomor:</strong> {{ $salesOrder->nomor }}</div>
-                    <div><strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}
-                    </div>
+    <div class="watermark-bg">SINAR SURYA SEMESTARAYA</div>
+
+    <!-- Header Section -->
+    <table class="header-table">
+        <tr style="margin-bottom: 10px;">
+            <td style="width: 50%; vertical-align: middle;">
+                <img src="{{ public_path('img/logo_nama3.png') }}" alt="Sinar Surya Logo"
+                    onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
+            </td>
+            <td style="width: 50%; text-align: right; vertical-align: middle;">
+                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">SALES ORDER</h2>
+                <div>
+                    <strong>Nomor:</strong> {{ $salesOrder->nomor }}<br>
+                    <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}<br>
                     @if ($salesOrder->nomor_po)
-                        <div><strong>Nomor PO Customer:</strong> {{ $salesOrder->nomor_po }}</div>
+                        <strong>Nomor PO Customer:</strong> {{ $salesOrder->nomor_po }}<br>
                     @endif
                     @if ($salesOrder->quotation)
-                        <div><strong>Berdasarkan Quotation:</strong> {{ $salesOrder->quotation->nomor }}</div>
+                        <strong>Berdasarkan Quotation:</strong> {{ $salesOrder->quotation->nomor }}
                     @endif
                 </div>
-            </div>
-        </div>
+            </td>
+        </tr>
+    </table>
 
-        <div class="document-title">SALES ORDER</div>
-
-        <div class="row">
-            <div class="col-6">
-                <div class="info-box">
-                    <div class="info-title">Customer:</div>
-                    <div>{{ $salesOrder->customer->nama }}</div>
+    <!-- Company and Customer Info Section -->
+    <table class="info-table">
+        <tr>
+            <td>
+                <div class="section-title">Info Perusahaan</div>
+                <div style="padding: 5px;">
+                    <strong>PT. SINAR SURYA SEMESTARAYA</strong><br>
+                    Jl. Condet Raya No. 6 Balekambang<br>
+                    Jakarta Timur 13530<br>
+                    Telp. (021) 80876624 - 80876642<br>
+                    E-mail: admin@kliksinarsurya.com<br>
+                    sinar.surya@hotmail.com
+                </div>
+            </td>
+            <td>
+                <div class="section-title">Customer</div>
+                <div style="padding: 5px;">
+                    <strong>{{ $salesOrder->customer->nama }}</strong><br>
                     @if ($salesOrder->customer->company)
-                        <div>{{ $salesOrder->customer->company }}</div>
+                        {{ $salesOrder->customer->company }}<br>
                     @endif
-                    <div>{{ $salesOrder->customer->alamat_utama ?? '-' }}</div>
-                    <div>Telepon: {{ $salesOrder->customer->telepon ?? '-' }}</div>
-                    <div>Email: {{ $salesOrder->customer->email ?? '-' }}</div>
+                    {{ $salesOrder->customer->alamat_utama ?? '-' }}<br>
+                    @if ($salesOrder->alamat_pengiriman && $salesOrder->alamat_pengiriman != $salesOrder->customer->alamat_utama)
+                        <strong>Alamat Pengiriman:</strong> {{ $salesOrder->alamat_pengiriman }}<br>
+                    @endif
+                    @if ($salesOrder->customer->telepon)
+                        Telp: {{ $salesOrder->customer->telepon }}<br>
+                    @endif
+                    @if ($salesOrder->customer->email)
+                        Email: {{ $salesOrder->customer->email }}<br>
+                    @endif
                 </div>
-            </div>
-            <div class="col-6">
-                <div class="info-box">
-                    <div class="info-title">Alamat Pengiriman:</div>
-                    <div>{{ $salesOrder->alamat_pengiriman ?? ($salesOrder->customer->alamat_utama ?? '-') }}</div>
-                    <div>&nbsp;</div>
-                    <div class="info-title" style="margin-top: 10px;">Status:</div>
-                    <div>
-                        <span class="status-badge status-{{ $salesOrder->status_pembayaran }}">
-                            @if ($salesOrder->status_pembayaran == 'belum_bayar')
-                                Belum Bayar
-                            @elseif ($salesOrder->status_pembayaran == 'sebagian')
-                                Sebagian
-                            @elseif ($salesOrder->status_pembayaran == 'lunas')
-                                Lunas
-                            @endif
-                        </span>
-                        &nbsp;
-                        <span class="status-badge status-{{ $salesOrder->status_pengiriman }}">
-                            @if ($salesOrder->status_pengiriman == 'belum_dikirim')
-                                Belum Dikirim
-                            @elseif ($salesOrder->status_pengiriman == 'sebagian')
-                                Sebagian
-                            @elseif ($salesOrder->status_pengiriman == 'dikirim')
-                                Dikirim
-                            @endif
-                        </span>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </td>
+        </tr>
+    </table>
 
-        <table>
-            <thead>
+    <!-- Items Table -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="5%">No</th>
+                <th width="30%">Produk</th>
+                <th width="10%">Qty</th>
+                <th width="10%">Satuan</th>
+                <th width="15%">Harga</th>
+                <th width="10%">Diskon</th>
+                <th width="20%">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($salesOrder->details as $index => $detail)
                 <tr>
-                    <th style="width: 5%;">No</th>
-                    <th style="width: 35%;">Produk</th>
-                    <th style="width: 10%;">Kuantitas</th>
-                    <th style="width: 10%;">Satuan</th>
-                    <th style="width: 15%;">Harga</th>
-                    <th style="width: 10%;">Diskon (%)</th>
-                    <th style="width: 15%;">Subtotal</th>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td>
+                        <strong>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</strong>
+                        <div style="font-size: 10px;">{{ $detail->produk->kode ?? '' }}</div>
+                        @if ($detail->deskripsi)
+                            <div style="font-size: 10px; margin-top: 3px;">{{ $detail->deskripsi }}</div>
+                        @endif
+                    </td>
+                    <td class="text-center">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
+                    <td class="text-center">{{ $detail->satuan->nama ?? '' }}</td>
+                    <td class="text-right">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
+                    <td class="text-center">
+                        @if ($detail->diskon_persen > 0)
+                            {{ number_format($detail->diskon_persen, 2, ',', '.') }}%
+                        @else
+                            -
+                        @endif
+                    </td>
+                    <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($salesOrder->details as $index => $detail)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>
-                            <div><strong>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</strong></div>
-                            <div style="font-size: 10px;">{{ $detail->produk->kode ?? '' }}</div>
-                            @if ($detail->deskripsi)
-                                <div style="font-size: 10px; margin-top: 3px;">{{ $detail->deskripsi }}</div>
-                            @endif
-                        </td>
-                        <td class="text-center">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
-                        <td class="text-center">{{ $detail->satuan->nama ?? '' }}</td>
-                        <td class="text-right">{{ number_format($detail->harga, 0, ',', '.') }}</td>
-                        <td class="text-center">
-                            @if ($detail->diskon_persen > 0)
-                                {{ number_format($detail->diskon_persen, 2, ',', '.') }}%
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="text-right">{{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
+            @endforeach
+        </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: space-between;">
+        <div style="width: 60%;">
+            @if ($salesOrder->catatan)
+                <div
+                    style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+                    <strong style="color: #2c3e50;">Catatan:</strong>
+                    <p>{{ $salesOrder->catatan }}</p>
+                </div>
+            @endif
+
+            <div class="text-amount">
+                <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $salesOrder->total)) }} Rupiah
+            </div>
+        </div>
+
+        <!-- Summary Table -->
+        <table class="summary-table">
+            <tr>
+                <td>Subtotal</td>
+                <td class="text-right">Rp {{ number_format($salesOrder->subtotal, 0, ',', '.') }}</td>
+            </tr>
+            @if ($salesOrder->diskon_nominal > 0)
+                <tr>
+                    <td>Diskon @if ($salesOrder->diskon_persen > 0)
+                            ({{ number_format($salesOrder->diskon_persen, 1) }}%)
+                        @endif
+                    </td>
+                    <td class="text-right">Rp {{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</td>
+                </tr>
+            @endif
+            @if ($salesOrder->ppn > 0)
+                <tr>
+                    <td>PPN ({{ $salesOrder->ppn }}%)</td>
+                    <td class="text-right">Rp
+                        {{ number_format(($salesOrder->subtotal - $salesOrder->diskon_nominal) * ($salesOrder->ppn / 100), 0, ',', '.') }}
+                    </td>
+                </tr>
+            @endif
+            <tr class="total-row">
+                <td><strong>Total</strong></td>
+                <td class="text-right"><strong>Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</strong></td>
+            </tr>
         </table>
-
-        <div style="display: flex; justify-content: space-between;">
-            <div style="width: 60%;">
-                @php
-                    // Convert number to words in Indonesian
-                    function terbilang($number)
-                    {
-                        $number = abs($number);
-                        $words = [
-                            '',
-                            'satu',
-                            'dua',
-                            'tiga',
-                            'empat',
-                            'lima',
-                            'enam',
-                            'tujuh',
-                            'delapan',
-                            'sembilan',
-                            'sepuluh',
-                            'sebelas',
-                        ];
-
-                        if ($number < 12) {
-                            return $words[$number];
-                        } elseif ($number < 20) {
-                            return $words[$number - 10] . ' belas';
-                        } elseif ($number < 100) {
-                            return $words[floor($number / 10)] . ' puluh ' . $words[$number % 10];
-                        } elseif ($number < 200) {
-                            return 'seratus ' . terbilang($number - 100);
-                        } elseif ($number < 1000) {
-                            return $words[floor($number / 100)] . ' ratus ' . terbilang($number % 100);
-                        } elseif ($number < 2000) {
-                            return 'seribu ' . terbilang($number - 1000);
-                        } elseif ($number < 1000000) {
-                            return terbilang(floor($number / 1000)) . ' ribu ' . terbilang($number % 1000);
-                        } elseif ($number < 1000000000) {
-                            return terbilang(floor($number / 1000000)) . ' juta ' . terbilang($number % 1000000);
-                        } elseif ($number < 1000000000000) {
-                            return terbilang(floor($number / 1000000000)) .
-                                ' milyar ' .
-                                terbilang($number % 1000000000);
-                        } elseif ($number < 1000000000000000) {
-                            return terbilang(floor($number / 1000000000000)) .
-                                ' trilyun ' .
-                                terbilang($number % 1000000000000);
-                        } else {
-                            return 'Angka terlalu besar';
-                        }
-                    }
-                @endphp
-
-                <div class="notes">
-                    @if ($salesOrder->catatan)
-                        <div class="section-title">Catatan:</div>
-                        <div>{{ $salesOrder->catatan }}</div>
-                    @endif
-                </div>
-                <div class="text-amount">
-                    Terbilang: {{ ucwords(terbilang((int) $salesOrder->total)) }} Rupiah
-                </div>
-            </div>
-            <div class="totals">
-                <div class="total-row">
-                    <div class="total-label">Subtotal:</div>
-                    <div>{{ number_format($salesOrder->subtotal, 0, ',', '.') }}</div>
-                </div>
-                @if ($salesOrder->diskon_nominal > 0)
-                    <div class="total-row">
-                        <div class="total-label">Diskon:</div>
-                        <div>{{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</div>
-                    </div>
-                @endif
-                @if ($salesOrder->ppn > 0)
-                    <div class="total-row">
-                        <div class="total-label">PPN ({{ $salesOrder->ppn }}%):</div>
-                        <div>
-                            {{ number_format(($salesOrder->subtotal - $salesOrder->diskon_nominal) * ($salesOrder->ppn / 100), 0, ',', '.') }}
-                        </div>
-                    </div>
-                @endif
-                <div class="total-row grand-total">
-                    <div class="total-label">TOTAL:</div>
-                    <div>{{ number_format($salesOrder->total, 0, ',', '.') }}</div>
-                </div>
-            </div>
-        </div>
-
-        @if ($salesOrder->syarat_ketentuan)
-            <div class="terms">
-                <div class="section-title">Syarat dan Ketentuan:</div>
-                <div style="white-space: pre-line;">{{ $salesOrder->syarat_ketentuan }}</div>
-            </div>
-        @endif
-
-        <div class="signatures">
-            <div class="signature-box">
-                <div>Disiapkan Oleh,</div>
-                <div class="signature-line"></div>
-                <div>{{ $salesOrder->user->name ?? 'Admin' }}</div>
-            </div>
-            <div class="signature-box">
-                <div>Disetujui Oleh,</div>
-                <div class="signature-line"></div>
-                <div>{{ $salesOrder->customer->nama }}</div>
-            </div>
-        </div>
-
-        <div class="page-number">Halaman 1 dari 1</div>
     </div>
+
+    <!-- Terms and Conditions -->
+    @if ($salesOrder->syarat_ketentuan)
+        <div
+            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+            <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
+            <div style="margin-top: 5px; white-space: pre-line;">{{ $salesOrder->syarat_ketentuan }}</div>
+        </div>
+    @else
+        <div
+            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+            <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
+            <ol style="margin-top: 5px; padding-left: 20px;">
+                <li>Barang yang sudah dibeli tidak dapat dikembalikan</li>
+                <li>Pembayaran dilakukan sesuai kesepakatan kedua belah pihak</li>
+                <li>Pengiriman dilakukan setelah pembayaran diterima (kecuali untuk pelanggan dengan terms tertentu)
+                </li>
+            </ol>
+        </div>
+    @endif
+
+    <!-- Signatures -->
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div class="signature-line"></div>
+                <div><strong style="color: #2c3e50;">{{ $salesOrder->user->name ?? 'Admin' }}</strong></div>
+                <div style="color: #7f8c8d;">Sales</div>
+            </td>
+            <td>
+                <div class="signature-line"></div>
+                <div><strong
+                        style="color: #2c3e50;">{{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}</strong>
+                </div>
+                <div style="color: #7f8c8d;">Customer</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+
+        <div class="footer-text">
+            <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB | PT. SINAR SURYA
+                SEMESTARAYA</p>
+        </div>
+    </div>
+
 </body>
 
 </html>

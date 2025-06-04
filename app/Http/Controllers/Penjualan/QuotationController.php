@@ -674,17 +674,32 @@ class QuotationController extends Controller
      */
     public function exportPdf($id)
     {
-        $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan'])
-            ->findOrFail($id);
+        try {
+            // Increase execution time limit for this request
+            ini_set('max_execution_time', 120); // Set to 2 minutes
 
-        // Load the PDF view
-        $pdf = Pdf::loadView('penjualan.quotation.pdf', ['quotation' => $quotation]);
+            $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan'])
+                ->findOrFail($id);
 
-        // Set paper size and orientation
-        $pdf->setPaper('a4', 'portrait');
+            // Load the PDF view
+            $pdf = Pdf::loadView('penjualan.quotation.pdf', ['quotation' => $quotation]);
 
-        // Download the PDF with a specific filename
-        return $pdf->download('Quotation-' . $quotation->nomor . '.pdf');
+            // Set paper size and orientation
+            $pdf->setPaper('a4', 'portrait');
+
+            // Set lower memory usage options if available
+            if (method_exists($pdf, 'setOption')) {
+                $pdf->setOption('isRemoteEnabled', true);
+                $pdf->setOption('isHtml5ParserEnabled', true);
+                $pdf->setOption('isPhpEnabled', false);
+            }
+
+            // Stream the PDF instead of downloading for better performance
+            return $pdf->download('Quotation-' . $quotation->nomor . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error generating PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+        }
     }
 
     /**

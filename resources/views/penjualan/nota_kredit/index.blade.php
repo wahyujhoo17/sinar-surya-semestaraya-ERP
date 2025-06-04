@@ -1,5 +1,5 @@
 <x-app-layout>
-    <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8" x-data="notaKreditTableManager()" x-init="init()">
         {{-- Header Section --}}
         <div class="mb-8">
             <div class="flex items-center justify-between">
@@ -14,70 +14,84 @@
                         </p>
                     </div>
                 </div>
+                <div>
+                    <a href="{{ route('penjualan.nota-kredit.create') }}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        Buat Nota Kredit
+                    </a>
+                </div>
             </div>
         </div>
 
         {{-- Filter Section --}}
-        <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6">
-            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+        <div x-data="{ filterPanelOpen: true }" class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden mb-6">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Filter</h3>
+                <button @click="filterPanelOpen = !filterPanelOpen"
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <svg x-show="filterPanelOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                    <svg x-show="!filterPanelOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
             </div>
-            <div class="p-6">
-                <form method="GET" action="{{ route('penjualan.nota-kredit.index') }}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <label for="search"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari:</label>
-                            <input type="text" name="search" id="search"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                                placeholder="Nomor / Customer" value="{{ request('search') }}">
-                        </div>
-                        <div>
-                            <label for="date_start"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dari
-                                Tanggal:</label>
-                            <input type="date" name="date_start" id="date_start"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                                value="{{ request('date_start') }}">
-                        </div>
-                        <div>
-                            <label for="date_end"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sampai
-                                Tanggal:</label>
-                            <input type="date" name="date_end" id="date_end"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                                value="{{ request('date_end') }}">
-                        </div>
-                        <div>
-                            <label for="status"
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status:</label>
-                            <select name="status" id="status"
-                                class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
-                                <option value="semua">Semua Status</option>
-                                <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft
-                                </option>
-                                <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>
-                                    Diproses</option>
-                                <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai
-                                </option>
-                            </select>
-                        </div>
+            <div x-show="filterPanelOpen" class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label for="search"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari:</label>
+                        <input type="text" x-model="search" id="search"
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                            placeholder="Nomor / Customer">
                     </div>
-                    <div class="mt-4 flex justify-end">
-                        <button type="submit"
-                            class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                            Filter
-                        </button>
-                        <a href="{{ route('penjualan.nota-kredit.index') }}"
-                            class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            Reset
-                        </a>
+                    <div>
+                        <label for="date_start"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dari
+                            Tanggal:</label>
+                        <input type="date" x-model="dateStart" id="date_start"
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                     </div>
-                </form>
+                    <div>
+                        <label for="date_end"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sampai
+                            Tanggal:</label>
+                        <input type="date" x-model="dateEnd" id="date_end"
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                    </div>
+                    <div>
+                        <label for="status"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status:</label>
+                        <select x-model="status" id="status"
+                            class="mt-1 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                            <option value="semua">Semua Status</option>
+                            <option value="draft">Draft</option>
+                            <option value="diproses">Diproses</option>
+                            <option value="selesai">Selesai</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button @click="fetchTable()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Filter
+                    </button>
+                    <button @click="resetFilters()"
+                        class="ml-3 inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Reset
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -140,7 +154,18 @@
 
         {{-- Data Table --}}
         <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
-            <div class="overflow-x-auto">
+            <!-- Loading indicator -->
+            <div x-show="isLoading" class="py-20 flex justify-center items-center">
+                <div class="flex flex-col items-center">
+                    <div
+                        class="rounded-full border-4 border-t-4 border-gray-200 dark:border-gray-700 border-t-primary-600 dark:border-t-primary-500 h-12 w-12 animate-spin">
+                    </div>
+                    <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">Memuat data...</p>
+                </div>
+            </div>
+
+            <!-- Table content -->
+            <div x-show="!isLoading" class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead class="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -148,159 +173,174 @@
                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 No.</th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Nomor</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('nomor')" class="flex items-center">
+                                    <span>Nomor</span>
+                                    <template x-if="sortField === 'nomor'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'nomor'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Tanggal</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('tanggal')" class="flex items-center">
+                                    <span>Tanggal</span>
+                                    <template x-if="sortField === 'tanggal'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'tanggal'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Customer</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('customer_id')" class="flex items-center">
+                                    <span>Customer</span>
+                                    <template x-if="sortField === 'customer_id'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'customer_id'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                No. Retur</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('retur_penjualan_id')" class="flex items-center">
+                                    <span>No. Retur</span>
+                                    <template x-if="sortField === 'retur_penjualan_id'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'retur_penjualan_id'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Total</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('total')" class="flex items-center">
+                                    <span>Total</span>
+                                    <template x-if="sortField === 'total'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'total'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                Status</th>
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer group">
+                                <button @click="sortBy('status')" class="flex items-center">
+                                    <span>Status</span>
+                                    <template x-if="sortField === 'status'">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-500 ml-1"
+                                            :class="{
+                                                'rotate-180': sortDirection === 'desc',
+                                                'text-primary-500': true
+                                            }"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7" />
+                                        </svg>
+                                    </template>
+                                    <template x-if="sortField !== 'status'">
+                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                            class="h-4 w-4 text-gray-400 ml-1 group-hover:text-gray-500"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                        </svg>
+                                    </template>
+                                </button>
+                            </th>
                             <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                        @forelse($notaKredits ?? [] as $index => $notaKredit)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $index + 1 }}
-                                </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                    {{ $notaKredit->nomor }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $notaKredit->tanggal ? \Carbon\Carbon::parse($notaKredit->tanggal)->format('d/m/Y') : '-' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $notaKredit->customer->company ?? $notaKredit->customer->nama ?? 'N/A' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $notaKredit->returPenjualan->nomor ?? 'N/A' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                    Rp {{ number_format($notaKredit->total, 0, ',', '.') }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @if ($notaKredit->status == 'draft')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-800 dark:text-amber-100">
-                                            <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-amber-500" fill="currentColor"
-                                                viewBox="0 0 8 8">
-                                                <circle cx="4" cy="4" r="3" />
-                                            </svg>
-                                            Draft
-                                        </span>
-                                    @elseif($notaKredit->status == 'diproses')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
-                                            <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-blue-500" fill="currentColor"
-                                                viewBox="0 0 8 8">
-                                                <circle cx="4" cy="4" r="3" />
-                                            </svg>
-                                            Diproses
-                                        </span>
-                                    @elseif($notaKredit->status == 'selesai')
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-800 dark:text-emerald-100">
-                                            <svg class="-ml-0.5 mr-1.5 h-2 w-2 text-emerald-500" fill="currentColor"
-                                                viewBox="0 0 8 8">
-                                                <circle cx="4" cy="4" r="3" />
-                                            </svg>
-                                            Selesai
-                                        </span>
-                                    @else
-                                        <span
-                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-                                            {{ $notaKredit->status }}
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex justify-end space-x-2">
-                                        <a href="{{ route('penjualan.nota-kredit.show', $notaKredit->id) }}"
-                                            class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300"
-                                            title="Lihat Detail">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                                </path>
-                                            </svg>
-                                        </a>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
+                        id="tableBody">
+                        {!! $notaKredits->count() > 0
+                            ? ''
+                            : '<tr><td colspan="8" class="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"><div class="flex flex-col items-center justify-center"><div class="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-gray-50 dark:bg-gray-700/50 mb-4"><svg class="w-12 h-12 text-gray-300 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div><p class="text-gray-500 dark:text-gray-400 mb-1">Tidak ada data nota kredit</p><p class="text-sm text-gray-400 dark:text-gray-500">Silakan tambahkan nota kredit baru atau ubah filter pencarian Anda</p></div></td></tr>' !!}
 
-                                        @if ($notaKredit->status == 'draft')
-                                            <a href="{{ route('penjualan.nota-kredit.edit', $notaKredit->id) }}"
-                                                class="text-amber-600 hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
-                                                title="Edit">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                                    </path>
-                                                </svg>
-                                            </a>
-
-                                            <button type="button"
-                                                class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 btn-delete"
-                                                data-modal-target="deleteModal" data-modal-toggle="deleteModal"
-                                                data-id="{{ $notaKredit->id }}" data-name="{{ $notaKredit->nomor }}"
-                                                title="Hapus">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                    </path>
-                                                </svg>
-                                            </button>
-                                        @endif
-
-                                        <a href="{{ route('penjualan.nota-kredit.pdf', $notaKredit->id) }}"
-                                            target="_blank"
-                                            class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
-                                            title="Download PDF">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                                                </path>
-                                            </svg>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8"
-                                    class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                    Tidak ada data nota kredit
-                                </td>
-                            </tr>
-                        @endforelse
+                        @include('penjualan.nota_kredit.partials.table')
                     </tbody>
                 </table>
             </div>
 
-            @if (isset($notaKredits) && $notaKredits->hasPages())
-                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-                    {{ $notaKredits->links() }}
-                </div>
-            @endif
+            <div id="paginationContainer" x-show="!isLoading">
+                @include('penjualan.nota_kredit.partials.pagination')
+            </div>
         </div>
     </div>
 
@@ -346,23 +386,6 @@
     </div>
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Setup delete modal
-                const deleteButtons = document.querySelectorAll('.btn-delete');
-                const deleteName = document.getElementById('delete-name');
-                const deleteForm = document.getElementById('delete-form');
-
-                deleteButtons.forEach(button => {
-                    button.addEventListener('click', function() {
-                        const id = this.getAttribute('data-id');
-                        const name = this.getAttribute('data-name');
-
-                        deleteName.textContent = name;
-                        deleteForm.action = `{{ url('penjualan/nota-kredit') }}/${id}`;
-                    });
-                });
-            });
-        </script>
+        <script src="{{ asset('js/nota_kredit_table_manager.js') }}"></script>
     @endpush
 </x-app-layout>

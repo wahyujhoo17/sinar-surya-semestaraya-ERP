@@ -164,7 +164,7 @@ class PermintaanBarangController extends Controller
                     'id' => $salesOrder->id,
                     'nomor' => $salesOrder->nomor,
                     'tanggal' => $salesOrder->tanggal,
-                    'customer_nama' => $salesOrder->customer->nama,
+                    'customer_nama' => $salesOrder->customer->nama ?? $salesOrder->customer->company,
                     'jumlah_item' => $validProducts->count(),
                     'status_pengiriman' => $salesOrder->status_pengiriman,
                 ];

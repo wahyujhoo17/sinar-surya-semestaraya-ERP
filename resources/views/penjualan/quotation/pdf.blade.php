@@ -22,8 +22,7 @@
             left: 50%;
             width: 100%;
             text-align: center;
-            z-index: -1;
-            /* Make sure it's behind all content */
+            z-index: 0;
             opacity: 0.07;
             font-size: 70px;
             font-weight: bold;
@@ -43,8 +42,8 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 1px solid #4a6fa5;
-            margin-bottom: 10px;
+            border-bottom: 2px solid #4a6fa5;
+            margin-bottom: 20px;
         }
 
         .info-table {
@@ -122,25 +121,23 @@
 
         .footer {
             text-align: center;
-            font-size: 10px;
-            color: #7f8c8d;
-            margin-top: 30px;
+            margin-top: 45px;
+            border-top: 1.5px solid #e0e6ed;
+            padding-top: 22px;
+            background-color: #f9fafb;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
+        }
+
+        .footer-text {
+            font-size: 9.5px;
+            color: #6b7280;
+            margin-top: 15px;
+            padding-bottom: 12px;
         }
 
         /* Simple utility classes */
         .text-right {
             text-align: right;
-        }
-
-        /* Logo styles */
-        .logo-container {
-            display: flex;
-            align-items: center;
-        }
-
-        .logo {
-            height: 60px;
-            margin-right: 10px;
         }
 
         /* Print-specific styling */
@@ -155,62 +152,23 @@
     <div class="watermark-bg">SINAR SURYA SEMESTARAYA</div>
     <!-- Header Section -->
     <table class="header-table">
-        <tr style="margin-bottom: 5px;">
+        <tr style="margin-bottom: 10px;">
             <td style="width: 50%; vertical-align: middle;">
                 <img src="{{ public_path('img/logo_nama3.png') }}" alt="Sinar Surya Logo"
-                    onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 55px;">
+                    onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <img src="{{ public_path('img/Atsaka-logo.webp') }}" alt="Atsaka Logo"
-                    style="height: 65px; margin-left: 15px;">
+                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">QUOTATION</h2>
+                <div>
+                    <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
+                    <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
+                    <strong>Status:</strong> <span
+                        style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
+                    <p></p>
+                </div>
             </td>
         </tr>
     </table>
-
-    <!-- Quotation Info Section -->
-    <div
-        style="text-align: center; margin: 15px auto; border: 1px solid #e8f0fa; border-radius: 5px; padding: 8px; background-color: #f8fafc; width: 60%; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-        <h2
-            style="color: #4a6fa5; margin: 0 0 8px 0; border-bottom: 1px solid #4a6fa5; padding-bottom: 5px; letter-spacing: 1px; font-size: 16px;">
-            QUOTATION</h2>
-        <table style="width: 100%; margin: 0 auto; border-collapse: collapse; font-size: 11px;">
-            <tr>
-                <td style="text-align: right; padding: 3px; width: 30%; font-weight: bold; color: #2c3e50;">Nomor:</td>
-                <td style="text-align: left; padding: 3px;">{{ $quotation->nomor }}</td>
-                <td style="text-align: right; padding: 3px; width: 20%; font-weight: bold; color: #2c3e50;">Tanggal:
-                </td>
-                <td style="text-align: left; padding: 3px;">
-                    {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</td>
-            </tr>
-            <tr>
-                <td style="text-align: right; padding: 3px; font-weight: bold; color: #2c3e50;">Status:</td>
-                <td style="text-align: left; padding: 3px;" colspan="3">
-                    @php
-                        $statusColor = '#3498db'; // Default blue color
-                        if ($quotation->status == 'DITOLAK') {
-                            $statusColor = '#e74c3c'; // Red for rejected
-                        } elseif ($quotation->status == 'DITERIMA' || $quotation->status == 'DISETUJUI') {
-                            $statusColor = '#2ecc71'; // Green for approved
-                        } elseif ($quotation->status == 'TERTUNDA' || $quotation->status == 'DRAFT') {
-                            $statusColor = '#f39c12'; // Orange for pending/draft
-                        }
-                    @endphp
-                    <span
-                        style="text-transform: uppercase; color: {{ $statusColor }}; font-weight: bold; padding: 2px 5px; background-color: rgba({{ $quotation->status == 'DITOLAK'
-                            ? '231, 76, 60, 0.1'
-                            : ($quotation->status == 'DITERIMA' || $quotation->status == 'DISETUJUI'
-                                ? '46, 204, 113, 0.1'
-                                : ($quotation->status == 'TERTUNDA' || $quotation->status == 'DRAFT'
-                                    ? '243, 156, 18, 0.1'
-                                    : '52, 152, 219, 0.1')) }}); border-radius: 2px; font-size: 10px;">{{ $quotation->status }}</span>
-                    <span style="font-size: 9px; color: #7f8c8d; margin-left: 10px;">
-                        Ref: {{ $quotation->nomor }} |
-                        {{ \Carbon\Carbon::parse($quotation->created_at)->format('d/m/Y') }}
-                    </span>
-                </td>
-            </tr>
-        </table>
-    </div>
 
 
     <!-- Company and Customer Info Section -->
@@ -375,7 +333,17 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB</p>
+        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
+            <img src="{{ public_path('img/atsaka.webp') }}" alt="Atsaka Logo" style="height: 55px; margin: 0 30px;">
+            <img src="{{ public_path('img/polylab.webp') }}" alt="Polylab Logo" style="height: 35px; margin: 0 25px;">
+            <img src="{{ public_path('img/sumbunesia.webp') }}" alt="Sumbunesia Logo"
+                style="height: 55px; margin: 0 30px;">
+        </div>
+        <div class="footer-text">
+            <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB | PT. SINAR SURYA
+                SEMESTARAYA</p>
+
+        </div>
     </div>
 </body>
 
