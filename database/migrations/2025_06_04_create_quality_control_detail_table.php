@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('quality_control_detail', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('quality_control_id')->constrained('quality_control')->onDelete('cascade');
+            $table->string('parameter');
+            $table->text('standar')->nullable();
+            $table->text('hasil');
+            $table->enum('status', ['pass', 'fail'])->default('pass');
+            $table->text('keterangan')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('quality_control_detail');
+    }
+};

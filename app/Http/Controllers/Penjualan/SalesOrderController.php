@@ -10,6 +10,9 @@ use App\Models\Produk;
 use App\Models\Satuan;
 use App\Models\Quotation;
 use App\Models\LogAktivitas;
+use App\Models\StokProduk;
+use App\Models\PerencanaanProduksi;
+use App\Models\PerencanaanProduksiDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -201,6 +204,7 @@ class SalesOrderController extends Controller
         $customers = Customer::orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
+        $gudangs = \App\Models\Gudang::orderBy('nama', 'asc')->get();
         $nomor = $this->generateNewSalesOrderNumber();
         $tanggal = now()->format('Y-m-d');
         $tanggal_kirim = now()->addDays(3)->format('Y-m-d');
@@ -228,6 +232,7 @@ class SalesOrderController extends Controller
             'customers',
             'products',
             'satuans',
+            'gudangs',
             'nomor',
             'tanggal',
             'tanggal_kirim',
@@ -266,6 +271,9 @@ class SalesOrderController extends Controller
             'diskon_global_nominal' => 'nullable|numeric|min:0',
             'ongkos_kirim' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
+            'check_stock' => 'nullable|boolean',
+            'create_production_plan' => 'nullable|boolean',
+            'gudang_id' => 'nullable|exists:gudang,id',
         ]);
 
         try {
@@ -328,9 +336,13 @@ class SalesOrderController extends Controller
             $salesOrder->terms_pembayaran_hari = $request->terms_pembayaran_hari;
             $salesOrder->save();
 
+            // Array untuk menyimpan produk yang perlu diproduksi
+            $needsProduction = [];
+            $gudangId = $request->gudang_id;
+
             // Create Sales Order Details
             foreach ($items as $item) {
-                $productTotal = $item['harga'] * $item['kuantitas'];
+                $productTotal = $item['harga'] * (isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity']);
                 $diskonPersenItem = $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = 0;
 
@@ -339,12 +351,13 @@ class SalesOrderController extends Controller
                 }
 
                 $subtotalItem = $productTotal - $diskonNominalItem;
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
 
                 $salesOrderDetail = new SalesOrderDetail();
                 $salesOrderDetail->sales_order_id = $salesOrder->id;
                 $salesOrderDetail->produk_id = $item['produk_id'];
                 $salesOrderDetail->deskripsi = $item['deskripsi'] ?? null;
-                $salesOrderDetail->quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                $salesOrderDetail->quantity = $quantity;
                 $salesOrderDetail->quantity_terkirim = 0;
                 $salesOrderDetail->satuan_id = $item['satuan_id'];
                 $salesOrderDetail->harga = $item['harga'];
@@ -352,6 +365,26 @@ class SalesOrderController extends Controller
                 $salesOrderDetail->diskon_nominal = $diskonNominalItem;
                 $salesOrderDetail->subtotal = $subtotalItem;
                 $salesOrderDetail->save();
+
+                // Jika opsi check_stock diaktifkan, cek ketersediaan stok
+                if ($request->check_stock && $gudangId) {
+                    $produk = Produk::find($item['produk_id']);
+                    $stokTersedia = StokProduk::where('produk_id', $item['produk_id'])
+                        ->where('gudang_id', $gudangId)
+                        ->sum('jumlah');
+
+                    // Jika stok tidak mencukupi, tambahkan ke daftar produk yang perlu diproduksi
+                    if ($stokTersedia < $quantity && $produk && $produk->tipe === 'produk_jadi') {
+                        $needsProduction[] = [
+                            'produk_id' => $item['produk_id'],
+                            'jumlah' => $quantity,
+                            'stok_tersedia' => $stokTersedia,
+                            'jumlah_produksi' => $quantity - $stokTersedia,
+                            'satuan_id' => $item['satuan_id'],
+                            'keterangan' => 'Stok tidak mencukupi untuk SO: ' . $salesOrder->nomor
+                        ];
+                    }
+                }
             }
 
             // Tambahkan log aktivitas untuk pembuatan sales order
@@ -403,6 +436,54 @@ class SalesOrderController extends Controller
                             'catatan' => 'Disetujui karena pembuatan Sales Order #' . $salesOrder->nomor
                         ])
                     ]);
+                }
+            }
+
+            // Jika ada produk yang perlu diproduksi dan opsi create_production_plan diaktifkan
+            if (!empty($needsProduction) && $request->create_production_plan) {
+                try {
+                    // Buat perencanaan produksi
+                    $perencanaanProduksiController = new \App\Http\Controllers\Produksi\PerencanaanProduksiController();
+
+                    // Generate nomor perencanaan produksi
+                    $nomorPerencanaan = $perencanaanProduksiController->generateNomorPerencanaan();
+
+                    // Buat perencanaan produksi
+                    $perencanaan = new \App\Models\PerencanaanProduksi();
+                    $perencanaan->nomor = $nomorPerencanaan;
+                    $perencanaan->tanggal = now();
+                    $perencanaan->sales_order_id = $salesOrder->id;
+                    $perencanaan->catatan = 'Dibuat otomatis dari Sales Order #' . $salesOrder->nomor;
+                    $perencanaan->status = 'draft';
+                    $perencanaan->created_by = Auth::id();
+                    $perencanaan->save();
+
+                    // Simpan detail perencanaan
+                    foreach ($needsProduction as $item) {
+                        $detailPerencanaan = new \App\Models\PerencanaanProduksiDetail();
+                        $detailPerencanaan->perencanaan_produksi_id = $perencanaan->id;
+                        $detailPerencanaan->produk_id = $item['produk_id'];
+                        $detailPerencanaan->jumlah = $item['jumlah'];
+                        $detailPerencanaan->satuan_id = $item['satuan_id'];
+                        $detailPerencanaan->stok_tersedia = $item['stok_tersedia'];
+                        $detailPerencanaan->jumlah_produksi = $item['jumlah_produksi'];
+                        $detailPerencanaan->jumlah_selesai = 0;
+                        $detailPerencanaan->keterangan = $item['keterangan'];
+                        $detailPerencanaan->save();
+                    }
+
+                    // Catat log aktivitas
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'create',
+                        'modul' => 'perencanaan_produksi_auto',
+                        'data_id' => $perencanaan->id,
+                        'ip_address' => request()->ip(),
+                        'detail' => 'Perencanaan produksi otomatis dibuat dari Sales Order #' . $salesOrder->nomor
+                    ]);
+                } catch (\Exception $e) {
+                    // Hanya log error tapi tidak rollback transaksi SO
+                    Log::error('Error creating production planning: ' . $e->getMessage());
                 }
             }
 

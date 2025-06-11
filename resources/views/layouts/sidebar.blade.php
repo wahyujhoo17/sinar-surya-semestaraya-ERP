@@ -147,17 +147,14 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'produksi'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('produksi/wo') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perintah
+                    <a href="/produksi/work-order"
+                        class="{{ request()->is('produksi/work-order') || request()->is('produksi/work-order/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perintah
                             Produksi (WO)</span></a>
                     <a href="/produksi/bom"
                         class="{{ request()->is('produksi/bom') || request()->is('produksi/bom/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Bill
                             of Materials (BOM)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('produksi/perencanaan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perencanaan
-                            Produksi</span></a>
-                    <a href="#"
-                        class="{{ request()->is('produksi/status') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Status
+                    <a href="/produksi/perencanaan-produksi"
+                        class="{{ request()->is('produksi/perencanaan-produksi') || request()->is('produksi/perencanaan-produksi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perencanaan
                             Produksi</span></a>
                 </div>
             </div>

@@ -221,6 +221,26 @@
                         @enderror
                     </div>
 
+                    {{-- User Role --}}
+                    <div>
+                        <label for="role_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            User Role <span class="text-red-500">*</span>
+                        </label>
+                        <select name="role_id" id="role_id" required
+                            class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('role_id') border-red-500 dark:border-red-500 @enderror">
+                            <option value="">Pilih Role</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->id }}"
+                                    {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                                    {{ $role->nama }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('role_id')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- Foto Karyawan --}}
                     <div class="md:col-span-2">
                         <label for="foto" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

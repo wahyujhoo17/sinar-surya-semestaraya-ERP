@@ -29,6 +29,11 @@ use App\Http\Controllers\Keuangan\PembayaranPiutangController; // Import Pembaya
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
+use App\Http\Controllers\Produksi\PerencanaanProduksiController;
+use App\Http\Controllers\Produksi\WorkOrderController;
+use App\Http\Controllers\Produksi\PengambilanBahanBakuController;
+use App\Http\Controllers\Produksi\QualityControlController;
+use App\Http\Controllers\Produksi\PengembalianMaterialController;
 use App\Http\Controllers\Penjualan\QuotationController;
 use App\Http\Controllers\Penjualan\SalesOrderController;
 use App\Http\Controllers\Penjualan\DeliveryOrderController;
@@ -270,6 +275,54 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('bom-component/{id}', [BOMController::class, 'deleteComponent'])->name('bom.delete-component');
         Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');
         Route::resource('bom', BOMController::class);
+
+        // Perencanaan Produksi Routes
+        Route::get('perencanaan-produksi/get-so-items', [PerencanaanProduksiController::class, 'getSoItems'])->name('perencanaan-produksi.get-so-items');
+        Route::put('perencanaan-produksi/{id}/submit', [PerencanaanProduksiController::class, 'submit'])->name('perencanaan-produksi.submit');
+        Route::put('perencanaan-produksi/{id}/approve', [PerencanaanProduksiController::class, 'approve'])->name('perencanaan-produksi.approve');
+        Route::put('perencanaan-produksi/{id}/reject', [PerencanaanProduksiController::class, 'reject'])->name('perencanaan-produksi.reject');
+        Route::get('perencanaan-produksi/{id}/create-work-order', [PerencanaanProduksiController::class, 'createWorkOrder'])->name('perencanaan-produksi.create-work-order');
+        Route::post('perencanaan-produksi/{id}/change-status', [PerencanaanProduksiController::class, 'changeStatus'])->name('perencanaan-produksi.change-status');
+        Route::get('perencanaan-produksi/get-sales-order/{id}', [PerencanaanProduksiController::class, 'getSalesOrderData'])->name('perencanaan-produksi.get-sales-order');
+        Route::resource('perencanaan-produksi', PerencanaanProduksiController::class);
+
+        // Work Order Routes
+        Route::post('work-order/{id}/change-status', [WorkOrderController::class, 'changeStatus'])->name('work-order.change-status');
+        // Routes for Pengambilan Bahan Baku
+        Route::get('work-order/{id}/create-pengambilan', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.create-pengambilan');
+        Route::post('work-order/{id}/store-pengambilan', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan');
+        Route::get('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.pengambilan-bahan-baku');
+        Route::post('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan-bahan-baku');
+
+        // Routes for Quality Control
+        Route::get('work-order/{id}/create-qc', [WorkOrderController::class, 'createQualityControl'])->name('work-order.create-qc');
+        Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
+        Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
+        Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
+
+        // Routes for Material Return
+        Route::get('work-order/{id}/create-pengembalian', [PengembalianMaterialController::class, 'create'])->name('work-order.create-pengembalian');
+        Route::post('work-order/{id}/store-pengembalian', [PengembalianMaterialController::class, 'store'])->name('work-order.store-pengembalian');
+
+        // Route for Select Product
+        Route::get('work-order/select-product/{perencanaan_id}', [WorkOrderController::class, 'create'])->name('work-order.select-product');
+        Route::resource('work-order', WorkOrderController::class);
+
+        // Pengambilan Bahan Baku Routes
+        Route::get('pengambilan-bahan-baku/{id}/pdf', [PengambilanBahanBakuController::class, 'exportPdf'])->name('pengambilan-bahan-baku.pdf');
+        Route::get('pengambilan-bahan-baku/check-stok', [PengambilanBahanBakuController::class, 'checkStok'])->name('pengambilan-bahan-baku.check-stok');
+        Route::resource('pengambilan-bahan-baku', PengambilanBahanBakuController::class)->only(['index', 'show']);
+
+        // Quality Control Routes
+        Route::get('quality-control/{id}/pdf', [QualityControlController::class, 'exportPdf'])->name('quality-control.pdf');
+        Route::put('quality-control/{id}/approve', [QualityControlController::class, 'approve'])->name('quality-control.approve');
+        Route::put('quality-control/{id}/reject', [QualityControlController::class, 'reject'])->name('quality-control.reject');
+        Route::resource('quality-control', QualityControlController::class)->only(['index', 'show']);
+
+        // Quality Control Routes
+        Route::get('quality-control/report', [App\Http\Controllers\Produksi\QualityControlController::class, 'report'])->name('quality-control.report');
+        Route::get('quality-control/export-pdf', [App\Http\Controllers\Produksi\QualityControlController::class, 'exportPdf'])->name('quality-control.export-pdf');
+        Route::resource('quality-control', App\Http\Controllers\Produksi\QualityControlController::class)->only(['index', 'show']);
     });
 
     // -- HR & Karyawan --

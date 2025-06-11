@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Karyawan;
 use App\Models\Department;
 use App\Models\Jabatan;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log; // Import Log facade
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class DataKaryawanController extends Controller
 {
@@ -20,7 +22,7 @@ class DataKaryawanController extends Controller
     public function index(Request $request)
     {
         // Base query dengan eager loading untuk department dan jabatan
-        $query = Karyawan::with(['department', 'jabatan'])->latest();
+        $query = Karyawan::with(['department', 'jabatan', 'user.roles'])->latest();
 
         // Pencarian
         if ($request->has('search') && !empty($request->search)) {
@@ -108,7 +110,8 @@ class DataKaryawanController extends Controller
     {
         $departments = Department::all();
         $jabatans = Jabatan::all();
-        return view('hr_karyawan.data_karyawan.create', compact('departments', 'jabatans'));
+        $roles = Role::all();
+        return view('hr_karyawan.data_karyawan.create', compact('departments', 'jabatans', 'roles'));
     }
 
     /**
@@ -130,6 +133,7 @@ class DataKaryawanController extends Controller
             'tanggal_masuk' => 'required|date',
             'status' => 'required|in:aktif,nonaktif,cuti,keluar',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
+            'role_id' => 'required|exists:roles,id', // User role
         ]);
 
         $data = $request->except('foto'); // Exclude foto initially
@@ -143,6 +147,14 @@ class DataKaryawanController extends Controller
         ]);
         $data['user_id'] = $user->id;
 
+        // Assign role to user
+        DB::table('user_roles')->insert([
+            'user_id' => $user->id,
+            'role_id' => $request->role_id,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
         if ($request->hasFile('foto')) {
             $path = $request->file('foto')->store('karyawan_fotos', 'public');
             $data['foto'] = $path;
@@ -150,7 +162,11 @@ class DataKaryawanController extends Controller
 
         try {
             Karyawan::create($data);
-            return redirect()->route('hr.karyawan.index')->with('success', 'Data Karyawan berhasil ditambahkan. Akun user juga telah dibuat.');
+
+            // Grab the role name for the message
+            $roleName = Role::find($request->role_id)->nama;
+
+            return redirect()->route('hr.karyawan.index')->with('success', "Data Karyawan berhasil ditambahkan. Akun user telah dibuat dengan role '$roleName'.");
         } catch (\Exception $e) {
             Log::error('Error storing karyawan: ' . $e->getMessage()); // Log the error
             return redirect()->back()->with('error', 'Gagal menambahkan data karyawan. Silakan coba lagi.')->withInput();
@@ -164,7 +180,7 @@ class DataKaryawanController extends Controller
     public function show(Karyawan $karyawan)
     {
         // Eager load relationships
-        $karyawan->load(['department', 'jabatan', 'user', 'absensi', 'cuti']);
+        $karyawan->load(['department', 'jabatan', 'user.roles', 'absensi', 'cuti']);
         return view('hr_karyawan.data_karyawan.show', compact('karyawan'));
     }
 
@@ -175,7 +191,15 @@ class DataKaryawanController extends Controller
     {
         $departments = Department::all();
         $jabatans = Jabatan::all();
-        return view('hr_karyawan.data_karyawan.edit', compact('karyawan', 'departments', 'jabatans'));
+        $roles = Role::all();
+
+        // Get the employee's current role id if it exists
+        $userRoleId = null;
+        if ($karyawan->user && $karyawan->user->roles->isNotEmpty()) {
+            $userRoleId = $karyawan->user->roles->first()->id;
+        }
+
+        return view('hr_karyawan.data_karyawan.edit', compact('karyawan', 'departments', 'jabatans', 'roles', 'userRoleId'));
     }
 
     /**
@@ -198,6 +222,7 @@ class DataKaryawanController extends Controller
             'tanggal_keluar' => 'nullable|date|after_or_equal:tanggal_masuk',
             'status' => 'required|in:aktif,nonaktif,cuti,keluar',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
+            'role_id' => 'required|exists:roles,id', // User role
         ]);
 
         $data = $request->except('foto');
@@ -216,7 +241,25 @@ class DataKaryawanController extends Controller
 
         try {
             $karyawan->update($data);
-            return redirect()->route('hr.karyawan.index')->with('success', 'Data Karyawan berhasil diperbarui.');
+
+            // Update user role if user exists
+            if ($karyawan->user) {
+                // Delete existing roles
+                DB::table('user_roles')->where('user_id', $karyawan->user_id)->delete();
+
+                // Assign new role
+                DB::table('user_roles')->insert([
+                    'user_id' => $karyawan->user_id,
+                    'role_id' => $request->role_id,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+
+            // Grab the role name for the message
+            $roleName = Role::find($request->role_id)->nama;
+
+            return redirect()->route('hr.karyawan.index')->with('success', "Data Karyawan berhasil diperbarui dengan role '$roleName'.");
         } catch (\Exception $e) {
             Log::error('Error updating karyawan: ' . $e->getMessage()); // Log the error
             return redirect()->back()->with('error', 'Gagal memperbarui data karyawan. Silakan coba lagi.')->withInput();

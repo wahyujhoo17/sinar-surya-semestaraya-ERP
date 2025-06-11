@@ -8,14 +8,15 @@ use Illuminate\Database\Eloquent\Model;
 class WorkOrder extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'work_order';
-    
+
     protected $fillable = [
         'nomor',
         'tanggal',
         'bom_id',
         'sales_order_id',
+        'perencanaan_produksi_id',
         'produk_id',
         'gudang_produksi_id',
         'gudang_hasil_id',
@@ -28,7 +29,7 @@ class WorkOrder extends Model
         'status',
         'catatan'
     ];
-    
+
     /**
      * Relasi ke Bill of Material
      */
@@ -36,7 +37,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(BillOfMaterial::class, 'bom_id');
     }
-    
+
     /**
      * Relasi ke Sales Order
      */
@@ -44,7 +45,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(SalesOrder::class, 'sales_order_id');
     }
-    
+
     /**
      * Relasi ke Produk
      */
@@ -52,7 +53,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    
+
     /**
      * Relasi ke Gudang Produksi
      */
@@ -60,7 +61,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(Gudang::class, 'gudang_produksi_id');
     }
-    
+
     /**
      * Relasi ke Gudang Hasil
      */
@@ -68,7 +69,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(Gudang::class, 'gudang_hasil_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -76,7 +77,7 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi ke Satuan
      */
@@ -84,12 +85,36 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(Satuan::class, 'satuan_id');
     }
-    
+
     /**
      * Relasi ke Material yang Digunakan
      */
     public function materials()
     {
         return $this->hasMany(WorkOrderMaterial::class, 'work_order_id');
+    }
+
+    /**
+     * Relasi ke pengambilan bahan baku
+     */
+    public function pengambilanBahanBaku()
+    {
+        return $this->hasMany(PengambilanBahanBaku::class, 'work_order_id');
+    }
+
+    /**
+     * Relasi ke quality control
+     */
+    public function qualityControl()
+    {
+        return $this->hasOne(QualityControl::class, 'work_order_id');
+    }
+
+    /**
+     * Relasi ke perencanaan produksi
+     */
+    public function perencanaanProduksi()
+    {
+        return $this->belongsTo(PerencanaanProduksi::class, 'perencanaan_produksi_id');
     }
 }

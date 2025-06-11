@@ -716,7 +716,9 @@ class QuotationController extends Controller
         $perPage = 10;
 
         $query = Quotation::with('customer')
-            ->where('status', $status);
+            ->where('status', $status)
+            // Filter out quotations that already have associated sales orders
+            ->whereDoesntHave('salesOrders');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
