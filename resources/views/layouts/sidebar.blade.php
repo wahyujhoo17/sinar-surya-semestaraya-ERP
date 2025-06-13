@@ -276,7 +276,7 @@
                 </button>
                 <div x-show="activeDropdown === 'hr'" x-cloak class="mt-1 space-y-1 pl-11">
                     <a href="/hr/karyawan"
-                        class="{{ request()->is('hr/karyawan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Data
+                        class="{{ request()->is('hr/karyawan') || request()->is('hr/karyawan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Data
                             Karyawan</span></a>
                     <a href="#"
                         class="{{ request()->is('hr/absensi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Absensi
@@ -317,18 +317,18 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'crm'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('crm/prospek') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Prospek
+                    <a href="{{ route('crm.prospek.index') }}"
+                        class="{{ request()->is('crm/prospek') || request()->is('crm/prospek/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Prospek
                             & Lead</span></a>
-                    <a href="#"
-                        class="{{ request()->is('crm/aktivitas') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Aktivitas
+                    <a href="{{ route('crm.aktivitas.index') }}"
+                        class="{{ request()->is('crm/aktivitas') || request()->is('crm/aktivitas/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Aktivitas
                             & Follow-up</span></a>
-                    <a href="#"
-                        class="{{ request()->is('crm/pipeline') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pipeline
+                    <a href="{{ route('crm.pipeline.index') }}"
+                        class="{{ request()->is('crm/pipeline') || request()->is('crm/pipeline/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pipeline
                             Penjualan</span></a>
-                    <a href="#"
+                    {{-- <a href="#"
                         class="{{ request()->is('crm/laporan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
-                            CRM</span></a>
+                            CRM</span></a> --}}
                 </div>
             </div>
 
@@ -406,11 +406,11 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'laporan'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('laporan/penjualan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                    <a href="/laporan/penjualan"
+                        class="{{ request()->is('laporan/penjualan') || request()->is('laporan/penjualan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Penjualan</span></a>
-                    <a href="#"
-                        class="{{ request()->is('laporan/pembelian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                    <a href="/laporan/pembelian"
+                        class="{{ request()->is('laporan/pembelian') || request()->is('laporan/pembelian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Pembelian</span></a>
                     <a href="/laporan/stok"
                         class="{{ request()->is('laporan/stok') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan

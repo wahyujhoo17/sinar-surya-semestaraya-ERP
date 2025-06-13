@@ -1,4 +1,47 @@
 <x-app-layout :breadcrumbs="$breadcrumbs" :currentPage="$currentPage">
+    <!-- Global function definitions -->
+    <script>
+        // Pre-define the transaction detail functions to avoid "not defined" errors
+        // These are temporary placeholders that will be replaced by the real functions from simple-modal.js
+        if (typeof window.showSimpleModal !== 'function') {
+            window.showSimpleModal = function(id, noBukti, tanggal, keterangan, jenis, jumlah, createdAt, updatedAt,
+                relatedId, relatedType) {
+                // Check if the script is still loading
+                alert('Loading modal system. Please try again in a moment.');
+
+                // Attempt to load the script again
+                const script = document.createElement('script');
+                script.src = "{{ asset('js/simple-modal.js') }}?v=" + new Date().getTime();
+                script.onload = function() {
+                    if (typeof window.showSimpleModal === 'function' &&
+                        window.showSimpleModal !== arguments.callee) {
+                        window.showSimpleModal(id, noBukti, tanggal, keterangan, jenis, jumlah, createdAt,
+                            updatedAt,
+                            relatedId, relatedType);
+                    }
+                };
+                document.head.appendChild(script);
+            };
+        }
+
+        if (typeof window.closeSimpleModal !== 'function') {
+            window.closeSimpleModal = function() {
+                // The actual implementation will be loaded from simple-modal.js or defined later in the page
+            };
+        }
+
+        // For backward compatibility - ensure these aliases always exist and point to the correct functions
+        window.showTransactionDetail = window.showSimpleModal;
+        window.closeTransactionDetail = window.closeSimpleModal;
+
+        // When document is ready, ensure the aliases are properly set
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make sure aliases are correctly set
+            window.showTransactionDetail = window.showSimpleModal;
+            window.closeTransactionDetail = window.closeSimpleModal;
+        });
+    </script>
+
     <div class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         {{-- Toast Notification --}}
         <div id="toast-notification"
@@ -39,8 +82,7 @@
                             class="h-16 w-16 flex-shrink-0 flex items-center justify-center rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30">
                             <svg class="h-10 w-10 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </div>
                         <div class="ml-5">
@@ -60,6 +102,13 @@
                                         Non-aktif
                                     </span>
                                 @endif
+
+                                <!-- Test button for modal -->
+                                <button type="button"
+                                    class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                                    onclick="showSimpleModal('test-id', 'TEST-001', '13 Juni 2025', 'Test Keterangan', 'masuk', 1000000, '13 Juni 2025 12:00', '13 Juni 2025 12:00', '', '')">
+                                    Test Modal
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -352,15 +401,14 @@
                 </div>
             </div>
 
-            <div id="tableContent">
+            <div id="tableContent" x-data="{}">
                 @if ($transaksi->isEmpty())
                     <div class="flex flex-col items-center justify-center py-16">
                         <div class="bg-green-50 dark:bg-green-900/30 rounded-full p-4 mb-6">
                             <svg class="w-16 h-16 text-green-400 dark:text-green-500"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
                             </svg>
                         </div>
                         <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Belum ada transaksi kas</h3>
@@ -415,14 +463,22 @@
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                                 @foreach ($transaksi as $trx)
-                                    <tr
-                                        class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors duration-150 ease-in-out">
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors duration-150 ease-in-out cursor-pointer hover:shadow-sm relative transform hover:scale-[1.01]"
+                                        data-id="{{ $trx->id }}" data-no-bukti="{{ $trx->no_bukti }}"
+                                        data-tanggal="{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}"
+                                        data-keterangan="{{ $trx->keterangan }}" data-jenis="{{ $trx->jenis }}"
+                                        data-jumlah="{{ $trx->jumlah }}"
+                                        data-created-at="{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}"
+                                        data-updated-at="{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}"
+                                        data-related-id="{{ $trx->related_id ?? '' }}"
+                                        data-related-type="{{ $trx->related_type ?? '' }}"
+                                        onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
                                                 {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
                                             </div>
                                             <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                {{ \Carbon\Carbon::parse($trx->tanggal)->format('H:i') }}
+                                                {{ \Carbon\Carbon::parse($trx->created_at)->format('H:i') }}
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
@@ -438,8 +494,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-500 dark:text-gray-400">
                                                 @if ($trx->related_id && $trx->related_type)
-                                                    <a href="#"
-                                                        class="inline-flex items-center text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 hover:underline transition-colors">
+                                                    <a href="{{ $trx->jenis == 'masuk' ? route('keuangan.piutang-usaha.show', $trx->related_id) : route('keuangan.hutang-usaha.show', $trx->related_id) }}"
+                                                        target="_blank"
+                                                        class="inline-flex items-center text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 hover:underline transition-colors"
+                                                        onclick="event.stopPropagation()">
                                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                                             fill="currentColor" class="w-4 h-4 mr-1">
                                                             <path fill-rule="evenodd"
@@ -447,7 +505,7 @@
                                                                 clip-rule="evenodd" />
                                                         </svg>
                                                         {{ class_basename($trx->related_type) }}
-                                                        #{{ $trx->related_id }}
+
                                                     </a>
                                                 @else
                                                     <span class="text-gray-400 dark:text-gray-500">-</span>
@@ -458,7 +516,7 @@
                                             @if ($trx->jenis == 'masuk')
                                                 <span
                                                     class="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                                         fill="currentColor" class="w-3.5 h-3.5 mr-1">
                                                         <path fill-rule="evenodd"
                                                             d="M1.22 5.222a.75.75 0 011.06 0L7 9.942l3.768-3.769a.75.75 0 011.113.058 20.908 20.908 0 013.813 7.254l1.574-2.727a.75.75 0 011.3.75l-2.475 4.286a.75.75 0 01-1.025.275l-4.287-2.475a.75.75 0 01.75-1.3l2.71 1.565a19.422 19.422 0 00-3.013-6.024L7.53 11.533a.75.75 0 01-1.06 0l-5.25-5.25a.75.75 0 010-1.06z"
@@ -469,13 +527,13 @@
                                             @else
                                                 <span
                                                     class="px-3 py-1 inline-flex items-center text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                                         fill="currentColor" class="w-3.5 h-3.5 mr-1">
                                                         <path fill-rule="evenodd"
                                                             d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.061l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042-.815a.75.75 0 01-.53-.919z"
                                                             clip-rule="evenodd" />
                                                     </svg>
-                         
+
                                                     Keluar
                                                 </span>
                                             @endif
@@ -489,9 +547,10 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right">
                                             <div class="flex justify-end space-x-2">
-                                                <a href="#"
+                                                <a href="javascript:void(0)"
                                                     class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 rounded-full p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                                                    title="Detail">
+                                                    title="Detail"
+                                                    onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
                                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                         viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
                                                         class="w-5 h-5">
@@ -499,28 +558,8 @@
                                                             d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
                                                 </a>
-                                                <a href="#"
-                                                    class="text-yellow-600 hover:text-yellow-800 dark:text-yellow-400 dark:hover:text-yellow-300 rounded-full p-1.5 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 transition-colors"
-                                                    title="Edit">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-5 h-5">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                                                    </svg>
-                                                </a>
-                                                <a href="#"
-                                                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 rounded-full p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                                    title="Hapus">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-5 h-5">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                    </svg>
-                                                </a>
+
                                             </div>
                                         </td>
                                     </tr>
@@ -530,8 +569,8 @@
                     </div>
 
                     {{-- Pagination --}}
-                    <div
-                        class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+                    <div class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6 kas-pagination"
+                        x-data="{ paginationLinks: true }">
                         {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
                     </div>
                 @endif
@@ -541,35 +580,145 @@
 </x-app-layout>
 
 {{-- JavaScript untuk menampilkan date range picker dan handling AJAX loading --}}
+
+<!-- Transaction Detail Modal -->
+<div id="transactionDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
+    role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div id="modal-backdrop"
+            class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity backdrop-blur-sm"
+            onclick="closeSimpleModal()"></div>
+
+        <!-- Modal positioning trick -->
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+            tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="absolute top-0 right-0 pt-4 pr-4">
+                <button type="button" onclick="closeSimpleModal()"
+                    class="bg-white dark:bg-gray-800 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10"
+                        id="transaction-icon-container">
+                        <!-- Icon will be set by JavaScript -->
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                            id="transaction-title">
+                            Detail Transaksi
+                        </h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400" id="transaction-subtitle">
+                                <!-- Will be set by JavaScript -->
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700">
+                <dl class="divide-y divide-gray-200 dark:divide-gray-700">
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            No. Bukti
+                        </dt>
+                        <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-reference">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Tanggal
+                        </dt>
+                        <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-date">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Jenis Transaksi
+                        </dt>
+                        <dd class="text-sm col-span-2" id="detail-type">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Jumlah
+                        </dt>
+                        <dd class="text-sm font-semibold col-span-2" id="detail-amount">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Keterangan
+                        </dt>
+                        <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-description">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6" id="related-document-container">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Dokumen Terkait
+                        </dt>
+                        <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-related">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Dibuat Pada
+                        </dt>
+                        <dd class="text-sm text-gray-500 dark:text-gray-400 col-span-2" id="detail-created">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                </dl>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button"
+                    class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    onclick="closeSimpleModal()">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Direct inclusion of the modal script to ensure it's available immediately after the modal HTML -->
+<script src="{{ asset('js/simple-modal.js') }}?v={{ time() }}"></script>
+
 <script>
+    // Define handlePaginationClick globally for Alpine.js pagination
+    window.handlePaginationClick = function(url) {
+        // Get reference to the loadData function
+        if (window.loadDataFunction) {
+            window.loadDataFunction(url);
+        } else {
+            // Fallback: Reload the page with the new URL
+            window.location.href = url;
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('DOM loaded, initializing filters...');
-
-        const periodeSelect = document.getElementById('periodeSelect');
-        const dateRangePicker = document.getElementById('dateRangePicker');
-        const filterForm = document.getElementById('filterForm');
-        const filterButton = document.getElementById('filterButton');
-        const resetButton = document.getElementById('resetButton');
-        const tableLoadingOverlay = document.getElementById('tableLoadingOverlay');
-        const tableContent = document.getElementById('tableContent');
-
-        // Validation check for required elements
-        if (!filterButton) {
-            console.error('Filter button not found!');
-            return;
-        }
-
-        if (!filterForm) {
-            console.error('Filter form not found!');
-            return;
-        }
-
-        if (!tableContent) {
-            console.error('Table content container not found!');
-            return;
-        }
-
-        console.log('All required elements found, continuing initialization...');
+        // Make loadData function available globally for Alpine.js
+        window.loadDataFunction = loadData;
+        window.loadDataFunction = loadData;
 
         // Fungsi untuk menampilkan atau menyembunyikan date range picker dengan animasi halus
         function toggleDateRangePicker() {
@@ -616,15 +765,18 @@
 
         // Fungsi untuk memuat data dengan AJAX
         async function loadData(url) {
-            console.log('Loading data from:', url);
             showLoading();
 
             try {
-                console.log('Fetching data...');
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
                 const response = await fetch(url, {
-                    signal: controller.signal
+                    signal: controller.signal,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html, */*'
+                    },
+                    credentials: 'same-origin'
                 });
                 clearTimeout(timeoutId);
                 if (!response.ok) {
@@ -633,32 +785,35 @@
                 }
 
                 const html = await response.text();
-                console.log('Response received, parsing HTML...');
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
                 // Ambil konten table dari response
                 const newTableContent = doc.getElementById('tableContent');
                 if (newTableContent) {
-                    console.log('Table content found, updating...');
+                    // Update the content
                     tableContent.innerHTML = newTableContent.innerHTML;
 
+                    // Alpine.js will automatically initialize on new content
+                    // but we need to ensure it's done by dispatching an Alpine event
+                    if (window.Alpine) {
+                        window.Alpine.initTree(tableContent);
+                    }
+
                     // Update ringkasan transaksi
-                    console.log('Updating transaction summary...');
                     updateTransactionSummary(doc);
 
                     // Update URL di browser tanpa reload
                     history.pushState({}, '', url);
 
-                    // Re-attach event listeners for pagination jika diperlukan
-                    attachPaginationListeners();
-                    console.log('Data update complete');
+                    // Check for pagination links
+                    setTimeout(() => {
+                        attachPaginationListeners();
+                    }, 100);
                 } else {
-                    console.error('Could not find tableContent element in response');
                     alert('Error: Unable to update content. Please try refreshing the page.');
                 }
             } catch (error) {
-                console.error('Error fetching data:', error);
                 alert('Failed to load data. Please check your connection and try again.');
             } finally {
                 hideLoading();
@@ -691,7 +846,6 @@
 
         // Event listener untuk form filter
         filterButton.addEventListener('click', function(event) {
-            console.log('Filter button clicked');
             event.preventDefault();
             applyFilter();
         });
@@ -701,7 +855,6 @@
             const formData = new FormData(filterForm);
             const searchParams = new URLSearchParams(formData);
             const url = `${filterForm.action}?${searchParams.toString()}`;
-            console.log('Filter URL:', url);
             loadData(url);
             showToast("Filter berhasil diterapkan");
         }
@@ -729,7 +882,6 @@
 
         // Event listener untuk tombol reset
         resetButton.addEventListener('click', function() {
-            console.log('Reset button clicked');
             const baseUrl = filterForm.action;
             loadData(baseUrl);
             // Reset form fields
@@ -755,15 +907,12 @@
         // Event listener untuk tombol cetak
         const printButton = document.getElementById('printButton');
         if (printButton) {
-            console.log('Print button found, adding event listener');
             printButton.addEventListener('click', function() {
-                console.log('Print button clicked');
                 // Buat URL yang sama dengan filter yang sedang diterapkan
                 const formData = new FormData(filterForm);
                 const searchParams = new URLSearchParams(formData);
                 searchParams.append('print', 'true'); // Tambahkan parameter print=true
                 const printUrl = `${filterForm.action}?${searchParams.toString()}`;
-                console.log('Print URL:', printUrl);
 
                 // Buka halaman cetak di tab baru
                 window.open(printUrl, '_blank');
@@ -781,13 +930,11 @@
             // Enter key in form triggers filter
             if (event.key === 'Enter' && isInputField && filterForm.contains(activeElement)) {
                 event.preventDefault();
-                console.log('Enter key pressed in filter form');
                 applyFilter();
             }
 
             // Escape key clears filters
             if (event.key === 'Escape') {
-                console.log('Escape key pressed');
                 if (isInputField && filterForm.contains(activeElement)) {
                     // If in a filter field, just blur the field
                     activeElement.blur();
@@ -800,22 +947,15 @@
 
         // Fungsi untuk attach event listeners pada pagination links
         function attachPaginationListeners() {
-            const paginationLinks = document.querySelectorAll('.pagination a');
-            console.log(`Found ${paginationLinks.length} pagination links`);
-
-            paginationLinks.forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Pagination link clicked:', this.href);
-                    loadData(this.href);
-                });
-            });
+            // We don't need to attach click events anymore since Alpine.js handles it
+            const paginationLinks = document.querySelectorAll('#tableContent .kas-pagination .pagination a');
         }
 
         // Attach event listeners pada pagination links saat halaman pertama kali dimuat
-        console.log('Attaching initial pagination listeners...');
         attachPaginationListeners();
     });
 </script>
 
 @include('keuangan.kas_dan_bank.detail_kas_scripts')
+
+@include('keuangan.kas_dan_bank.detail_kas_head')

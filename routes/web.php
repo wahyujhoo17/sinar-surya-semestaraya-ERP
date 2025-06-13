@@ -21,6 +21,7 @@ use App\Http\Controllers\Pembelian\PenerimaanBarangController;
 use App\Http\Controllers\Pembelian\RiwayatTransaksiController;
 use App\Http\Controllers\Pembelian\ReturPembelianController;
 use App\Http\Controllers\Laporan\LaporanStokController;
+use App\Http\Controllers\Laporan\LaporanPembelianController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
@@ -41,6 +42,8 @@ use App\Http\Controllers\Penjualan\InvoiceController;
 use App\Http\Controllers\Penjualan\ReturPenjualanController;
 use App\Http\Controllers\Penjualan\NotaKreditController;
 use App\Http\Controllers\Penjualan\RiwayatTransaksiPenjualanController;
+use App\Http\Controllers\CRM\ProspekLeadController;
+use App\Http\Controllers\CRM\ProspekAktivitasController;
 
 
 /*
@@ -389,6 +392,36 @@ Route::middleware(['auth'])->group(function () {
         Route::get('stok/export/excel', [LaporanStokController::class, 'exportExcel'])->name('stok.export.excel');
         Route::get('stok/export/pdf', [LaporanStokController::class, 'exportPdf'])->name('stok.export.pdf');
         Route::get('stok/detail/{produk_id}/{gudang_id?}', [LaporanStokController::class, 'detail'])->name('stok.detail');
+
+        // Purchase Report Routes
+        Route::get('pembelian', [LaporanPembelianController::class, 'index'])->name('pembelian.index');
+        Route::get('pembelian/data', [LaporanPembelianController::class, 'getData'])->name('pembelian.data');
+        Route::get('pembelian/export/excel', [LaporanPembelianController::class, 'exportExcel'])->name('pembelian.export.excel');
+        Route::get('pembelian/export/pdf', [LaporanPembelianController::class, 'exportPdf'])->name('pembelian.export.pdf');
+        Route::get('pembelian/detail/{id}', [LaporanPembelianController::class, 'detail'])->name('pembelian.detail');
+        Route::get('pembelian/detail/{id}/pdf', [LaporanPembelianController::class, 'detailPdf'])->name('pembelian.detail.pdf');
+    });
+
+    // -- CRM --
+    Route::prefix('crm')->name('crm.')->group(function () {
+        // Prospek & Lead Routes
+        Route::get('prospek/data', [ProspekLeadController::class, 'data'])->name('prospek.data');
+        Route::resource('prospek', ProspekLeadController::class);
+
+        // Aktivitas Routes
+        Route::get('aktivitas/followups', [ProspekAktivitasController::class, 'followups'])->name('aktivitas.followups');
+        Route::patch('aktivitas/{aktivita}/followup', [ProspekAktivitasController::class, 'updateFollowupStatus'])->name('aktivitas.followup.update');
+        // Batch Operations
+        Route::post('aktivitas/batch-delete', [ProspekAktivitasController::class, 'batchDelete'])->name('aktivitas.batch-delete');
+        Route::post('aktivitas/followup/batch-update', [ProspekAktivitasController::class, 'batchUpdateFollowup'])->name('aktivitas.followup.batch-update');
+        Route::resource('aktivitas', ProspekAktivitasController::class);
+
+        // Pipeline Penjualan Routes
+        Route::get('pipeline', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'index'])->name('pipeline.index');
+        Route::get('pipeline/data', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'data'])->name('pipeline.data');
+        Route::patch('pipeline/{prospek}/status', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'updateStatus'])->name('pipeline.update-status');
+        Route::get('pipeline/export/excel', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'exportExcel'])->name('pipeline.export.excel');
+        Route::get('pipeline/export/csv', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'exportCsv'])->name('pipeline.export.csv');
     });
 });
 

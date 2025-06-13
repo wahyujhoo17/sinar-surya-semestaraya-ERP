@@ -171,7 +171,7 @@ class PembayaranHutangController extends Controller
                     'jumlah' => $request->jumlah,
                     'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
                     'no_bukti' => $validated['nomor'],
-                    'related_id' => $payment->id,
+                    'related_id' => $po->id,
                     'related_type' => PembayaranHutang::class,
                     'user_id' => Auth::id()
                 ]);
@@ -195,7 +195,7 @@ class PembayaranHutangController extends Controller
                     'jumlah' => $request->jumlah,
                     'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
                     'no_referensi' => $request->no_referensi,
-                    'related_id' => $payment->id,
+                    'related_id' => $po->id,
                     'related_type' => PembayaranHutang::class,
                     'user_id' => Auth::id()
                 ]);

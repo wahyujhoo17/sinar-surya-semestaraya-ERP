@@ -36,9 +36,34 @@ function formatActivityLog($log)
 
             $output = 'Status Sales Order <span class="font-medium">' . ($detail['nomor'] ?? '-') . '</span> diubah.' . $statusPembayaran . $statusPengiriman;
             break;
+        case 'ubah_status':
+            $output = 'Status Prospek <span class="font-medium">' . ($detail['nama_prospek'] ?? '-') . '</span> diubah dari <span class="font-medium">' . getStatusLabel($detail['status_lama']) . '</span> menjadi <span class="font-medium">' . getStatusLabel($detail['status_baru']) . '</span>';
+            break;
+        case 'export_excel':
+            $output = 'Mengekspor data pipeline penjualan ke Excel. ' . ($detail['record_count'] ?? '0') . ' data diekspor';
+            break;
+        case 'export_csv':
+            $output = 'Mengekspor data pipeline penjualan ke CSV. ' . ($detail['record_count'] ?? '0') . ' data diekspor';
+            break;
         default:
             $output = 'Aktivitas: ' . ucfirst($log->aktivitas);
     }
 
     return $output;
+}
+
+/**
+ * Helper function to get status labels for pipeline
+ */
+function getStatusLabel($status)
+{
+    $labels = [
+        'baru' => 'Baru',
+        'tertarik' => 'Tertarik',
+        'negosiasi' => 'Negosiasi',
+        'menolak' => 'Menolak',
+        'menjadi_customer' => 'Menjadi Customer',
+    ];
+
+    return $labels[$status] ?? $status;
 }

@@ -214,7 +214,7 @@ class PembayaranPiutangController extends Controller
                     'jumlah' => $pembayaran->jumlah, // Use $pembayaran->jumlah
                     'keterangan' => 'Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
                     'no_bukti' => $pembayaran->nomor, // Changed nomor_pembayaran to nomor
-                    'related_id' => $pembayaran->id,
+                    'related_id' => $invoice->id,
                     'related_type' => PembayaranPiutang::class,
                     'user_id' => Auth::id()
                 ]);
@@ -230,7 +230,7 @@ class PembayaranPiutangController extends Controller
                     'keterangan' => 'Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
                     'no_referensi' => $pembayaran->no_referensi,
                     'no_bukti' => $pembayaran->nomor, // Changed nomor_pembayaran to nomor
-                    'related_id' => $pembayaran->id,
+                    'related_id' => $invoice->id,
                     'related_type' => PembayaranPiutang::class,
                     'user_id' => Auth::id()
                 ]);
