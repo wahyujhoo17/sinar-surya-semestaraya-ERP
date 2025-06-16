@@ -8,4 +8,8 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    server: {
+        https: process.env.APP_ENV === 'production',
+        host: '0.0.0.0',
+    },
 });
