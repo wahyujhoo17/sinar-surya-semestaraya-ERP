@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: laravel-erp
+    env: php
+    buildCommand: "composer install && php artisan key:generate && php artisan migrate --force"
+    startCommand: "php artisan serve --host 0.0.0.0 --port 10000"
+    plan: free
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+    routes:
+      - type: rewrite
+        source: /
+        destination: /public/index.php
