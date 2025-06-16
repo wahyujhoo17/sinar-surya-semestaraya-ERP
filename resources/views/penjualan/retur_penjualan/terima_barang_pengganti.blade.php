@@ -303,7 +303,7 @@
                     </h3>
                 </div>
                 <div class="p-6">
-                    <form action="{{ route('penjualan.retur.kirim-barang-pengganti', $returPenjualan->id) }}"
+                    <form action="{{ route('penjualan.retur.proses-kirim-barang-pengganti', $returPenjualan->id) }}"
                         method="POST">
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -570,7 +570,7 @@
                         e.preventDefault();
                         alert(
                             'Ada item dengan quantity melebihi stok tersedia. Mohon periksa kembali quantity yang diinput.'
-                            );
+                        );
                     }
                 });
             });

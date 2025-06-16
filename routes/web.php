@@ -87,7 +87,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/produk/generate-code', [ProdukController::class, 'generateCode'])
             ->name('produk.generate-code');
         Route::post('produk/import', [ProdukController::class, 'import'])->name('produk.import');
-        Route::post('produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
+        Route::post('produk/{produk}', [ProdukController::class, 'update'])->name('produk.custom-update');
         Route::get('produk/export', [ProdukController::class, 'export'])->name('produk.export');
         Route::get('produk/template', [ProdukController::class, 'downloadTemplate'])->name('produk.template');
         Route::resource('produk', ProdukController::class);
@@ -203,7 +203,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('retur/{id}/create-credit-note', [ReturPenjualanController::class, 'createCreditNote'])->name('retur.create-credit-note');
         Route::get('retur/qc-report', [ReturPenjualanController::class, 'qcReport'])->name('retur.qc-report');
         Route::get('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'showTerimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
-        Route::post('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'terimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
+        Route::post('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'terimaBarangPengganti'])->name('retur.proses-kirim-barang-pengganti');
         Route::get('retur/get-stok', [ReturPenjualanController::class, 'getStokProduk'])->name('retur.get-stok');
         Route::resource('retur', ReturPenjualanController::class);
 
