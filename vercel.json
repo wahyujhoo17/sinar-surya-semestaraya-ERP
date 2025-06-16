@@ -29,7 +29,6 @@
         "DB_HOST": "ykhra.h.filess.io",
         "DB_PORT": "3307",
         "DB_DATABASE": "ERPsinarsurya_shallowif",
-        "DB_USERNAME": "ERPsinarsurya_shallowif",
-        "DB_PASSWORD": "df2e5d6163c8d2de59d24b320f5b1b1344453569"
+        "DB_USERNAME": "ERPsinarsurya_shallowif"
     }
 }
