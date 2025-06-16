@@ -101,6 +101,22 @@ class SalesOrder extends Model
     }
 
     /**
+     * Get all payments across all invoices for this sales order
+     * 
+     * @return \Illuminate\Support\Collection
+     */
+    public function getAllPayments()
+    {
+        $payments = collect();
+        foreach ($this->invoices as $invoice) {
+            if ($invoice->pembayaranPiutang) {
+                $payments = $payments->merge($invoice->pembayaranPiutang);
+            }
+        }
+        return $payments;
+    }
+
+    /**
      * Relasi ke Log Aktivitas
      */
     public function logAktivitas()

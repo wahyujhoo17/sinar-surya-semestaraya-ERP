@@ -15,7 +15,9 @@ class AkunAkuntansi extends Model
         'kategori',
         'tipe',
         'parent_id',
-        'is_active'
+        'is_active',
+        'ref_id',
+        'ref_type'
     ];
 
     public function parent()
@@ -31,5 +33,13 @@ class AkunAkuntansi extends Model
     public function jurnalEntries()
     {
         return $this->hasMany(JurnalUmum::class, 'akun_id');
+    }
+
+    /**
+     * Mendapatkan relasi polimorfik untuk referensi ke Kas atau RekeningBank
+     */
+    public function reference()
+    {
+        return $this->morphTo('reference', 'ref_type', 'ref_id');
     }
 }

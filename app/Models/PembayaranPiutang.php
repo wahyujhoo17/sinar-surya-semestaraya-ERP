@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use App\Services\JournalEntryService;
+use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Log;
 
 class PembayaranPiutang extends Model
 {
-    use HasFactory;
+    use HasFactory, AutomaticJournalEntry;
 
     protected $table = 'pembayaran_piutang';
 
@@ -81,5 +84,75 @@ class PembayaranPiutang extends Model
     public function transaksiKas(): MorphOne
     {
         return $this->morphOne(TransaksiKas::class, 'related');
+    }
+
+    /**
+     * Membuat jurnal otomatis saat pembayaran piutang dicatat
+     */
+    public function createAutomaticJournal()
+    {
+        try {
+            // Mendapatkan ID akun dari konfigurasi
+            $akunPiutangUsaha = config('accounting.pembayaran_piutang.piutang_usaha');
+            $akunKas = config('accounting.pembayaran_piutang.kas');
+            $akunBank = config('accounting.pembayaran_piutang.bank');
+
+            if (!$akunPiutangUsaha || (!$akunKas && !$akunBank)) {
+                Log::error("Akun untuk jurnal pembayaran piutang belum dikonfigurasi", [
+                    'pembayaran_id' => $this->id,
+                    'nomor' => $this->nomor
+                ]);
+                return false;
+            }
+
+            // Menyiapkan entri jurnal
+            $entries = [];
+
+            // Debit: Kas atau Bank, tergantung metode pembayaran
+            if ($this->metode_pembayaran == 'kas' && $akunKas) {
+                $entries[] = [
+                    'akun_id' => $akunKas,
+                    'debit' => $this->jumlah,
+                    'kredit' => 0
+                ];
+            } elseif (($this->metode_pembayaran == 'transfer' || $this->metode_pembayaran == 'bank') && $akunBank) {
+                $entries[] = [
+                    'akun_id' => $akunBank,
+                    'debit' => $this->jumlah,
+                    'kredit' => 0
+                ];
+            } else {
+                // Jika metode pembayaran tidak dikenali, gunakan Kas sebagai default
+                $entries[] = [
+                    'akun_id' => $akunKas,
+                    'debit' => $this->jumlah,
+                    'kredit' => 0
+                ];
+            }
+
+            // Kredit: Piutang Usaha
+            $entries[] = [
+                'akun_id' => $akunPiutangUsaha,
+                'debit' => 0,
+                'kredit' => $this->jumlah
+            ];
+
+            // Buat jurnal otomatis
+            $service = new JournalEntryService();
+            return $service->createJournalEntries(
+                $entries,
+                $this->nomor,
+                "Penerimaan pembayaran piutang: {$this->nomor} dari {$this->customer->nama}",
+                $this->tanggal,
+                $this
+            );
+        } catch (\Exception $e) {
+            Log::error("Error saat membuat jurnal otomatis untuk pembayaran piutang: " . $e->getMessage(), [
+                'exception' => $e,
+                'pembayaran_id' => $this->id,
+                'nomor' => $this->nomor
+            ]);
+            return false;
+        }
     }
 }

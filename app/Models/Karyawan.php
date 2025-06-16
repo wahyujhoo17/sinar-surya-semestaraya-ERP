@@ -22,6 +22,7 @@ class Karyawan extends Model
         'email',
         'department_id',
         'jabatan_id',
+        'gaji_pokok',
         'tanggal_masuk',
         'tanggal_keluar',
         'status', // 'aktif', 'nonaktif', 'cuti', 'keluar'

@@ -196,6 +196,26 @@
                         @enderror
                     </div>
 
+                    {{-- Gaji Pokok --}}
+                    <div>
+                        <label for="gaji_pokok"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Gaji Pokok <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative mt-1">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="gaji_pokok" id="gaji_pokok"
+                                value="{{ old('gaji_pokok', $karyawan->gaji_pokok) }}" min="0" step="1000"
+                                required
+                                class="pl-10 mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('gaji_pokok') border-red-500 dark:border-red-500 @enderror">
+                        </div>
+                        @error('gaji_pokok')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     {{-- Tanggal Masuk --}}
                     <div>
                         <label for="tanggal_masuk"

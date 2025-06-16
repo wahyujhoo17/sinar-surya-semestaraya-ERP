@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class RekeningBank extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'rekening_bank';
-    
+
     protected $fillable = [
         'nama_bank',
         'nomor_rekening',
@@ -20,12 +20,20 @@ class RekeningBank extends Model
         'saldo',
         'is_perusahaan' // true untuk rekening perusahaan, false untuk supplier/customer
     ];
-    
+
     /**
      * Relasi ke transaksi bank
      */
     public function transaksi()
     {
         return $this->hasMany(TransaksiBank::class, 'rekening_id');
+    }
+
+    /**
+     * Relasi ke akun akuntansi
+     */
+    public function akunAkuntansi()
+    {
+        return $this->morphOne(AkunAkuntansi::class, 'reference', 'ref_type', 'ref_id');
     }
 }

@@ -16,8 +16,9 @@ class JurnalUmum extends Model
         'debit',
         'kredit',
         'keterangan',
-        'referensi_type',
-        'referensi_id',
+        'sumber',
+        'ref_type',
+        'ref_id',
         'user_id'
     ];
 
@@ -28,7 +29,7 @@ class JurnalUmum extends Model
 
     public function referensi()
     {
-        return $this->morphTo();
+        return $this->morphTo('referensi', 'ref_type', 'ref_id');
     }
 
     public function user()

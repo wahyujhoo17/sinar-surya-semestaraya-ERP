@@ -82,7 +82,15 @@
         @if ($visibleColumns['sales_name'] ?? false)
             {{-- Match default visibility --}}
             <td class="px-5 py-4 whitespace-nowrap">
-                <span class="text-sm text-gray-700 dark:text-gray-300">{{ $customer->sales_name ?? '-' }}</span>
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                    @if ($customer->sales_id && $customer->sales)
+                        {{ $customer->sales->name }}
+                    @elseif ($customer->sales_name)
+                        {{ $customer->sales_name }}
+                    @else
+                        -
+                    @endif
+                </span>
             </td>
         @endif
         {{-- Status --}}

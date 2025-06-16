@@ -82,6 +82,11 @@
                     {{ $k->jabatan->nama ?? 'N/A' }}
                 </div>
             </td>
+            {{-- <td class="px-5 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                    Rp {{ number_format($k->gaji_pokok ?? 0, 0, ',', '.') }}
+                </div>
+            </td> --}}
             <td class="px-5 py-4 whitespace-nowrap">
                 @php
                     $statusClasses = [

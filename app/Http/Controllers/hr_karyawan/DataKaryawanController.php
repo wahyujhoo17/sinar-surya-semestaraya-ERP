@@ -130,6 +130,7 @@ class DataKaryawanController extends Controller
             'email' => 'required|email|unique:karyawan,email|unique:users,email',
             'department_id' => 'required|exists:department,id',
             'jabatan_id' => 'required|exists:jabatan,id',
+            'gaji_pokok' => 'required|numeric|min:0',
             'tanggal_masuk' => 'required|date',
             'status' => 'required|in:aktif,nonaktif,cuti,keluar',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
@@ -218,6 +219,7 @@ class DataKaryawanController extends Controller
             'email' => 'required|email|unique:karyawan,email,' . $karyawan->id . '|unique:users,email,' . $karyawan->user_id,
             'department_id' => 'required|exists:department,id',
             'jabatan_id' => 'required|exists:jabatan,id',
+            'gaji_pokok' => 'required|numeric|min:0',
             'tanggal_masuk' => 'required|date',
             'tanggal_keluar' => 'nullable|date|after_or_equal:tanggal_masuk',
             'status' => 'required|in:aktif,nonaktif,cuti,keluar',

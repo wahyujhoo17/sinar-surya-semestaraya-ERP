@@ -376,8 +376,11 @@
     </div>
 
     @push('scripts')
+        {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> --}}
+
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
         <style>
             /* Select2 customization for dark mode */
             .select2-container--default .select2-selection--single {

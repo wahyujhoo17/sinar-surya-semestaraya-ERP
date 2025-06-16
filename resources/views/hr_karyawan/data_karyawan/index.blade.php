@@ -416,6 +416,12 @@
                                                 Jabatan
                                             </th>
                                         </template>
+                                        {{-- <template x-if="visibleColumns.gaji_pokok">
+                                            <th scope="col"
+                                                class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                                Gaji Pokok
+                                            </th>
+                                        </template> --}}
                                         <template x-if="visibleColumns.status">
                                             <th scope="col"
                                                 class="px-5 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
@@ -480,6 +486,7 @@
                     nip: true,
                     department: true,
                     jabatan: true,
+                    gaji_pokok: true,
                     status: true,
                     aksi: true,
                 };

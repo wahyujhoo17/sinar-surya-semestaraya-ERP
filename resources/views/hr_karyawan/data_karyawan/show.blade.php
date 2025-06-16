@@ -358,6 +358,13 @@
                                                     <span
                                                         class="text-sm font-semibold text-gray-900 dark:text-white">{{ $karyawan->jabatan->nama ?? '-' }}</span>
                                                 </div>
+                                                <div class="flex justify-between">
+                                                    <span class="text-sm text-gray-500 dark:text-gray-400">Gaji
+                                                        Pokok</span>
+                                                    <span
+                                                        class="text-sm font-semibold text-gray-900 dark:text-white">Rp
+                                                        {{ number_format($karyawan->gaji_pokok ?? 0, 0, ',', '.') }}</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

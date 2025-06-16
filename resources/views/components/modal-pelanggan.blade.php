@@ -1,5 +1,10 @@
+{{-- Include styles and scripts at the top level (outside any blocks) --}}
+@include('components.custom-dropdown-styles')
+@include('components.custom-dropdown')
+
 <div x-data="modalPelangganManager()" x-show="isOpen" @open-pelanggan-modal.window="openModal($event.detail)"
-    @close-pelanggan-modal.window="closeModal()" x-cloak class="fixed inset-0 z-50 overflow-y-auto">
+    @close-pelanggan-modal.window="closeModal()" x-cloak
+    class="fixed inset-0 z-50 overflow-y-auto modal-pelanggan-container">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div class="fixed inset-0 transition-opacity" aria-hidden="true" x-show="isOpen" x-cloak
             x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
@@ -137,6 +142,66 @@
                                 <option value="0">Nonaktif</option>
                             </select>
                         </div>
+                        <div>
+                            <label for="sales_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sales</label>
+                            <div x-data="customDropdown()" class="custom-dropdown w-full">
+                                <div @click="toggleDropdown" @keydown.enter="toggleDropdown" tabindex="0"
+                                    class="flex items-center justify-between cursor-pointer custom-dropdown-input bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-white shadow-sm">
+                                    <span x-text="selectedOption ? selectedOption.text : 'Pilih Sales'"
+                                        :class="!selectedOption ? 'placeholder' : ''"></span>
+                                    <div class="flex items-center">
+                                        <button x-show="selectedOption" @click.stop="clearSelection" type="button"
+                                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 mr-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div x-show="isOpen" @click.away="closeDropdown"
+                                    class="custom-dropdown-menu bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                                    <div class="p-2">
+                                        <input type="text" x-model="searchTerm"
+                                            @keydown.escape.prevent="closeDropdown"
+                                            @keydown.arrow-down.prevent="navigateOptions('down')"
+                                            @keydown.arrow-up.prevent="navigateOptions('up')"
+                                            @keydown.enter.prevent="selectHighlightedOption"
+                                            placeholder="Cari sales..."
+                                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    </div>
+                                    <div class="max-h-48 overflow-y-auto">
+                                        <template x-for="(option, index) in filteredOptions" :key="option.id">
+                                            <div @click="selectOption(option)" @mouseover="highlightedIndex = index"
+                                                :class="{
+                                                    'custom-dropdown-item': true,
+                                                    'selected': selectedOption &&
+                                                        selectedOption.id === option
+                                                        .id,
+                                                    'bg-gray-100 dark:bg-gray-700': highlightedIndex ===
+                                                        index
+                                                }"
+                                                x-text="option.text"></div>
+                                        </template>
+                                        <div x-show="filteredOptions.length === 0"
+                                            class="p-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                            Tidak ada data sales
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" name="sales_id" :value="selectedOption ? selectedOption.id : ''"
+                                    x-model="selectedValue">
+                            </div>
+                        </div>
                     </div>
                     <!-- Input alamat dihapus karena terisi otomatis -->
                     <div class="mb-4">
@@ -186,6 +251,7 @@
             modalTitle: 'Tambah Pelanggan',
             loading: false,
             customerId: null,
+            salesUsers: [],
             formData: {
                 kode: '',
                 nama: '',
@@ -209,6 +275,7 @@
                 no_hp_kontak: '',
                 catatan: '',
                 is_active: 1,
+                sales_id: '',
             },
             errors: {},
 
@@ -236,21 +303,81 @@
                     console.error('Error generating customer code:', error);
                 }
             },
+            async fetchSalesUsers() {
+                try {
+                    const response = await fetch('/master-data/pelanggan/get-sales-users');
+                    const data = await response.json();
+                    if (data.success) {
+                        this.salesUsers = data.salesUsers;
+                        console.log('Fetched sales users:', this.salesUsers);
+
+                        // Make sure salesUsers have valid ID and name properties
+                        this.salesUsers = this.salesUsers.map(user => ({
+                            id: user.id,
+                            name: user.name || user.text || `User ${user.id}`
+                        }));
+
+                        // Dispatch event for child components to know sales users are available
+                        window.dispatchEvent(new CustomEvent('sales-users-updated', {
+                            detail: {
+                                users: this.salesUsers
+                            }
+                        }));
+                    } else {
+                        console.error('Error in fetchSalesUsers response:', data);
+                    }
+                } catch (error) {
+                    console.error('Error fetching sales users:', error);
+                }
+            },
             openModal(data = {}) {
                 this.resetForm();
                 if (data.mode === 'edit' && data.customer) {
                     this.isEdit = true;
                     this.modalTitle = 'Edit Pelanggan';
                     this.customerId = data.customer.id;
+
+                    // First, set up the sales users if available
+                    if (data.salesUsers && Array.isArray(data.salesUsers)) {
+                        this.salesUsers = data.salesUsers;
+                    } else {
+                        // Fetch sales users if not provided
+                        this.fetchSalesUsers();
+                    }
+
+                    // Then populate form data
                     Object.assign(this.formData, data.customer);
+
+                    // Notify dropdowns that sales users are available
+                    if (this.salesUsers && this.salesUsers.length) {
+                        console.log('Dispatching sales users in edit mode:', this.salesUsers);
+                        console.log('Current sales_id:', this.formData.sales_id);
+
+                        // Use a small delay to ensure the form data is properly set
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('sales-users-updated', {
+                                detail: {
+                                    users: this.salesUsers
+                                }
+                            }));
+                        }, 50);
+                    }
                 } else {
                     this.isEdit = false;
                     this.modalTitle = 'Tambah Pelanggan';
                     this.generateCustomerCode();
+
+                    // For new customer, fetch sales users list
+                    this.fetchSalesUsers();
                 }
                 this.isOpen = true;
                 // Pastikan alamat diupdate
                 this.updateAddress();
+
+                // Dispatch an Alpine initialization event
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('alpine:initialized'));
+                }, 100);
             },
             closeModal() {
                 this.isOpen = false;
@@ -280,6 +407,7 @@
                     no_hp_kontak: '',
                     catatan: '',
                     is_active: 1,
+                    sales_id: '',
                 };
                 this.errors = {};
                 this.loading = false;

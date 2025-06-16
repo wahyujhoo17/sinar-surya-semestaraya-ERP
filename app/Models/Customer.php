@@ -24,6 +24,7 @@ class Customer extends Model
         'group',
         'industri',
         'sales_name',
+        'sales_id',
         'alamat',
         'alamat_pengiriman',
         'telepon',
@@ -49,6 +50,14 @@ class Customer extends Model
     public function salesOrders()
     {
         return $this->hasMany(SalesOrder::class, 'customer_id');
+    }
+
+    /**
+     * Relasi ke User (Sales)
+     */
+    public function sales()
+    {
+        return $this->belongsTo(User::class, 'sales_id');
     }
 
     /**

@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Services\JournalEntryService;
+use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class Invoice extends Model
 {
-    use HasFactory;
+    use HasFactory, AutomaticJournalEntry;
 
     protected $table = 'invoice';
 
@@ -197,5 +200,82 @@ class Invoice extends Model
     {
         $notaKredit = $this->notaKredits()->where('nota_kredit_id', $notaKreditId)->first();
         return $notaKredit ? $notaKredit->pivot->applied_amount : 0;
+    }
+
+    /**
+     * Membuat jurnal otomatis saat invoice dibuat
+     */
+    public function createAutomaticJournal()
+    {
+        try {
+            // Mendapatkan ID akun dari konfigurasi
+            $akunPiutangUsaha = config('accounting.penjualan.piutang_usaha');
+            $akunPendapatanPenjualan = config('accounting.penjualan.pendapatan_penjualan');
+            $akunPpnKeluaran = config('accounting.penjualan.ppn_keluaran');
+
+            if (!$akunPiutangUsaha || !$akunPendapatanPenjualan) {
+                Log::error("Akun untuk jurnal penjualan belum dikonfigurasi", [
+                    'invoice_id' => $this->id,
+                    'nomor' => $this->nomor
+                ]);
+                return false;
+            }
+
+            // Menyiapkan entri jurnal
+            $entries = [];
+
+            // Debit: Piutang Usaha
+            $entries[] = [
+                'akun_id' => $akunPiutangUsaha,
+                'debit' => $this->total,
+                'kredit' => 0
+            ];
+
+            // Hitung dasar pengenaan pajak (DPP) jika ada PPN
+            $dpp = $this->subtotal - ($this->diskon_nominal ?? 0);
+            $ppnAmount = $this->ppn ?? 0;
+
+            // Kredit: Pendapatan Penjualan (DPP)
+            $entries[] = [
+                'akun_id' => $akunPendapatanPenjualan,
+                'debit' => 0,
+                'kredit' => $dpp
+            ];
+
+            // Jika ada PPN, tambahkan entri untuk PPN Keluaran
+            if ($ppnAmount > 0 && $akunPpnKeluaran) {
+                $entries[] = [
+                    'akun_id' => $akunPpnKeluaran,
+                    'debit' => 0,
+                    'kredit' => $ppnAmount
+                ];
+            }
+
+            // Jika ada ongkos kirim, tambahkan ke pendapatan (atau akun khusus jika ada)
+            if (($this->ongkos_kirim ?? 0) > 0) {
+                $entries[] = [
+                    'akun_id' => $akunPendapatanPenjualan, // Bisa gunakan akun khusus untuk ongkos kirim jika ada
+                    'debit' => 0,
+                    'kredit' => $this->ongkos_kirim
+                ];
+            }
+
+            // Buat jurnal otomatis
+            $service = new JournalEntryService();
+            return $service->createJournalEntries(
+                $entries,
+                $this->nomor,
+                "Invoice penjualan: {$this->nomor}",
+                $this->tanggal,
+                $this
+            );
+        } catch (\Exception $e) {
+            Log::error("Error saat membuat jurnal otomatis untuk invoice: " . $e->getMessage(), [
+                'exception' => $e,
+                'invoice_id' => $this->id,
+                'nomor' => $this->nomor
+            ]);
+            return false;
+        }
     }
 }

@@ -22,6 +22,8 @@ use App\Http\Controllers\Pembelian\RiwayatTransaksiController;
 use App\Http\Controllers\Pembelian\ReturPembelianController;
 use App\Http\Controllers\Laporan\LaporanStokController;
 use App\Http\Controllers\Laporan\LaporanPembelianController;
+use App\Http\Controllers\Laporan\LaporanPenjualanController;
+use App\Http\Controllers\Laporan\LaporanProduksiController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
@@ -102,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('pelanggan/bulk-destroy', [CustomerController::class, 'bulkDestroy'])->name('pelanggan.bulk-destroy.any');
         Route::get('pelanggan/{pelanggan}/get', [CustomerController::class, 'getById'])->name('pelanggan.get');
         Route::get('pelanggan/generate-code', [CustomerController::class, 'generateCode'])->name('pelanggan.generate-code');
+        Route::get('pelanggan/get-sales-users', [CustomerController::class, 'getSalesUsers'])->name('pelanggan.get-sales-users');
         Route::get('pelanggan/export', [CustomerController::class, 'export'])->name('pelanggan.export');
         Route::post('pelanggan/import', [CustomerController::class, 'import'])->name('pelanggan.import');
         Route::resource('pelanggan', CustomerController::class);
@@ -337,6 +340,13 @@ Route::middleware(['auth'])->group(function () {
 
     // -- Keuangan --
     Route::prefix('keuangan')->name('keuangan.')->group(function () {
+        // Chart of Accounts (COA) Routes
+        Route::get('/coa/generate-code', [App\Http\Controllers\Keuangan\COAController::class, 'generateCode'])->name('coa.generate-code');
+        Route::resource('coa', App\Http\Controllers\Keuangan\COAController::class);
+
+        // Jurnal Umum Routes
+        Route::resource('jurnal-umum', App\Http\Controllers\Keuangan\JurnalUmumController::class);
+
         // Rutas para Kas dan Bank
         Route::get('/kas-dan-bank', [KasDanBankController::class, 'index'])->name('kas-dan-bank.index');
         Route::get('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'detailKas'])->name('kas-dan-bank.kas');
@@ -400,6 +410,22 @@ Route::middleware(['auth'])->group(function () {
         Route::get('pembelian/export/pdf', [LaporanPembelianController::class, 'exportPdf'])->name('pembelian.export.pdf');
         Route::get('pembelian/detail/{id}', [LaporanPembelianController::class, 'detail'])->name('pembelian.detail');
         Route::get('pembelian/detail/{id}/pdf', [LaporanPembelianController::class, 'detailPdf'])->name('pembelian.detail.pdf');
+
+        // Sales Report Routes
+        Route::get('penjualan', [LaporanPenjualanController::class, 'index'])->name('penjualan.index');
+        Route::get('penjualan/data', [LaporanPenjualanController::class, 'getData'])->name('penjualan.data');
+        Route::get('penjualan/export/excel', [LaporanPenjualanController::class, 'exportExcel'])->name('penjualan.export.excel');
+        Route::get('penjualan/export/pdf', [LaporanPenjualanController::class, 'exportPdf'])->name('penjualan.export.pdf');
+        Route::get('penjualan/detail/{id}', [LaporanPenjualanController::class, 'detail'])->name('penjualan.detail');
+        Route::get('penjualan/detail/{id}/pdf', [LaporanPenjualanController::class, 'detailPdf'])->name('penjualan.detail.pdf');
+
+        // Production Report Routes
+        Route::get('produksi', [LaporanProduksiController::class, 'index'])->name('produksi.index');
+        Route::get('produksi/data', [LaporanProduksiController::class, 'getData'])->name('produksi.data');
+        Route::get('produksi/export/excel', [LaporanProduksiController::class, 'exportExcel'])->name('produksi.export.excel');
+        Route::get('produksi/export/pdf', [LaporanProduksiController::class, 'exportPdf'])->name('produksi.export.pdf');
+        Route::get('produksi/detail/{id}', [LaporanProduksiController::class, 'detail'])->name('produksi.detail');
+        Route::get('produksi/detail/{id}/pdf', [LaporanProduksiController::class, 'detailPdf'])->name('produksi.detail.pdf');
     });
 
     // -- CRM --

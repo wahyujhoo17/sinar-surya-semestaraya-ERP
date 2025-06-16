@@ -356,11 +356,11 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'keuangan'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
-                        class="{{ request()->is('keuangan/coa') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Chart
+                    <a href="{{ route('keuangan.coa.index') }}"
+                        class="{{ request()->is('keuangan/coa') || request()->is('keuangan/coa/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Chart
                             of Accounts (COA)</span></a>
-                    <a href="#"
-                        class="{{ request()->is('keuangan/jurnal') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Jurnal
+                    <a href="{{ route('keuangan.jurnal-umum.index') }}"
+                        class="{{ request()->is('keuangan/jurnal-umum') || request()->is('keuangan/jurnal-umum/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Jurnal
                             Umum</span></a>
                     <a href="/keuangan/piutang-usaha"
                         class="{{ request()->is('keuangan/piutang-usaha') || request()->is('keuangan/piutang-usaha/*') || request()->is('keuangan/pembayaran-piutang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Piutang
@@ -413,10 +413,10 @@
                         class="{{ request()->is('laporan/pembelian') || request()->is('laporan/pembelian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Pembelian</span></a>
                     <a href="/laporan/stok"
-                        class="{{ request()->is('laporan/stok') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                        class="{{ request()->is('laporan/stok') || request()->is('laporan/stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Stok</span></a>
-                    <a href="#"
-                        class="{{ request()->is('laporan/produksi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                    <a href="/laporan/produksi"
+                        class="{{ request()->is('laporan/produksi') || request()->is('laporan/produksi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Produksi</span></a>
                     <a href="#"
                         class="{{ request()->is('laporan/keuangan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
@@ -426,6 +426,8 @@
                             Kustom</span></a>
                 </div>
             </div>
+
+
 
             <!-- Pengaturan -->
             <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">

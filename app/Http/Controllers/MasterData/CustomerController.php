@@ -17,6 +17,9 @@ class CustomerController extends Controller
     {
         $query = Customer::query();
 
+        // Get active users for sales_id dropdown
+        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
+
         // Decode visible columns from request, default to all true if not provided or invalid
         $visibleColumnsInput = $request->input('visible_columns', '{}');
         $visibleColumns = json_decode($visibleColumnsInput, true);
@@ -111,7 +114,8 @@ class CustomerController extends Controller
             'currentPage',
             'sortField',
             'sortDirection',
-            'visibleColumns' // Pass for initial state if needed
+            'visibleColumns', // Pass for initial state if needed
+            'salesUsers'
         ));
     }
 
@@ -139,10 +143,12 @@ class CustomerController extends Controller
             'Pelanggan' => route('master.pelanggan.index')
         ];
         $currentPage = 'Detail Pelanggan';
+        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
         return view('master-data.pelanggan.show', [
             'customer' => $pelanggan,
             'breadcrumbs' => $breadcrumbs,
-            'currentPage' => $currentPage
+            'currentPage' => $currentPage,
+            'salesUsers' => $salesUsers
         ]);
     }
 
@@ -152,10 +158,12 @@ class CustomerController extends Controller
             'Pelanggan' => route('master.pelanggan.index')
         ];
         $currentPage = 'Edit Pelanggan';
+        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
         return view('master-data.pelanggan.edit', [
             'customer' => $pelanggan,
             'breadcrumbs' => $breadcrumbs,
-            'currentPage' => $currentPage
+            'currentPage' => $currentPage,
+            'salesUsers' => $salesUsers
         ]);
     }
 
@@ -207,9 +215,11 @@ class CustomerController extends Controller
 
     public function getById(Customer $pelanggan)
     {
+        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
         return response()->json([
             'success' => true,
-            'customer' => $pelanggan
+            'customer' => $pelanggan,
+            'salesUsers' => $salesUsers
         ]);
     }
 
@@ -224,6 +234,12 @@ class CustomerController extends Controller
         $newNumber = $lastNumber + 1;
         $code = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
         return response()->json(['success' => true, 'code' => $code]);
+    }
+
+    public function getSalesUsers()
+    {
+        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
+        return response()->json(['success' => true, 'salesUsers' => $salesUsers]);
     }
 
     public function export()
@@ -267,6 +283,7 @@ class CustomerController extends Controller
             'group' => 'nullable|max:100',
             'industri' => 'nullable|max:100',
             'sales_name' => 'nullable|max:100',
+            'sales_id' => 'nullable|exists:users,id',
             'alamat' => 'nullable|max:255',
             'alamat_pengiriman' => 'nullable|max:255',
             'telepon' => 'nullable|max:50',
