@@ -1,0 +1,8 @@
+{
+    "build": {
+        "command": "composer install --no-dev --optimize-autoloader"
+    },
+    "start": {
+        "command": "./start.sh"
+    }
+}
