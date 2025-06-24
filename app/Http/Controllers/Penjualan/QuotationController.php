@@ -26,7 +26,7 @@ class QuotationController extends Controller
 
         $lastQuotation = DB::table('quotation')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';

@@ -30,10 +30,10 @@ class SalesOrderController extends Controller
         $prefix = 'SO-';
         $date = now()->format('Ymd');
 
-        // PostgreSQL compatible query - convert substring to integer instead of UNSIGNED
+        // MySQL compatible query - use UNSIGNED instead of INTEGER
         $lastSalesOrder = DB::table('sales_order')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
