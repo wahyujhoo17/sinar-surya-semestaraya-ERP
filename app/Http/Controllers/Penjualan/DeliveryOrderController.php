@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\NotificationService;
 
 class DeliveryOrderController extends Controller
 {
@@ -616,6 +617,10 @@ class DeliveryOrderController extends Controller
             $deliveryOrder->status = 'dikirim';
             $deliveryOrder->save();
 
+            // Send notification to managers about shipped delivery order
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyDeliveryOrderShipped($deliveryOrder, Auth::user());
+
             // Update sales order status if all items are delivered
             // $this->updateSalesOrderStatus($deliveryOrder->sales_order_id);
 
@@ -839,6 +844,10 @@ class DeliveryOrderController extends Controller
             'referensi_id' => $referensiId,
             'keterangan' => 'Pengurangan dari Delivery Order'
         ]);
+
+        // Check for low stock and send notification if needed
+        $notificationService = new \App\Services\NotificationService();
+        $notificationService->checkAndNotifyLowStock($produkId, $gudangId);
     }
 
     /**

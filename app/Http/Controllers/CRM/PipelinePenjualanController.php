@@ -17,6 +17,14 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 class PipelinePenjualanController extends Controller
 {
+    /**
+     * Check if current user can access all prospects (admin/manager_penjualan)
+     */
+    private function canAccessAllProspects()
+    {
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+    }
+
     public function index()
     {
         return view('CRM.pipeline_penjualan.index');
@@ -44,8 +52,12 @@ class PipelinePenjualanController extends Controller
         ];
 
         try {
-            // Base query
-            $query = Prospek::with('user');
+            // Base query dengan role-based access control
+            if ($this->canAccessAllProspects()) {
+                $query = Prospek::with('user');
+            } else {
+                $query = Prospek::with('user')->where('user_id', Auth::id());
+            }
 
             // Apply search filter
             if ($request->filled('search')) {
@@ -143,6 +155,16 @@ class PipelinePenjualanController extends Controller
     public function updateStatus(Request $request, Prospek $prospek)
     {
         try {
+            // Role-based access control untuk update status
+            if (!$this->canAccessAllProspects()) {
+                if ($prospek->user_id !== Auth::id()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki akses untuk mengubah status prospek ini.'
+                    ], 403);
+                }
+            }
+
             // Log the request for debugging
             Log::info('Update status request:', [
                 'id' => $prospek->id,
@@ -260,8 +282,12 @@ class PipelinePenjualanController extends Controller
         // Style the header row
         $sheet->getStyle('A1:I1')->getFont()->setBold(true);
 
-        // Query the data (apply filters from request)
-        $query = Prospek::with('user');
+        // Query the data (apply filters from request) dengan role-based access control
+        if ($this->canAccessAllProspects()) {
+            $query = Prospek::with('user');
+        } else {
+            $query = Prospek::with('user')->where('user_id', Auth::id());
+        }
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -379,8 +405,12 @@ class PipelinePenjualanController extends Controller
         $sheet->setCellValue('H1', 'Sales Penanggung Jawab');
         $sheet->setCellValue('I1', 'Catatan');
 
-        // Query the data (apply filters from request)
-        $query = Prospek::with('user');
+        // Query the data (apply filters from request) dengan role-based access control
+        if ($this->canAccessAllProspects()) {
+            $query = Prospek::with('user');
+        } else {
+            $query = Prospek::with('user')->where('user_id', Auth::id());
+        }
 
         // Apply search filter
         if ($request->filled('search')) {

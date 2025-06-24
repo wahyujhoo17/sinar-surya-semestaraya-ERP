@@ -15,6 +15,7 @@ use App\Models\Kas;
 use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
+use App\Services\NotificationService;
 // use App\\Models\\AkunAkuntansi; // User commented out
 
 class PembayaranPiutangController extends Controller
@@ -234,6 +235,12 @@ class PembayaranPiutangController extends Controller
                     'related_type' => PembayaranPiutang::class,
                     'user_id' => Auth::id()
                 ]);
+            }
+
+            // Send payment notification
+            if ($invoice) {
+                $notificationService = new NotificationService();
+                $notificationService->notifyPaymentReceived($pembayaran, $invoice);
             }
 
             DB::commit();

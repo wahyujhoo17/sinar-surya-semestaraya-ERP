@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\LogAktivitas;
+use App\Services\NotificationService;
 
 class PurchasingOrderController extends Controller
 {
@@ -349,6 +350,10 @@ class PurchasingOrderController extends Controller
             DB::commit();
 
             $this->logUserAktivitas('tambah', 'purchase_order', $purchaseOrder->id, 'Membuat Purchase Order: ' . $purchaseOrder->nomor);
+
+            // Send notification to managers about new purchase order
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyPurchaseOrderCreated($purchaseOrder, Auth::user());
 
             return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
                 ->with('success', 'Purchase Order berhasil dibuat.');

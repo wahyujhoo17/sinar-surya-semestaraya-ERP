@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\LOG;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\NotificationService;
 
 class ReturPenjualanController extends Controller
 {
@@ -1068,6 +1069,10 @@ class ReturPenjualanController extends Controller
             // Update status to waiting for approval
             $returPenjualan->status = 'menunggu_persetujuan';
             $returPenjualan->save();
+
+            // Send notification to manager_penjualan for approval
+            $notificationService = new NotificationService();
+            $notificationService->notifyApprovalRequired('retur_penjualan', $returPenjualan, ['manager_penjualan']);
 
             // Enhanced log with detailed information
             $itemCount = $returPenjualan->details->count();

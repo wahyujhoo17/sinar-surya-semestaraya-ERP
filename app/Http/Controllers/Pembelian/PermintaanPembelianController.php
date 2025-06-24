@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\NotificationService;
 
 class PermintaanPembelianController extends Controller
 {
@@ -333,6 +334,27 @@ class PermintaanPembelianController extends Controller
 
         try {
             $purchaseRequest->update(['status' => $request->status]);
+
+            // Send notifications based on status change
+            $notificationService = new NotificationService();
+            $currentUser = Auth::user();
+
+            switch ($request->status) {
+                case 'diajukan':
+                    $notificationService->notifyPurchaseRequestSubmitted($purchaseRequest, $currentUser);
+                    break;
+                case 'disetujui':
+                    $notificationService->notifyPurchaseRequestApproved($purchaseRequest, $currentUser);
+                    break;
+                case 'ditolak':
+                    $rejectionReason = $request->input('rejection_reason'); // Optional reason
+                    $notificationService->notifyPurchaseRequestRejected($purchaseRequest, $currentUser, $rejectionReason);
+                    break;
+                case 'selesai':
+                    $notificationService->notifyPurchaseRequestCompleted($purchaseRequest, $currentUser);
+                    break;
+            }
+
             // Log aktivitas perubahan status
             LogAktivitas::create([
                 'user_id' => Auth::id(),

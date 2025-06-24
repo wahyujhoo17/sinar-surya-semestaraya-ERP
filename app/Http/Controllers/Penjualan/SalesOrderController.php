@@ -20,6 +20,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\NotificationService;
 
 class SalesOrderController extends Controller
 {
@@ -427,6 +428,10 @@ class SalesOrderController extends Controller
                     'user' => Auth::user()->name
                 ])
             ]);
+
+            // Send notification to managers about new sales order
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifySalesOrderCreated($salesOrder, Auth::user());
 
             // Update quotation status if sales order was created from quotation
             if ($salesOrder->quotation_id) {

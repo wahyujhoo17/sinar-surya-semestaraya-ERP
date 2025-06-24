@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 class WorkOrderController extends Controller
 {
@@ -434,10 +435,10 @@ class WorkOrderController extends Controller
                         'jumlah' => DB::raw('jumlah + ' . $workOrder->qualityControl->jumlah_lolos),
                     ]
                 );
-                
+
                 // Reload stok untuk mendapatkan nilai yang telah diupdate
                 $stokProduk->refresh();
-                
+
                 // Catat di riwayat stok untuk produk jadi
                 RiwayatStok::create([
                     'stok_id' => $stokProduk->id,
@@ -455,6 +456,10 @@ class WorkOrderController extends Controller
 
                 // Update status perencanaan produksi jika semua work order selesai
                 $this->checkPerencanaanCompletion($workOrder->perencanaan_produksi_id);
+
+                // Send work order completion notification
+                $notificationService = new NotificationService();
+                $notificationService->notifyWorkOrderCompleted($workOrder, Auth::user());
             }
 
             DB::commit();
@@ -550,11 +555,11 @@ class WorkOrderController extends Controller
                         $jumlahSebelum = $stok->jumlah;
                         $jumlahPerubahan = $item['jumlah_diambil'];
                         $jumlahSetelah = max(0, $jumlahSebelum - $jumlahPerubahan);
-                        
+
                         // Update stok
                         $stok->jumlah = $jumlahSetelah;
                         $stok->save();
-                        
+
                         // Catat di riwayat stok
                         RiwayatStok::create([
                             'stok_id' => $stok->id,
@@ -690,8 +695,8 @@ class WorkOrderController extends Controller
             // Catat log aktivitas
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Membuat quality control untuk work order ' . $workOrder->nomor . ' dengan hasil ' . 
-                               ($newStatus === 'qc_passed' ? 'lulus QC' : 'perlu perbaikan'),
+                'aktivitas' => 'Membuat quality control untuk work order ' . $workOrder->nomor . ' dengan hasil ' .
+                    ($newStatus === 'qc_passed' ? 'lulus QC' : 'perlu perbaikan'),
                 'modul' => 'produksi',
                 'id_referensi' => $qc->id,
                 'jenis_referensi' => 'quality_control',

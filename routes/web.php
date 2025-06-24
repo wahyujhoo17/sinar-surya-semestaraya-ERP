@@ -88,6 +88,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications/latest', [NotificationController::class, 'getLatest'])->name('notifications.latest');
     Route::post('/notifications/{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+    Route::post('/notifications/clean-old', [NotificationController::class, 'cleanOldNotifications'])->name('notifications.cleanOld');
+    Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     // Pengaturan Hak Akses

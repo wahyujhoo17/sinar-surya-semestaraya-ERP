@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
@@ -13,9 +14,22 @@ use App\Imports\CustomerImport;
 
 class CustomerController extends Controller
 {
+    /**
+     * Check if current user can access all customers (admin/manager_penjualan)
+     */
+    private function canAccessAllCustomers()
+    {
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+    }
+
     public function index(Request $request)
     {
-        $query = Customer::query();
+        // Base query dengan role-based access control
+        if ($this->canAccessAllCustomers()) {
+            $query = Customer::query();
+        } else {
+            $query = Customer::where('sales_id', Auth::id());
+        }
 
         // Get active users for sales_id dropdown
         $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
@@ -128,6 +142,13 @@ class CustomerController extends Controller
     {
         $validated = $request->validate($this->validationRules());
         $validated['is_active'] = $request->has('is_active');
+
+        // Untuk sales, otomatis set sales_id ke ID mereka sendiri
+        if (!$this->canAccessAllCustomers()) {
+            $validated['sales_id'] = Auth::id();
+            $validated['sales_name'] = Auth::user()->name;
+        }
+
         $customer = Customer::create($validated);
 
         return response()->json([
@@ -139,6 +160,13 @@ class CustomerController extends Controller
 
     public function show(Customer $pelanggan)
     {
+        // Role-based access control untuk show
+        if (!$this->canAccessAllCustomers()) {
+            if ($pelanggan->sales_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke customer ini.');
+            }
+        }
+
         $breadcrumbs = [
             'Pelanggan' => route('master.pelanggan.index')
         ];
@@ -154,6 +182,13 @@ class CustomerController extends Controller
 
     public function edit(Customer $pelanggan)
     {
+        // Role-based access control untuk edit
+        if (!$this->canAccessAllCustomers()) {
+            if ($pelanggan->sales_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke customer ini.');
+            }
+        }
+
         $breadcrumbs = [
             'Pelanggan' => route('master.pelanggan.index')
         ];
@@ -169,8 +204,25 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $pelanggan)
     {
+        // Role-based access control untuk update
+        if (!$this->canAccessAllCustomers()) {
+            if ($pelanggan->sales_id !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk mengubah customer ini.'
+                ], 403);
+            }
+        }
+
         $validated = $request->validate($this->validationRules($pelanggan->id));
         $validated['is_active'] = $request->boolean('is_active');
+
+        // Untuk sales, pastikan sales_id tidak berubah
+        if (!$this->canAccessAllCustomers()) {
+            $validated['sales_id'] = Auth::id();
+            $validated['sales_name'] = Auth::user()->name;
+        }
+
         $pelanggan->update($validated);
 
         return response()->json([
@@ -182,6 +234,14 @@ class CustomerController extends Controller
 
     public function destroy(Customer $pelanggan)
     {
+        // Role-based access control untuk destroy
+        if (!$this->canAccessAllCustomers()) {
+            if ($pelanggan->sales_id !== Auth::id()) {
+                return redirect()->route('master.pelanggan.index')
+                    ->with('error', 'Anda tidak memiliki akses untuk menghapus customer ini.');
+            }
+        }
+
         $nama = $pelanggan->nama;
         try {
             $pelanggan->delete();
@@ -202,9 +262,18 @@ class CustomerController extends Controller
             return redirect()->route('master.pelanggan.index')
                 ->with('warning', 'Tidak ada pelanggan yang dipilih untuk dihapus.');
         }
+
         try {
-            $count = Customer::whereIn('id', $ids)->count();
-            Customer::whereIn('id', $ids)->delete();
+            // Role-based access control untuk bulk destroy
+            if ($this->canAccessAllCustomers()) {
+                $query = Customer::whereIn('id', $ids);
+            } else {
+                $query = Customer::whereIn('id', $ids)->where('sales_id', Auth::id());
+            }
+
+            $count = $query->count();
+            $query->delete();
+
             return redirect()->route('master.pelanggan.index')
                 ->with('success', '<strong>' . $count . '</strong> pelanggan berhasil dihapus.');
         } catch (\Exception $e) {
@@ -215,6 +284,16 @@ class CustomerController extends Controller
 
     public function getById(Customer $pelanggan)
     {
+        // Role-based access control untuk getById
+        if (!$this->canAccessAllCustomers()) {
+            if ($pelanggan->sales_id !== Auth::id()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses ke customer ini.'
+                ], 403);
+            }
+        }
+
         $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
         return response()->json([
             'success' => true,

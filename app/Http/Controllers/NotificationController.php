@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Notification;
 
 class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = auth()->user()
-            ->notifications()
+        $notifications = Notification::where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -35,7 +35,7 @@ class NotificationController extends Controller
                     'message' => $notification->message,
                     'type' => $notification->type,
                     'link' => $notification->link,
-                    'read_at' => $notification->read_at,
+                    'read_at' => $notification->read_at ? $notification->read_at->format('Y-m-d H:i:s') : null,
                     'created_at' => $notification->created_at->format('Y-m-d H:i:s')
                 ];
             });
@@ -146,6 +146,66 @@ class NotificationController extends Controller
                 'error' => 'Failed to get unread count',
                 'message' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function cleanOldNotifications()
+    {
+        try {
+            // Clean notifications older than 30 days
+            $deleted = auth()->user()
+                ->notifications()
+                ->where('created_at', '<', now()->subDays(30))
+                ->delete();
+
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil menghapus {$deleted} notifikasi lama",
+                    'deleted_count' => $deleted
+                ]);
+            }
+
+            return redirect()->route('notifications.index')
+                ->with('success', "Berhasil menghapus {$deleted} notifikasi lama");
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus notifikasi lama',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Gagal menghapus notifikasi lama');
+        }
+    }
+
+    public function deleteAll()
+    {
+        try {
+            $deleted = auth()->user()->notifications()->delete();
+
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil menghapus semua notifikasi ({$deleted} item)",
+                    'deleted_count' => $deleted
+                ]);
+            }
+
+            return redirect()->route('notifications.index')
+                ->with('success', "Berhasil menghapus semua notifikasi ({$deleted} item)");
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menghapus semua notifikasi',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Gagal menghapus semua notifikasi');
         }
     }
 }

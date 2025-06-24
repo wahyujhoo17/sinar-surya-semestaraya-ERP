@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -12,12 +13,31 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 class CustomerExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
 {
+    private $salesId;
+
+    public function __construct($salesId = null)
+    {
+        $this->salesId = $salesId;
+    }
+
+    /**
+     * Check if current user can access all customers (admin/manager_penjualan)
+     */
+    private function canAccessAllCustomers()
+    {
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+    }
+
     /**
      * @return \Illuminate\Support\Collection
      */
     public function collection()
     {
-        return Customer::all();
+        if ($this->canAccessAllCustomers()) {
+            return Customer::all();
+        } else {
+            return Customer::where('sales_id', Auth::id())->get();
+        }
     }
 
     /**

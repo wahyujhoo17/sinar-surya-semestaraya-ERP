@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Services\NotificationService;
 
 class PerencanaanProduksiController extends Controller
 {
@@ -220,6 +221,10 @@ class PerencanaanProduksiController extends Controller
                 'jenis_referensi' => 'perencanaan_produksi',
             ]);
 
+            // Send notification to production managers
+            $notificationService = new NotificationService();
+            $notificationService->notifyProductionPlanCreated($perencanaan, Auth::user());
+
             DB::commit();
 
             return redirect()->route('produksi.perencanaan-produksi.show', $perencanaan->id)
@@ -247,6 +252,10 @@ class PerencanaanProduksiController extends Controller
 
             $perencanaan->status = 'menunggu_persetujuan';
             $perencanaan->save();
+
+            // Send notification to production managers for approval
+            $notificationService = new NotificationService();
+            $notificationService->notifyApprovalRequired('perencanaan_produksi', $perencanaan, ['manager_produksi', 'production']);
 
             // Catat log aktivitas
             LogAktivitas::create([
@@ -287,6 +296,20 @@ class PerencanaanProduksiController extends Controller
             $perencanaan->approved_at = now();
             $perencanaan->save();
 
+            // Send notification to creator about approval
+            $notificationService = new NotificationService();
+            $notificationService->sendToUsers(
+                [$perencanaan->created_by],
+                'success',
+                'Perencanaan Produksi Disetujui',
+                "Perencanaan Produksi #{$perencanaan->nomor} telah disetujui oleh " . Auth::user()->name,
+                [
+                    'url' => route('produksi.perencanaan-produksi.show', $perencanaan->id),
+                    'production_plan_id' => $perencanaan->id,
+                    'approved_by' => Auth::id()
+                ]
+            );
+
             // Catat log aktivitas
             LogAktivitas::create([
                 'user_id' => Auth::id(),
@@ -325,6 +348,20 @@ class PerencanaanProduksiController extends Controller
             $perencanaan->approved_by = Auth::id();
             $perencanaan->approved_at = now();
             $perencanaan->save();
+
+            // Send notification to creator about rejection
+            $notificationService = new NotificationService();
+            $notificationService->sendToUsers(
+                [$perencanaan->created_by],
+                'warning',
+                'Perencanaan Produksi Ditolak',
+                "Perencanaan Produksi #{$perencanaan->nomor} telah ditolak oleh " . Auth::user()->name,
+                [
+                    'url' => route('produksi.perencanaan-produksi.show', $perencanaan->id),
+                    'production_plan_id' => $perencanaan->id,
+                    'rejected_by' => Auth::id()
+                ]
+            );
 
             // Catat log aktivitas
             LogAktivitas::create([

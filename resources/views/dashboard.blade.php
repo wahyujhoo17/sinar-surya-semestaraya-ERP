@@ -99,7 +99,10 @@
         </script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
         <script>
-            let dashboardCharts = {};
+            // Use window namespace to avoid redeclaration issues
+            if (typeof window.dashboardCharts === 'undefined') {
+                window.dashboardCharts = {};
+            }
 
             // Register the plugin globally
             Chart.register(ChartDataLabels);
@@ -169,10 +172,10 @@
                 const doughnutBorderColor = isDarkMode ? 'rgb(31, 41, 55)' : '#fff';
 
                 // --- 3. Destroy Existing Charts ---
-                Object.values(dashboardCharts).forEach(chart => {
+                Object.values(window.dashboardCharts).forEach(chart => {
                     if (chart instanceof Chart) chart.destroy();
                 });
-                dashboardCharts = {};
+                window.dashboardCharts = {};
 
                 // --- 4. Initialize Charts with Modern Styles ---
 
@@ -187,7 +190,7 @@
                     gradient.addColorStop(0.6, getColor('indigo', 0.1));
                     gradient.addColorStop(1, getColor('indigo', 0.0));
 
-                    dashboardCharts.penjualan = new Chart(penjualanCtx, {
+                    window.dashboardCharts.penjualan = new Chart(penjualanCtx, {
                         type: 'line',
                         data: {
                             labels: penjualanData.map(item => item.bulan),
@@ -306,7 +309,7 @@
                             getColor('violet', 0.8), getColor('pink', 0.8), getColor('warning', 0.8),
                             getColor('info', 0.8), getColor('success', 0.8)
                         ];
-                        dashboardCharts.kategori = new Chart(kategoriCtx, {
+                        window.dashboardCharts.kategori = new Chart(kategoriCtx, {
                             type: 'doughnut',
                             data: {
                                 labels: kategoriData.map(item => item.nama),
@@ -413,7 +416,7 @@
                         selesai: {{ $workOrderComplete ?? 0 }}
                     };
 
-                    dashboardCharts.woStatus = new Chart(woStatusCtx, {
+                    window.dashboardCharts.woStatus = new Chart(woStatusCtx, {
                         type: 'pie',
                         data: {
                             labels: ['Direncanakan', 'Berjalan', 'Selesai'],
@@ -517,7 +520,7 @@
                         diterima: {{ $deliveryComplete ?? 0 }}
                     };
 
-                    dashboardCharts.delivery = new Chart(deliveryStatusCtx, {
+                    window.dashboardCharts.delivery = new Chart(deliveryStatusCtx, {
                         type: 'bar',
                         data: {
                             labels: ['Draft', 'Dikirim', 'Diterima'],

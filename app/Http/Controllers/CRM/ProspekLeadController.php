@@ -10,15 +10,33 @@ use Illuminate\Support\Facades\Auth;
 
 class ProspekLeadController extends Controller
 {
+    /**
+     * Check if current user can access all prospects (admin/manager_penjualan)
+     */
+    private function canAccessAllProspects()
+    {
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+    }
+
     public function index()
     {
-        $prospeks = Prospek::with('user')->orderBy('created_at', 'desc')->get();
+        if ($this->canAccessAllProspects()) {
+            $prospeks = Prospek::with('user')->orderBy('created_at', 'desc')->get();
+        } else {
+            $prospeks = Prospek::where('user_id', Auth::id())->orderBy('created_at', 'desc')->get();
+        }
+
         return view('CRM.prospek_and_lead.index', compact('prospeks'));
     }
 
     public function data(Request $request)
     {
-        $query = Prospek::with('user');
+        // Base query dengan role-based access control
+        if ($this->canAccessAllProspects()) {
+            $query = Prospek::with('user');
+        } else {
+            $query = Prospek::with('user')->where('user_id', Auth::id());
+        }
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -122,13 +140,25 @@ class ProspekLeadController extends Controller
 
     public function show($id)
     {
-        $prospek = Prospek::with('user')->findOrFail($id);
+        // Role-based access control untuk show
+        if ($this->canAccessAllProspects()) {
+            $prospek = Prospek::with('user')->findOrFail($id);
+        } else {
+            $prospek = Prospek::with('user')->where('user_id', Auth::id())->findOrFail($id);
+        }
+        
         return view('CRM.prospek_and_lead.show', compact('prospek'));
     }
 
     public function edit($id)
     {
-        $prospek = Prospek::findOrFail($id);
+        // Role-based access control untuk edit
+        if ($this->canAccessAllProspects()) {
+            $prospek = Prospek::findOrFail($id);
+        } else {
+            $prospek = Prospek::where('user_id', Auth::id())->findOrFail($id);
+        }
+        
         $customers = Customer::all();
         return view('CRM.prospek_and_lead.edit', compact('prospek', 'customers'));
     }
@@ -150,8 +180,13 @@ class ProspekLeadController extends Controller
             'catatan' => 'nullable|string',
         ]);
 
-        // Update data prospek
-        $prospek = Prospek::findOrFail($id);
+        // Role-based access control untuk update
+        if ($this->canAccessAllProspects()) {
+            $prospek = Prospek::findOrFail($id);
+        } else {
+            $prospek = Prospek::where('user_id', Auth::id())->findOrFail($id);
+        }
+        
         $prospek->update($request->all());
 
         return redirect()->route('crm.prospek.index')
@@ -161,8 +196,13 @@ class ProspekLeadController extends Controller
     public function destroy($id)
     {
         try {
-            // Delete data prospek
-            $prospek = Prospek::findOrFail($id);
+            // Role-based access control untuk delete
+            if ($this->canAccessAllProspects()) {
+                $prospek = Prospek::findOrFail($id);
+            } else {
+                $prospek = Prospek::where('user_id', Auth::id())->findOrFail($id);
+            }
+            
             $prospek->delete();
 
             // If it's an AJAX request, return JSON response

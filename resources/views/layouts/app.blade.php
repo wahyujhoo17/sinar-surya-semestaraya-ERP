@@ -255,6 +255,9 @@ if (darkMode) {
         <!-- Alert Modal Component (Global) -->
         <x-alert-modal />
 
+        <!-- Confirmation Modal Component (Global) -->
+        <x-confirmation-modal />
+
         <!-- Existing Scripts -->
         @stack('scripts')
     </div>

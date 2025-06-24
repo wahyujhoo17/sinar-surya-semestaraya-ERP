@@ -12,16 +12,31 @@ use Illuminate\Support\Facades\Auth;
 class ProspekAktivitasController extends Controller
 {
     /**
+     * Check if current user can access all prospects (admin/manager_penjualan)
+     */
+    private function canAccessAllProspects()
+    {
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         $userTimezone = Auth::user()->timezone ?? 'Asia/Jakarta';
 
-        // Filter aktivitas
+        // Filter aktivitas dengan role-based access control
         $query = ProspekAktivitas::query()
             ->with(['prospek', 'user'])
             ->orderBy('tanggal', 'desc');
+
+        // Apply role-based access control
+        if (!$this->canAccessAllProspects()) {
+            $query->whereHas('prospek', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
 
         // Filter by prospek
         if ($request->has('prospek_id') && $request->prospek_id) {
@@ -89,12 +104,24 @@ class ProspekAktivitasController extends Controller
     {
         $prospek = null;
         if ($request->has('prospek_id') && $request->prospek_id) {
-            $prospek = Prospek::findOrFail($request->prospek_id);
+            // Role-based access control untuk prospek
+            if ($this->canAccessAllProspects()) {
+                $prospek = Prospek::findOrFail($request->prospek_id);
+            } else {
+                $prospek = Prospek::where('user_id', Auth::id())->findOrFail($request->prospek_id);
+            }
+        }
+
+        // Filter prospek list berdasarkan role
+        if ($this->canAccessAllProspects()) {
+            $prospekList = Prospek::orderBy('nama_prospek')->get();
+        } else {
+            $prospekList = Prospek::where('user_id', Auth::id())->orderBy('nama_prospek')->get();
         }
 
         return view('CRM.aktivitas.create', [
             'prospek' => $prospek,
-            'prospekList' => Prospek::orderBy('nama_prospek')->get(),
+            'prospekList' => $prospekList,
             'tipeList' => ProspekAktivitas::getTipeList(),
             'statusList' => ProspekAktivitas::getStatusList(),
             'userList' => User::where('is_active', true)->orderBy('name')->get(),
@@ -118,6 +145,17 @@ class ProspekAktivitasController extends Controller
             'status_followup' => 'nullable|string|required_if:perlu_followup,1',
             'catatan_followup' => 'nullable|string',
         ]);
+
+        // Validasi akses ke prospek berdasarkan role
+        if (!$this->canAccessAllProspects()) {
+            $prospekExists = Prospek::where('id', $request->prospek_id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            if (!$prospekExists) {
+                abort(403, 'Anda tidak memiliki akses ke prospek ini.');
+            }
+        }
 
         $aktivitas = new ProspekAktivitas();
         $aktivitas->prospek_id = $request->prospek_id;
@@ -154,6 +192,14 @@ class ProspekAktivitasController extends Controller
      */
     public function show(ProspekAktivitas $aktivita)
     {
+        // Role-based access control untuk show
+        if (!$this->canAccessAllProspects()) {
+            $aktivita->load(['prospek']);
+            if ($aktivita->prospek->user_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            }
+        }
+
         return view('CRM.aktivitas.show', [
             'aktivitas' => $aktivita->load(['prospek', 'user']),
             'tipeList' => ProspekAktivitas::getTipeList(),
@@ -166,9 +212,24 @@ class ProspekAktivitasController extends Controller
      */
     public function edit(ProspekAktivitas $aktivita)
     {
+        // Role-based access control untuk edit
+        if (!$this->canAccessAllProspects()) {
+            $aktivita->load(['prospek']);
+            if ($aktivita->prospek->user_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            }
+        }
+
+        // Filter prospek list berdasarkan role
+        if ($this->canAccessAllProspects()) {
+            $prospekList = Prospek::orderBy('nama_prospek')->get();
+        } else {
+            $prospekList = Prospek::where('user_id', Auth::id())->orderBy('nama_prospek')->get();
+        }
+
         return view('CRM.aktivitas.edit', [
             'aktivitas' => $aktivita,
-            'prospekList' => Prospek::orderBy('nama_prospek')->get(),
+            'prospekList' => $prospekList,
             'tipeList' => ProspekAktivitas::getTipeList(),
             'statusList' => ProspekAktivitas::getStatusList(),
         ]);
@@ -179,6 +240,14 @@ class ProspekAktivitasController extends Controller
      */
     public function update(Request $request, ProspekAktivitas $aktivita)
     {
+        // Role-based access control untuk update
+        if (!$this->canAccessAllProspects()) {
+            $aktivita->load(['prospek']);
+            if ($aktivita->prospek->user_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            }
+        }
+
         $request->validate([
             'prospek_id' => 'required|exists:prospek,id',
             'tipe' => 'required|string',
@@ -191,6 +260,17 @@ class ProspekAktivitasController extends Controller
             'status_followup' => 'nullable|string|required_if:perlu_followup,1',
             'catatan_followup' => 'nullable|string',
         ]);
+
+        // Validasi akses ke prospek yang akan diubah berdasarkan role
+        if (!$this->canAccessAllProspects()) {
+            $prospekExists = Prospek::where('id', $request->prospek_id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            if (!$prospekExists) {
+                abort(403, 'Anda tidak memiliki akses ke prospek ini.');
+            }
+        }
 
         $aktivita->prospek_id = $request->prospek_id;
         $aktivita->tipe = $request->tipe;
@@ -238,6 +318,14 @@ class ProspekAktivitasController extends Controller
      */
     public function destroy(ProspekAktivitas $aktivita)
     {
+        // Role-based access control untuk destroy
+        if (!$this->canAccessAllProspects()) {
+            $aktivita->load(['prospek']);
+            if ($aktivita->prospek->user_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            }
+        }
+
         $prospekId = $aktivita->prospek_id;
         $aktivita->delete();
 
@@ -268,6 +356,14 @@ class ProspekAktivitasController extends Controller
      */
     public function updateFollowupStatus(Request $request, ProspekAktivitas $aktivita)
     {
+        // Role-based access control untuk update followup status
+        if (!$this->canAccessAllProspects()) {
+            $aktivita->load(['prospek']);
+            if ($aktivita->prospek->user_id !== Auth::id()) {
+                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            }
+        }
+
         $request->validate([
             'status_followup' => 'required|string',
             'catatan_followup' => 'nullable|string',
@@ -312,12 +408,19 @@ class ProspekAktivitasController extends Controller
     {
         $userTimezone = Auth::user()->timezone ?? 'Asia/Jakarta';
 
-        // Filter aktivitas
+        // Filter aktivitas dengan role-based access control
         $query = ProspekAktivitas::query()
             ->with(['prospek', 'user'])
             ->where('perlu_followup', 1)
             ->whereIn('status_followup', [null, ProspekAktivitas::STATUS_MENUNGGU])
             ->orderBy('tanggal_followup');
+
+        // Apply role-based access control
+        if (!$this->canAccessAllProspects()) {
+            $query->whereHas('prospek', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
 
         // Filter by user
         if ($request->has('user_id') && $request->user_id) {
@@ -364,8 +467,15 @@ class ProspekAktivitasController extends Controller
 
         $count = 0;
         foreach ($request->ids as $id) {
-            $aktivitas = ProspekAktivitas::find($id);
+            $aktivitas = ProspekAktivitas::with('prospek')->find($id);
             if ($aktivitas && $aktivitas->perlu_followup) {
+                // Role-based access control untuk batch update
+                if (!$this->canAccessAllProspects()) {
+                    if ($aktivitas->prospek->user_id !== Auth::id()) {
+                        continue; // Skip aktivitas yang tidak dapat diakses
+                    }
+                }
+
                 $aktivitas->status_followup = $request->status_followup;
                 $aktivitas->save();
                 $count++;
@@ -401,8 +511,15 @@ class ProspekAktivitasController extends Controller
         $prospekIds = [];
 
         foreach ($request->ids as $id) {
-            $aktivitas = ProspekAktivitas::find($id);
+            $aktivitas = ProspekAktivitas::with('prospek')->find($id);
             if ($aktivitas) {
+                // Role-based access control untuk batch delete
+                if (!$this->canAccessAllProspects()) {
+                    if ($aktivitas->prospek->user_id !== Auth::id()) {
+                        continue; // Skip aktivitas yang tidak dapat diakses
+                    }
+                }
+
                 $prospekIds[] = $aktivitas->prospek_id;
                 $aktivitas->delete();
                 $count++;
