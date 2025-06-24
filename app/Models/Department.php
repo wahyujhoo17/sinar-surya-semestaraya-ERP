@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class Department extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'department';
-    
+
     protected $fillable = [
         'nama',
         'kode',
@@ -18,7 +18,7 @@ class Department extends Model
         'parent_id',
         'is_active'
     ];
-    
+
     /**
      * Relasi ke Department Parent
      */
@@ -26,7 +26,7 @@ class Department extends Model
     {
         return $this->belongsTo(Department::class, 'parent_id');
     }
-    
+
     /**
      * Relasi ke Department Child
      */
@@ -34,12 +34,20 @@ class Department extends Model
     {
         return $this->hasMany(Department::class, 'parent_id');
     }
-    
+
     /**
      * Relasi ke Karyawan
      */
     public function karyawan()
     {
         return $this->hasMany(Karyawan::class, 'department_id');
+    }
+
+    /**
+     * Relasi ke Jabatan
+     */
+    public function jabatan()
+    {
+        return $this->hasMany(Jabatan::class, 'department_id');
     }
 }

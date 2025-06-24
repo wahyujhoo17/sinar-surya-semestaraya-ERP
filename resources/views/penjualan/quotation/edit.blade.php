@@ -582,9 +582,10 @@
                                 <input type="checkbox" id="include_ppn" x-model="$data.includePPN"
                                     @change="calculateTotals()"
                                     class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
-                                <input type="hidden" name="ppn" :value="$data.includePPN ? 11 : 0">
+                                <input type="hidden" name="ppn"
+                                    :value="$data.includePPN ? {{ setting('tax_percentage', 11) }} : 0">
                                 <span class="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">Include PPN
-                                    (11%)</span>
+                                    ({{ setting('tax_percentage', 11) }}%)</span>
                             </label>
                             <span class="text-sm font-semibold text-gray-800 dark:text-white"
                                 x-text="$data.includePPN && $data.summary && typeof $data.formatCurrency === 'function' ? $data.formatCurrency($data.summary.ppn_nominal) : 'Rp 0,00'"></span>
@@ -1086,8 +1087,8 @@
                             this.summary.total_setelah_diskon_global = totalSetelahDiskonGlobal < 0 ? 0 :
                                 totalSetelahDiskonGlobal;
 
-                            // Calculate PPN if included (11%)
-                            const ppnRate = 11;
+                            // Calculate PPN if included ({{ setting('tax_percentage', 11) }}%)
+                            const ppnRate = {{ setting('tax_percentage', 11) }};
                             const includePPN = !!this.includePPN;
                             this.summary.ppn_nominal = includePPN ?
                                 (this.summary.total_setelah_diskon_global * ppnRate / 100) : 0;
@@ -1263,7 +1264,7 @@
                             // Handle global discount values
                             formData.set('diskon_persen', this.diskon_global_persen || '0');
                             formData.set('diskon_nominal', this.diskon_global_nominal || '0');
-                            formData.set('ppn', this.includePPN ? '11' : '0');
+                            formData.set('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
 
                             // Also add these as hidden fields as backup
                             const createGlobalHiddenInput = (name, value) => {
@@ -1279,7 +1280,7 @@
 
                             createGlobalHiddenInput('diskon_persen', this.diskon_global_persen || '0');
                             createGlobalHiddenInput('diskon_nominal', this.diskon_global_nominal || '0');
-                            createGlobalHiddenInput('ppn', this.includePPN ? '11' : '0');
+                            createGlobalHiddenInput('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
 
                             // Use fetch API for the submission
                             const url = form.getAttribute('action');

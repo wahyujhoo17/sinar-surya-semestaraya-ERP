@@ -2,10 +2,27 @@
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         {{-- Overview Header --}}
         <div class="mb-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Manajemen Kas & Bank</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">
-                Kelola kas dan rekening bank untuk operasional keuangan PT Sinar Surya Semestaraya
-            </p>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Manajemen Kas & Bank</h1>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                        Kelola kas dan rekening bank untuk operasional keuangan PT Sinar Surya Semestaraya
+                    </p>
+                </div>
+                {{-- Quick Transaction Button --}}
+                <div class="mt-4 sm:mt-0">
+                    <button type="button"
+                        onclick="console.log('Button clicked, dispatching event'); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {}}));"
+                        class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5">
+                        <svg class="mr-2 -ml-1 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        Transaksi Cepat
+                    </button>
+                </div>
+            </div>
         </div>
 
         {{-- Dashboard Cards --}}
@@ -135,8 +152,8 @@
                         class="py-4 px-1 inline-flex items-center font-medium text-sm border-b-2 whitespace-nowrap"
                         :class="activeTab === 'rekening' ? 'border-primary-500 text-primary-600 dark:text-primary-400' :
                             'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'">
-                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
                         </svg>
@@ -190,56 +207,76 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach ($kasAll as $kas)
                                 <div
-                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
-                                    <div class="p-5">
-                                        <div class="flex justify-between items-center mb-4">
-                                            <div class="flex items-center">
-                                                <div
-                                                    class="flex-shrink-0 rounded-lg bg-green-100 dark:bg-green-900/30 p-2.5">
-                                                    <svg class="h-5 w-5 text-green-500 dark:text-green-400"
-                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125-1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
-                                                    </svg>
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden group cursor-pointer">
+                                    {{-- Clickable Card Content --}}
+                                    <a href="{{ route('keuangan.kas-dan-bank.kas', $kas->id) }}" class="block">
+                                        <div class="p-5">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <div class="flex items-center">
+                                                    <div
+                                                        class="flex-shrink-0 rounded-lg bg-green-100 dark:bg-green-900/30 p-2.5 group-hover:bg-green-200 dark:group-hover:bg-green-900/50 transition-colors duration-200">
+                                                        <svg class="h-5 w-5 text-green-500 dark:text-green-400"
+                                                            xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5"
+                                                            stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125-1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+                                                        </svg>
+                                                    </div>
+                                                    <h4
+                                                        class="text-base font-semibold text-gray-900 dark:text-white ml-3 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
+                                                        {{ $kas->nama }}</h4>
                                                 </div>
-                                                <h4 class="text-base font-semibold text-gray-900 dark:text-white ml-3">
-                                                    {{ $kas->nama }}</h4>
-                                            </div>
-                                            <span
-                                                class="px-2 py-1 text-xs font-semibold rounded-full {{ $kas->is_aktif ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
-                                                {{ $kas->is_aktif ? 'Aktif' : 'Non-aktif' }}
-                                            </span>
-                                        </div>
-
-                                        <div class="flex flex-col space-y-2 mb-4">
-                                            <div class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                                                {{ $kas->deskripsi ?: 'Tidak ada deskripsi' }}
-                                            </div>
-                                            <div class="flex items-baseline">
-                                                <span class="text-xl font-bold text-gray-900 dark:text-white">Rp
-                                                    {{ number_format($kas->saldo, 0, ',', '.') }}</span>
                                                 <span
-                                                    class="ml-1 text-xs text-gray-500 dark:text-gray-400">saldo</span>
+                                                    class="px-2 py-1 text-xs font-semibold rounded-full {{ $kas->is_aktif ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                                    {{ $kas->is_aktif ? 'Aktif' : 'Non-aktif' }}
+                                                </span>
                                             </div>
-                                        </div>
 
-                                        <div
-                                            class="flex justify-end space-x-2 border-t dark:border-gray-700 pt-4 mt-2">
-                                            <a href="{{ route('keuangan.kas-dan-bank.kas', $kas->id) }}"
-                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
+                                            <div class="flex flex-col space-y-2 mb-4">
+                                                <div class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                                                    {{ $kas->deskripsi ?: 'Tidak ada deskripsi' }}
+                                                </div>
+                                                <div class="flex items-baseline">
+                                                    <span
+                                                        class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">Rp
+                                                        {{ number_format($kas->saldo, 0, ',', '.') }}</span>
+                                                    <span
+                                                        class="ml-1 text-xs text-gray-500 dark:text-gray-400">saldo</span>
+                                                </div>
+                                            </div>
+
+                                            {{-- Hover indicator --}}
+                                            <div
+                                                class="flex items-center text-sm text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
                                                 <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                     stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c-4.638 0-8.573 3.007-9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                                                 </svg>
-                                                Detail
-                                            </a>
+                                                Klik untuk melihat detail transaksi
+                                            </div>
+                                        </div>
+                                    </a>
+
+                                    {{-- Action Buttons (separate from clickable area) --}}
+                                    <div class="px-5 pb-4">
+                                        <div
+                                            class="flex justify-end space-x-2 border-t dark:border-gray-700 pt-4 mt-2">
                                             <button type="button"
-                                                onclick="window.dispatchEvent(new CustomEvent('open-kas-modal', {detail: {mode: 'edit', kas: {{ json_encode($kas) }}}}));"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {account_type: 'kas', account_id: {{ $kas->id }}}}));"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                                Transaksi
+                                            </button>
+                                            <button type="button"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-kas-modal', {detail: {mode: 'edit', kas: {{ json_encode($kas) }}}}));"
                                                 class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
                                                 <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -249,7 +286,7 @@
                                                 </svg>
                                                 Edit
                                             </button>
-                                            <button
+                                            <button onclick="event.preventDefault(); event.stopPropagation();"
                                                 class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
                                                 <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -302,150 +339,130 @@
                     @else
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach ($rekeningAll as $rekening)
-                                <div class="group perspective">
-                                    <div
-                                        class="relative transform transition-all duration-300 group-hover:scale-[1.02]">
-                                        {{-- Glass effect background --}}
-                                        <div
-                                            class="absolute -inset-0.5 bg-gradient-to-r from-blue-500/50 to-purple-500/50 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-300">
-                                        </div>
-
-                                        {{-- Main Card --}}
-                                        <div
-                                            class="relative bg-white dark:bg-gray-800/95 backdrop-blur-xl rounded-2xl shadow-lg group-hover:shadow-2xl transition-all duration-300 border border-gray-200/20 dark:border-gray-700/20 overflow-hidden">
-                                            {{-- Header with gradient --}}
-                                            <div class="relative overflow-hidden">
-                                                <div
-                                                    class="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50/80 to-purple-50/50 dark:from-blue-900/30 dark:via-indigo-900/20 dark:to-purple-900/10 backdrop-blur">
-                                                </div>
-                                                <div class="relative p-5 flex items-center justify-between">
-                                                    <div class="flex items-center space-x-4">
-                                                        {{-- Bank Logo with enhanced container --}}
-                                                        <div
-                                                            class="flex-shrink-0 h-14 w-14 rounded-lg p-2 bg-white/80 dark:bg-gray-800/80 shadow-sm backdrop-blur">
-                                                            @php
-                                                                $bankLogos = [
-                                                                    'BCA' =>
-                                                                        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Bank_Central_Asia.svg/2560px-Bank_Central_Asia.svg.png',
-                                                                    'BNI' =>
-                                                                        'https://www.bni.co.id/Portals/1/BNI/Images/logo-bni-new.png',
-                                                                    'BRI' =>
-                                                                        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/BANK_BRI_logo.svg/2560px-BANK_BRI_logo.svg.png',
-                                                                    'Mandiri' =>
-                                                                        'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/2560px-Bank_Mandiri_logo_2016.svg.png',
-                                                                    'default' =>
-                                                                        'https://cdn-icons-png.flaticon.com/512/2830/2830289.png',
-                                                                ];
-                                                                $bankLogo = $bankLogos['default'];
-                                                                foreach ($bankLogos as $bankName => $logo) {
-                                                                    if (
-                                                                        stripos($rekening->nama_bank, $bankName) !==
-                                                                        false
-                                                                    ) {
-                                                                        $bankLogo = $logo;
-                                                                        break;
-                                                                    }
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden group cursor-pointer">
+                                    {{-- Clickable Card Content --}}
+                                    <a href="{{ route('keuangan.kas-dan-bank.rekening', $rekening->id) }}"
+                                        class="block">
+                                        <div class="p-5">
+                                            <div class="flex justify-between items-center mb-4">
+                                                <div class="flex items-center">
+                                                    <div
+                                                        class="flex-shrink-0 h-12 w-12 rounded-lg p-2 bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 dark:group-hover:bg-blue-900/50 transition-colors duration-200">
+                                                        @php
+                                                            $bankLogos = [
+                                                                'BCA' =>
+                                                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Bank_Central_Asia.svg/2560px-Bank_Central_Asia.svg.png',
+                                                                'BNI' =>
+                                                                    'https://www.bni.co.id/Portals/1/BNI/Images/logo-bni-new.png',
+                                                                'BRI' =>
+                                                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/BANK_BRI_logo.svg/2560px-BANK_BRI_logo.svg.png',
+                                                                'Mandiri' =>
+                                                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Bank_Mandiri_logo_2016.svg/2560px-Bank_Mandiri_logo_2016.svg.png',
+                                                                'default' =>
+                                                                    'https://cdn-icons-png.flaticon.com/512/2830/2830289.png',
+                                                            ];
+                                                            $bankLogo = $bankLogos['default'];
+                                                            foreach ($bankLogos as $bankName => $logo) {
+                                                                if (
+                                                                    stripos($rekening->nama_bank, $bankName) !== false
+                                                                ) {
+                                                                    $bankLogo = $logo;
+                                                                    break;
                                                                 }
-                                                            @endphp
-                                                            <img src="{{ $bankLogo }}"
-                                                                alt="{{ $rekening->nama_bank }}"
-                                                                class="h-full w-full object-contain filter drop-shadow-sm">
-                                                        </div>
-                                                        <div>
-                                                            <h4
-                                                                class="text-lg font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-200 bg-clip-text text-transparent">
-                                                                {{ $rekening->nama_bank }}
-                                                            </h4>
-                                                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                                                {{ $rekening->atas_nama }}
-                                                            </p>
-                                                        </div>
+                                                            }
+                                                        @endphp
+                                                        <img src="{{ $bankLogo }}"
+                                                            alt="{{ $rekening->nama_bank }}"
+                                                            class="h-full w-full object-contain">
                                                     </div>
+                                                    <div class="ml-3">
+                                                        <h4
+                                                            class="text-base font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
+                                                            {{ $rekening->nama_bank }}
+                                                        </h4>
+                                                        <p
+                                                            class="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors duration-200">
+                                                            {{ $rekening->atas_nama }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    class="px-2 py-1 text-xs font-semibold rounded-full {{ $rekening->is_aktif ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' }}">
+                                                    {{ $rekening->is_aktif ? 'Aktif' : 'Non-aktif' }}
+                                                </span>
+                                            </div>
 
+                                            <div class="flex flex-col space-y-3 mb-4">
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="text-gray-500 dark:text-gray-400">No. Rekening</span>
                                                     <span
-                                                        class="px-3 py-1.5 text-xs font-semibold rounded-full shadow-sm {{ $rekening->is_aktif ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-400 ring-1 ring-green-500/20' : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-400 ring-1 ring-red-500/20' }}">
-                                                        {{ $rekening->is_aktif ? 'Aktif' : 'Non-aktif' }}
-                                                    </span>
+                                                        class="font-mono font-medium text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">{{ $rekening->nomor_rekening }}</span>
+                                                </div>
+                                                <div class="flex justify-between text-sm">
+                                                    <span class="text-gray-500 dark:text-gray-400">Cabang</span>
+                                                    <span
+                                                        class="text-gray-900 dark:text-white">{{ $rekening->cabang ?: '-' }}</span>
+                                                </div>
+                                                <div class="flex items-baseline">
+                                                    <span
+                                                        class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">Rp
+                                                        {{ number_format($rekening->saldo, 0, ',', '.') }}</span>
+                                                    <span
+                                                        class="ml-1 text-xs text-gray-500 dark:text-gray-400">saldo</span>
                                                 </div>
                                             </div>
 
-                                            {{-- Card Body --}}
-                                            <div class="p-5 space-y-5">
-                                                {{-- Account Details --}}
-                                                <div class="space-y-3">
-                                                    <div
-                                                        class="flex items-center p-3 bg-gray-50/80 dark:bg-gray-700/40 rounded-xl backdrop-blur border border-gray-200/50 dark:border-gray-600/20">
-                                                        <span
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400 flex-1">No.
-                                                            Rekening</span>
-                                                        <span
-                                                            class="text-sm font-bold text-gray-900 dark:text-white font-mono tracking-wide">{{ $rekening->nomor_rekening }}</span>
-                                                    </div>
-
-                                                    <div
-                                                        class="flex items-center p-3 bg-gray-50/80 dark:bg-gray-700/40 rounded-xl backdrop-blur border border-gray-200/50 dark:border-gray-600/20">
-                                                        <span
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400 flex-1">Cabang</span>
-                                                        <span
-                                                            class="text-sm text-gray-900 dark:text-white">{{ $rekening->cabang ?: '-' }}</span>
-                                                    </div>
-                                                </div>
-
-                                                {{-- Balance Display --}}
-                                                <div
-                                                    class="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-500/10 via-indigo-500/10 to-purple-500/10 dark:from-blue-900/20 dark:via-indigo-900/20 dark:to-purple-900/20 p-4">
-                                                    <div
-                                                        class="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 dark:from-blue-400/10 dark:to-purple-400/10 blur-3xl">
-                                                    </div>
-                                                    <div class="relative flex flex-col items-center">
-                                                        <span
-                                                            class="text-xs text-gray-500 dark:text-gray-400 mb-1">Saldo
-                                                            Tersedia</span>
-                                                        <span
-                                                            class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
-                                                            Rp {{ number_format($rekening->saldo, 0, ',', '.') }}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {{-- Action Buttons --}}
-                                                <div
-                                                    class="flex justify-end space-x-2 pt-4 border-t border-gray-100 dark:border-gray-700/50">
-                                                    <a href="{{ route('keuangan.kas-dan-bank.rekening', $rekening->id) }}"
-                                                        class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-primary-700 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition">
-                                                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                            stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c-4.638 0-8.573 3.007-9.963-7.178z" />
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                        </svg>
-                                                        Detail
-                                                    </a>
-                                                    <button type="button"
-                                                        onclick="window.dispatchEvent(new CustomEvent('open-rekening-modal', {detail: {mode: 'edit', rekening: {{ json_encode($rekening) }}}}));"
-                                                        class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                                                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                            stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                                        </svg>
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
-                                                        <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                            stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                        </svg>
-                                                        Hapus
-                                                    </button>
-                                                </div>
+                                            {{-- Hover indicator --}}
+                                            <div
+                                                class="flex items-center text-sm text-gray-500 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                                </svg>
+                                                Klik untuk melihat detail transaksi
                                             </div>
+                                        </div>
+                                    </a>
+
+                                    {{-- Action Buttons (separate from clickable area) --}}
+                                    <div class="px-5 pb-4">
+                                        <div
+                                            class="flex justify-end space-x-2 border-t dark:border-gray-700 pt-4 mt-2">
+                                            <button type="button"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {account_type: 'bank', account_id: {{ $rekening->id }}}}));"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M12 4.5v15m7.5-7.5h-15" />
+                                                </svg>
+                                                Transaksi
+                                            </button>
+                                            <button type="button"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-rekening-modal', {detail: {mode: 'edit', rekening: {{ json_encode($rekening) }}}}));"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                </svg>
+                                                Edit
+                                            </button>
+                                            <button onclick="event.preventDefault(); event.stopPropagation();"
+                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                                Hapus
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -625,6 +642,22 @@
     {{-- Include Modal Components --}}
     @include('keuangan.kas_dan_bank.modal-kas')
     @include('keuangan.kas_dan_bank.modal-rekening')
+    @include('keuangan.kas_dan_bank.modal-transaksi')
+
+    {{-- Initialize Transaction Modal --}}
+    <script>
+        console.log('Script section loaded');
+
+        // Listen for custom events and log them
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, setting up event listeners');
+
+            // Listen for transaction modal events
+            window.addEventListener('open-transaksi-modal', (event) => {
+                console.log('Global open-transaksi-modal event received:', event.detail);
+            });
+        });
+    </script>
 
     @push('scripts')
         <script>

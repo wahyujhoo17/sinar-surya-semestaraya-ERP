@@ -302,6 +302,17 @@
                                 </div>
                             </th>
                             <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                <div class="flex items-center cursor-pointer" @click="sortBy('user_id')">
+                                    Sales Penanggung Jawab
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor"
+                                        :class="{ 'text-primary-500': sortColumn === 'user_id' }">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                                </div>
+                            </th>
+                            <th scope="col"
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Aksi
                             </th>
@@ -311,7 +322,7 @@
                         <!-- Loading state -->
                         <template x-if="isLoading">
                             <tr>
-                                <td colspan="8"
+                                <td colspan="9"
                                     class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                     <div class="py-8 flex flex-col items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -332,7 +343,7 @@
                         <!-- No data state -->
                         <template x-if="!isLoading && (!Array.isArray(prospekList) || prospekList.length === 0)">
                             <tr>
-                                <td colspan="8"
+                                <td colspan="9"
                                     class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                     <div class="py-8">
                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -406,6 +417,26 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400"
                                         x-text="item && item.nilai_potensi ? formatCurrency(item.nilai_potensi) : '-'">
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        <div class="flex items-center">
+                                            <div class="flex-shrink-0 h-8 w-8">
+                                                <div
+                                                    class="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                                                    <span
+                                                        class="text-xs font-medium text-primary-600 dark:text-primary-400"
+                                                        x-text="item && item.user && item.user.name ? item.user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'N/A'"></span>
+                                                </div>
+                                            </div>
+                                            <div class="ml-3">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-white"
+                                                    x-text="item && item.user && item.user.name ? item.user.name : 'Tidak Ada'">
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400"
+                                                    x-text="item && item.user && item.user.email ? item.user.email : '-'">
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end items-center space-x-2">
@@ -747,6 +778,11 @@
                         'lainnya': 'Lainnya'
                     };
                     return labels[sumber] || sumber;
+                },
+
+                getUserName(user) {
+                    if (!user || !user.name) return 'Tidak Ada';
+                    return user.name;
                 }
             };
         }

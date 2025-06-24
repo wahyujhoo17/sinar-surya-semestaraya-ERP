@@ -278,17 +278,17 @@
                     <a href="/hr/karyawan"
                         class="{{ request()->is('hr/karyawan') || request()->is('hr/karyawan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Data
                             Karyawan</span></a>
-                    <a href="#"
-                        class="{{ request()->is('hr/absensi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Absensi
+                    <a href="/hr/absensi"
+                        class="{{ request()->is('hr/absensi') || request()->is('hr/absensi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Absensi
                             & Kehadiran</span></a>
-                    <a href="#"
-                        class="{{ request()->is('hr/penggajian') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penggajian
+                    <a href="/hr/penggajian"
+                        class="{{ request()->is('hr/penggajian') || request()->is('hr/penggajian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penggajian
                             & Tunjangan</span></a>
                     <a href="#"
                         class="{{ request()->is('hr/cuti') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Cuti
                             & Izin</span></a>
-                    <a href="#"
-                        class="{{ request()->is('hr/struktur') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Struktur
+                    <a href="/hr/struktur-organisasi"
+                        class="{{ request()->is('hr/struktur-organisasi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Struktur
                             Organisasi</span></a>
                 </div>
             </div>
@@ -371,11 +371,11 @@
                     <a href="/keuangan/kas-dan-bank"
                         class="{{ request()->is('keuangan/kas-dan-bank') || request()->is('keuangan/kas-dan-bank/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Kas
                             & Bank</span></a>
-                    <a href="#"
-                        class="{{ request()->is('keuangan/pajak') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Manajemen
+                    <a href="{{ route('keuangan.management-pajak.index') }}"
+                        class="{{ request()->is('keuangan/management-pajak') || request()->is('keuangan/management-pajak/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Management
                             Pajak</span></a>
-                    <a href="#"
-                        class="{{ request()->is('keuangan/rekonsiliasi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Rekonsiliasi</span></a>
+                    <a href="{{ route('keuangan.rekonsiliasi.index') }}"
+                        class="{{ request()->is('keuangan/rekonsiliasi') || request()->is('keuangan/rekonsiliasi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Rekonsiliasi</span></a>
                     <a href="/keuangan/pengembalian-dana"
                         class="{{ request()->is('keuangan/pengembalian-dana') || request()->is('keuangan/pengembalian-dana/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pengembalian
                             Dana</span></a>
@@ -418,12 +418,12 @@
                     <a href="/laporan/produksi"
                         class="{{ request()->is('laporan/produksi') || request()->is('laporan/produksi/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Produksi</span></a>
-                    <a href="#"
-                        class="{{ request()->is('laporan/keuangan') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
+                    <a href="/laporan/keuangan"
+                        class="{{ request()->is('laporan/keuangan') || request()->is('laporan/keuangan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
                             Keuangan</span></a>
-                    <a href="#"
+                    {{-- <a href="#"
                         class="{{ request()->is('laporan/kustom') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
-                            Kustom</span></a>
+                            Kustom</span></a> --}}
                 </div>
             </div>
 
@@ -455,17 +455,17 @@
                     </svg>
                 </button>
                 <div x-show="activeDropdown === 'pengaturan'" x-cloak class="mt-1 space-y-1 pl-11">
-                    <a href="#"
+                    <a href="/pengaturan/umum"
                         class="{{ request()->is('pengaturan/umum') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pengaturan
                             Umum</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pengaturan/pengguna') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Manajemen
+                    <a href="{{ route('pengaturan.management-pengguna.index') }}"
+                        class="{{ request()->is('pengaturan/management-pengguna*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Management
                             Pengguna</span></a>
                     <a href="/pengaturan/hak-akses"
                         class="{{ request()->is('pengaturan/hak-akses') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Peran
                             & Hak Akses</span></a>
-                    <a href="#"
-                        class="{{ request()->is('pengaturan/log') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Log
+                    <a href="{{ route('pengaturan.log-aktivitas.index') }}"
+                        class="{{ request()->routeIs('pengaturan.log-aktivitas.*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Log
                             Aktivitas</span></a>
                 </div>
             </div>
@@ -475,8 +475,8 @@
     <!-- Footer -->
     <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center justify-center">
         <div class="text-xs text-gray-500 text-center">
-            PT. Sinar Surya Semestaraya<br>
-            <span class="font-semibold">Versi 1.0.0</span>
+            {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}<br>
+            <span class="font-semibold">Versi {{ setting('app_version', '1.0.0') }}</span>
         </div>
     </div>
 </div>

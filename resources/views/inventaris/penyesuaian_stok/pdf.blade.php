@@ -266,7 +266,7 @@
     </div>
 
     <div class="footer">
-        Dicetak pada: {{ now()->format('d F Y H:i:s') }} | Sinar Surya ERP System
+        Dicetak pada: {{ now()->format('d F Y H:i:s') }} | {{ setting('company_name', 'Sinar Surya') }} ERP System
     </div>
 </body>
 

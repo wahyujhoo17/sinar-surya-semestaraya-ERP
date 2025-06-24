@@ -111,12 +111,21 @@
                 <div x-data="{ open: false }" class="relative">
                     <button @click="open = !open"
                         class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500">
-                        <img class="h-8 w-8 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
-                            src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                            alt="">
+                        @if (auth()->user()->photo_url)
+                            <img class="h-8 w-8 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
+                                src="{{ auth()->user()->photo_url }}" alt="{{ auth()->user()->display_name }}">
+                        @else
+                            <div
+                                class="h-8 w-8 rounded-lg bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center border border-gray-200 dark:border-gray-600">
+                                <span class="text-sm font-medium text-primary-700 dark:text-primary-300">
+                                    {{ auth()->user()->initials }}
+                                </span>
+                            </div>
+                        @endif
                         <div class="hidden md:block text-left">
-                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Administrator</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">admin@sinarsurya.com</p>
+                            <p class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                {{ auth()->user()->display_name }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ auth()->user()->display_email }}</p>
                         </div>
                     </button>
                     <!-- User Dropdown Panel -->

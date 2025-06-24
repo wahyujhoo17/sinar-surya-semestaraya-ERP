@@ -122,7 +122,7 @@ class COAController extends Controller
 
             DB::commit();
 
-            return redirect()->route('coa.index')
+            return redirect()->route('keuangan.coa.index')
                 ->with('success', 'Akun berhasil ditambahkan.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -267,7 +267,7 @@ class COAController extends Controller
 
             DB::commit();
 
-            return redirect()->route('coa.index')
+            return redirect()->route('keuangan.coa.index')
                 ->with('success', 'Akun berhasil diperbarui.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -295,7 +295,7 @@ class COAController extends Controller
 
             $akun->delete();
 
-            return redirect()->route('coa.index')
+            return redirect()->route('keuangan.coa.index')
                 ->with('success', 'Akun berhasil dihapus.');
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());

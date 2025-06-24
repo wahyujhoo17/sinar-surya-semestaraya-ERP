@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PurchaseOrderController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Penjualan\QuotationController;
+use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Models\Customer;
 
 // Purchase Order routes
@@ -27,3 +28,8 @@ Route::get('customers/{id}', function ($id) {
         'alamat_pengiriman' => $customer->alamat_pengiriman
     ]);
 });
+
+// Kas dan Bank API routes
+Route::get('accounts/chart-of-accounts', [KasDanBankController::class, 'getChartOfAccounts']);
+Route::get('kas/active', [KasDanBankController::class, 'getActiveKas']);
+Route::get('rekening-bank/active', [KasDanBankController::class, 'getActiveRekeningBank']);

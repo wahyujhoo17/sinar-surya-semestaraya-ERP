@@ -610,7 +610,7 @@
                                         <div class="flex justify-between items-center space-x-4">
                                             <div class="flex items-center">
                                                 <span class="text-sm text-gray-700 dark:text-gray-300 mr-2">PPN
-                                                    (11%):</span>
+                                                    ({{ setting('tax_percentage', 11) }}%):</span>
                                                 <label class="inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" x-model="includePPN"
                                                         @change="updateTotals()" class="sr-only peer"
@@ -1072,7 +1072,7 @@
                     const afterDiscount = subtotal - this.diskonNominal;
 
                     if (this.includePPN) {
-                        this.ppn = Math.max(0, afterDiscount) * 0.11;
+                        this.ppn = Math.max(0, afterDiscount) * ({{ setting('tax_percentage', 11) }} / 100);
                     } else {
                         this.ppn = 0;
                     }

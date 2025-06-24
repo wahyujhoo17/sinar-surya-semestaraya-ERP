@@ -158,13 +158,18 @@
             <td>
                 <div class="section-title">Info Perusahaan</div>
                 <div style="padding: 5px;">
-                    <strong>PT. SINAR SURYA SEMESTARAYA</strong><br>
-                    Jl. Condet Raya No. 6 Balekambang<br>
-                    Jakarta Timur 13530<br>
-                    Telp. (021) 80876624 - 80876642<br>
-                    E-mail: admin@kliksinarsurya.com<br>
-                    sinar.surya@hotmail.com<br>
-                    sinarsurya.sr@gmail.com
+                    <strong>{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</strong><br>
+                    {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }}<br>
+                    {{ setting('company_city', 'Jakarta Timur') }} {{ setting('company_postal_code', '13530') }}<br>
+                    Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
+                    E-mail: {{ setting('company_email', 'admin@kliksinarsurya.com') }}<br>
+                    @if (setting('company_email_2'))
+                        {{ setting('company_email_2') }}<br>
+                    @endif
+                    @if (setting('company_email_3'))
+                        {{ setting('company_email_3') }}
+                    @endif
+                </div>
                 </div>
             </td>
             <td>
@@ -257,7 +262,8 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>Dokumen ini dibuat oleh sistem ERP PT Sinar Surya Semestaraya | Dicetak pada:
+        <p>Dokumen ini dibuat oleh sistem ERP {{ setting('company_name', 'PT Sinar Surya Semestaraya') }} | Dicetak
+            pada:
             {{ \Carbon\Carbon::now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>

@@ -12,16 +12,17 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolePermissionSeeder::class, // Harus pertama karena User membutuhkan Role
-            UserSeeder::class,           // Kedua karena departemen memerlukan user sebagai penanggung jawab
+            ComprehensivePermissionSeeder::class, // Seeder komprehensif untuk roles dan permissions
+            UserSeeder::class,                    // Kedua karena departemen memerlukan user sebagai penanggung jawab
             DepartmentSeeder::class,
             JabatanSeeder::class,
             KategoriProdukSeeder::class,
             SatuanSeeder::class,
             GudangSeeder::class,
             JenisProdukSeeder::class,
-            ReturPenjualanSeeder::class, // Seeder untuk Retur Penjualan
-            NotaKreditSeeder::class,     // Seeder untuk Nota Kredit
+            ReturPenjualanSeeder::class,          // Seeder untuk Retur Penjualan
+            NotaKreditSeeder::class,              // Seeder untuk Nota Kredit
+            SettingsSeeder::class,                // Seeder untuk pengaturan umum
         ]);
     }
 }

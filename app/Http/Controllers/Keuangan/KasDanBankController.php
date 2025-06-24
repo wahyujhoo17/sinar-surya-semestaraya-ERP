@@ -7,9 +7,12 @@ use App\Models\Kas;
 use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
+use App\Models\AkunAkuntansi;
+use App\Services\JournalEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class KasDanBankController extends Controller
 {
@@ -308,7 +311,7 @@ class KasDanBankController extends Controller
                     'keterangan' => 'Saldo awal kas ' . $kas->nama,
                     'jumlah' => $request->saldo,
                     'jenis' => 'masuk',
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                 ]);
             }
 
@@ -447,7 +450,7 @@ class KasDanBankController extends Controller
                     'keterangan' => 'Saldo awal rekening ' . $rekening->nama_bank . ' - ' . $rekening->nomor_rekening,
                     'jumlah' => $request->saldo,
                     'jenis' => 'masuk',
-                    'user_id' => auth()->id(),
+                    'user_id' => Auth::id(),
                 ]);
             }
 
@@ -542,6 +545,500 @@ class KasDanBankController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get the latest transactions for a cash account
+     * 
+     * @param int $id The kas (cash account) ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getKasTransaksi($id)
+    {
+        try {
+            $kas = Kas::findOrFail($id);
+
+            // Get last 5 transactions
+            $transaksi = TransaksiKas::where('kas_id', $id)
+                ->orderBy('tanggal', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $transaksi->map(function ($trx) {
+                    return [
+                        'id' => $trx->id,
+                        'tanggal' => $trx->tanggal,
+                        'jenis' => $trx->jenis,
+                        'jumlah' => $trx->jumlah,
+                        'keterangan' => $trx->keterangan,
+                        'no_bukti' => $trx->no_bukti,
+                        'created_at' => $trx->created_at
+                    ];
+                }),
+                'account' => [
+                    'id' => $kas->id,
+                    'nama' => $kas->nama,
+                    'deskripsi' => $kas->deskripsi,
+                    'saldo' => $kas->saldo,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get the latest transactions for a bank account
+     * 
+     * @param int $id The rekening (bank account) ID
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRekeningTransaksi($id)
+    {
+        try {
+            $rekening = RekeningBank::findOrFail($id);
+
+            // Get last 5 transactions
+            $transaksi = TransaksiBank::where('rekening_id', $id)
+                ->orderBy('tanggal', 'desc')
+                ->orderBy('id', 'desc')
+                ->limit(5)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $transaksi->map(function ($trx) {
+                    return [
+                        'id' => $trx->id,
+                        'tanggal' => $trx->tanggal,
+                        'jenis' => $trx->jenis,
+                        'jumlah' => $trx->jumlah,
+                        'keterangan' => $trx->keterangan,
+                        'no_referensi' => $trx->no_referensi,
+                        'created_at' => $trx->created_at
+                    ];
+                }),
+                'account' => [
+                    'id' => $rekening->id,
+                    'nama_bank' => $rekening->nama_bank,
+                    'nomor_rekening' => $rekening->nomor_rekening,
+                    'atas_nama' => $rekening->atas_nama,
+                    'cabang' => $rekening->cabang,
+                    'saldo' => $rekening->saldo,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+
+
+    /**
+     * Menyimpan transaksi baru (kas atau bank)
+     */
+    public function storeTransaksi(Request $request)
+    {
+        // Validasi input
+        $validator = Validator::make($request->all(), [
+            'tanggal' => 'required|date',
+            'jenis' => 'required|in:masuk,keluar',
+            'account_type' => 'required|in:kas,bank',
+            'account_id' => 'required|integer',
+            'contra_account_id' => 'required|integer|exists:akun_akuntansi,id',
+            'jumlah' => 'required|numeric|min:0.01',
+            'keterangan' => 'required|string|max:500',
+            'no_referensi' => 'nullable|string|max:100',
+        ], [
+            'tanggal.required' => 'Tanggal transaksi harus diisi',
+            'jenis.required' => 'Jenis transaksi harus dipilih',
+            'jenis.in' => 'Jenis transaksi tidak valid',
+            'account_type.required' => 'Tipe akun harus dipilih',
+            'account_type.in' => 'Tipe akun tidak valid',
+            'account_id.required' => 'Akun harus dipilih',
+            'contra_account_id.required' => 'Akun lawan transaksi harus dipilih',
+            'contra_account_id.exists' => 'Akun lawan transaksi tidak valid',
+            'jumlah.required' => 'Jumlah transaksi harus diisi',
+            'jumlah.numeric' => 'Jumlah harus berupa angka',
+            'jumlah.min' => 'Jumlah minimal adalah 0.01',
+            'keterangan.required' => 'Keterangan transaksi harus diisi',
+            'keterangan.max' => 'Keterangan maksimal 500 karakter',
+            'no_referensi.max' => 'No referensi maksimal 100 karakter',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Validasi akun berdasarkan tipe
+            if ($request->account_type === 'kas') {
+                $account = Kas::where('id', $request->account_id)
+                    ->where('is_aktif', true)
+                    ->first();
+
+                if (!$account) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Kas tidak ditemukan atau tidak aktif'
+                    ], 404);
+                }
+
+                // Cek saldo untuk transaksi keluar
+                if ($request->jenis === 'keluar' && $account->saldo < $request->jumlah) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Saldo kas tidak mencukupi. Saldo tersedia: Rp ' . number_format($account->saldo, 0, ',', '.')
+                    ], 400);
+                }
+            } else {
+                $account = RekeningBank::where('id', $request->account_id)
+                    ->where('is_aktif', true)
+                    ->where('is_perusahaan', true)
+                    ->first();
+
+                if (!$account) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Rekening bank tidak ditemukan atau tidak aktif'
+                    ], 404);
+                }
+
+                // Cek saldo untuk transaksi keluar
+                if ($request->jenis === 'keluar' && $account->saldo < $request->jumlah) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Saldo rekening tidak mencukupi. Saldo tersedia: Rp ' . number_format($account->saldo, 0, ',', '.')
+                    ], 400);
+                }
+            }
+
+            // Validasi akun lawan transaksi
+            $contraAccount = AkunAkuntansi::where('id', $request->contra_account_id)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$contraAccount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akun lawan transaksi tidak valid'
+                ], 404);
+            }
+
+            // Cek apakah ini adalah transfer antar kas/bank
+            $isTransfer = false;
+            $targetAccount = null;
+
+            if ($contraAccount->ref_type === 'App\Models\Kas' && $contraAccount->ref_id) {
+                $targetAccount = Kas::find($contraAccount->ref_id);
+                $isTransfer = true;
+            } elseif ($contraAccount->ref_type === 'App\Models\RekeningBank' && $contraAccount->ref_id) {
+                $targetAccount = RekeningBank::find($contraAccount->ref_id);
+                $isTransfer = true;
+            }
+
+            // Generate nomor referensi jika tidak ada
+            $noReferensi = $request->no_referensi;
+            if (empty($noReferensi)) {
+                $prefix = $request->account_type === 'kas' ? 'KAS' : 'BANK';
+                $prefix .= $request->jenis === 'masuk' ? 'IN' : 'OUT';
+                $noReferensi = $prefix . '-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            }
+
+            // Buat transaksi
+            if ($request->account_type === 'kas') {
+                $transaksi = TransaksiKas::create([
+                    'kas_id' => $account->id,
+                    'tanggal' => $request->tanggal,
+                    'jenis' => $request->jenis,
+                    'jumlah' => $request->jumlah,
+                    'keterangan' => $request->keterangan,
+                    'no_referensi' => $noReferensi,
+                    'user_id' => Auth::id(),
+                ]);
+
+                // Update saldo kas
+                if ($request->jenis === 'masuk') {
+                    $account->increment('saldo', $request->jumlah);
+                } else {
+                    $account->decrement('saldo', $request->jumlah);
+                }
+
+                // Jika ini adalah transfer, update saldo target account
+                if ($isTransfer && $targetAccount && $request->jenis === 'keluar') {
+                    // Transfer dari kas ke kas/bank lain
+                    $targetAccount->increment('saldo', $request->jumlah);
+
+                    // Buat transaksi masuk di target account juga
+                    if ($contraAccount->ref_type === 'App\Models\Kas') {
+                        TransaksiKas::create([
+                            'kas_id' => $targetAccount->id,
+                            'tanggal' => $request->tanggal,
+                            'jenis' => 'masuk',
+                            'jumlah' => $request->jumlah,
+                            'keterangan' => 'Transfer dari ' . $account->nama . ' - ' . $request->keterangan,
+                            'no_referensi' => $noReferensi . '-IN',
+                            'user_id' => Auth::id(),
+                        ]);
+                    } else {
+                        TransaksiBank::create([
+                            'rekening_id' => $targetAccount->id,
+                            'tanggal' => $request->tanggal,
+                            'jenis' => 'masuk',
+                            'jumlah' => $request->jumlah,
+                            'keterangan' => 'Transfer dari ' . $account->nama . ' - ' . $request->keterangan,
+                            'no_referensi' => $noReferensi . '-IN',
+                            'user_id' => Auth::id(),
+                        ]);
+                    }
+                }
+            } else {
+                $transaksi = TransaksiBank::create([
+                    'rekening_id' => $account->id,
+                    'tanggal' => $request->tanggal,
+                    'jenis' => $request->jenis,
+                    'jumlah' => $request->jumlah,
+                    'keterangan' => $request->keterangan,
+                    'no_referensi' => $noReferensi,
+                    'user_id' => Auth::id(),
+                ]);
+
+                // Update saldo rekening
+                if ($request->jenis === 'masuk') {
+                    $account->increment('saldo', $request->jumlah);
+                } else {
+                    $account->decrement('saldo', $request->jumlah);
+                }
+
+                // Jika ini adalah transfer, update saldo target account
+                if ($isTransfer && $targetAccount && $request->jenis === 'keluar') {
+                    // Transfer dari bank ke kas/bank lain
+                    $targetAccount->increment('saldo', $request->jumlah);
+
+                    // Buat transaksi masuk di target account juga
+                    if ($contraAccount->ref_type === 'App\Models\Kas') {
+                        TransaksiKas::create([
+                            'kas_id' => $targetAccount->id,
+                            'tanggal' => $request->tanggal,
+                            'jenis' => 'masuk',
+                            'jumlah' => $request->jumlah,
+                            'keterangan' => 'Transfer dari ' . $account->nama_bank . ' - ' . $account->nomor_rekening . ' - ' . $request->keterangan,
+                            'no_referensi' => $noReferensi . '-IN',
+                            'user_id' => Auth::id(),
+                        ]);
+                    } else {
+                        TransaksiBank::create([
+                            'rekening_id' => $targetAccount->id,
+                            'tanggal' => $request->tanggal,
+                            'jenis' => 'masuk',
+                            'jumlah' => $request->jumlah,
+                            'keterangan' => 'Transfer dari ' . $account->nama_bank . ' - ' . $account->nomor_rekening . ' - ' . $request->keterangan,
+                            'no_referensi' => $noReferensi . '-IN',
+                            'user_id' => Auth::id(),
+                        ]);
+                    }
+                }
+            }
+
+            // Dapatkan akun akuntansi untuk kas/bank
+            $kasAccountRecord = AkunAkuntansi::where('ref_type', get_class($account))
+                ->where('ref_id', $account->id)
+                ->first();
+
+            if (!$kasAccountRecord) {
+                // Jika belum ada akun akuntansi untuk kas/bank ini, buat otomatis
+                $kasAccountRecord = AkunAkuntansi::create([
+                    'kode' => ($request->account_type === 'kas' ? '1110' : '1120') . str_pad($account->id, 3, '0', STR_PAD_LEFT),
+                    'nama' => $request->account_type === 'kas' ? $account->nama : $account->nama_bank . ' - ' . $account->nomor_rekening,
+                    'kategori' => 'asset',
+                    'tipe' => 'current',
+                    'is_active' => true,
+                    'ref_type' => get_class($account),
+                    'ref_id' => $account->id,
+                ]);
+            }
+
+            // Buat entri jurnal otomatis
+            $journalService = new JournalEntryService();
+
+            $journalEntries = [];
+            if ($request->jenis === 'masuk') {
+                // Kas/Bank: Debit (penambahan aset)
+                $journalEntries[] = [
+                    'akun_id' => $kasAccountRecord->id,
+                    'debit' => $request->jumlah,
+                    'kredit' => 0,
+                ];
+
+                // Akun lawan: Kredit
+                $journalEntries[] = [
+                    'akun_id' => $contraAccount->id,
+                    'debit' => 0,
+                    'kredit' => $request->jumlah,
+                ];
+            } else {
+                // Akun lawan: Debit
+                $journalEntries[] = [
+                    'akun_id' => $contraAccount->id,
+                    'debit' => $request->jumlah,
+                    'kredit' => 0,
+                ];
+
+                // Kas/Bank: Kredit (pengurangan aset)
+                $journalEntries[] = [
+                    'akun_id' => $kasAccountRecord->id,
+                    'debit' => 0,
+                    'kredit' => $request->jumlah,
+                ];
+            }
+
+            $journalCreated = $journalService->createJournalEntries(
+                $journalEntries,
+                $noReferensi,
+                $request->keterangan,
+                $request->tanggal,
+                $transaksi
+            );
+
+            if (!$journalCreated) {
+                throw new \Exception('Gagal membuat entri jurnal');
+            }
+
+            DB::commit();
+
+            // Tentukan pesan sukses berdasarkan jenis transaksi
+            $successMessage = 'Transaksi berhasil disimpan dan jurnal otomatis telah dibuat';
+            if ($isTransfer && $targetAccount) {
+                $targetName = $contraAccount->ref_type === 'App\Models\Kas' ? $targetAccount->nama : $targetAccount->nama_bank;
+                $successMessage = 'Transfer berhasil dilakukan ke ' . $targetName . ' dan jurnal otomatis telah dibuat';
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $successMessage,
+                'data' => [
+                    'transaksi_id' => $transaksi->id,
+                    'no_referensi' => $noReferensi,
+                    'saldo_baru' => $account->fresh()->saldo,
+                    'is_transfer' => $isTransfer,
+                    'target_saldo' => $isTransfer && $targetAccount ? $targetAccount->fresh()->saldo : null,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get chart of accounts for contra account selection
+     */
+    public function getChartOfAccounts()
+    {
+        try {
+            $accounts = AkunAkuntansi::where('is_active', true)
+                ->orderBy('kode')
+                ->select('id', 'kode', 'nama', 'tipe', 'kategori')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $accounts
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat chart of accounts: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get active kas accounts for transaction modal
+     */
+    public function getActiveKas()
+    {
+        try {
+            $kasAccounts = Kas::where('is_aktif', true)
+                ->orderBy('nama')
+                ->select('id', 'nama', 'saldo', 'deskripsi')
+                ->get()
+                ->map(function ($kas) {
+                    return [
+                        'id' => $kas->id,
+                        'nama' => $kas->nama,
+                        'saldo' => $kas->saldo,
+                        'deskripsi' => $kas->deskripsi,
+                        'display_name' => $kas->nama . ($kas->deskripsi ? ' - ' . $kas->deskripsi : '') . ' (Saldo: Rp ' . number_format($kas->saldo, 0, ',', '.') . ')'
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $kasAccounts
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data kas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * API: Get active bank accounts for transaction modal
+     */
+    public function getActiveRekeningBank()
+    {
+        try {
+            $bankAccounts = RekeningBank::where('is_aktif', true)
+                ->where('is_perusahaan', true)
+                ->orderBy('nama_bank')
+                ->select('id', 'nama_bank', 'nomor_rekening', 'atas_nama', 'saldo', 'cabang')
+                ->get()
+                ->map(function ($rekening) {
+                    return [
+                        'id' => $rekening->id,
+                        'nama_bank' => $rekening->nama_bank,
+                        'nomor_rekening' => $rekening->nomor_rekening,
+                        'atas_nama' => $rekening->atas_nama,
+                        'saldo' => $rekening->saldo,
+                        'cabang' => $rekening->cabang,
+                        'display_name' => $rekening->nama_bank . ' - ' . $rekening->nomor_rekening . ' (' . $rekening->atas_nama . ')' . ($rekening->cabang ? ' - ' . $rekening->cabang : '') . ' - Saldo: Rp ' . number_format($rekening->saldo, 0, ',', '.')
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $bankAccounts
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data rekening bank: ' . $e->getMessage()
             ], 500);
         }
     }

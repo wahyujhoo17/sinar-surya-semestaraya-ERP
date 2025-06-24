@@ -441,8 +441,8 @@
                                             <div class="flex justify-between items-center">
                                                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
                                                     Nama:</span>
-                                                <span class="text-xs font-medium text-gray-800 dark:text-gray-200">PT.
-                                                    Sinar Surya</span>
+                                                <span
+                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya') }}</span>
                                             </div>
                                         </div>
                                         <p class="text-xs text-gray-600 dark:text-gray-400 italic">Harap sertakan nomor
@@ -615,7 +615,7 @@
                     subtotal: 0,
                     diskonPersen: 0,
                     diskonNominal: 0,
-                    ppnPersen: 11, // Default PPN Indonesia
+                    ppnPersen: {{ setting('tax_percentage', 11) }}, // Default PPN from settings
                     ppnNominal: 0,
                     ongkosKirim: 0,
                     total: 0,
@@ -719,7 +719,7 @@
                         this.subtotal = 0;
                         this.diskonPersen = 0;
                         this.diskonNominal = 0;
-                        this.ppnPersen = 11;
+                        this.ppnPersen = {{ setting('tax_percentage', 11) }};
                         this.ppnNominal = 0;
                         this.ongkosKirim = 0;
                         this.total = 0;

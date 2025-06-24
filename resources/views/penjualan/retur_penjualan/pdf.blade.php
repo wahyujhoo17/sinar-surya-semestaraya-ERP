@@ -234,44 +234,48 @@
     <table class="info-table">
         <tr>
             <td style="width: 50%; padding-right: 15px;">
-                <div class="section-title">PT. SINAR SURYA SEMESTARAYA</div>
+                <div class="section-title">{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</div>
                 <div style="padding: 5px;">
-                    Jl. Marsekal Surya Darma No. 8 Ruko<br>
-                    Neglasari - Tangerang - Banten<br>
-                    Telp. (021) 80876624 - 80876642<br>
-                    E-mail: admin@kliksinarsurya.com<br>
-                    sinar.surya@hotmail.com<br>
-                    sinarsurya.sr@gmail.com
+                    {{ setting('company_address', 'Jl. Marsekal Surya Darma No. 8 Ruko') }}<br>
+                    {{ setting('company_city', 'Neglasari - Tangerang - Banten') }}<br>
+                    Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
+                    E-mail: {{ setting('company_email', 'admin@kliksinarsurya.com') }}<br>
+                    @if (setting('company_email_2'))
+                        {{ setting('company_email_2') }}<br>
+                    @endif
+                    @if (setting('company_email_3'))
+                        {{ setting('company_email_3') }}
+                    @endif
                 </div>
             </td>
             <td style="width: 50%; padding-left: 15px;">
                 <div class="section-title">Dari Pelanggan</div>
                 <div style="padding: 5px;">
                     <strong>{{ $returPenjualan->customer->nama ?? ($returPenjualan->salesOrder->customer->nama ?? 'Customer') }}</strong><br>
-                    @if(isset($returPenjualan->customer->company) && $returPenjualan->customer->company)
+                    @if (isset($returPenjualan->customer->company) && $returPenjualan->customer->company)
                         {{ $returPenjualan->customer->company }}<br>
                     @elseif(isset($returPenjualan->salesOrder->customer->company) && $returPenjualan->salesOrder->customer->company)
                         {{ $returPenjualan->salesOrder->customer->company }}<br>
                     @endif
                     {{ $returPenjualan->customer->alamat_utama ?? ($returPenjualan->salesOrder->customer->alamat_utama ?? '-') }}<br>
-                    @if(isset($returPenjualan->customer->telepon) && $returPenjualan->customer->telepon)
+                    @if (isset($returPenjualan->customer->telepon) && $returPenjualan->customer->telepon)
                         Telp: {{ $returPenjualan->customer->telepon }}<br>
                     @elseif(isset($returPenjualan->salesOrder->customer->telepon) && $returPenjualan->salesOrder->customer->telepon)
                         Telp: {{ $returPenjualan->salesOrder->customer->telepon }}<br>
                     @endif
-                    @if(isset($returPenjualan->customer->email) && $returPenjualan->customer->email)
+                    @if (isset($returPenjualan->customer->email) && $returPenjualan->customer->email)
                         Email: {{ $returPenjualan->customer->email }}<br>
                     @elseif(isset($returPenjualan->salesOrder->customer->email) && $returPenjualan->salesOrder->customer->email)
                         Email: {{ $returPenjualan->salesOrder->customer->email }}<br>
                     @endif
-                    @if(isset($returPenjualan->customer->nama_kontak) && $returPenjualan->customer->nama_kontak)
+                    @if (isset($returPenjualan->customer->nama_kontak) && $returPenjualan->customer->nama_kontak)
                         Kontak: {{ $returPenjualan->customer->nama_kontak }}
-                        @if(isset($returPenjualan->customer->no_hp) && $returPenjualan->customer->no_hp)
+                        @if (isset($returPenjualan->customer->no_hp) && $returPenjualan->customer->no_hp)
                             ({{ $returPenjualan->customer->no_hp }})
                         @endif
                     @elseif(isset($returPenjualan->salesOrder->customer->nama_kontak) && $returPenjualan->salesOrder->customer->nama_kontak)
                         Kontak: {{ $returPenjualan->salesOrder->customer->nama_kontak }}
-                        @if(isset($returPenjualan->salesOrder->customer->no_hp) && $returPenjualan->salesOrder->customer->no_hp)
+                        @if (isset($returPenjualan->salesOrder->customer->no_hp) && $returPenjualan->salesOrder->customer->no_hp)
                             ({{ $returPenjualan->salesOrder->customer->no_hp }})
                         @endif
                     @endif
@@ -283,7 +287,7 @@
     <!-- Reference Sales Order Info -->
     <div class="notes-box">
         <strong>Sales Order:</strong> {{ $returPenjualan->salesOrder->nomor ?? '-' }}
-        @if(isset($returPenjualan->salesOrder->tanggal))
+        @if (isset($returPenjualan->salesOrder->tanggal))
             ({{ \Carbon\Carbon::parse($returPenjualan->salesOrder->tanggal)->format('d/m/Y') }})
         @endif
     </div>
@@ -291,7 +295,8 @@
     <!-- Return Type Info -->
     <div class="notes-box">
         <strong>Tipe Retur:</strong>
-        <span style="color: {{ $returPenjualan->tipe_retur === 'pengembalian_dana' ? '#c2410c' : '#7e22ce' }}; font-weight: bold;">
+        <span
+            style="color: {{ $returPenjualan->tipe_retur === 'pengembalian_dana' ? '#c2410c' : '#7e22ce' }}; font-weight: bold;">
             {{ $returPenjualan->tipe_retur === 'pengembalian_dana' ? 'Pengembalian Dana' : 'Tukar Barang' }}
         </span>
     </div>
@@ -303,19 +308,24 @@
             @switch($returPenjualan->alasan)
                 @case('barang_rusak')
                     Barang Rusak
-                    @break
+                @break
+
                 @case('barang_cacat')
                     Barang Cacat
-                    @break
+                @break
+
                 @case('tidak_sesuai_pesanan')
                     Tidak Sesuai Pesanan
-                    @break
+                @break
+
                 @case('kelebihan_pengiriman')
                     Kelebihan Pengiriman
-                    @break
+                @break
+
                 @case('lainnya')
                     Lainnya
-                    @break
+                @break
+
                 @default
                     {{ $returPenjualan->alasan }}
             @endswitch
@@ -378,7 +388,7 @@
                         <td class="text-center">{{ $alasan }}</td>
                     </tr>
                 @endforeach
-                
+
                 <!-- Total Row -->
                 <tr style="background-color: #f8fafc; font-weight: bold;">
                     <td colspan="6" class="text-right"><strong>Total Retur:</strong></td>
@@ -398,12 +408,16 @@
         <tr>
             <td>
                 <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">{{ $returPenjualan->user->name ?? ($returPenjualan->user->nama ?? 'Admin') }}</strong></div>
+                <div><strong
+                        style="color: #2c3e50;">{{ $returPenjualan->user->name ?? ($returPenjualan->user->nama ?? 'Admin') }}</strong>
+                </div>
                 <div style="color: #7f8c8d;">Dibuat Oleh</div>
             </td>
             <td>
                 <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">{{ $returPenjualan->customer->nama ?? ($returPenjualan->salesOrder->customer->nama ?? 'Customer') }}</strong></div>
+                <div><strong
+                        style="color: #2c3e50;">{{ $returPenjualan->customer->nama ?? ($returPenjualan->salesOrder->customer->nama ?? 'Customer') }}</strong>
+                </div>
                 <div style="color: #7f8c8d;">Pelanggan</div>
             </td>
             <td>
@@ -417,7 +431,8 @@
     <!-- Footer -->
     <div class="footer">
         <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB</p>
-        <p>Retur Penjualan {{ $returPenjualan->nomor }} - {{ $returPenjualan->customer->nama ?? ($returPenjualan->salesOrder->customer->nama ?? 'Customer') }}</p>
+        <p>Retur Penjualan {{ $returPenjualan->nomor }} -
+            {{ $returPenjualan->customer->nama ?? ($returPenjualan->salesOrder->customer->nama ?? 'Customer') }}</p>
         <div style="font-size: 9px; color: #aaa; margin-top: 5px;">
             © {{ date('Y') }} PT. SINAR SURYA SEMESTARAYA. All rights reserved.
         </div>

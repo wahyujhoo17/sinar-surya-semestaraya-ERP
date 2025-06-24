@@ -271,7 +271,7 @@ class PurchasingOrderController extends Controller
         $after_discount = max(0, $subtotal - $diskon_nominal);
 
         // Cek apakah PPN diaktifkan (bisa dari request atau default true)
-        $ppn_persen = 11; // default 11%
+        $ppn_persen = setting('tax_percentage', 11); // default from settings
         $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
 
@@ -326,6 +326,13 @@ class PurchasingOrderController extends Controller
                     'diskon_nominal' => $diskon_item,
                     'subtotal' => $item_subtotal,
                 ]);
+
+                // Update harga_beli di model Produk agar selalu relevan
+                $produk = Produk::find($item['produk_id']);
+                if ($produk) {
+                    $produk->harga_beli = $harga;
+                    $produk->save();
+                }
 
                 // Tambahkan ke supplier_produks jika belum ada
                 $exists = SupplierProduk::where('supplier_id', $purchaseOrder->supplier_id)
@@ -460,7 +467,7 @@ class PurchasingOrderController extends Controller
         $diskon_nominal = $validated['diskon_nominal'] ?? 0;
         $diskon_nominal = min($diskon_nominal, $subtotal);
         $after_discount = max(0, $subtotal - $diskon_nominal);
-        $ppn_persen = 11; // default 11%
+        $ppn_persen = setting('tax_percentage', 11); // default from settings
         $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
 
@@ -522,6 +529,13 @@ class PurchasingOrderController extends Controller
                             'diskon_nominal' => $diskon_item,
                             'subtotal' => $item_subtotal,
                         ]);
+
+                    // Update harga_beli di model Produk agar selalu relevan
+                    $produk = Produk::find($item['produk_id']);
+                    if ($produk) {
+                        $produk->harga_beli = $harga;
+                        $produk->save();
+                    }
                 } else {
                     // Create new detail
                     PurchaseOrderDetail::create([
@@ -537,6 +551,13 @@ class PurchasingOrderController extends Controller
                         'diskon_nominal' => $diskon_item,
                         'subtotal' => $item_subtotal,
                     ]);
+
+                    // Update harga_beli di model Produk agar selalu relevan
+                    $produk = Produk::find($item['produk_id']);
+                    if ($produk) {
+                        $produk->harga_beli = $harga;
+                        $produk->save();
+                    }
 
                     // Tambahkan ke supplier_produks jika belum ada
                     $exists = SupplierProduk::where('supplier_id', $purchaseOrder->supplier_id)

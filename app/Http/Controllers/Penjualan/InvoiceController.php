@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+
 class InvoiceController extends Controller
 {
     private function generateNewInvoiceNumber()
@@ -41,7 +42,13 @@ class InvoiceController extends Controller
 
     public function index(Request $request)
     {
-        $query = Invoice::with('customer');
+        $query = null;
+
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+            $query = Invoice::query();
+        } else {
+            $query = Invoice::where('user_id', Auth::id());
+        }
 
         // Check if this is for credit application
         $notaKreditId = $request->filled('nota_kredit_id') ? $request->nota_kredit_id : null;
@@ -60,7 +67,7 @@ class InvoiceController extends Controller
                 $query->whereRaw('(invoice.total - COALESCE(invoice.kredit_terapkan, 0)) > 0');
 
                 // Debug log to verify filter is applied
-                \Illuminate\Support\Facades\Log::info('Filtering invoices for nota kredit', [
+                Log::info('Filtering invoices for nota kredit', [
                     'nota_kredit_id' => $notaKreditId,
                     'customer_id' => $notaKredit->customer_id,
                     'query' => $query->toSql(),

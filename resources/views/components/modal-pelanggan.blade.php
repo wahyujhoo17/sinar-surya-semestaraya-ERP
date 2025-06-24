@@ -145,7 +145,8 @@
                         <div>
                             <label for="sales_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sales</label>
-                            <div x-data="customDropdown()" class="custom-dropdown w-full">
+                            <div x-data="customDropdown()" class="custom-dropdown w-full"
+                                @sales-debug.window="debugAndFixDropdown($event.detail)" x-init="init()">
                                 <div @click="toggleDropdown" @keydown.enter="toggleDropdown" tabindex="0"
                                     class="flex items-center justify-between cursor-pointer custom-dropdown-input bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-white shadow-sm">
                                     <span x-text="selectedOption ? selectedOption.text : 'Pilih Sales'"
@@ -169,7 +170,8 @@
                                     </div>
                                 </div>
                                 <div x-show="isOpen" @click.away="closeDropdown"
-                                    class="custom-dropdown-menu bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600">
+                                    class="custom-dropdown-menu bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                                    style="display: none;">
                                     <div class="p-2">
                                         <input type="text" x-model="searchTerm"
                                             @keydown.escape.prevent="closeDropdown"
@@ -199,7 +201,7 @@
                                     </div>
                                 </div>
                                 <input type="hidden" name="sales_id" :value="selectedOption ? selectedOption.id : ''"
-                                    x-model="selectedValue">
+                                    x-model="selectedValue" id="sales_id_input">
                             </div>
                         </div>
                     </div>
@@ -299,61 +301,23 @@
                     if (data.success) {
                         this.formData.kode = data.code;
                     }
-                } catch (error) {
-                    console.error('Error generating customer code:', error);
-                }
+                } catch (error) {}
             },
             async fetchSalesUsers() {
                 try {
                     const response = await fetch('/master-data/pelanggan/get-sales-users');
                     const data = await response.json();
                     if (data.success) {
-                        this.salesUsers = data.salesUsers;
-                        console.log('Fetched sales users:', this.salesUsers);
-
-                        // Make sure salesUsers have valid ID and name properties
-                        this.salesUsers = this.salesUsers.map(user => ({
-                            id: user.id,
+                        // Normalize sales users data format
+                        this.salesUsers = data.salesUsers.map(user => ({
+                            id: String(user.id), // Ensure ID is string for consistent comparison
                             name: user.name || user.text || `User ${user.id}`
                         }));
 
-                        // Dispatch event for child components to know sales users are available
-                        window.dispatchEvent(new CustomEvent('sales-users-updated', {
-                            detail: {
-                                users: this.salesUsers
-                            }
-                        }));
-                    } else {
-                        console.error('Error in fetchSalesUsers response:', data);
-                    }
-                } catch (error) {
-                    console.error('Error fetching sales users:', error);
-                }
-            },
-            openModal(data = {}) {
-                this.resetForm();
-                if (data.mode === 'edit' && data.customer) {
-                    this.isEdit = true;
-                    this.modalTitle = 'Edit Pelanggan';
-                    this.customerId = data.customer.id;
+                        // Save current sales_id value to preserve selection
+                        const currentSalesId = this.formData.sales_id;
 
-                    // First, set up the sales users if available
-                    if (data.salesUsers && Array.isArray(data.salesUsers)) {
-                        this.salesUsers = data.salesUsers;
-                    } else {
-                        // Fetch sales users if not provided
-                        this.fetchSalesUsers();
-                    }
-
-                    // Then populate form data
-                    Object.assign(this.formData, data.customer);
-
-                    // Notify dropdowns that sales users are available
-                    if (this.salesUsers && this.salesUsers.length) {
-                        console.log('Dispatching sales users in edit mode:', this.salesUsers);
-                        console.log('Current sales_id:', this.formData.sales_id);
-
-                        // Use a small delay to ensure the form data is properly set
+                        // Dispatch event for child components with delay to ensure processing order
                         setTimeout(() => {
                             window.dispatchEvent(new CustomEvent('sales-users-updated', {
                                 detail: {
@@ -361,8 +325,56 @@
                                 }
                             }));
                         }, 50);
+                    } else {}
+                } catch (error) {}
+            },
+            openModal(data = {}) {
+                // Reset form first to clear any previous data
+                this.resetForm();
+
+                // Determine if we're in edit mode
+                if (data.mode === 'edit' && data.customer) {
+                    this.isEdit = true;
+                    this.modalTitle = 'Edit Pelanggan';
+                    this.customerId = data.customer.id;
+                    // First, ensure there's a deep copy of the customer data to prevent reference issues
+                    const customerData = JSON.parse(JSON.stringify(data.customer));
+
+                    // Store the initial sales_id from the customer data
+                    const initialSalesId = customerData.sales_id ? String(customerData.sales_id) : '';
+
+                    // Populate form data with customer data
+                    Object.assign(this.formData, customerData);
+
+                    // Ensure sales_id is properly set as string
+                    this.formData.sales_id = initialSalesId;
+
+                    // Create a global reference to help debugging
+                    window._lastEditSalesId = initialSalesId;
+
+                    // Now, set up the sales users if available or fetch them
+                    if (data.salesUsers && Array.isArray(data.salesUsers)) {
+                        this.salesUsers = data.salesUsers.map(user => ({
+                            id: String(user.id),
+                            name: user.name || user.text || `User ${user.id}`
+                        }));
+                    } else {
+                        // Fetch sales users if not provided
+                        this.fetchSalesUsers();
+                    }
+
+                    // Dispatch sales users event with a delay to ensure form data is set
+                    if (this.salesUsers && this.salesUsers.length) {
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('sales-users-updated', {
+                                detail: {
+                                    users: this.salesUsers
+                                }
+                            }));
+                        }, 200); // Longer delay to ensure dropdown is ready
                     }
                 } else {
+                    // New customer mode
                     this.isEdit = false;
                     this.modalTitle = 'Tambah Pelanggan';
                     this.generateCustomerCode();
@@ -370,14 +382,85 @@
                     // For new customer, fetch sales users list
                     this.fetchSalesUsers();
                 }
-                this.isOpen = true;
-                // Pastikan alamat diupdate
-                this.updateAddress();
 
-                // Dispatch an Alpine initialization event
-                setTimeout(() => {
-                    window.dispatchEvent(new CustomEvent('alpine:initialized'));
-                }, 100);
+                // Implement a staged initialization for better sequence control
+                const initStages = () => {
+                    // Stage 1: Open the modal (immediately)
+                    this.isOpen = true;
+
+                    // For edit mode, ensure the sales_id is set correctly immediately
+                    if (this.isEdit && this.formData.sales_id) {
+                        // Set a global variable to help with debugging
+                        window._currentEditSalesId = String(this.formData.sales_id);
+                    }
+
+                    // Stage 2: Update the address (after 50ms)
+                    setTimeout(() => {
+                        this.updateAddress();
+
+                        // Stage 3: Dispatch Alpine initialization (after 100ms more)
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('alpine:initialized'));
+
+                            // Stage 4: Re-dispatch sales users (after 150ms more)
+                            setTimeout(() => {
+                                if (this.salesUsers && this.salesUsers.length) {
+                                    // Make sure sales_id is still set correctly before dispatching
+                                    if (this.isEdit && window._currentEditSalesId) {
+                                        this.formData.sales_id = window._currentEditSalesId;
+                                    }
+
+                                    // Dispatch the event with the current sales users
+                                    window.dispatchEvent(new CustomEvent(
+                                        'sales-users-updated', {
+                                            detail: {
+                                                users: this.salesUsers,
+                                                selectedId: this.isEdit ? this
+                                                    .formData.sales_id : null
+                                            }
+                                        }));
+
+                                    // For edit mode, dispatch a direct debug trigger after everything else
+                                    if (this.isEdit) {
+                                        setTimeout(() => {
+                                            window.dispatchEvent(new CustomEvent(
+                                                'sales-debug', {
+                                                    detail: {
+                                                        formData: this
+                                                            .formData,
+                                                        salesUsers: this
+                                                            .salesUsers,
+                                                        isEdit: true
+                                                    }
+                                                }));
+                                        }, 300);
+
+                                        // Additional final check with longer delay
+                                        setTimeout(() => {
+                                            if (this.formData.sales_id) {
+                                                window.dispatchEvent(
+                                                    new CustomEvent(
+                                                        'sales-debug', {
+                                                            detail: {
+                                                                formData: this
+                                                                    .formData,
+                                                                salesUsers: this
+                                                                    .salesUsers,
+                                                                isEdit: true,
+                                                                finalCheck: true
+                                                            }
+                                                        }));
+                                            }
+                                        }, 500);
+                                    }
+                                }
+                            }, 150);
+                        }, 100);
+                    }, 50);
+                };
+
+                // Start the staged initialization
+                initStages();
             },
             closeModal() {
                 this.isOpen = false;

@@ -236,12 +236,12 @@
     <div class="container">
         <div class="header clearfix">
             <div class="header-left">
-                <div class="company-name">{{ $invoice->user->company->nama }}</div>
+                <div class="company-name">{{ setting('company_name', 'PT Sinar Surya Semestaraya') }}</div>
                 <div class="company-info">
-                    {{ $invoice->user->company->alamat }}<br>
-                    {{ $invoice->user->company->kota }}, {{ $invoice->user->company->kode_pos }}<br>
-                    Telp: {{ $invoice->user->company->telepon }}<br>
-                    Email: {{ $invoice->user->company->email }}
+                    {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }}<br>
+                    {{ setting('company_city', 'Jakarta Timur') }}, {{ setting('company_postal_code', '13530') }}<br>
+                    Telp: {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
+                    Email: {{ setting('company_email', 'admin@kliksinarsurya.com') }}
                 </div>
             </div>
             <div class="header-right">
@@ -356,7 +356,7 @@
 
                 @if ($invoice->ppn > 0)
                     <div class="total-row">
-                        <div class="total-label">PPN (11%):</div>
+                        <div class="total-label">PPN ({{ setting('tax_percentage', 11) }}%):</div>
                         <div class="total-value">Rp {{ number_format($invoice->ppn, 0, ',', '.') }}</div>
                     </div>
                 @endif

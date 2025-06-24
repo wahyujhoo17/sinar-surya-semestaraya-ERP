@@ -38,7 +38,13 @@ class QuotationController extends Controller
     }
     public function index(Request $request)
     {
-        $query = Quotation::with('customer');
+        $query = null;
+
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+            $query = Quotation::query();
+        } else {
+            $query = Quotation::where('user_id', Auth::id());
+        }
 
         $sort = $request->get('sort', 'tanggal');
         $direction = $request->get('direction', 'desc');
@@ -185,7 +191,7 @@ class QuotationController extends Controller
     public function create()
     {
         // dd('Create Quotation');
-        $customers = Customer::orderBy('nama', 'asc')->get();
+        $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $nomor = $this->generateNewQuotationNumber();

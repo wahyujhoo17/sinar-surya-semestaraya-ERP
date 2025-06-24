@@ -296,12 +296,18 @@
                 <img src="{{ asset('img/Logo.png') }}" alt="Logo Sinar Surya" class="company-logo">
             </div>
             <div class="company-info">
-                <div class="company-name">PT SINAR SURYA SEMESTARAYA</div>
+                <div class="company-name">{{ setting('company_name', 'PT SINAR SURYA SEMESTARAYA') }}</div>
                 <div class="company-address">
-                    Jl. Condet Raya No. 6 Balekambang - Jakarta Timur 13530<br>
-                    Telp. (021) 80876624 - 80876642<br>
-                    E-mail : admin@kliksinarsurya.com - sinar.surya@hotmail.com<br>
-                    sinarsurya.sr@gmail.com
+                    {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }} -
+                    {{ setting('company_city', 'Jakarta Timur') }} {{ setting('company_postal_code', '13530') }}<br>
+                    Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
+                    E-mail : {{ setting('company_email', 'admin@kliksinarsurya.com') }}@if (setting('company_email_2'))
+                        - {{ setting('company_email_2') }}
+                    @endif
+                    <br>
+                    @if (setting('company_email_3'))
+                        {{ setting('company_email_3') }}
+                    @endif
                 </div>
             </div>
         </div>
@@ -407,7 +413,7 @@
                 <div class="signature-box">
                     <div style="height: 80px;"></div>
                     <div class="signature-name">
-                        PT Sinar Surya Semestaraya<br>
+                        {{ setting('company_name', 'PT Sinar Surya Semestaraya') }}<br>
                         ({{ $deliveryOrder->user->name ?? '____________________' }})
                     </div>
                 </div>

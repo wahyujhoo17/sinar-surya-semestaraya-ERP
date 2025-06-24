@@ -112,4 +112,55 @@ class User extends Authenticatable
     {
         return $this->notifications()->whereNull('read_at');
     }
+
+    /**
+     * Get user's photo URL from their karyawan profile
+     */
+    public function getPhotoUrlAttribute()
+    {
+        if ($this->karyawan && $this->karyawan->foto) {
+            return asset('storage/' . $this->karyawan->foto);
+        }
+        return null;
+    }
+
+    /**
+     * Get user's initials from their name
+     */
+    public function getInitialsAttribute()
+    {
+        $words = explode(' ', trim($this->name));
+        $initials = '';
+
+        foreach ($words as $word) {
+            if (!empty($word)) {
+                $initials .= strtoupper(substr($word, 0, 1));
+                if (strlen($initials) >= 2) break; // Limit to 2 initials
+            }
+        }
+
+        return $initials ?: strtoupper(substr($this->name, 0, 1));
+    }
+
+    /**
+     * Get user's display name (karyawan name if available, otherwise user name)
+     */
+    public function getDisplayNameAttribute()
+    {
+        if ($this->karyawan && $this->karyawan->nama_lengkap) {
+            return $this->karyawan->nama_lengkap;
+        }
+        return $this->name;
+    }
+
+    /**
+     * Get user's email for display (karyawan email if available, otherwise user email)
+     */
+    public function getDisplayEmailAttribute()
+    {
+        if ($this->karyawan && $this->karyawan->email) {
+            return $this->karyawan->email;
+        }
+        return $this->email;
+    }
 }

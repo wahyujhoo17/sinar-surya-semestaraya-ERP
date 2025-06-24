@@ -36,7 +36,8 @@
         },
         "files": [
             "app/Helpers/helpers.php",
-            "app/Helpers/ActivityLogHelper.php"
+            "app/Helpers/ActivityLogHelper.php",
+            "app/Helpers/SettingsHelper.php"
         ]
     },
     "autoload-dev": {

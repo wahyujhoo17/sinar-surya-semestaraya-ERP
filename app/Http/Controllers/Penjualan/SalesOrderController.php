@@ -46,7 +46,13 @@ class SalesOrderController extends Controller
 
     public function index(Request $request)
     {
-        $query = SalesOrder::with('customer');
+        $query = null;
+
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+            $query = SalesOrder::query();
+        } else {
+            $query = SalesOrder::where('user_id', Auth::id());
+        }
 
         $sort = $request->get('sort', 'tanggal');
         $direction = $request->get('direction', 'desc');
@@ -201,7 +207,7 @@ class SalesOrderController extends Controller
 
     public function create(Request $request)
     {
-        $customers = Customer::orderBy('nama', 'asc')->get();
+        $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $gudangs = \App\Models\Gudang::orderBy('nama', 'asc')->get();
@@ -365,6 +371,13 @@ class SalesOrderController extends Controller
                 $salesOrderDetail->diskon_nominal = $diskonNominalItem;
                 $salesOrderDetail->subtotal = $subtotalItem;
                 $salesOrderDetail->save();
+
+                // Update harga_jual di model Produk agar selalu relevan
+                $produk = Produk::find($item['produk_id']);
+                if ($produk) {
+                    $produk->harga_jual = $item['harga'];
+                    $produk->save();
+                }
 
                 // Jika opsi check_stock diaktifkan, cek ketersediaan stok
                 if ($request->check_stock && $gudangId) {
@@ -720,6 +733,13 @@ class SalesOrderController extends Controller
                 $salesOrderDetail->diskon_nominal = $diskonNominalItem;
                 $salesOrderDetail->subtotal = $subtotalItem;
                 $salesOrderDetail->save();
+
+                // Update harga_jual di model Produk agar selalu relevan
+                $produk = Produk::find($item['produk_id']);
+                if ($produk) {
+                    $produk->harga_jual = $item['harga'];
+                    $produk->save();
+                }
             }
 
             // Tambahkan log aktivitas untuk update

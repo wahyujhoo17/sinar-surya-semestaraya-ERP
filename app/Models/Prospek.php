@@ -23,6 +23,12 @@ class Prospek extends Model
         return $this->belongsTo(Customer::class, 'customer_id');
     }
 
+    // Relasi dengan user (sales penanggung jawab)
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     // Status prospek
     const STATUS_BARU = 'baru';
     const STATUS_TERTARIK = 'tertarik';

@@ -95,7 +95,8 @@ class Pembelian extends Model
             $entries = [];
 
             // Debit: Persediaan Barang (Total tanpa PPN)
-            $totalBeforeTax = $this->total / 1.11; // Asumsi PPN 11%, sesuaikan jika berbeda
+            $taxRate = (float) setting('tax_percentage', 11) / 100;
+            $totalBeforeTax = $this->total / (1 + $taxRate); // Dynamic tax rate from settings
 
             $entries[] = [
                 'akun_id' => $akunPersediaan,

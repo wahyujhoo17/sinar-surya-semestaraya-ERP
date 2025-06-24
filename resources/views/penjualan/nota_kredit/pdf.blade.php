@@ -208,10 +208,11 @@
             <td>
                 <div class="section-title">Info Perusahaan</div>
                 <div style="padding: 5px;">
-                    <strong>PT SINAR SURYA SEMESTARAYA</strong><br>
-                    Jl. Industri No. 123, Kawasan Industri Pulogadung, Jakarta Timur<br>
-                    Telp: (021) 4567-8901<br>
-                    E-mail: info@sinarsurya.com
+                    <strong>{{ setting('company_name', 'PT SINAR SURYA SEMESTARAYA') }}</strong><br>
+                    {{ setting('company_address', 'Jl. Industri No. 123, Kawasan Industri Pulogadung') }},
+                    {{ setting('company_city', 'Jakarta Timur') }}<br>
+                    Telp: {{ setting('company_phone', '(021) 4567-8901') }}<br>
+                    E-mail: {{ setting('company_email', 'info@sinarsurya.com') }}
                 </div>
             </td>
             <td>

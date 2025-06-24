@@ -592,7 +592,8 @@
                     <div class="flex justify-between items-center p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
                         <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
                             PPN
-                            <span class="ml-1 px-2 py-0.5 text-xs bg-blue-200 dark:bg-blue-800 rounded-full">11%</span>
+                            <span
+                                class="ml-1 px-2 py-0.5 text-xs bg-blue-200 dark:bg-blue-800 rounded-full">{{ setting('tax_percentage', 11) }}%</span>
                         </span>
                         <span class="text-sm font-semibold text-blue-600 dark:text-blue-400">Rp
                             {{ number_format($invoice->ppn, 0, ',', '.') }}</span>

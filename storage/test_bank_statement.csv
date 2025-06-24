@@ -1,0 +1,7 @@
+Tanggal,Keterangan,CBG,Mutasi,Saldo
+10/05/2025,Saldo awal rekening,001,999999999,999999999
+11/05/2025,Transfer keluar ke CV Gilang Pratama,001,-472523,999527476
+14/05/2025,Transfer keluar pembayaran PO,001,-9000000,990527476
+14/05/2025,Transfer keluar pembayaran supplier,001,-1000000,989527476
+26/05/2025,Incoming transfer dari customer,001,1000000,990527476
+30/05/2025,Incoming payment,001,1,990527477

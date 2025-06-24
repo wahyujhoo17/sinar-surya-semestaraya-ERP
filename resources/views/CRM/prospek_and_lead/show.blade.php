@@ -84,6 +84,16 @@
                                     </svg>
                                     {{ $prospek->tanggal_kontak ? date('d F Y', strtotime($prospek->tanggal_kontak)) : 'Belum ada kontak' }}
                                 </div>
+                                @if ($prospek->user)
+                                    <div class="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 flex-shrink-0"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Sales: {{ $prospek->user->name }}
+                                    </div>
+                                @endif
                             </div>
                         </div>
                         <div class="mt-4 md:mt-0 flex-shrink-0 flex space-x-3">
@@ -201,7 +211,53 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <!-- Sales Penanggung Jawab -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Sales Penanggung Jawab</h3>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 dark:text-gray-400"
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <div class="p-6">
+                    @if ($prospek->user)
+                        <div class="flex items-center">
+                            <div
+                                class="w-12 h-12 rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-300 flex items-center justify-center font-semibold text-lg">
+                                {{ strtoupper(substr($prospek->user->name, 0, 1)) }}
+                            </div>
+                            <div class="ml-4">
+                                <h4 class="text-base font-medium text-gray-900 dark:text-white">
+                                    {{ $prospek->user->name }}</h4>
+                                @if ($prospek->user->email)
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $prospek->user->email }}
+                                    </p>
+                                @endif
+                                <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
+                                    <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                                    Bertanggung jawab
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <div class="text-center py-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mx-auto mb-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Belum ada sales yang ditugaskan</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
             <!-- Informasi Kontak -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">

@@ -6,6 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\RedirectResponse;
 
 class ProfileController extends Controller
@@ -16,6 +17,13 @@ class ProfileController extends Controller
     public function edit(Request $request)
     {
         $user = $request->user();
+
+        // Load karyawan with related data
+        $user->load([
+            'karyawan.department',
+            'karyawan.jabatan',
+            'karyawan.user.roles'
+        ]);
 
         $breadcrumbs = [
             ['name' => 'Dashboard', 'url' => route('dashboard')],
@@ -50,6 +58,101 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
+    }
+
+    /**
+     * Update the user's profile photo.
+     */
+    public function updatePhoto(Request $request)
+    {
+        try {
+            $request->validate([
+                'photo' => ['required', 'image', 'mimes:jpeg,png,jpg,gif', 'max:5120'], // max 5MB
+            ]);
+
+            $user = $request->user();
+
+            // Check if user has karyawan profile
+            if (!$user->karyawan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hanya karyawan yang dapat mengubah foto profil.'
+                ], 403);
+            }
+
+            // Delete old photo if exists
+            if ($user->karyawan->foto && Storage::disk('public')->exists($user->karyawan->foto)) {
+                Storage::disk('public')->delete($user->karyawan->foto);
+            }
+
+            // Store new photo
+            $path = $request->file('photo')->store('karyawan/photos', 'public');
+
+            // Update karyawan foto field
+            $user->karyawan->foto = $path;
+            $user->karyawan->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto profil berhasil diperbarui.',
+                'photo_url' => asset('storage/' . $path)
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tidak valid. ' . implode(' ', $e->validator->errors()->all())
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat mengupload foto.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete the user's profile photo.
+     */
+    public function deletePhoto(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Check if user has karyawan profile
+            if (!$user->karyawan) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hanya karyawan yang dapat menghapus foto profil.'
+                ], 403);
+            }
+
+            // Check if photo exists
+            if (!$user->karyawan->foto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada foto untuk dihapus.'
+                ], 404);
+            }
+
+            // Delete photo if exists
+            if (Storage::disk('public')->exists($user->karyawan->foto)) {
+                Storage::disk('public')->delete($user->karyawan->foto);
+            }
+
+            // Remove photo from database
+            $user->karyawan->foto = null;
+            $user->karyawan->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Foto profil berhasil dihapus.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghapus foto.'
+            ], 500);
+        }
     }
 
     /**

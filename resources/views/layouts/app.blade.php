@@ -96,6 +96,9 @@ if (darkMode) {
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Alpine.js Collapse Plugin -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+    <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script>
         if (localStorage.getItem('darkMode') === 'true' ||
@@ -120,7 +123,7 @@ if (darkMode) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title', 'Dashboard') - PT. Sinar Surya Semestaraya</title>
+    <title>@yield('title', 'Dashboard') - {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

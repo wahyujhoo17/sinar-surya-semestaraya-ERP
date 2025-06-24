@@ -87,6 +87,7 @@
                         </div>
                         <div class="mt-4 flex space-x-3">
                             <button type="button"
+                                onclick="window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {account_type: 'bank', account_id: {{ $rekening->id }}}}))"
                                 class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
                                 <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                                     viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -232,424 +233,456 @@
                     </div>
 
                     {{-- Filter & Actions - Modern UI --}}
-                    <form id="filterForm" action="{{ route('keuangan.kas-dan-bank.rekening', $rekening->id) }}"
-                        method="GET" class="w-full sm:w-auto">
-                        <div class="flex flex-wrap gap-3 items-center">
-                            <div class="relative min-w-[160px]">
-                                <select name="jenis" id="jenisFilter"
-                                    class="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 pl-3 pr-8 py-0 w-full hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                    <option value="all" {{ request('jenis', 'all') == 'all' ? 'selected' : '' }}>
-                                        Semua Transaksi</option>
-                                    <option value="masuk" {{ request('jenis') == 'masuk' ? 'selected' : '' }}>
-                                        Transaksi Masuk</option>
-                                    <option value="keluar" {{ request('jenis') == 'keluar' ? 'selected' : '' }}>
-                                        Transaksi Keluar</option>
-                                </select>
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <form id="filterForm" action="{{ route('keuangan.kas-dan-bank.rekening', $rekening->id) }}"
+                            method="GET" class="w-full sm:w-auto">
+                            <div class="flex flex-wrap gap-3 items-center">
+                                <div class="relative min-w-[160px]">
+                                    <select name="jenis" id="jenisFilter"
+                                        class="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 pl-3 pr-8 py-0 w-full hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                        <option value="all"
+                                            {{ request('jenis', 'all') == 'all' ? 'selected' : '' }}>
+                                            Semua Transaksi</option>
+                                        <option value="masuk" {{ request('jenis') == 'masuk' ? 'selected' : '' }}>
+                                            Transaksi Masuk</option>
+                                        <option value="keluar" {{ request('jenis') == 'keluar' ? 'selected' : '' }}>
+                                            Transaksi Keluar</option>
+                                    </select>
 
-                            </div>
-
-                            <div class="relative min-w-[180px]">
-                                <select name="periode" id="periodeSelect"
-                                    class="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 pl-3 pr-8 py-0 w-full hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                                    <option value="30" {{ request('periode', '30') == '30' ? 'selected' : '' }}>30
-                                        Hari Terakhir</option>
-                                    <option value="60" {{ request('periode') == '60' ? 'selected' : '' }}>60 Hari
-                                        Terakhir</option>
-                                    <option value="90" {{ request('periode') == '90' ? 'selected' : '' }}>90 Hari
-                                        Terakhir</option>
-                                    <option value="custom" {{ request('periode') == 'custom' ? 'selected' : '' }}>
-                                        Pilih Rentang Tanggal</option>
-                                    <option value="all" {{ request('periode') == 'all' ? 'selected' : '' }}>Semua
-                                        Waktu</option>
-                                </select>
-
-                            </div>
-
-                            <div id="dateRangePicker"
-                                class="{{ request('periode') == 'custom' || (request('tanggal_mulai') && request('tanggal_akhir')) ? 'flex' : 'hidden' }} space-x-2 items-center"
-                                style="transition: opacity 0.2s ease-in-out; opacity: 1;">
-                                <div class="relative">
-                                    <input type="date" name="tanggal_mulai" id="tanggal_mulai"
-                                        value="{{ request('tanggal_mulai') }}"
-                                        class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 px-3 py-0 w-40 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                                 </div>
-                                <span class="text-gray-500 dark:text-gray-400">-</span>
-                                <div class="relative">
-                                    <input type="date" name="tanggal_akhir" id="tanggal_akhir"
-                                        value="{{ request('tanggal_akhir') }}"
-                                        class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 px-3 py-0 w-40 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+
+                                <div class="relative min-w-[180px]">
+                                    <select name="periode" id="periodeSelect"
+                                        class="appearance-none bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 pl-3 pr-8 py-0 w-full hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                        <option value="30"
+                                            {{ request('periode', '30') == '30' ? 'selected' : '' }}>30
+                                            Hari Terakhir</option>
+                                        <option value="60" {{ request('periode') == '60' ? 'selected' : '' }}>60
+                                            Hari
+                                            Terakhir</option>
+                                        <option value="90" {{ request('periode') == '90' ? 'selected' : '' }}>90
+                                            Hari
+                                            Terakhir</option>
+                                        <option value="custom" {{ request('periode') == 'custom' ? 'selected' : '' }}>
+                                            Pilih Rentang Tanggal</option>
+                                        <option value="all" {{ request('periode') == 'all' ? 'selected' : '' }}>
+                                            Semua
+                                            Waktu</option>
+                                    </select>
+
                                 </div>
-                            </div>
 
-                            <div class="flex space-x-2">
-                                <button type="button" id="filterButton"
-                                    class="flex items-center justify-center h-10 px-4 py-2 bg-primary-600 text-white rounded-md shadow hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                                    <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                    </svg>
-                                    Filter
-                                </button>
-
-                                <button type="button" id="resetButton"
-                                    class="flex items-center justify-center h-10 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                                    <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                                    </svg>
-                                    Reset
-                                </button>
-                                <button type="button" id="printButton"
-                                    class="flex items-center justify-center h-10 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                                    <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
-                                    </svg>
-                                    Cetak
-                                </button>
-
-                                <!-- Filter Keyboard Shortcuts Help -->
-                                <div class="relative group">
-                                    <button type="button"
-                                        class="flex items-center justify-center h-10 w-10 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                                        </svg>
-                                    </button>
-                                    <div
-                                        class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-700 transform opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
-                                        <h5
-                                            class="text-sm font-semibold text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-gray-700 pb-1">
-                                            Pintasan Keyboard</h5>
-                                        <ul class="space-y-2 text-xs">
-                                            <li class="flex justify-between">
-                                                <span class="text-gray-600 dark:text-gray-300">Terapkan filter</span>
-                                                <span
-                                                    class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Enter</span>
-                                            </li>
-                                            <li class="flex justify-between">
-                                                <span class="text-gray-600 dark:text-gray-300">Reset filter</span>
-                                                <span
-                                                    class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Esc</span>
-                                            </li>
-                                        </ul>
+                                <div id="dateRangePicker"
+                                    class="{{ request('periode') == 'custom' || (request('tanggal_mulai') && request('tanggal_akhir')) ? 'flex' : 'hidden' }} space-x-2 items-center"
+                                    style="transition: opacity 0.2s ease-in-out; opacity: 1;">
+                                    <div class="relative">
+                                        <input type="date" name="tanggal_mulai" id="tanggal_mulai"
+                                            value="{{ request('tanggal_mulai') }}"
+                                            class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 px-3 py-0 w-40 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                    </div>
+                                    <span class="text-gray-500 dark:text-gray-400">-</span>
+                                    <div class="relative">
+                                        <input type="date" name="tanggal_akhir" id="tanggal_akhir"
+                                            value="{{ request('tanggal_akhir') }}"
+                                            class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md h-10 px-3 py-0 w-40 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
                                     </div>
                                 </div>
-                            </div>
 
-                            {{-- Advanced filters removed --}}
-                    </form>
+                                <div class="flex space-x-2">
+                                    <button type="button" id="filterButton"
+                                        class="flex items-center justify-center h-10 px-4 py-2 bg-primary-600 text-white rounded-md shadow hover:bg-primary-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                        <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                        </svg>
+                                        Filter
+                                    </button>
+
+                                    <button type="button" id="resetButton"
+                                        class="flex items-center justify-center h-10 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                        <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                        </svg>
+                                        Reset
+                                    </button>
+                                    <button type="button" id="printButton"
+                                        class="flex items-center justify-center h-10 px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md shadow hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                        <svg class="mr-2 -ml-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" />
+                                        </svg>
+                                        Cetak
+                                    </button>
+
+                                    <!-- Filter Keyboard Shortcuts Help -->
+                                    <div class="relative group">
+                                        <button type="button"
+                                            class="flex items-center justify-center h-10 w-10 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                class="w-5 h-5">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                                            </svg>
+                                        </button>
+                                        <div
+                                            class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-700 transform opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50">
+                                            <h5
+                                                class="text-sm font-semibold text-gray-900 dark:text-white mb-2 border-b border-gray-200 dark:border-gray-700 pb-1">
+                                                Pintasan Keyboard</h5>
+                                            <ul class="space-y-2 text-xs">
+                                                <li class="flex justify-between">
+                                                    <span class="text-gray-600 dark:text-gray-300">Terapkan
+                                                        filter</span>
+                                                    <span
+                                                        class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Enter</span>
+                                                </li>
+                                                <li class="flex justify-between">
+                                                    <span class="text-gray-600 dark:text-gray-300">Reset filter</span>
+                                                    <span
+                                                        class="font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded">Esc</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Advanced filters removed --}}
+                        </form>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        {{-- Transactions --}}
-        <div
-            class="bg-white dark:bg-gray-800 shadow rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 relative">
+            {{-- Transactions --}}
+            <div
+                class="bg-white dark:bg-gray-800 shadow rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 relative">
 
-            {{-- Loading Overlay for Table --}}
-            <div id="tableLoadingOverlay"
-                class="hidden absolute inset-0 bg-gray-200/50 dark:bg-gray-900/60 items-center justify-center z-10 rounded-xl backdrop-blur-sm">
-                <div
-                    class="flex flex-col items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                {{-- Loading Overlay for Table --}}
+                <div id="tableLoadingOverlay"
+                    class="hidden absolute inset-0 bg-gray-200/50 dark:bg-gray-900/60 items-center justify-center z-10 rounded-xl backdrop-blur-sm">
                     <div
-                        class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 dark:border-primary-500">
+                        class="flex flex-col items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                        <div
+                            class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-600 dark:border-primary-500">
+                        </div>
+                        <span class="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat data...</span>
                     </div>
-                    <span class="mt-4 text-gray-700 dark:text-gray-300 font-medium">Sedang memuat data...</span>
                 </div>
-            </div>
 
-            <div id="tableContent">
-                @if ($transaksi->isEmpty())
-                    <div class="flex flex-col items-center justify-center py-16">
-                        <div class="bg-gray-50 dark:bg-gray-700/30 rounded-full p-4 mb-6">
-                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-600" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Belum ada transaksi</h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6 max-w-sm text-center">
-                            Belum ada transaksi yang tercatat pada rekening ini. Tambahkan transaksi untuk mulai
-                            mencatat aliran dana rekening.
-                        </p>
-                        <div>
-                            <button type="button"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-all duration-200 transform hover:-translate-y-0.5">
-                                <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                <div id="tableContent">
+                    @if ($transaksi->isEmpty())
+                        <div class="flex flex-col items-center justify-center py-16">
+                            <div class="bg-gray-50 dark:bg-gray-700/30 rounded-full p-4 mb-6">
+                                <svg class="w-16 h-16 text-gray-400 dark:text-gray-600"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                 </svg>
-                                Tambah Transaksi Baru
-                            </button>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Belum ada transaksi</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 mb-6 max-w-sm text-center">
+                                Belum ada transaksi yang tercatat pada rekening ini. Tambahkan transaksi untuk mulai
+                                mencatat aliran dana rekening.
+                            </p>
+                            <div>
+                                <button type="button"
+                                    onclick="window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {account_type: 'bank', account_id: {{ $rekening->id }}}}))"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-all duration-200 transform hover:-translate-y-0.5">
+                                    <svg class="mr-2 -ml-1 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                                    </svg>
+                                    Tambah Transaksi Baru
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Tanggal
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        No. Referensi
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Keterangan
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Dokumen Terkait
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Jenis
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Jumlah
-                                    </th>
-                                    <th scope="col"
-                                        class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
-                                        Aksi
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-                                @foreach ($transaksi as $trx)
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-all duration-150 ease-in-out cursor-pointer hover:shadow-sm relative transform hover:scale-[1.01]"
-                                        onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
-                                                {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
-                                            </div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                {{ \Carbon\Carbon::parse($trx->created_at)->format('H:i') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-900 dark:text-gray-200 font-medium">
-                                                {{ $trx->no_referensi }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <div class="text-sm text-gray-900 dark:text-gray-200 line-clamp-2">
-                                                {{ $trx->keterangan }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                @if ($trx->related_id && $trx->related_type)
-                                                    <a href="{{ $trx->jenis == 'masuk' ? route('keuangan.piutang-usaha.show', $trx->related_id) : route('keuangan.hutang-usaha.show', $trx->related_id) }}"
-                                                        class="inline-flex items-center text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 hover:underline transition-colors">
+                    @else
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Tanggal
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            No. Referensi
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Keterangan
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Dokumen Terkait
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Jenis
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Jumlah
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Aksi
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                                    @foreach ($transaksi as $trx)
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-all duration-150 ease-in-out cursor-pointer hover:shadow-sm relative transform hover:scale-[1.01]"
+                                            onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
+                                                    {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                    {{ \Carbon\Carbon::parse($trx->created_at)->format('H:i') }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900 dark:text-gray-200 font-medium">
+                                                    {{ $trx->no_referensi }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <div class="text-sm text-gray-900 dark:text-gray-200 line-clamp-2">
+                                                    {{ $trx->keterangan }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                    @if ($trx->related_id && $trx->related_type)
+                                                        <a href="{{ $trx->jenis == 'masuk' ? route('keuangan.piutang-usaha.show', $trx->related_id) : route('keuangan.hutang-usaha.show', $trx->related_id) }}"
+                                                            class="inline-flex items-center text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 hover:underline transition-colors">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 20 20" fill="currentColor"
+                                                                class="w-4 h-4 mr-1">
+                                                                <path fill-rule="evenodd"
+                                                                    d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.5a.75.75 0 011.064 1.057l-.498.501-.002.002a4.5 4.5 0 01-6.364-6.364l7-7a4.5 4.5 0 016.368 6.36l-3.455 3.553A2.625 2.625 0 119.52 9.52l3.45-3.451a.75.75 0 111.061 1.06l-3.45 3.451a1.125 1.125 0 001.587 1.595l3.454-3.553a3 3 0 000-4.242z"
+                                                                    clip-rule="evenodd" />
+                                                            </svg>
+                                                            {{ class_basename($trx->related_type) }}
+
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-400 dark:text-gray-500">-</span>
+                                                    @endif
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                                @if ($trx->jenis == 'masuk')
+                                                    <span
+                                                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
                                                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                            fill="currentColor" class="w-4 h-4 mr-1">
+                                                            fill="currentColor" class="w-3.5 h-3.5 mr-1">
                                                             <path fill-rule="evenodd"
-                                                                d="M15.621 4.379a3 3 0 00-4.242 0l-7 7a3 3 0 004.241 4.243h.001l.497-.5a.75.75 0 011.064 1.057l-.498.501-.002.002a4.5 4.5 0 01-6.364-6.364l7-7a4.5 4.5 0 016.368 6.36l-3.455 3.553A2.625 2.625 0 119.52 9.52l3.45-3.451a.75.75 0 111.061 1.06l-3.45 3.451a1.125 1.125 0 001.587 1.595l3.454-3.553a3 3 0 000-4.242z"
+                                                                d="M1.22 5.222a.75.75 0 011.06 0L7 9.942l3.768-3.769a.75.75 0 011.113.058 20.908 20.908 0 013.813 7.254l1.574-2.727a.75.75 0 011.3.75l-2.475 4.286a.75.75 0 01-1.025.275l-4.287-2.475a.75.75 0 01.75-1.3l2.71 1.565a19.422 19.422 0 00-3.013-6.024L7.53 11.533a.75.75 0 01-1.06 0l-5.25-5.25a.75.75 0 010-1.06z"
                                                                 clip-rule="evenodd" />
                                                         </svg>
-                                                        {{ class_basename($trx->related_type) }}
-
-                                                    </a>
+                                                        Masuk
+                                                    </span>
                                                 @else
-                                                    <span class="text-gray-400 dark:text-gray-500">-</span>
+                                                    <span
+                                                        class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                            fill="currentColor" class="w-3.5 h-3.5 mr-1">
+                                                            <path fill-rule="evenodd"
+                                                                d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.061l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042-.815a.75.75 0 01-.53-.919z"
+                                                                clip-rule="evenodd" />
+                                                        </svg>
+
+                                                        Keluar
+                                                    </span>
                                                 @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            @if ($trx->jenis == 'masuk')
-                                                <span
-                                                    class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                        fill="currentColor" class="w-3.5 h-3.5 mr-1">
-                                                        <path fill-rule="evenodd"
-                                                            d="M1.22 5.222a.75.75 0 011.06 0L7 9.942l3.768-3.769a.75.75 0 011.113.058 20.908 20.908 0 013.813 7.254l1.574-2.727a.75.75 0 011.3.75l-2.475 4.286a.75.75 0 01-1.025.275l-4.287-2.475a.75.75 0 01.75-1.3l2.71 1.565a19.422 19.422 0 00-3.013-6.024L7.53 11.533a.75.75 0 01-1.06 0l-5.25-5.25a.75.75 0 010-1.06z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
-                                                    Masuk
-                                                </span>
-                                            @else
-                                                <span
-                                                    class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                        fill="currentColor" class="w-3.5 h-3.5 mr-1">
-                                                        <path fill-rule="evenodd"
-                                                            d="M12.577 4.878a.75.75 0 01.919-.53l4.78 1.281a.75.75 0 01.531.919l-1.281 4.78a.75.75 0 01-1.449-.387l.81-3.022a19.407 19.407 0 00-5.594 5.203.75.75 0 01-1.139.093L7 10.06l-4.72 4.72a.75.75 0 01-1.06-1.061l5.25-5.25a.75.75 0 011.06 0l3.074 3.073a20.923 20.923 0 015.545-4.931l-3.042-.815a.75.75 0 01-.53-.919z"
-                                                            clip-rule="evenodd" />
-                                                    </svg>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                                <div
+                                                    class="text-sm font-medium {{ $trx->jenis == 'masuk' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                                    {{ $trx->jenis == 'masuk' ? '+' : '-' }} Rp
+                                                    {{ number_format($trx->jumlah, 0, ',', '.') }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right">
+                                                <div class="flex justify-end space-x-2">
+                                                    <a href="#"
+                                                        class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 rounded-full p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                                                        onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')"
+                                                        title="Detail">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24" stroke-width="1.5"
+                                                            stroke="currentColor" class="w-5 h-5">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
 
-                                                    Keluar
-                                                </span>
-                                            @endif
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                                            <div
-                                                class="text-sm font-medium {{ $trx->jenis == 'masuk' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
-                                                {{ $trx->jenis == 'masuk' ? '+' : '-' }} Rp
-                                                {{ number_format($trx->jumlah, 0, ',', '.') }}
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right">
-                                            <div class="flex justify-end space-x-2">
-                                                <a href="#"
-                                                    class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 rounded-full p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                                                    onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')"
-                                                    title="Detail">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
-                                                        class="w-5 h-5">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {{-- Pagination --}}
-                    <div
-                        class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
-                        {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
-                    </div>
-                @endif
+                        {{-- Pagination --}}
+                        <div
+                            class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+                            {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Transaction Detail Modal -->
-    <div id="transactionDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title"
-        role="dialog" aria-modal="true">
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <!-- Background overlay -->
-            <div id="modal-backdrop"
-                class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity backdrop-blur-sm"
-                onclick="closeTransactionDetail()"></div>
+        <!-- Transaction Detail Modal -->
+        <div id="transactionDetailModal" class="hidden fixed inset-0 z-50 overflow-y-auto"
+            aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <!-- Background overlay -->
+                <div id="modal-backdrop"
+                    class="fixed inset-0 bg-gray-500 bg-opacity-75 dark:bg-gray-900 dark:bg-opacity-75 transition-opacity backdrop-blur-sm"
+                    onclick="closeTransactionDetail()"></div>
 
-            <!-- Modal positioning trick -->
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <!-- Modal positioning trick -->
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
 
-            <!-- Modal panel -->
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
-                tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-                <div class="absolute top-0 right-0 pt-4 pr-4">
-                    <button type="button" onclick="closeTransactionDetail()"
-                        class="bg-white dark:bg-gray-800 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
-                        <span class="sr-only">Close</span>
-                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+                <!-- Modal panel -->
+                <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50"
+                    tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                    <div class="absolute top-0 right-0 pt-4 pr-4">
+                        <button type="button" onclick="closeTransactionDetail()"
+                            class="bg-white dark:bg-gray-800 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800">
+                            <span class="sr-only">Close</span>
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
-                <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                    <div class="sm:flex sm:items-start">
-                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10"
-                            id="transaction-icon-container">
-                            <!-- Icon will be set by JavaScript -->
-                        </div>
-                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
-                                id="transaction-title">
-                                Detail Transaksi
-                            </h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-500 dark:text-gray-400" id="transaction-subtitle">
-                                    <!-- Will be set by JavaScript -->
-                                </p>
+                    <div class="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10"
+                                id="transaction-icon-container">
+                                <!-- Icon will be set by JavaScript -->
+                            </div>
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                                    id="transaction-title">
+                                    Detail Transaksi
+                                </h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" id="transaction-subtitle">
+                                        <!-- Will be set by JavaScript -->
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="border-t border-gray-200 dark:border-gray-700">
-                    <dl class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                No. Referensi
-                            </dt>
-                            <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-reference">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Tanggal
-                            </dt>
-                            <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-date">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Jenis Transaksi
-                            </dt>
-                            <dd class="text-sm col-span-2" id="detail-type">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Jumlah
-                            </dt>
-                            <dd class="text-sm font-semibold col-span-2" id="detail-amount">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Keterangan
-                            </dt>
-                            <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-description">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6" id="related-document-container">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Dokumen Terkait
-                            </dt>
-                            <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-related">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                        <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                Dibuat Pada
-                            </dt>
-                            <dd class="text-sm text-gray-500 dark:text-gray-400 col-span-2" id="detail-created">
-                                <!-- Will be set by JavaScript -->
-                            </dd>
-                        </div>
-                    </dl>
-                </div>
+                    <div class="border-t border-gray-200 dark:border-gray-700">
+                        <dl class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    No. Referensi
+                                </dt>
+                                <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-reference">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Tanggal
+                                </dt>
+                                <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-date">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Jenis Transaksi
+                                </dt>
+                                <dd class="text-sm col-span-2" id="detail-type">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Jumlah
+                                </dt>
+                                <dd class="text-sm font-semibold col-span-2" id="detail-amount">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Keterangan
+                                </dt>
+                                <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-description">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6" id="related-document-container">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Dokumen Terkait
+                                </dt>
+                                <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-related">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Dibuat Pada
+                                </dt>
+                                <dd class="text-sm text-gray-500 dark:text-gray-400 col-span-2" id="detail-created">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
 
-                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                    <button type="button"
-                        class="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:w-auto sm:text-sm"
-                        onclick="closeTransactionDetail()">
-                        Tutup
-                    </button>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="button"
+                            class="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 sm:w-auto sm:text-sm"
+                            onclick="closeTransactionDetail()">
+                            Tutup
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+
+        {{-- Include Transaction Modal --}}
+        @include('keuangan.kas_dan_bank.modal-transaksi')
+
+        {{-- Initialize Transaction Modal --}}
+        <script>
+            // Initialize modal when Alpine.js is loaded        document.addEventListener('alpine:init', () => {
+            const initModal = () => {
+                if (typeof window.modalTransaksiManager === 'function') {
+                    window.modalTransaksi = window.modalTransaksiManager();
+                    console.log('Transaction modal initialized successfully in detail rekening');
+                } else {
+                    setTimeout(initModal, 100);
+                }
+            };
+            initModal();
+            });
+        </script>
 </x-app-layout>
 
 {{-- JavaScript untuk menampilkan date range picker dan handling AJAX loading --}}

@@ -631,9 +631,10 @@
                                     <input type="checkbox" id="include_ppn" x-model="includePPN"
                                         @change="calculateTotal()"
                                         class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
-                                    <input type="hidden" name="ppn" :value="includePPN ? 11 : 0">
+                                    <input type="hidden" name="ppn"
+                                        :value="includePPN ? {{ setting('tax_percentage', 11) }} : 0">
                                     <span class="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">Include PPN
-                                        (11%)</span>
+                                        ({{ setting('tax_percentage', 11) }}%)</span>
                                 </label>
                                 <span class="text-sm font-semibold text-blue-600 dark:text-blue-400"
                                     x-text="includePPN ? formatRupiah(calculateTotal().ppnNominal) : 'Rp 0'"></span>
@@ -1414,7 +1415,7 @@
 
                         const afterDiscount = subtotal - diskonGlobalNominal;
                         const ongkosKirimValue = parseFloat(this.ongkosKirim) || 0;
-                        const ppnNominal = this.includePPN ? (11 / 100) * afterDiscount : 0;
+                        const ppnNominal = this.includePPN ? ({{ setting('tax_percentage', 11) }} / 100) * afterDiscount : 0;
                         const total = afterDiscount + ppnNominal + ongkosKirimValue;
 
                         // Update reactive properties for display

@@ -12,9 +12,12 @@ use App\Http\Controllers\MasterData\SatuanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\HakAksesController;
+use App\Http\Controllers\ManagementPenggunaController;
 use App\Http\Controllers\Pembelian\PermintaanPembelianController;
 use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
+use App\Http\Controllers\hr_karyawan\StrukturOrganisasiController;
+use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\Inventaris\StokBarangController;
 use App\Http\Controllers\Inventaris\PermintaanBarangController;
 use App\Http\Controllers\Pembelian\PenerimaanBarangController;
@@ -24,11 +27,14 @@ use App\Http\Controllers\Laporan\LaporanStokController;
 use App\Http\Controllers\Laporan\LaporanPembelianController;
 use App\Http\Controllers\Laporan\LaporanPenjualanController;
 use App\Http\Controllers\Laporan\LaporanProduksiController;
+use App\Http\Controllers\Laporan\LaporanKeuanganController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
 use App\Http\Controllers\Keuangan\PiutangUsahaController; // Import PiutangUsahaController
 use App\Http\Controllers\Keuangan\PembayaranPiutangController; // Import PembayaranPiutangController
+use App\Http\Controllers\Keuangan\ManagementPajakController;
+use App\Http\Controllers\Keuangan\RekonsiliasiBankController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
@@ -46,6 +52,8 @@ use App\Http\Controllers\Penjualan\NotaKreditController;
 use App\Http\Controllers\Penjualan\RiwayatTransaksiPenjualanController;
 use App\Http\Controllers\CRM\ProspekLeadController;
 use App\Http\Controllers\CRM\ProspekAktivitasController;
+use App\Http\Controllers\Pengaturan\LogAktivitasController;
+use App\Http\Controllers\Pengaturan\PengaturanUmumController;
 
 
 /*
@@ -58,6 +66,13 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
+// Test routes without auth for debugging
+Route::get('test-financial', [LaporanKeuanganController::class, 'index'])->name('test.financial.index');
+Route::get('test-financial/balance-sheet', [LaporanKeuanganController::class, 'getBalanceSheet'])->name('test.financial.balance-sheet');
+Route::get('test-financial/income-statement', [LaporanKeuanganController::class, 'getIncomeStatement'])->name('test.financial.income-statement');
+Route::get('test-financial/cash-flow', [LaporanKeuanganController::class, 'getCashFlow'])->name('test.financial.cash-flow');
+Route::get('test-financial/validate/operating-expenses', [LaporanKeuanganController::class, 'validateOperatingExpenses'])->name('test.financial.validate.operating-expenses');
+Route::get('test-financial/expense-category/{category}', [LaporanKeuanganController::class, 'getExpenseCategoryDetail'])->name('test.financial.expense-category.detail');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -65,6 +80,8 @@ Route::middleware(['auth'])->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
 
     // Notifications routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
@@ -76,6 +93,31 @@ Route::middleware(['auth'])->group(function () {
     // Pengaturan Hak Akses
     Route::get('/pengaturan/hak-akses', [HakAksesController::class, 'index'])->name('pengaturan.hak-akses.index');
     Route::post('/pengaturan/hak-akses', [HakAksesController::class, 'update'])->name('pengaturan.hak-akses.update');
+
+    // Pengaturan Umum
+    Route::get('/pengaturan/umum', [PengaturanUmumController::class, 'index'])->name('pengaturan.umum');
+    Route::post('/pengaturan/umum', [PengaturanUmumController::class, 'update'])->name('pengaturan.umum.update');
+
+    // Management Pengguna
+    Route::prefix('pengaturan')->name('pengaturan.')->group(function () {
+        Route::delete('management-pengguna/bulk-destroy', [ManagementPenggunaController::class, 'bulkDestroy'])->name('management-pengguna.bulk-destroy');
+        Route::patch('management-pengguna/{user}/toggle-status', [ManagementPenggunaController::class, 'toggleStatus'])->name('management-pengguna.toggle-status');
+        Route::patch('management-pengguna/{user}/reset-password', [ManagementPenggunaController::class, 'resetPassword'])->name('management-pengguna.reset-password');
+
+        // Role management routes
+        Route::get('management-pengguna/roles', [ManagementPenggunaController::class, 'getRoles'])->name('management-pengguna.roles');
+        Route::post('management-pengguna/roles', [ManagementPenggunaController::class, 'storeRole'])->name('management-pengguna.roles.store');
+        Route::put('management-pengguna/roles/{role}', [ManagementPenggunaController::class, 'updateRole'])->name('management-pengguna.roles.update');
+        Route::delete('management-pengguna/roles/{role}', [ManagementPenggunaController::class, 'destroyRole'])->name('management-pengguna.roles.destroy');
+
+        Route::resource('management-pengguna', ManagementPenggunaController::class);
+
+        // Log Aktivitas Routes
+        Route::get('log-aktivitas/export', [LogAktivitasController::class, 'export'])->name('log-aktivitas.export');
+        Route::post('log-aktivitas/bulk-delete', [LogAktivitasController::class, 'bulkDelete'])->name('log-aktivitas.bulk-delete');
+        Route::post('log-aktivitas/cleanup', [LogAktivitasController::class, 'cleanOldLogs'])->name('log-aktivitas.cleanup');
+        Route::resource('log-aktivitas', LogAktivitasController::class)->only(['index', 'show']);
+    });
 
     // --- Master Data Group ---
     Route::prefix('master-data')->name('master.')->group(function () {
@@ -335,8 +377,43 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('hr')->name('hr.')->group(function () {
         Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
         Route::resource('karyawan', DataKaryawanController::class);
-        // Add other HR routes here if needed
+
+        // Struktur Organisasi routes
+        Route::get('struktur-organisasi/department/{id}', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'getDepartmentDetails'])->name('struktur-organisasi.department');
+        Route::get('struktur-organisasi', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'index'])->name('struktur-organisasi.index');
+
+        // Department CRUD routes
+        Route::post('struktur-organisasi/departments', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'storeDepartment'])->name('struktur-organisasi.departments.store');
+        Route::put('struktur-organisasi/departments/{id}', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'updateDepartment'])->name('struktur-organisasi.departments.update');
+        Route::delete('struktur-organisasi/departments/{id}', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'deleteDepartment'])->name('struktur-organisasi.departments.delete');
+
+        // Jabatan CRUD routes  
+        Route::post('jabatan', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'storeJabatan'])->name('jabatan.store');
+        Route::put('jabatan/{id}', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'updateJabatan'])->name('jabatan.update');
+        Route::delete('jabatan/{id}', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'deleteJabatan'])->name('jabatan.delete');
+
+        // Employees API route
+        Route::get('karyawan/api/employees', [App\Http\Controllers\hr_karyawan\StrukturOrganisasiController::class, 'getAvailableEmployees'])->name('karyawan.api.employees');
+
+        // Absensi & Kehadiran routes
+        Route::get('absensi/export-excel', [AbsensiController::class, 'exportExcel'])->name('absensi.export-excel');
+        Route::get('absensi/export-pdf', [AbsensiController::class, 'exportPdf'])->name('absensi.export-pdf');
+        Route::post('absensi/import', [AbsensiController::class, 'import'])->name('absensi.import');
+        Route::get('absensi/departemen', [AbsensiController::class, 'getDepartemen'])->name('absensi.departemen');
+        Route::resource('absensi', AbsensiController::class);
+
+        // API routes for kas and rekening bank transactions
+        Route::get('/api/kas/{id}/transaksi', [App\Http\Controllers\Keuangan\KasDanBankController::class, 'getKasTransaksi'])->name('api.kas.transaksi');
+        Route::get('/api/rekening/{id}/transaksi', [App\Http\Controllers\Keuangan\KasDanBankController::class, 'getRekeningTransaksi'])->name('api.rekening.transaksi');
+
+        // Penggajian routes
+        Route::post('penggajian/get-komisi', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'getKomisiKaryawan'])->name('penggajian.get-komisi');
+        Route::post('penggajian/{id}/approve', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'approve'])->name('penggajian.approve');
+        Route::post('penggajian/{id}/process-payment', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'processPayment'])->name('penggajian.process-payment');
+        Route::resource('penggajian', App\Http\Controllers\hr_karyawan\PenggajianController::class);
     });
+
+
 
     // -- Keuangan --
     Route::prefix('keuangan')->name('keuangan.')->group(function () {
@@ -361,6 +438,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kas-dan-bank/rekening', [KasDanBankController::class, 'storeRekening'])->name('kas-dan-bank.store-rekening');
         Route::put('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'updateRekening'])->name('kas-dan-bank.update-rekening');
         Route::delete('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'destroyRekening'])->name('kas-dan-bank.destroy-rekening');
+
+        // Transaksi Routes
+        Route::post('/kas-dan-bank/transaksi/store', [KasDanBankController::class, 'storeTransaksi'])->name('kas-dan-bank.store-transaksi');
 
         // Hutang Usaha Routes
         Route::get('hutang-usaha', [HutangUsahaController::class, 'index'])->name('hutang-usaha.index');
@@ -392,6 +472,39 @@ Route::middleware(['auth'])->group(function () {
         Route::get('pengembalian-dana/get-po-data', [\App\Http\Controllers\Keuangan\PengembalianDanaController::class, 'getPurchaseOrderData'])->name('pengembalian-dana.get-po-data');
         Route::get('pengembalian-dana/data', [\App\Http\Controllers\Keuangan\PengembalianDanaController::class, 'data'])->name('pengembalian-dana.data');
         Route::resource('pengembalian-dana', \App\Http\Controllers\Keuangan\PengembalianDanaController::class);
+
+        // Management Pajak Routes
+        Route::post('management-pajak/auto-report', [ManagementPajakController::class, 'generateAutoReport'])->name('management-pajak.auto-report');
+        Route::post('management-pajak/{id}/finalize', [ManagementPajakController::class, 'finalize'])->name('management-pajak.finalize');
+        Route::get('management-pajak/{id}/export-pdf', [ManagementPajakController::class, 'exportPdf'])->name('management-pajak.export-pdf');
+        Route::resource('management-pajak', ManagementPajakController::class);
+
+        // Rekonsiliasi Bank Routes
+        Route::get('rekonsiliasi', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'index'])->name('rekonsiliasi.index');
+        // Put specific routes before the {id} parameter route to avoid conflicts
+        Route::get('rekonsiliasi/erp-transactions', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getErpTransactions'])->name('rekonsiliasi.erp-transactions');
+        Route::get('rekonsiliasi/balance/rekening', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getRekeningBalance'])->name('rekonsiliasi.rekening-balance');
+        Route::get('rekonsiliasi/history/data', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getReconciliationHistory'])->name('rekonsiliasi.history');
+        Route::get('rekonsiliasi/list/data', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getReconciliationList'])->name('rekonsiliasi.list');
+        Route::get('rekonsiliasi/stats', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getReconciliationStats'])->name('rekonsiliasi.stats');
+        Route::get('rekonsiliasi/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'show'])->name('rekonsiliasi.show');
+        Route::post('rekonsiliasi/save', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'saveReconciliation'])->name('rekonsiliasi.save');
+        Route::post('rekonsiliasi/auto-match', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'autoMatch'])->name('rekonsiliasi.auto-match');
+        Route::post('rekonsiliasi/process-statement', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'processStatement'])->name('rekonsiliasi.process-statement');
+
+        // Enhanced Bank Statement Processing Routes
+        Route::post('rekonsiliasi/upload-statement', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'uploadBankStatement'])->name('rekonsiliasi.upload-statement');
+        Route::post('rekonsiliasi/add-manual-transaction', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'addManualBankTransaction'])->name('rekonsiliasi.add-manual-transaction');
+        Route::post('rekonsiliasi/enhanced-auto-match', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'enhancedAutoMatch'])->name('rekonsiliasi.enhanced-auto-match');
+        Route::post('rekonsiliasi/bulk-match', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'bulkMatchTransactions'])->name('rekonsiliasi.bulk-match');
+        Route::get('rekonsiliasi/export/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliationReport'])->name('rekonsiliasi.export');
+        Route::post('rekonsiliasi/approve/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'approveReconciliation'])->name('rekonsiliasi.approve');
+        Route::post('rekonsiliasi/reject/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'rejectReconciliation'])->name('rekonsiliasi.reject');
+        Route::post('rekonsiliasi/export-report', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export-report');
+        Route::post('rekonsiliasi/{id}/approve', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'approveReconciliation'])->name('rekonsiliasi.approve');
+        Route::post('rekonsiliasi/{id}/reject', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'rejectReconciliation'])->name('rekonsiliasi.reject');
+        Route::get('rekonsiliasi/{id}/export', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export');
+        Route::post('rekonsiliasi/export', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export-data');
     });
 
     // -- Laporan --
@@ -426,6 +539,18 @@ Route::middleware(['auth'])->group(function () {
         Route::get('produksi/export/pdf', [LaporanProduksiController::class, 'exportPdf'])->name('produksi.export.pdf');
         Route::get('produksi/detail/{id}', [LaporanProduksiController::class, 'detail'])->name('produksi.detail');
         Route::get('produksi/detail/{id}/pdf', [LaporanProduksiController::class, 'detailPdf'])->name('produksi.detail.pdf');
+
+        // Financial Report Routes
+        Route::get('keuangan', [LaporanKeuanganController::class, 'index'])->name('keuangan.index');
+        Route::get('keuangan/balance-sheet', [LaporanKeuanganController::class, 'getBalanceSheet'])->name('keuangan.balance-sheet');
+        Route::get('keuangan/income-statement', [LaporanKeuanganController::class, 'getIncomeStatement'])->name('keuangan.income-statement');
+        Route::get('keuangan/cash-flow', [LaporanKeuanganController::class, 'getCashFlow'])->name('keuangan.cash-flow');
+        Route::get('keuangan/export/excel', [LaporanKeuanganController::class, 'exportExcel'])->name('keuangan.export.excel');
+        Route::get('keuangan/export/pdf', [LaporanKeuanganController::class, 'exportPdf'])->name('keuangan.export.pdf');
+
+        // Enhanced Financial Validation Routes
+        Route::get('keuangan/validate/operating-expenses', [LaporanKeuanganController::class, 'validateOperatingExpenses'])->name('keuangan.validate.operating-expenses');
+        Route::get('keuangan/expense-category/{category}', [LaporanKeuanganController::class, 'getExpenseCategoryDetail'])->name('keuangan.expense-category.detail');
     });
 
     // -- CRM --

@@ -19,6 +19,7 @@
     },
     "dependencies": {
         "@alpinejs/collapse": "^3.14.9",
+        "chart.js": "^4.5.0",
         "choices.js": "^11.1.0"
     }
 }

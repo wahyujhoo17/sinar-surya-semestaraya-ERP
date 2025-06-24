@@ -451,8 +451,8 @@
                                             <div class="flex justify-between items-center">
                                                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
                                                     Nama:</span>
-                                                <span class="text-xs font-medium text-gray-800 dark:text-gray-200">PT.
-                                                    Sinar Surya</span>
+                                                <span
+                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya') }}</span>
                                             </div>
                                         </div>
                                         <p class="text-xs text-gray-600 dark:text-gray-400 italic">Harap sertakan nomor
@@ -640,7 +640,7 @@
                     subtotal: {{ $invoice->subtotal ?? 0 }},
                     diskonPersen: {{ $invoice->diskon_persen ?? 0 }},
                     diskonNominal: {{ $invoice->diskon_nominal ?? 0 }},
-                    ppnPersen: {{ ($invoice->subtotal - $invoice->diskon_nominal > 0 ? number_format(($invoice->ppn * 100) / ($invoice->subtotal - $invoice->diskon_nominal), 2, '.', '') : $invoice->ppn_persen) ?? ($invoice->ppn_persen_default ?? 11) }},
+                    ppnPersen: {{ ($invoice->subtotal - $invoice->diskon_nominal > 0 ? number_format(($invoice->ppn * 100) / ($invoice->subtotal - $invoice->diskon_nominal), 2, '.', '') : $invoice->ppn_persen) ?? setting('tax_percentage', 11) }},
                     ppnNominal: {{ $invoice->ppn ?? 0 }},
                     ongkosKirim: {{ $invoice->ongkos_kirim ?? 0 }},
                     total: {{ $invoice->total ?? 0 }},

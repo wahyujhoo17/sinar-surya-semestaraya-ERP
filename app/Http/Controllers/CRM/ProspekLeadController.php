@@ -12,13 +12,13 @@ class ProspekLeadController extends Controller
 {
     public function index()
     {
-        $prospeks = Prospek::orderBy('created_at', 'desc')->get();
+        $prospeks = Prospek::with('user')->orderBy('created_at', 'desc')->get();
         return view('CRM.prospek_and_lead.index', compact('prospeks'));
     }
 
     public function data(Request $request)
     {
-        $query = Prospek::query();
+        $query = Prospek::with('user');
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -122,7 +122,7 @@ class ProspekLeadController extends Controller
 
     public function show($id)
     {
-        $prospek = Prospek::findOrFail($id);
+        $prospek = Prospek::with('user')->findOrFail($id);
         return view('CRM.prospek_and_lead.show', compact('prospek'));
     }
 

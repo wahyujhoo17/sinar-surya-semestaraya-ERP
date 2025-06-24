@@ -572,9 +572,10 @@
                                 <input type="checkbox" id="include_ppn" x-model="includePPN"
                                     @change="calculateTotals()"
                                     class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
-                                <input type="hidden" name="ppn" :value="includePPN ? 11 : 0">
+                                <input type="hidden" name="ppn"
+                                    :value="includePPN ? {{ setting('tax_percentage', 11) }} : 0">
                                 <span class="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">Include PPN
-                                    (11%)</span>
+                                    ({{ setting('tax_percentage', 11) }}%)</span>
                             </label>
                             <span class="text-sm font-semibold text-gray-800 dark:text-white"
                                 x-text="includePPN ? formatCurrency(summary.ppn_nominal) : 'Rp 0,00'"></span>
@@ -1019,7 +1020,7 @@
                         this.summary.total_setelah_diskon_global = totalSetelahDiskonGlobal < 0 ? 0 : totalSetelahDiskonGlobal;
 
                         // Calculate PPN if included
-                        const ppnRate = 11; // 11%
+                        const ppnRate = {{ setting('tax_percentage', 11) }}; // {{ setting('tax_percentage', 11) }}%
                         this.summary.ppn_nominal = this.includePPN ? (this.summary.total_setelah_diskon_global * ppnRate /
                             100) : 0;
 
@@ -1108,7 +1109,7 @@
 
                         createGlobalHiddenInput('diskon_persen', this.diskon_global_persen || '0');
                         createGlobalHiddenInput('diskon_nominal', this.diskon_global_nominal || '0');
-                        createGlobalHiddenInput('ppn', this.includePPN ? '11' : '0');
+                        createGlobalHiddenInput('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
                         createGlobalHiddenInput('total', this.summary.grand_total || '0');
 
                         form.submit();
