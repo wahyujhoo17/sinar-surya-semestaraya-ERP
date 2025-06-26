@@ -80,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
     // Profile routes
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/employee', [ProfileController::class, 'updateEmployee'])->name('profile.employee.update');
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo.update');
     Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.delete');
 
@@ -521,6 +522,7 @@ Route::middleware(['auth'])->group(function () {
         // Purchase Report Routes
         Route::get('pembelian', [LaporanPembelianController::class, 'index'])->name('pembelian.index');
         Route::get('pembelian/data', [LaporanPembelianController::class, 'getData'])->name('pembelian.data');
+        Route::get('pembelian/chart-data', [LaporanPembelianController::class, 'getChartData'])->name('pembelian.chart-data');
         Route::get('pembelian/export/excel', [LaporanPembelianController::class, 'exportExcel'])->name('pembelian.export.excel');
         Route::get('pembelian/export/pdf', [LaporanPembelianController::class, 'exportPdf'])->name('pembelian.export.pdf');
         Route::get('pembelian/detail/{id}', [LaporanPembelianController::class, 'detail'])->name('pembelian.detail');
@@ -529,6 +531,7 @@ Route::middleware(['auth'])->group(function () {
         // Sales Report Routes
         Route::get('penjualan', [LaporanPenjualanController::class, 'index'])->name('penjualan.index');
         Route::get('penjualan/data', [LaporanPenjualanController::class, 'getData'])->name('penjualan.data');
+        Route::get('penjualan/chart-data', [LaporanPenjualanController::class, 'getChartData'])->name('penjualan.chart-data');
         Route::get('penjualan/export/excel', [LaporanPenjualanController::class, 'exportExcel'])->name('penjualan.export.excel');
         Route::get('penjualan/export/pdf', [LaporanPenjualanController::class, 'exportPdf'])->name('penjualan.export.pdf');
         Route::get('penjualan/detail/{id}', [LaporanPenjualanController::class, 'detail'])->name('penjualan.detail');

@@ -278,6 +278,130 @@
                         </div>
                     </div>
 
+                    <!-- Employee Personal Information Section -->
+                    @if ($user->karyawan)
+                        <div
+                            class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Informasi Personal
+                                    Karyawan</h3>
+                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                                    Perbarui informasi personal Anda sebagai karyawan.
+                                </p>
+                            </div>
+
+                            <div class="p-6">
+                                <form method="post" action="{{ route('profile.employee.update') }}"
+                                    class="space-y-6">
+                                    @csrf
+                                    @method('patch')
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label for="nama_lengkap"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Nama Lengkap
+                                            </label>
+                                            <input type="text" name="nama_lengkap" id="nama_lengkap"
+                                                value="{{ old('nama_lengkap', $user->karyawan->nama_lengkap) }}"
+                                                class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('nama_lengkap', 'updateEmployee') border-red-500 dark:border-red-500 @enderror">
+                                            @error('nama_lengkap', 'updateEmployee')
+                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="telepon"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Nomor Telepon
+                                            </label>
+                                            <input type="text" name="telepon" id="telepon"
+                                                value="{{ old('telepon', $user->karyawan->telepon) }}"
+                                                class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('telepon', 'updateEmployee') border-red-500 dark:border-red-500 @enderror"
+                                                placeholder="Contoh: 081234567890">
+                                            @error('telepon', 'updateEmployee')
+                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="tempat_lahir"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Tempat Lahir
+                                            </label>
+                                            <input type="text" name="tempat_lahir" id="tempat_lahir"
+                                                value="{{ old('tempat_lahir', $user->karyawan->tempat_lahir) }}"
+                                                class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('tempat_lahir', 'updateEmployee') border-red-500 dark:border-red-500 @enderror"
+                                                placeholder="Contoh: Jakarta">
+                                            @error('tempat_lahir', 'updateEmployee')
+                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="tanggal_lahir"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Tanggal Lahir
+                                            </label>
+                                            <input type="date" name="tanggal_lahir" id="tanggal_lahir"
+                                                value="{{ old('tanggal_lahir', $user->karyawan->tanggal_lahir) }}"
+                                                class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('tanggal_lahir', 'updateEmployee') border-red-500 dark:border-red-500 @enderror">
+                                            @error('tanggal_lahir', 'updateEmployee')
+                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+
+                                        <div>
+                                            <label for="jenis_kelamin"
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Jenis Kelamin
+                                            </label>
+                                            <select name="jenis_kelamin" id="jenis_kelamin"
+                                                class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('jenis_kelamin', 'updateEmployee') border-red-500 dark:border-red-500 @enderror">
+                                                <option value="">Pilih Jenis Kelamin</option>
+                                                <option value="L"
+                                                    {{ old('jenis_kelamin', $user->karyawan->jenis_kelamin) == 'L' ? 'selected' : '' }}>
+                                                    Laki-laki</option>
+                                                <option value="P"
+                                                    {{ old('jenis_kelamin', $user->karyawan->jenis_kelamin) == 'P' ? 'selected' : '' }}>
+                                                    Perempuan</option>
+                                            </select>
+                                            @error('jenis_kelamin', 'updateEmployee')
+                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
+                                                </p>
+                                            @enderror
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label for="alamat"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Alamat Lengkap
+                                        </label>
+                                        <textarea name="alamat" id="alamat" rows="3"
+                                            class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('alamat', 'updateEmployee') border-red-500 dark:border-red-500 @enderror"
+                                            placeholder="Masukkan alamat lengkap Anda">{{ old('alamat', $user->karyawan->alamat) }}</textarea>
+                                        @error('alamat', 'updateEmployee')
+                                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="flex items-center justify-between pt-4">
+                                        <button type="submit"
+                                            class="px-6 py-3 rounded-md bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 text-white transition-colors duration-200">
+                                            Simpan Informasi Personal
+                                        </button>
+
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
+
                     <!-- Update Password Section -->
                     <div
                         class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">

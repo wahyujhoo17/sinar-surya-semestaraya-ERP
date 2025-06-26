@@ -208,10 +208,41 @@
         .dark .sortable-active {
             background-color: rgba(30, 58, 138, 0.4);
         }
+
+        /* Modern Card Hover Effects */
+        .status-card {
+            transform: translateY(0);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Text truncation for card titles */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Responsive grid adjustments */
+        @media (max-width: 640px) {
+            .grid-cols-2 {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .xl\:grid-cols-7 {
+                grid-template-columns: repeat(7, minmax(0, 1fr));
+            }
+        }
     </style>
     <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
         {{-- Modern Header with Stats and Summary --}}
-        <div class="mb-8">
+        <div class="mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <div class="flex items-center">
@@ -255,33 +286,84 @@
             </div>
         </div>
 
-        {{-- Status Cards Summary --}}
-        <div class="mb-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {{-- Modern Compact Status Cards --}}
+        <div class="mb-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
             @foreach ($validStatuses as $status)
                 <div
-                    class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
+                    class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md hover:border-{{ returStatusColor($status) }}-200 dark:hover:border-{{ returStatusColor($status) }}-700 transition-all duration-200">
+                    <!-- Gradient Background Accent -->
                     <div
-                        class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-{{ returStatusColor($status) }}-50 dark:bg-{{ returStatusColor($status) }}-900/20 opacity-70">
+                        class="absolute inset-0 bg-gradient-to-br from-{{ returStatusColor($status) }}-50 to-transparent dark:from-{{ returStatusColor($status) }}-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     </div>
-                    <div class="p-4">
-                        <p class="text-sm font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                            {{ formatStatusText($status) }}</p>
-                        <div class="mt-2 flex items-baseline">
-                            <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                {{ $statusCounts[$status] ?? 0 }}</p>
+
+                    <div class="relative p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div
+                                class="flex items-center justify-center w-8 h-8 rounded-lg bg-{{ returStatusColor($status) }}-100 dark:bg-{{ returStatusColor($status) }}-900/30 group-hover:bg-{{ returStatusColor($status) }}-200 dark:group-hover:bg-{{ returStatusColor($status) }}-900/50 transition-colors duration-200">
+                                <span
+                                    class="w-4 h-4 text-{{ returStatusColor($status) }}-600 dark:text-{{ returStatusColor($status) }}-400">
+                                    {!! returStatusIcon($status) !!}
+                                </span>
+                            </div>
+                            <span
+                                class="text-xs font-medium text-{{ returStatusColor($status) }}-600 dark:text-{{ returStatusColor($status) }}-400 bg-{{ returStatusColor($status) }}-100 dark:bg-{{ returStatusColor($status) }}-900/30 px-2 py-1 rounded-full">
+                                {{ $statusCounts[$status] ?? 0 }}
+                            </span>
+                        </div>
+                        <div class="space-y-1">
+                            <h3 class="text-xs font-medium text-gray-900 dark:text-white line-clamp-2 leading-tight">
+                                {{ formatStatusText($status) }}
+                            </h3>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                                {{ $statusCounts[$status] == 1 ? 'item' : 'items' }}
+                            </p>
                         </div>
                     </div>
                 </div>
             @endforeach
+
+            <!-- Total Summary Card -->
+            <div
+                class="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg shadow-sm border border-blue-200 dark:border-blue-700 hover:shadow-md transition-all duration-200">
+                <div
+                    class="absolute inset-0 bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                </div>
+
+                <div class="relative p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <div
+                            class="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-200 dark:bg-blue-800 group-hover:bg-blue-300 dark:group-hover:bg-blue-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 text-blue-700 dark:text-blue-300" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-200 dark:bg-blue-800 px-2 py-1 rounded-full">
+                            {{ array_sum($statusCounts) }}
+                        </span>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-xs font-semibold text-blue-900 dark:text-blue-100">
+                            Total Retur
+                        </h3>
+                        <p class="text-xs text-blue-700 dark:text-blue-300">
+                            Semua status
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{-- Enhanced Tab Navigation --}}
-        <div class="mb-6">
+        <div class="mb-4">
             <div class="border-b border-gray-200 dark:border-gray-700">
                 <nav class="-mb-px flex overflow-x-auto">
                     @foreach (array_merge(['semua'], $validStatuses) as $status)
                         <a href="{{ route('penjualan.retur.index', ['status' => $status]) }}"
-                            class="flex items-center gap-2 whitespace-nowrap py-3 px-4 border-b-2 font-medium text-sm transition-colors duration-200 
+                            class="flex items-center gap-2 whitespace-nowrap py-2.5 px-3 border-b-2 font-medium text-sm transition-colors duration-200 
                                 {{ $currentStatus === $status
                                     ? 'border-primary-500 text-primary-600 dark:text-primary-400'
                                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300' }}">

@@ -11,9 +11,11 @@ use App\Models\PenyesuaianStok;
 use App\Models\PenyesuaianStokDetail;
 use App\Models\RiwayatStok;
 use App\Models\LogAktivitas;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -130,13 +132,13 @@ class PenyesuaianStokController extends Controller
                 })
                 ->get();
 
-            \Log::info("Found {$produksWithStock->count()} products with stock in warehouse ID: $id");
+            Log::info("Found {$produksWithStock->count()} products with stock in warehouse ID: $id");
 
             // Format the data for the dropdown
             $produks = $produksWithStock->map(function ($stokProduk) {
                 try {
                     if (!$stokProduk->produk) {
-                        \Log::warning("Missing product for stok_produk ID: " . $stokProduk->id);
+                        Log::warning("Missing product for stok_produk ID: " . $stokProduk->id);
                         return null;
                     }
 
@@ -144,7 +146,7 @@ class PenyesuaianStokController extends Controller
 
                     // Make sure we have all required fields
                     if (!$produk->id || !$produk->nama || !$produk->kode) {
-                        \Log::warning("Product missing required fields. ID: {$produk->id}");
+                        Log::warning("Product missing required fields. ID: {$produk->id}");
                         return null;
                     }
 
@@ -163,16 +165,16 @@ class PenyesuaianStokController extends Controller
                         'satuan_nama' => $satuanNama
                     ];
                 } catch (\Exception $e) {
-                    \Log::error("Error mapping product data: " . $e->getMessage());
+                    Log::error("Error mapping product data: " . $e->getMessage());
                     return null;
                 }
             })->filter()->values(); // Remove null entries and reindex array
 
-            \Log::info("Returning {$produks->count()} formatted products for warehouse ID: $id");
+            Log::info("Returning {$produks->count()} formatted products for warehouse ID: $id");
 
             return response()->json($produks);
         } catch (\Exception $e) {
-            \Log::error("Error in getProduksByGudang: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error("Error in getProduksByGudang: " . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Terjadi kesalahan saat mengambil data produk: ' . $e->getMessage()
             ], 500);
@@ -184,7 +186,7 @@ class PenyesuaianStokController extends Controller
      */
     public function store(Request $request)
     {
-        \Log::info('Storing penyesuaian stok with data:', [
+        Log::info('Storing penyesuaian stok with data:', [
             'gudang_id' => $request->gudang_id,
             'produk_count' => $request->produk_id ? count($request->produk_id) : 0,
             'print_draft' => $request->has('print_draft') ? 'yes' : 'no'
@@ -206,7 +208,7 @@ class PenyesuaianStokController extends Controller
 
         // Check if we're just printing a draft without saving
         if ($request->has('print_draft')) {
-            \Log::info('Generating draft PDF without saving to database');
+            Log::info('Generating draft PDF without saving to database');
 
             // Create a temporary object for PDF generation
             $penyesuaian = new \stdClass();
@@ -319,13 +321,17 @@ class PenyesuaianStokController extends Controller
                 'aktivitas' => 'Membuat penyesuaian stok baru dengan nomor ' . $penyesuaianStok->nomor
             ]);
 
+            // Send notification
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyStockAdjustmentCreated($penyesuaianStok, Auth::user());
+
             DB::commit();
 
             return redirect()->route('inventaris.penyesuaian-stok.show', $penyesuaianStok->id)
                 ->with('success', 'Penyesuaian stok berhasil dibuat.');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('Error creating penyesuaian stok: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error('Error creating penyesuaian stok: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return back()->withInput()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
@@ -414,12 +420,12 @@ class PenyesuaianStokController extends Controller
             ->values();
 
         $allStokProduk = $mappedStokProduk;
-        
+
         // Prepare the items array from penyesuaian details
-        $items = $penyesuaian->details->map(function($detail) {
+        $items = $penyesuaian->details->map(function ($detail) {
             $satuan = $detail->satuan;
             $satuanNama = ($satuan && isset($satuan->nama)) ? $satuan->nama : '-';
-            
+
             return [
                 'produk_id' => $detail->produk_id,
                 'stok_tercatat' => (float)$detail->stok_tercatat,
@@ -555,6 +561,10 @@ class PenyesuaianStokController extends Controller
                 'detail' => "Menghapus penyesuaian stok dengan nomor {$penyesuaianInfo['nomor']} dari gudang {$penyesuaianInfo['gudang']}"
             ]);
 
+            // Send notification
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyStockAdjustmentDeleted($penyesuaianInfo, Auth::user());
+
             DB::commit();
 
             return redirect()->route('inventaris.penyesuaian-stok.index')
@@ -580,6 +590,19 @@ class PenyesuaianStokController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Check for significant discrepancies before processing
+            $discrepancyItems = [];
+            $discrepancyThreshold = 50; // Notify if difference is more than 50 units
+
+            foreach ($penyesuaian->details as $detail) {
+                if (abs($detail->selisih) >= $discrepancyThreshold) {
+                    $discrepancyItems[] = [
+                        'nama' => $detail->produk->nama ?? 'Produk',
+                        'selisih' => $detail->selisih
+                    ];
+                }
+            }
 
             // Process each detail
             foreach ($penyesuaian->details as $detail) {
@@ -628,6 +651,20 @@ class PenyesuaianStokController extends Controller
                 'ip_address' => request()->ip(),
                 'detail' => "Memproses penyesuaian stok #{$penyesuaian->nomor} untuk gudang {$penyesuaian->gudang->nama}. Stok telah disesuaikan."
             ]);
+
+            // Send notifications
+            $notificationService = app(NotificationService::class);
+            $notificationService->notifyStockAdjustmentProcessed($penyesuaian, Auth::user());
+
+            // Notify about significant discrepancies if any
+            if (!empty($discrepancyItems)) {
+                $notificationService->notifyStockDiscrepancy($penyesuaian, $discrepancyItems);
+            }
+
+            // Check for low stock after processing
+            foreach ($penyesuaian->details as $detail) {
+                $notificationService->checkAndNotifyLowStock($detail->produk_id, $penyesuaian->gudang_id);
+            }
 
             DB::commit();
 
@@ -678,11 +715,11 @@ class PenyesuaianStokController extends Controller
                 'produk_kode' => $produk->kode
             ];
 
-            \Log::info("Returning stock data: " . json_encode($responseData));
+            Log::info("Returning stock data: " . json_encode($responseData));
 
             return response()->json($responseData);
         } catch (\Exception $e) {
-            \Log::error('Error in getStokProduk: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            Log::error('Error in getStokProduk: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'error' => 'Terjadi kesalahan saat mengambil data stok produk: ' . $e->getMessage()
             ], 500);

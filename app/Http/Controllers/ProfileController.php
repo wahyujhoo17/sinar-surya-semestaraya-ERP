@@ -61,6 +61,40 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the employee's personal information.
+     */
+    public function updateEmployee(Request $request)
+    {
+        $user = $request->user();
+
+        // Check if user has karyawan profile
+        if (!$user->karyawan) {
+            return redirect()->route('profile.edit')->with('error', 'Hanya karyawan yang dapat mengubah informasi personal.');
+        }
+
+        $request->validateWithBag('updateEmployee', [
+            'nama_lengkap' => ['nullable', 'string', 'max:255'],
+            'telepon' => ['nullable', 'string', 'max:20', 'regex:/^[0-9\+\-\(\)\s]+$/'],
+            'alamat' => ['nullable', 'string', 'max:1000'],
+            'tempat_lahir' => ['nullable', 'string', 'max:100'],
+            'tanggal_lahir' => ['nullable', 'date', 'before:today'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
+        ]);
+
+        // Update karyawan data
+        $karyawan = $user->karyawan;
+        $karyawan->nama_lengkap = $request->nama_lengkap;
+        $karyawan->telepon = $request->telepon;
+        $karyawan->alamat = $request->alamat;
+        $karyawan->tempat_lahir = $request->tempat_lahir;
+        $karyawan->tanggal_lahir = $request->tanggal_lahir;
+        $karyawan->jenis_kelamin = $request->jenis_kelamin;
+        $karyawan->save();
+
+        return redirect()->route('profile.edit')->with('success', 'Informasi personal berhasil diperbarui.')->with('status', 'employee-updated');
+    }
+
+    /**
      * Update the user's profile photo.
      */
     public function updatePhoto(Request $request)

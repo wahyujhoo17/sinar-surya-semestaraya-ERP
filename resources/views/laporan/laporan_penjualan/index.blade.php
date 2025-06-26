@@ -79,7 +79,7 @@
                 x-transition:enter-start="transform opacity-0" x-transition:enter-end="transform opacity-100"
                 x-transition:leave="transition ease-in duration-200" x-transition:leave-start="transform opacity-100"
                 x-transition:leave-end="transform opacity-0" class="p-5">
-                <form @submit.prevent="fetchData()" class="space-y-6">
+                <form @submit.prevent="fetchData(); loadChartData()" class="space-y-6">
                     <!-- Filter Section -->
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -88,7 +88,7 @@
                                 <div
                                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
@@ -171,7 +171,7 @@
                                 <div
                                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full">
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path
@@ -195,7 +195,7 @@
                                 <div
                                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full">
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
@@ -220,7 +220,7 @@
                                 <div
                                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
@@ -338,6 +338,180 @@
             </div>
         </div>
 
+        {{-- Charts Analytics Section --}}
+        <div class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
+            x-data="{ isChartsOpen: true }">
+            <div class="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/60 cursor-pointer"
+                @click="isChartsOpen = !isChartsOpen">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+                        </svg>
+                        Analisis Penjualan
+                    </h3>
+                    <div class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+                        <svg x-show="!isChartsOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <svg x-show="isChartsOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                            viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 pl-7">Visualisasi data penjualan dengan
+                    berbagai
+                    jenis chart yang dapat disesuaikan</p>
+            </div>
+            <div x-show="isChartsOpen" x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="transform opacity-0" x-transition:enter-end="transform opacity-100"
+                x-transition:leave="transition ease-in duration-200" x-transition:leave-start="transform opacity-100"
+                x-transition:leave-end="transform opacity-0" class="p-5">
+
+                <!-- Chart Type Selector -->
+                <div class="mb-6">
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="(chart, key) in chartTypes" :key="key">
+                            <button @click="selectedChartType = key; loadChartData()"
+                                :class="selectedChartType === key ?
+                                    'bg-primary-100 text-primary-700 border-primary-200 dark:bg-primary-900 dark:text-primary-300 dark:border-primary-700' :
+                                    'bg-white text-gray-600 border-gray-200 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600'"
+                                class="px-4 py-2 text-sm font-medium border rounded-lg transition-all duration-200 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                    fill="currentColor">
+                                    <path x-html="chart.icon"></path>
+                                </svg>
+                                <span x-text="chart.label"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Main Chart -->
+                    <div class="lg:col-span-2">
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-lg font-medium text-gray-900 dark:text-white"
+                                    x-text="chartTypes[selectedChartType]?.title || 'Chart Penjualan'"></h4>
+                                <div class="flex items-center gap-2">
+                                    <button @click="refreshChart()"
+                                        class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                    </button>
+                                    <button @click="downloadChart()"
+                                        class="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="chart-container" style="position: relative; height: 400px;">
+                                <canvas id="mainSalesChart"></canvas>
+                                <div x-show="chartLoading"
+                                    class="absolute inset-0 flex items-center justify-center bg-white dark:bg-gray-800 bg-opacity-80">
+                                    <div class="flex items-center space-x-2">
+                                        <svg class="animate-spin h-5 w-5 text-primary-500"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        <span class="text-sm text-gray-600 dark:text-gray-400">Memuat chart...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Monthly Chart Statistics -->
+                            <div x-show="selectedChartType === 'monthly' && monthlyStats"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 transform scale-95"
+                                x-transition:enter-end="opacity-100 transform scale-100"
+                                class="mt-4 grid grid-cols-2 md:grid-cols-5 gap-4">
+
+                                <div
+                                    class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg p-4">
+                                    <div class="text-sm text-blue-600 dark:text-blue-400 font-medium">Tahun</div>
+                                    <div class="text-xl font-bold text-blue-700 dark:text-blue-300"
+                                        x-text="monthlyStats?.year || '-'"></div>
+                                </div>
+
+                                <div
+                                    class="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg p-4">
+                                    <div class="text-sm text-green-600 dark:text-green-400 font-medium">Total Tahunan
+                                    </div>
+                                    <div class="text-lg font-bold text-green-700 dark:text-green-300"
+                                        x-text="formatCurrency(monthlyStats?.total_annual_sales || 0)"></div>
+                                </div>
+
+                                <div
+                                    class="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg p-4">
+                                    <div class="text-sm text-purple-600 dark:text-purple-400 font-medium">Total
+                                        Transaksi</div>
+                                    <div class="text-lg font-bold text-purple-700 dark:text-purple-300"
+                                        x-text="(monthlyStats?.total_annual_orders || 0).toLocaleString() + ' transaksi'">
+                                    </div>
+                                </div>
+
+                                <div
+                                    class="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 rounded-lg p-4">
+                                    <div class="text-sm text-orange-600 dark:text-orange-400 font-medium">Rata-rata
+                                        Bulanan</div>
+                                    <div class="text-lg font-bold text-orange-700 dark:text-orange-300"
+                                        x-text="formatCurrency(monthlyStats?.avg_monthly_sales || 0)"></div>
+                                </div>
+
+                                <div
+                                    class="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg p-4">
+                                    <div class="text-sm text-red-600 dark:text-red-400 font-medium">Bulan Terbaik</div>
+                                    <div class="text-sm font-bold text-red-700 dark:text-red-300"
+                                        x-text="monthlyStats?.best_month || '-'"></div>
+                                    <div class="text-xs text-red-600 dark:text-red-400"
+                                        x-text="formatCurrency(monthlyStats?.best_month_sales || 0)"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Charts -->
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Status Pembayaran</h4>
+                        <div class="chart-container" style="position: relative; height: 250px;">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Top Customers</h4>
+                        <div class="chart-container" style="position: relative; height: 250px;">
+                            <canvas id="customerChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Table --}}
         <div
             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 mb-6">
@@ -378,6 +552,7 @@
     @push('scripts')
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
         <style>
             /* Select2 customization for dark mode */
@@ -416,6 +591,7 @@
             function penjualanLaporanController() {
                 return {
                     loading: true,
+                    chartLoading: false,
                     penjualanData: [],
                     customerList: [],
                     filter: {
@@ -432,6 +608,45 @@
                     currentPage: 1,
                     perPage: 10,
                     totalPages: 1,
+                    selectedChartType: 'monthly',
+                    monthlyStats: null,
+                    charts: {
+                        mainChart: null,
+                        statusChart: null,
+                        customerChart: null
+                    },
+                    chartTypes: {
+                        'daily': {
+                            label: 'Harian',
+                            title: 'Trend Penjualan Harian',
+                            icon: '<path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>'
+                        },
+                        'monthly': {
+                            label: 'Bulanan',
+                            title: 'Trend Penjualan Bulanan',
+                            icon: '<path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"/>'
+                        },
+                        'customer': {
+                            label: 'Per Customer',
+                            title: 'Top Customer Berdasarkan Penjualan',
+                            icon: '<path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>'
+                        },
+                        'status': {
+                            label: 'Status Bayar',
+                            title: 'Distribusi Status Pembayaran',
+                            icon: '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>'
+                        },
+                        'product': {
+                            label: 'Per Produk',
+                            title: 'Top Produk Berdasarkan Penjualan',
+                            icon: '<path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>'
+                        },
+                        'comparison': {
+                            label: 'Perbandingan',
+                            title: 'Perbandingan Periode Saat Ini vs Sebelumnya',
+                            icon: '<path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>'
+                        }
+                    },
 
                     async init() {
                         // Initialize date range filter
@@ -440,6 +655,7 @@
 
                         await this.loadCustomerData();
                         await this.fetchData();
+                        await this.loadChartData();
 
                         // Initialize Select2 after data is loaded
                         this.$nextTick(() => {
@@ -492,6 +708,450 @@
                         }
                     },
 
+                    async loadChartData() {
+                        this.chartLoading = true;
+
+                        // Reset monthly stats when chart type changes
+                        if (this.selectedChartType !== 'monthly') {
+                            this.monthlyStats = null;
+                        }
+
+                        try {
+                            // Ensure DOM is ready before loading charts
+                            await this.$nextTick();
+
+                            // Small delay to ensure canvas elements are rendered
+                            await new Promise(resolve => setTimeout(resolve, 100));
+
+                            // Load main chart
+                            await this.loadMainChart();
+
+                            // Load additional charts with small delays
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            await this.loadStatusChart();
+
+                            await new Promise(resolve => setTimeout(resolve, 50));
+                            await this.loadCustomerChart();
+                        } catch (error) {
+                            console.error('Error loading chart data:', error);
+                        } finally {
+                            this.chartLoading = false;
+                        }
+                    },
+
+                    async loadMainChart() {
+                        try {
+                            const response = await fetch('/laporan/penjualan/chart-data?' + new URLSearchParams({
+                                ...this.filter,
+                                chart_type: this.selectedChartType
+                            }));
+
+                            const result = await response.json();
+                            if (result.success) {
+                                this.renderMainChart(result.data);
+                            }
+                        } catch (error) {
+                            console.error('Error loading main chart:', error);
+                        }
+                    },
+
+                    async loadStatusChart() {
+                        try {
+                            const response = await fetch('/laporan/penjualan/chart-data?' + new URLSearchParams({
+                                ...this.filter,
+                                chart_type: 'status'
+                            }));
+
+                            const result = await response.json();
+                            if (result.success) {
+                                this.renderStatusChart(result.data);
+                            }
+                        } catch (error) {
+                            console.error('Error loading status chart:', error);
+                        }
+                    },
+
+                    async loadCustomerChart() {
+                        try {
+                            console.log('Loading customer chart with filters:', this.filter);
+
+                            const response = await fetch('/laporan/penjualan/chart-data?' + new URLSearchParams({
+                                ...this.filter,
+                                chart_type: 'customer'
+                            }));
+
+                            console.log('Customer chart response status:', response.status);
+
+                            const result = await response.json();
+                            console.log('Customer chart result:', result);
+
+                            if (result.success) {
+                                this.renderCustomerChart(result.data);
+                            } else {
+                                console.error('Customer chart load failed:', result.message);
+                            }
+                        } catch (error) {
+                            console.error('Error loading customer chart:', error);
+                        }
+                    },
+
+                    renderMainChart(data) {
+                        // Check if canvas element exists
+                        const canvas = document.getElementById('mainSalesChart');
+                        if (!canvas) {
+                            console.warn('Main chart canvas not found');
+                            return;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            console.warn('Could not get 2D context for main chart');
+                            return;
+                        }
+
+                        if (this.charts.mainChart) {
+                            this.charts.mainChart.destroy();
+                        }
+
+                        const chartType = ['customer', 'status'].includes(this.selectedChartType) ? 'doughnut' :
+                            this.selectedChartType === 'comparison' ? 'bar' : 'line';
+
+                        // Special configuration for monthly chart with dual axis
+                        const isMonthlyChart = this.selectedChartType === 'monthly';
+
+                        const chartOptions = {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                },
+                                tooltip: {
+                                    mode: 'index',
+                                    intersect: false,
+                                    callbacks: {
+                                        label: (context) => {
+                                            let label = context.dataset.label || '';
+                                            if (label) {
+                                                label += ': ';
+                                            }
+
+                                            // Format based on dataset type
+                                            if (label.includes('Jumlah Transaksi')) {
+                                                label += context.parsed.y + ' transaksi';
+                                            } else {
+                                                label += this.formatCurrency(context.parsed.y || context.parsed);
+                                            }
+                                            return label;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: chartType === 'doughnut' ? {} : {
+                                x: {
+                                    grid: {
+                                        display: true,
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                y: {
+                                    type: 'linear',
+                                    display: true,
+                                    position: 'left',
+                                    beginAtZero: true,
+                                    title: {
+                                        display: isMonthlyChart,
+                                        text: 'Nilai Penjualan (Rp)'
+                                    },
+                                    ticks: {
+                                        callback: (value) => this.formatCurrency(value)
+                                    },
+                                    grid: {
+                                        display: true,
+                                        color: 'rgba(0, 0, 0, 0.1)'
+                                    }
+                                },
+                                ...(isMonthlyChart ? {
+                                    y1: {
+                                        type: 'linear',
+                                        display: true,
+                                        position: 'right',
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Jumlah Transaksi'
+                                        },
+                                        ticks: {
+                                            callback: (value) => value + ' transaksi'
+                                        },
+                                        grid: {
+                                            drawOnChartArea: false,
+                                        }
+                                    }
+                                } : {})
+                            },
+                            ...(data.options || {})
+                        };
+
+                        this.charts.mainChart = new Chart(ctx, {
+                            type: chartType,
+                            data: data,
+                            options: chartOptions
+                        });
+
+                        // Display additional info for monthly chart
+                        if (isMonthlyChart && data.meta) {
+                            this.displayMonthlyChartInfo(data.meta);
+                        }
+                    },
+
+                    displayMonthlyChartInfo(meta) {
+                        // Store monthly stats for display in the template
+                        this.monthlyStats = {
+                            year: meta.year,
+                            total_annual_sales: meta.total_annual_sales,
+                            total_annual_orders: meta.total_annual_orders,
+                            avg_monthly_sales: meta.avg_monthly_sales,
+                            best_month: meta.best_month,
+                            best_month_sales: meta.best_month_sales
+                        };
+
+                        // Also log for debugging
+                        console.log('Monthly Chart Stats:', {
+                            year: meta.year,
+                            totalSales: this.formatCurrency(meta.total_annual_sales),
+                            totalOrders: meta.total_annual_orders,
+                            avgMonthlySales: this.formatCurrency(meta.avg_monthly_sales),
+                            bestMonth: meta.best_month,
+                            bestMonthSales: this.formatCurrency(meta.best_month_sales)
+                        });
+                    },
+
+                    renderStatusChart(data) {
+                        // Check if canvas element exists
+                        const canvas = document.getElementById('statusChart');
+                        if (!canvas) {
+                            console.warn('Status chart canvas not found');
+                            return;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            console.warn('Could not get 2D context for status chart');
+                            return;
+                        }
+
+                        if (this.charts.statusChart) {
+                            this.charts.statusChart.destroy();
+                        }
+
+                        this.charts.statusChart = new Chart(ctx, {
+                            type: 'doughnut',
+                            data: data,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom',
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                return context.label + ': ' + this.formatCurrency(context.parsed);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    },
+
+                    renderCustomerChart(data) {
+                        console.log('Rendering customer chart with data:', data);
+
+                        // Check if canvas element exists
+                        const canvas = document.getElementById('customerChart');
+                        if (!canvas) {
+                            console.warn('Customer chart canvas not found');
+                            return;
+                        }
+
+                        const ctx = canvas.getContext('2d');
+                        if (!ctx) {
+                            console.warn('Could not get 2D context for customer chart');
+                            return;
+                        }
+
+                        if (this.charts.customerChart) {
+                            this.charts.customerChart.destroy();
+                        }
+
+                        // Check if data has values or shows "Tidak ada data"
+                        if (!data.labels || data.labels.length === 0 ||
+                            (data.labels.length === 1 && data.labels[0] === 'Tidak ada data')) {
+                            console.warn('No customer data available');
+
+                            // Create a simple "no data" chart
+                            this.charts.customerChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: ['Tidak ada data'],
+                                    datasets: [{
+                                        label: 'Tidak ada data',
+                                        data: [0],
+                                        backgroundColor: ['rgba(156, 163, 175, 0.5)'],
+                                        borderColor: ['rgba(156, 163, 175, 1)'],
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    maintainAspectRatio: false,
+                                    indexAxis: 'y',
+                                    plugins: {
+                                        legend: {
+                                            display: false
+                                        },
+                                        tooltip: {
+                                            enabled: false
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            display: false
+                                        },
+                                        y: {
+                                            ticks: {
+                                                color: '#6B7280',
+                                                font: {
+                                                    size: 12
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                            return;
+                        }
+
+                        // Limit to top 5 customers if more than 5
+                        let chartData = {
+                            ...data
+                        };
+                        if (data.labels && data.labels.length > 5) {
+                            chartData = {
+                                labels: data.labels.slice(0, 5),
+                                datasets: [{
+                                    ...data.datasets[0],
+                                    data: data.datasets[0].data.slice(0, 5),
+                                    backgroundColor: data.datasets[0].backgroundColor ? data.datasets[0]
+                                        .backgroundColor.slice(0, 5) : undefined,
+                                    borderColor: data.datasets[0].borderColor ? data.datasets[0].borderColor.slice(
+                                        0, 5) : undefined
+                                }]
+                            };
+                        }
+
+                        // Always use horizontal bar chart for customer data
+                        this.charts.customerChart = new Chart(ctx, {
+                            type: 'bar',
+                            data: chartData,
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                indexAxis: 'y',
+                                plugins: {
+                                    legend: {
+                                        display: false
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: (context) => {
+                                                return `${context.label}: ${this.formatCurrency(context.parsed.x)}`;
+                                            }
+                                        }
+                                    }
+                                },
+                                scales: {
+                                    x: {
+                                        beginAtZero: true,
+                                        title: {
+                                            display: true,
+                                            text: 'Nilai Penjualan (Rp)',
+                                            font: {
+                                                size: 12,
+                                                weight: 'bold'
+                                            }
+                                        },
+                                        ticks: {
+                                            callback: (value) => {
+                                                // Format currency for shorter display
+                                                if (value >= 1000000000) {
+                                                    return 'Rp ' + (value / 1000000000).toFixed(1) + 'M';
+                                                } else if (value >= 1000000) {
+                                                    return 'Rp ' + (value / 1000000).toFixed(1) + 'Jt';
+                                                } else if (value >= 1000) {
+                                                    return 'Rp ' + (value / 1000).toFixed(0) + 'Rb';
+                                                }
+                                                return 'Rp ' + value;
+                                            },
+                                            font: {
+                                                size: 10
+                                            }
+                                        },
+                                        grid: {
+                                            display: true,
+                                            color: 'rgba(0, 0, 0, 0.1)'
+                                        }
+                                    },
+                                    y: {
+                                        ticks: {
+                                            font: {
+                                                size: 11
+                                            },
+                                            callback: function(value, index) {
+                                                const label = this.getLabelForValue(value);
+                                                // Truncate long labels
+                                                return label.length > 20 ? label.substring(0, 20) + '...' : label;
+                                            }
+                                        },
+                                        grid: {
+                                            display: false
+                                        }
+                                    }
+                                },
+                                layout: {
+                                    padding: {
+                                        right: 20,
+                                        left: 10
+                                    }
+                                },
+                                elements: {
+                                    bar: {
+                                        borderWidth: 1,
+                                        borderRadius: 4
+                                    }
+                                }
+                            }
+                        });
+
+                        console.log('Customer chart rendered successfully as horizontal bar chart');
+                    },
+
+                    async refreshChart() {
+                        await this.loadChartData();
+                    },
+
+                    downloadChart() {
+                        if (this.charts.mainChart) {
+                            const link = document.createElement('a');
+                            link.download = `sales-chart-${this.selectedChartType}-${new Date().getTime()}.png`;
+                            link.href = this.charts.mainChart.toBase64Image();
+                            link.click();
+                        }
+                    },
+
                     async exportExcel() {
                         window.location.href = `/laporan/penjualan/export/excel?` + new URLSearchParams({
                             tanggal_awal: this.filter.tanggal_awal,
@@ -529,6 +1189,7 @@
                         // Fetch data with reset filters
                         this.currentPage = 1;
                         this.fetchData();
+                        this.loadChartData();
                     },
 
                     changePage(page) {
@@ -563,6 +1224,22 @@
                             pages.push(i);
                         }
                         return pages;
+                    },
+
+                    // Chart utility methods
+                    async refreshChart() {
+                        await this.loadChartData();
+                    },
+
+                    downloadChart() {
+                        const canvas = document.getElementById('mainSalesChart');
+                        if (canvas) {
+                            const link = document.createElement('a');
+                            link.download =
+                                `chart-penjualan-${this.selectedChartType}-${new Date().toISOString().split('T')[0]}.png`;
+                            link.href = canvas.toDataURL();
+                            link.click();
+                        }
                     },
 
                     formatCurrency(amount) {

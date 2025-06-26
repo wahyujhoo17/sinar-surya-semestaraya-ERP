@@ -517,4 +517,129 @@ class NotificationService
             return 0;
         }
     }
+
+    /**
+     * Send stock adjustment notifications
+     */
+    public function notifyStockAdjustmentCreated($stockAdjustment, $createdBy)
+    {
+        $gudangNama = $stockAdjustment->gudang->nama ?? 'Gudang';
+        $totalItems = $stockAdjustment->details->count();
+
+        // Notify warehouse and inventory managers
+        $this->sendToRoles(
+            ['warehouse', 'inventory', 'manager_gudang', 'admin'],
+            'order',
+            'Penyesuaian Stok Baru',
+            "Penyesuaian Stok #{$stockAdjustment->nomor} telah dibuat oleh {$createdBy->name} untuk {$gudangNama} dengan {$totalItems} item",
+            [
+                'url' => route('inventaris.penyesuaian-stok.show', $stockAdjustment->id),
+                'stock_adjustment_id' => $stockAdjustment->id,
+                'gudang_id' => $stockAdjustment->gudang_id,
+                'total_items' => $totalItems
+            ]
+        );
+    }
+
+    public function notifyStockAdjustmentProcessed($stockAdjustment, $processedBy)
+    {
+        $gudangNama = $stockAdjustment->gudang->nama ?? 'Gudang';
+        $totalItems = $stockAdjustment->details->count();
+
+        // Calculate adjustment summary
+        $positiveAdjustments = $stockAdjustment->details->where('selisih', '>', 0)->count();
+        $negativeAdjustments = $stockAdjustment->details->where('selisih', '<', 0)->count();
+        $noChanges = $stockAdjustment->details->where('selisih', 0)->count();
+
+        $summaryText = [];
+        if ($positiveAdjustments > 0) {
+            $summaryText[] = "{$positiveAdjustments} item bertambah";
+        }
+        if ($negativeAdjustments > 0) {
+            $summaryText[] = "{$negativeAdjustments} item berkurang";
+        }
+        if ($noChanges > 0) {
+            $summaryText[] = "{$noChanges} item tidak berubah";
+        }
+
+        $summary = implode(', ', $summaryText);
+
+        // Notify warehouse, inventory managers, and admin
+        $this->sendToRoles(
+            ['warehouse', 'inventory', 'manager_gudang', 'admin'],
+            'success',
+            'Penyesuaian Stok Diproses',
+            "Penyesuaian Stok #{$stockAdjustment->nomor} telah diproses oleh {$processedBy->name} untuk {$gudangNama}. Ringkasan: {$summary}",
+            [
+                'url' => route('inventaris.penyesuaian-stok.show', $stockAdjustment->id),
+                'stock_adjustment_id' => $stockAdjustment->id,
+                'gudang_id' => $stockAdjustment->gudang_id,
+                'processed_by' => $processedBy->id
+            ]
+        );
+
+        // Notify the creator
+        if ($stockAdjustment->user_id !== $processedBy->id) {
+            $this->sendToUsers(
+                [$stockAdjustment->user_id],
+                'success',
+                'Penyesuaian Stok Anda Diproses',
+                "Penyesuaian Stok #{$stockAdjustment->nomor} yang Anda buat telah diproses oleh {$processedBy->name}",
+                [
+                    'url' => route('inventaris.penyesuaian-stok.show', $stockAdjustment->id),
+                    'stock_adjustment_id' => $stockAdjustment->id
+                ]
+            );
+        }
+    }
+
+    public function notifyStockAdjustmentDeleted($stockAdjustmentData, $deletedBy)
+    {
+        // Notify warehouse and inventory managers about deletion
+        $this->sendToRoles(
+            ['warehouse', 'inventory', 'manager_gudang', 'admin'],
+            'warning',
+            'Penyesuaian Stok Dihapus',
+            "Penyesuaian Stok #{$stockAdjustmentData['nomor']} telah dihapus oleh {$deletedBy->name} dari {$stockAdjustmentData['gudang']}",
+            [
+                'url' => route('inventaris.penyesuaian-stok.index'),
+                'deleted_by' => $deletedBy->id,
+                'gudang_name' => $stockAdjustmentData['gudang']
+            ]
+        );
+    }
+
+    /**
+     * Check and notify significant stock discrepancies during adjustment
+     */
+    public function notifyStockDiscrepancy($stockAdjustment, $discrepancyItems)
+    {
+        if (empty($discrepancyItems)) {
+            return;
+        }
+
+        $gudangNama = $stockAdjustment->gudang->nama ?? 'Gudang';
+        $discrepancyCount = count($discrepancyItems);
+
+        // Create message with discrepancy details
+        $message = "Ditemukan {$discrepancyCount} item dengan selisih besar pada Penyesuaian Stok #{$stockAdjustment->nomor} di {$gudangNama}:";
+
+        foreach ($discrepancyItems as $item) {
+            $message .= "\n- {$item['nama']}: selisih {$item['selisih']} unit";
+        }
+
+        // Notify managers and admin about significant discrepancies
+        $this->sendToRoles(
+            ['warehouse', 'inventory', 'manager', 'admin'],
+            'warning',
+            'Selisih Stok Signifikan',
+            $message,
+            [
+                'url' => route('inventaris.penyesuaian-stok.show', $stockAdjustment->id),
+                'stock_adjustment_id' => $stockAdjustment->id,
+                'discrepancy_count' => $discrepancyCount,
+                'gudang_id' => $stockAdjustment->gudang_id
+            ]
+        );
+    }
 }

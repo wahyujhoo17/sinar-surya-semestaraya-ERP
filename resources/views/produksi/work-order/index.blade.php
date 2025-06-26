@@ -543,9 +543,13 @@
 
     @push('styles')
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
     @endpush
 
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Daterange picker

@@ -435,8 +435,9 @@ class InvoiceController extends Controller
             $invoice->load([
                 'customer',
                 'salesOrder',
-                'details.barang',
-                'details.barang.satuan',
+                'details.produk',
+                'details.produk.satuan',
+                'details.satuan',
                 'pembayaranPiutang' // Changed 'pembayaran' to 'pembayaranPiutang'
             ]);
 
