@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\JournalEntryService;
 use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -105,15 +104,15 @@ class BiayaOperasional extends Model
                 'kredit' => $this->jumlah
             ];
 
-            // Buat jurnal otomatis
-            $service = new JournalEntryService();
-            return $service->createJournalEntries(
+            // Buat jurnal otomatis dengan sinkronisasi saldo
+            $this->createJournalEntries(
                 $entries,
                 $this->nomor,
                 "Biaya Operasional: {$this->nomor} - {$this->keterangan}",
-                $this->tanggal,
-                $this
+                $this->tanggal
             );
+
+            return true;
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal otomatis untuk biaya operasional: " . $e->getMessage(), [
                 'exception' => $e,

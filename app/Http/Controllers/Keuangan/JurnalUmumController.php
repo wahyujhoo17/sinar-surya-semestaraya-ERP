@@ -680,4 +680,45 @@ class JurnalUmumController extends Controller
                 ->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
         }
     }
+
+    /**
+     * Export jurnal umum to Excel
+     */
+    public function exportExcel(Request $request)
+    {
+        try {
+            $startDate = $request->get('start_date');
+            $endDate = $request->get('end_date');
+            $akunId = $request->get('akun_id');
+            $noReferensi = $request->get('no_referensi');
+
+            // Validate date range if provided
+            if ($startDate && $endDate && $startDate > $endDate) {
+                return redirect()->back()
+                    ->withErrors(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.']);
+            }
+
+            // Generate filename
+            $filename = 'jurnal_umum';
+            if ($startDate && $endDate) {
+                $filename .= '_' . str_replace('-', '', $startDate) . '_' . str_replace('-', '', $endDate);
+            }
+            if ($akunId) {
+                $akun = \App\Models\AkunAkuntansi::find($akunId);
+                if ($akun) {
+                    $filename .= '_' . $akun->kode;
+                }
+            }
+            $filename .= '.xlsx';
+
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\JurnalUmumExport($startDate, $endDate, $akunId, $noReferensi),
+                $filename
+            );
+        } catch (\Exception $e) {
+            \Log::error('Error exporting jurnal umum: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['error' => 'Terjadi kesalahan saat export: ' . $e->getMessage()]);
+        }
+    }
 }

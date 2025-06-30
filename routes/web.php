@@ -35,6 +35,7 @@ use App\Http\Controllers\Keuangan\PiutangUsahaController; // Import PiutangUsaha
 use App\Http\Controllers\Keuangan\PembayaranPiutangController; // Import PembayaranPiutangController
 use App\Http\Controllers\Keuangan\ManagementPajakController;
 use App\Http\Controllers\Keuangan\RekonsiliasiBankController;
+use App\Http\Controllers\Keuangan\BukuBesarController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
@@ -425,7 +426,14 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('coa', App\Http\Controllers\Keuangan\COAController::class);
 
         // Jurnal Umum Routes
+        Route::get('jurnal-umum/export-excel', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'exportExcel'])->name('jurnal-umum.export-excel');
         Route::resource('jurnal-umum', App\Http\Controllers\Keuangan\JurnalUmumController::class);
+
+        // Buku Besar Routes
+        Route::get('buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');
+        Route::get('buku-besar/export-excel', [BukuBesarController::class, 'exportExcel'])->name('buku-besar.export-excel');
+        Route::get('buku-besar/export', [BukuBesarController::class, 'export'])->name('buku-besar.export');
+        Route::get('buku-besar/account-balance', [BukuBesarController::class, 'getAccountBalance'])->name('buku-besar.account-balance');
 
         // Rutas para Kas dan Bank
         Route::get('/kas-dan-bank', [KasDanBankController::class, 'index'])->name('kas-dan-bank.index');
@@ -482,9 +490,9 @@ Route::middleware(['auth'])->group(function () {
         Route::get('management-pajak/{id}/export-pdf', [ManagementPajakController::class, 'exportPdf'])->name('management-pajak.export-pdf');
         Route::resource('management-pajak', ManagementPajakController::class);
 
+
         // Rekonsiliasi Bank Routes
         Route::get('rekonsiliasi', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'index'])->name('rekonsiliasi.index');
-        // Put specific routes before the {id} parameter route to avoid conflicts
         Route::get('rekonsiliasi/erp-transactions', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getErpTransactions'])->name('rekonsiliasi.erp-transactions');
         Route::get('rekonsiliasi/balance/rekening', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getRekeningBalance'])->name('rekonsiliasi.rekening-balance');
         Route::get('rekonsiliasi/history/data', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'getReconciliationHistory'])->name('rekonsiliasi.history');
@@ -500,10 +508,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('rekonsiliasi/add-manual-transaction', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'addManualBankTransaction'])->name('rekonsiliasi.add-manual-transaction');
         Route::post('rekonsiliasi/enhanced-auto-match', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'enhancedAutoMatch'])->name('rekonsiliasi.enhanced-auto-match');
         Route::post('rekonsiliasi/bulk-match', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'bulkMatchTransactions'])->name('rekonsiliasi.bulk-match');
-        Route::get('rekonsiliasi/export/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliationReport'])->name('rekonsiliasi.export');
-        Route::post('rekonsiliasi/approve/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'approveReconciliation'])->name('rekonsiliasi.approve');
-        Route::post('rekonsiliasi/reject/{id}', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'rejectReconciliation'])->name('rekonsiliasi.reject');
-        Route::post('rekonsiliasi/export-report', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export-report');
         Route::post('rekonsiliasi/{id}/approve', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'approveReconciliation'])->name('rekonsiliasi.approve');
         Route::post('rekonsiliasi/{id}/reject', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'rejectReconciliation'])->name('rekonsiliasi.reject');
         Route::get('rekonsiliasi/{id}/export', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export');

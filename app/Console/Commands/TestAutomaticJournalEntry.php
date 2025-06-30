@@ -10,8 +10,8 @@ use App\Models\ReturPenjualan;
 use App\Models\ReturPembelian;
 use App\Models\PenyesuaianStok;
 use App\Models\BiayaOperasional;
+use App\Models\Penggajian;
 use App\Models\JurnalUmum;
-use App\Services\AccountingConfigValidator;
 use Illuminate\Console\Command;
 
 class TestAutomaticJournalEntry extends Command
@@ -21,7 +21,7 @@ class TestAutomaticJournalEntry extends Command
      *
      * @var string
      */
-    protected $signature = 'journal:test {model? : The model to test (invoice, pembayaran-piutang, pembelian, pembayaran-hutang, retur-penjualan, retur-pembelian, penyesuaian-stok, biaya-operasional)} {id? : The ID of the model to test}';
+    protected $signature = 'journal:test {model? : The model to test (invoice, pembayaran-piutang, pembelian, pembayaran-hutang, retur-penjualan, retur-pembelian, penyesuaian-stok, biaya-operasional, penggajian)} {id? : The ID of the model to test}';
 
     /**
      * The console command description.
@@ -50,6 +50,7 @@ class TestAutomaticJournalEntry extends Command
                     'retur-pembelian' => 'Retur Pembelian',
                     'penyesuaian-stok' => 'Penyesuaian Stok',
                     'biaya-operasional' => 'Biaya Operasional',
+                    'penggajian' => 'Penggajian',
                     'all' => 'Test All Models'
                 ],
                 'all'
@@ -103,6 +104,9 @@ class TestAutomaticJournalEntry extends Command
                 break;
             case 'biaya-operasional':
                 $this->testBiayaOperasional($id);
+                break;
+            case 'penggajian':
+                $this->testPenggajian($id);
                 break;
             default:
                 $this->error("Unknown model: {$model}");
@@ -181,6 +185,14 @@ class TestAutomaticJournalEntry extends Command
             $this->testBiayaOperasional($biayaOperasional->id);
         } else {
             $this->warn('No BiayaOperasional found to test');
+        }
+
+        // Test Penggajian
+        $penggajian = Penggajian::orderBy('id', 'desc')->first();
+        if ($penggajian) {
+            $this->testPenggajian($penggajian->id);
+        } else {
+            $this->warn('No Penggajian found to test');
         }
     }
 
@@ -321,6 +333,23 @@ class TestAutomaticJournalEntry extends Command
     }
 
     /**
+     * Test Penggajian journal entry
+     *
+     * @param int $id
+     * @return void
+     */
+    private function testPenggajian($id)
+    {
+        $penggajian = Penggajian::find($id);
+        if (!$penggajian) {
+            $this->error("Penggajian with ID {$id} not found");
+            return;
+        }
+
+        $this->checkJournalEntries('App\Models\Penggajian', $id);
+    }
+
+    /**
      * Check journal entries for a specific model
      *
      * @param string $refType
@@ -364,20 +393,6 @@ class TestAutomaticJournalEntry extends Command
             $this->info("✅ Journal is balanced");
         } else {
             $this->error("❌ Journal is not balanced! Difference: " . number_format(abs($totalDebit - $totalKredit), 2));
-        }
-
-        // Check if all required accounting configs are set
-        $validator = new AccountingConfigValidator();
-        $validator->validateForModel($refType);
-        $missingConfigs = $validator->getMissingConfigs();
-
-        if (!empty($missingConfigs)) {
-            $this->warn("⚠️ Missing accounting configurations:");
-            foreach ($missingConfigs as $config) {
-                $this->warn(" - {$config}");
-            }
-        } else {
-            $this->info("✅ All required accounting configurations are set");
         }
     }
 }

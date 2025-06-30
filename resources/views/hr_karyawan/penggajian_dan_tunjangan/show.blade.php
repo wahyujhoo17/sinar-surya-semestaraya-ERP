@@ -476,6 +476,25 @@
                                         @if ($penggajian->status == 'dibayar')
                                             Dibayar pada:
                                             {{ \Carbon\Carbon::parse($penggajian->tanggal_bayar)->format('d F Y') }}
+
+                                            @if ($penggajian->metode_pembayaran)
+                                                <br>
+                                                <span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                                    {{ $penggajian->metode_pembayaran === 'kas' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' }}">
+                                                    @if ($penggajian->metode_pembayaran === 'kas')
+                                                        💰 Kas
+                                                        @if ($penggajian->kas)
+                                                            - {{ $penggajian->kas->nama }}
+                                                        @endif
+                                                    @else
+                                                        🏦 Bank Transfer
+                                                        @if ($penggajian->rekeningBank)
+                                                            - {{ $penggajian->rekeningBank->nama_bank }}
+                                                        @endif
+                                                    @endif
+                                                </span>
+                                            @endif
                                         @else
                                             Menunggu pembayaran
                                         @endif

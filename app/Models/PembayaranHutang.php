@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\JournalEntryService;
 use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,7 +22,9 @@ class PembayaranHutang extends Model
         'metode_pembayaran',
         'no_referensi',
         'catatan',
-        'user_id'
+        'user_id',
+        'kas_id',
+        'rekening_id'
     ];
 
     /**
@@ -51,6 +52,22 @@ class PembayaranHutang extends Model
     }
 
     /**
+     * Relasi ke Kas
+     */
+    public function kas()
+    {
+        return $this->belongsTo(Kas::class, 'kas_id');
+    }
+
+    /**
+     * Relasi ke Rekening Bank
+     */
+    public function rekeningBank()
+    {
+        return $this->belongsTo(RekeningBank::class, 'rekening_id');
+    }
+
+    /**
      * Get the cash transaction associated with this payment
      */
     public function transaksiKas()
@@ -74,11 +91,11 @@ class PembayaranHutang extends Model
         try {
             // Mendapatkan ID akun dari konfigurasi
             $akunHutangUsaha = config('accounting.pembayaran_hutang.hutang_usaha');
-            $akunKas = config('accounting.pembayaran_hutang.kas');
-            $akunBank = config('accounting.pembayaran_hutang.bank');
+            $akunKasDefault = config('accounting.pembayaran_hutang.kas');
+            $akunBankDefault = config('accounting.pembayaran_hutang.bank');
 
-            if (!$akunHutangUsaha || (!$akunKas && !$akunBank)) {
-                Log::error("Akun untuk jurnal pembayaran hutang belum dikonfigurasi", [
+            if (!$akunHutangUsaha) {
+                Log::error("Akun hutang usaha untuk jurnal pembayaran hutang belum dikonfigurasi", [
                     'pembayaran_id' => $this->id,
                     'nomor' => $this->nomor
                 ]);
@@ -96,7 +113,41 @@ class PembayaranHutang extends Model
             ];
 
             // Kredit: Kas atau Bank tergantung metode pembayaran
-            $akunSumber = $this->metode_pembayaran == 'tunai' ? $akunKas : $akunBank;
+            $akunSumber = null;
+
+            if ($this->metode_pembayaran == 'kas' || $this->metode_pembayaran == 'tunai') {
+                // Jika ada kas_id, cari akun akuntansi yang terkait dengan kas tersebut
+                if ($this->kas_id) {
+                    $akunKas = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\Kas')
+                        ->where('ref_id', $this->kas_id)
+                        ->first();
+                    $akunSumber = $akunKas ? $akunKas->id : $akunKasDefault;
+                } else {
+                    $akunSumber = $akunKasDefault;
+                }
+            } else {
+                // Untuk pembayaran bank
+                if ($this->rekening_id) {
+                    // Cari akun akuntansi yang terkait dengan rekening bank yang dipilih
+                    $akunBank = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\RekeningBank')
+                        ->where('ref_id', $this->rekening_id)
+                        ->first();
+                    $akunSumber = $akunBank ? $akunBank->id : $akunBankDefault;
+                } else {
+                    $akunSumber = $akunBankDefault;
+                }
+            }
+
+            if (!$akunSumber) {
+                Log::error("Akun sumber pembayaran tidak ditemukan", [
+                    'pembayaran_id' => $this->id,
+                    'nomor' => $this->nomor,
+                    'metode_pembayaran' => $this->metode_pembayaran,
+                    'kas_id' => $this->kas_id,
+                    'rekening_id' => $this->rekening_id
+                ]);
+                return false;
+            }
 
             $entries[] = [
                 'akun_id' => $akunSumber,
@@ -104,15 +155,15 @@ class PembayaranHutang extends Model
                 'kredit' => $this->jumlah
             ];
 
-            // Buat jurnal otomatis
-            $service = new JournalEntryService();
-            return $service->createJournalEntries(
+            // Buat jurnal otomatis dengan sinkronisasi saldo
+            $this->createJournalEntries(
                 $entries,
                 $this->nomor,
                 "Pembayaran Hutang: {$this->nomor}",
-                $this->tanggal,
-                $this
+                $this->tanggal
             );
+
+            return true;
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal otomatis untuk pembayaran hutang: " . $e->getMessage(), [
                 'exception' => $e,

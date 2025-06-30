@@ -688,9 +688,9 @@
                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         @forelse ($invoices as $index => $invoice)
                             @php
-                                // Calculate manually to ensure consistent display
+                                // Use accessor to ensure nota kredit is included in calculation
                                 $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-                                $sisaPiutang = $invoice->total - $totalPayments;
+                                $sisaPiutang = $invoice->sisa_piutang; // This accessor includes nota kredit
 
                                 // Status display logic
                                 $isOverdue =

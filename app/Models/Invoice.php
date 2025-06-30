@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\JournalEntryService;
 use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -260,15 +259,15 @@ class Invoice extends Model
                 ];
             }
 
-            // Buat jurnal otomatis
-            $service = new JournalEntryService();
-            return $service->createJournalEntries(
+            // Buat jurnal otomatis dengan sinkronisasi saldo
+            $this->createJournalEntries(
                 $entries,
                 $this->nomor,
                 "Invoice penjualan: {$this->nomor}",
-                $this->tanggal,
-                $this
+                $this->tanggal
             );
+
+            return true;
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal otomatis untuk invoice: " . $e->getMessage(), [
                 'exception' => $e,

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\JournalEntryService;
 use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,10 +17,21 @@ class Pembelian extends Model
         'nomor',
         'tanggal',
         'supplier_id',
+        'pr_id',
         'user_id',
+        'subtotal',
+        'diskon_persen',
+        'diskon_nominal',
+        'ppn',
+        'ongkos_kirim',
         'total',
+        'status',
         'status_pembayaran',
-        'catatan'
+        'status_penerimaan',
+        'tanggal_pengiriman',
+        'alamat_pengiriman',
+        'catatan',
+        'syarat_ketentuan'
     ];
 
     /**
@@ -121,15 +131,15 @@ class Pembelian extends Model
                 'kredit' => $this->total
             ];
 
-            // Buat jurnal otomatis
-            $service = new JournalEntryService();
-            return $service->createJournalEntries(
+            // Buat jurnal otomatis dengan sinkronisasi saldo
+            $this->createJournalEntries(
                 $entries,
                 $this->nomor,
                 "Pembelian: {$this->nomor}",
-                $this->tanggal,
-                $this
+                $this->tanggal
             );
+
+            return true;
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal otomatis untuk pembelian: " . $e->getMessage(), [
                 'exception' => $e,

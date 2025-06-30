@@ -129,7 +129,7 @@ class PiutangUsahaController extends Controller
 
         foreach ($allInvoices as $invoice) {
             $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-            $sisaPiutang = $invoice->total - $totalPayments;
+            $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
 
             if ($sisaPiutang > 0) {
                 $totalPiutang += $sisaPiutang;
@@ -151,7 +151,7 @@ class PiutangUsahaController extends Controller
         $totalSisaPiutangCurrent = 0;
         foreach ($invoices as $invoice) {
             $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-            $sisaPiutang = $invoice->total - $totalPayments;
+            $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
             if ($sisaPiutang > 0) {
                 $totalSisaPiutangCurrent += $sisaPiutang;
             }
@@ -336,7 +336,7 @@ class PiutangUsahaController extends Controller
         $totalPiutangPdf = 0;
         foreach ($invoices as $invoice) {
             $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-            $sisaPiutang = $invoice->total - $totalPayments;
+            $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
             if ($sisaPiutang > 0) {
                 $totalPiutangPdf += $sisaPiutang;
             }

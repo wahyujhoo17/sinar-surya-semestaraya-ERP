@@ -4,13 +4,18 @@ namespace App\Traits;
 
 use App\Models\JurnalUmum;
 use App\Models\AkunAkuntansi;
+use App\Models\Kas;
+use App\Models\RekeningBank;
+use App\Models\TransaksiKas;
+use App\Models\TransaksiBank;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 trait AutomaticJournalEntry
 {
     /**
-     * Membuat entri jurnal umum secara otomatis.
+     * Membuat entri jurnal umum secara otomatis dengan sinkronisasi saldo kas/bank.
      *
      * @param array $entries Array berisi entri jurnal yang akan dibuat
      * @param string $noReferensi Nomor referensi untuk entri jurnal
@@ -44,11 +49,15 @@ trait AutomaticJournalEntry
             DB::beginTransaction();
 
             $tanggal = $tanggal ?? date('Y-m-d');
-            $userId = Auth::id();
+            $userId = Auth::id() ?? 1; // Default ke admin jika tidak ada user yang login
+
+            // Arrays untuk menyimpan perubahan saldo
+            $kasToUpdate = [];
+            $rekeningToUpdate = [];
 
             // Buat entri jurnal untuk setiap akun yang terlibat
             foreach ($entries as $entry) {
-                JurnalUmum::create([
+                $newJurnal = JurnalUmum::create([
                     'tanggal' => $tanggal,
                     'no_referensi' => $noReferensi,
                     'akun_id' => $entry['akun_id'],
@@ -59,6 +68,88 @@ trait AutomaticJournalEntry
                     'ref_type' => get_class($this),
                     'ref_id' => $this->id
                 ]);
+
+                // Periksa apakah akun ini terkait dengan Kas atau RekeningBank
+                $akun = AkunAkuntansi::find($entry['akun_id']);
+
+                if ($akun && $akun->ref_type) {
+                    $debit = (float)($entry['debit'] ?? 0);
+                    $kredit = (float)($entry['kredit'] ?? 0);
+
+                    if ($akun->ref_type === 'App\Models\Kas') {
+                        // Untuk akun Kas: debit menambah saldo, kredit mengurangi saldo
+                        $nilaiPerubahan = $debit - $kredit;
+
+                        if (!isset($kasToUpdate[$akun->ref_id])) {
+                            $kasToUpdate[$akun->ref_id] = 0;
+                        }
+                        $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
+                        // Untuk akun Rekening Bank: debit menambah saldo, kredit mengurangi saldo
+                        $nilaiPerubahan = $debit - $kredit;
+
+                        if (!isset($rekeningToUpdate[$akun->ref_id])) {
+                            $rekeningToUpdate[$akun->ref_id] = 0;
+                        }
+                        $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    }
+                }
+            }
+
+            // Update saldo kas dan buat transaksi kas
+            foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
+                $kas = Kas::find($kasId);
+                if ($kas) {
+                    Log::info('AutomaticJournal - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $kas->saldo += $nilaiPerubahan;
+                    $kas->save();
+
+                    Log::info('AutomaticJournal - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
+
+                    // Buat transaksi kas untuk mencatat perubahan
+                    if ($nilaiPerubahan != 0) {
+                        TransaksiKas::create([
+                            'tanggal' => $tanggal,
+                            'kas_id' => $kasId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => $keterangan,
+                            'no_bukti' => $noReferensi,
+                            'related_id' => $this->id,
+                            'related_type' => get_class($this),
+                            'user_id' => $userId
+                        ]);
+                    }
+                }
+            }
+
+            // Update saldo rekening bank dan buat transaksi bank
+            foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
+                $rekening = RekeningBank::find($rekeningId);
+                if ($rekening) {
+                    Log::info('AutomaticJournal - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $rekening->saldo += $nilaiPerubahan;
+                    $rekening->save();
+
+                    Log::info('AutomaticJournal - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
+
+                    // Buat transaksi bank untuk mencatat perubahan
+                    if ($nilaiPerubahan != 0) {
+                        TransaksiBank::create([
+                            'tanggal' => $tanggal,
+                            'rekening_id' => $rekeningId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => $keterangan,
+                            'no_referensi' => $noReferensi,
+                            'related_id' => $this->id,
+                            'related_type' => get_class($this),
+                            'user_id' => $userId
+                        ]);
+                    }
+                }
             }
 
             DB::commit();
@@ -79,12 +170,114 @@ trait AutomaticJournalEntry
     }
 
     /**
-     * Hapus entri jurnal terkait dengan model ini.
+     * Hapus entri jurnal terkait dengan model ini dan reverse saldo kas/bank.
      *
      * @return void
      */
     public function deleteJournalEntries()
     {
-        $this->journalEntries()->delete();
+        try {
+            DB::beginTransaction();
+
+            // Get journal entries yang akan dihapus untuk reverse saldo
+            $journalEntries = $this->journalEntries()->get();
+
+            // Arrays untuk menyimpan perubahan saldo (reverse dari yang ada)
+            $kasToUpdate = [];
+            $rekeningToUpdate = [];
+
+            foreach ($journalEntries as $journal) {
+                $akun = AkunAkuntansi::find($journal->akun_id);
+
+                if ($akun && $akun->ref_type) {
+                    $debit = (float)$journal->debit;
+                    $kredit = (float)$journal->kredit;
+
+                    if ($akun->ref_type === 'App\Models\Kas') {
+                        // Reverse: jika debit menambah, sekarang kurangi
+                        $nilaiPerubahan = $kredit - $debit; // Kebalikan dari saat create
+
+                        if (!isset($kasToUpdate[$akun->ref_id])) {
+                            $kasToUpdate[$akun->ref_id] = 0;
+                        }
+                        $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
+                        // Reverse: jika debit menambah, sekarang kurangi
+                        $nilaiPerubahan = $kredit - $debit; // Kebalikan dari saat create
+
+                        if (!isset($rekeningToUpdate[$akun->ref_id])) {
+                            $rekeningToUpdate[$akun->ref_id] = 0;
+                        }
+                        $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    }
+                }
+            }
+
+            // Hapus journal entries
+            $this->journalEntries()->delete();
+
+            $userId = Auth::id() ?? 1;
+
+            // Update saldo kas (reverse)
+            foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
+                $kas = Kas::find($kasId);
+                if ($kas) {
+                    Log::info('AutomaticJournal Delete - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $kas->saldo += $nilaiPerubahan;
+                    $kas->save();
+
+                    Log::info('AutomaticJournal Delete - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
+
+                    // Buat transaksi kas untuk mencatat reverse
+                    if ($nilaiPerubahan != 0) {
+                        TransaksiKas::create([
+                            'tanggal' => date('Y-m-d'),
+                            'kas_id' => $kasId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => 'Reverse: ' . get_class($this) . ' ID: ' . $this->id,
+                            'no_bukti' => 'REV-' . get_class($this) . '-' . $this->id,
+                            'related_id' => $this->id,
+                            'related_type' => get_class($this),
+                            'user_id' => $userId
+                        ]);
+                    }
+                }
+            }
+
+            // Update saldo rekening bank (reverse)
+            foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
+                $rekening = RekeningBank::find($rekeningId);
+                if ($rekening) {
+                    Log::info('AutomaticJournal Delete - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $rekening->saldo += $nilaiPerubahan;
+                    $rekening->save();
+
+                    Log::info('AutomaticJournal Delete - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
+
+                    // Buat transaksi bank untuk mencatat reverse
+                    if ($nilaiPerubahan != 0) {
+                        TransaksiBank::create([
+                            'tanggal' => date('Y-m-d'),
+                            'rekening_id' => $rekeningId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => 'Reverse: ' . get_class($this) . ' ID: ' . $this->id,
+                            'no_referensi' => 'REV-' . get_class($this) . '-' . $this->id,
+                            'related_id' => $this->id,
+                            'related_type' => get_class($this),
+                            'user_id' => $userId
+                        ]);
+                    }
+                }
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

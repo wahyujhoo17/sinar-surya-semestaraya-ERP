@@ -114,7 +114,7 @@ class PembayaranPiutangController extends Controller
             $pembayaran->jumlah = $validatedData['jumlah_pembayaran'];
             $pembayaran->metode_pembayaran = $validatedData['metode_pembayaran'];
 
-            // Store kas and rekening information in catatan field instead of separate columns
+            // Store kas and rekening information in catatan field and also in separate columns for relasi
             $originalCatatan = $validatedData['catatan'] ?? '';
 
             if ($validatedData['metode_pembayaran'] === 'Kas' && isset($validatedData['kas_id'])) {
@@ -164,9 +164,9 @@ class PembayaranPiutangController extends Controller
 
                 $pembayaran->customer_id = $invoice->customer_id;
 
-                // Calculate sisa_piutang by subtracting total payments from invoice total
+                // Calculate sisa_piutang using Invoice accessor (includes nota kredit calculation)
                 $totalPaymentsBefore = $invoice->pembayaranPiutang()->sum('jumlah');
-                $sisaPiutang = (float)$invoice->total - (float)$totalPaymentsBefore;
+                $sisaPiutang = $invoice->sisa_piutang; // This accessor already includes nota kredit
 
                 if (round((float)$pembayaran->jumlah, 2) > round((float)$sisaPiutang, 2) + 0.001) { // Use $pembayaran->jumlah
                     DB::rollBack();
@@ -200,42 +200,13 @@ class PembayaranPiutangController extends Controller
 
             $pembayaran->save();
 
+            // Update invoice status
             $customerName = Customer::find($pembayaran->customer_id);
             $customerName = $customerName ? ($customerName->company ?? $customerName->nama) : 'Unknown';
             $invoiceNumber = $invoice ? $invoice->nomor : 'Tanpa Invoice';
 
-            if ($pembayaran->metode_pembayaran === 'Kas' && $pembayaran->kas_id) {
-                $kas = Kas::findOrFail($pembayaran->kas_id);
-                $kas->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
-                $kas->save();
-                TransaksiKas::create([
-                    'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
-                    'kas_id' => $pembayaran->kas_id,
-                    'jenis' => 'masuk',
-                    'jumlah' => $pembayaran->jumlah, // Use $pembayaran->jumlah
-                    'keterangan' => 'Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
-                    'no_bukti' => $pembayaran->nomor, // Changed nomor_pembayaran to nomor
-                    'related_id' => $invoice->id,
-                    'related_type' => PembayaranPiutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            } elseif ($pembayaran->metode_pembayaran === 'Bank Transfer' && $pembayaran->rekening_bank_id) {
-                $rekening = RekeningBank::findOrFail($pembayaran->rekening_bank_id);
-                $rekening->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
-                $rekening->save();
-                TransaksiBank::create([
-                    'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
-                    'rekening_id' => $pembayaran->rekening_bank_id,
-                    'jenis' => 'masuk',
-                    'jumlah' => $pembayaran->jumlah, // Use $pembayaran->jumlah
-                    'keterangan' => 'Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
-                    'no_referensi' => $pembayaran->no_referensi,
-                    'no_bukti' => $pembayaran->nomor, // Changed nomor_pembayaran to nomor
-                    'related_id' => $invoice->id,
-                    'related_type' => PembayaranPiutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            }
+            // NOTE: Jurnal otomatis dibuat melalui model observer (AutomaticJournalEntry trait)
+            // Tidak perlu manual membuat jurnal atau update saldo kas/bank
 
             // Send payment notification
             if ($invoice) {
@@ -330,46 +301,29 @@ class PembayaranPiutangController extends Controller
 
         DB::beginTransaction();
         try {
-            $originalJumlahPembayaran = $pembayaran->jumlah;
-            $originalMetodePembayaran = $pembayaran->metode_pembayaran;
-            $originalKasId = $pembayaran->kas_id;
-            $originalRekeningBankId = $pembayaran->rekening_bank_id;
             $originalInvoiceId = $pembayaran->invoice_id;
             $originalCustomerId = $pembayaran->customer_id; // For payments without invoice
-
-            // --- Revert old financial records and invoice status ---
-            // Revert Kas/Bank transaction
-            if ($originalMetodePembayaran === 'Kas' && $originalKasId) {
-                $kas = Kas::find($originalKasId);
-                if ($kas) {
-                    $kas->saldo -= $originalJumlahPembayaran;
-                    $kas->save();
-                }
-                TransaksiKas::where('related_id', $pembayaran->id)->where('related_type', PembayaranPiutang::class)->delete();
-            } elseif ($originalMetodePembayaran === 'Bank Transfer' && $originalRekeningBankId) {
-                $rekening = RekeningBank::find($originalRekeningBankId);
-                if ($rekening) {
-                    $rekening->saldo -= $originalJumlahPembayaran;
-                    $rekening->save();
-                }
-                TransaksiBank::where('related_id', $pembayaran->id)->where('related_type', PembayaranPiutang::class)->delete();
-            }
-
+            $originalJumlahPembayaran = $pembayaran->jumlah;
+            $originalInvoice = $originalInvoiceId ? Invoice::find($originalInvoiceId) : null;
             $originalSalesOrderToUpdate = null;
-            if ($originalInvoiceId) {
-                $originalInvoice = Invoice::find($originalInvoiceId);
-                if ($originalInvoice) {
-                    $originalInvoice->sisa_piutang += $originalJumlahPembayaran;
-                    if (round($originalInvoice->sisa_piutang, 2) >= round($originalInvoice->total, 2) - 0.001) {
-                        $originalInvoice->status = 'belum_bayar';
-                    } else {
-                        $originalInvoice->status = 'sebagian';
-                    }
-                    $originalInvoice->save();
 
-                    if ($originalInvoice->sales_order_id) {
-                        $originalSalesOrderToUpdate = SalesOrder::find($originalInvoice->sales_order_id);
-                    }
+            // --- Revert old invoice status ---
+            if ($originalInvoice) {
+                // Don't manually update sisa_piutang as it's an accessor
+                // Just refresh the model to get updated status based on payments and credits
+                $originalInvoice->refresh();
+                
+                // Check status based on current sisa_piutang (after this payment is removed)
+                $sisaPiutangAfterRevert = $originalInvoice->sisa_piutang + $originalJumlahPembayaran;
+                if ($sisaPiutangAfterRevert >= $originalInvoice->total - 0.001) {
+                    $originalInvoice->status = 'belum_bayar';
+                } else {
+                    $originalInvoice->status = 'sebagian';
+                }
+                $originalInvoice->save();
+
+                if ($originalInvoice->sales_order_id) {
+                    $originalSalesOrderToUpdate = SalesOrder::find($originalInvoice->sales_order_id);
                 }
             }
 
@@ -378,8 +332,12 @@ class PembayaranPiutangController extends Controller
             $pembayaran->jumlah = $validatedData['jumlah_pembayaran'];
             $pembayaran->metode_pembayaran = $validatedData['metode_pembayaran'];
 
-            // Store kas and rekening information in catatan field instead of separate columns
+            // Store kas and rekening information in catatan field and also in separate columns for relasi
             $originalCatatan = $validatedData['catatan'] ?? '';
+
+            // Reset fields first
+            $pembayaran->kas_id = null;
+            $pembayaran->rekening_bank_id = null;
 
             if ($validatedData['metode_pembayaran'] === 'Kas' && isset($validatedData['kas_id'])) {
                 $kas = Kas::find($validatedData['kas_id']);
@@ -416,9 +374,10 @@ class PembayaranPiutangController extends Controller
                     return back()->withInput()->withErrors(['jumlah_pembayaran' => 'Jumlah pembayaran (Rp ' . number_format($pembayaran->jumlah, 2, ',', '.') . ') melebihi sisa piutang (Rp ' . number_format($currentSisaPiutangNewInvoice, 2, ',', '.') . ') untuk invoice ini.']);
                 }
 
-                $newInvoice->sisa_piutang -= $pembayaran->jumlah;
-                if ($newInvoice->sisa_piutang <= 0.009) {
-                    $newInvoice->sisa_piutang = 0;
+                // Don't manually update sisa_piutang as it's an accessor
+                // Just update status based on calculated sisa_piutang after this payment
+                $sisaPiutangAfterPayment = $currentSisaPiutangNewInvoice - $pembayaran->jumlah;
+                if ($sisaPiutangAfterPayment <= 0.009) {
                     $newInvoice->status = 'lunas';
                 } else {
                     $newInvoice->status = 'sebagian';
@@ -469,38 +428,8 @@ class PembayaranPiutangController extends Controller
             $customerName = Customer::find($pembayaran->customer_id)->nama ?? 'N/A';
             $invoiceNumber = $newInvoice ? $newInvoice->nomor_invoice : 'Tanpa Invoice';
 
-            if ($pembayaran->metode_pembayaran === 'Kas' && $pembayaran->kas_id) {
-                $kas = Kas::findOrFail($pembayaran->kas_id);
-                $kas->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
-                $kas->save();
-                TransaksiKas::create([
-                    'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
-                    'kas_id' => $pembayaran->kas_id,
-                    'jenis' => 'masuk',
-                    'jumlah' => $pembayaran->jumlah, // Use $pembayaran->jumlah
-                    'keterangan' => 'Update Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
-                    'no_bukti' => $pembayaran->nomor, // Use $pembayaran->nomor
-                    'related_id' => $pembayaran->id,
-                    'related_type' => PembayaranPiutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            } elseif ($pembayaran->metode_pembayaran === 'Bank Transfer' && $pembayaran->rekening_bank_id) {
-                $rekening = RekeningBank::findOrFail($pembayaran->rekening_bank_id);
-                $rekening->saldo += $pembayaran->jumlah; // Use $pembayaran->jumlah
-                $rekening->save();
-                TransaksiBank::create([
-                    'tanggal' => $pembayaran->tanggal, // Use $pembayaran->tanggal
-                    'rekening_id' => $pembayaran->rekening_bank_id,
-                    'jenis' => 'masuk',
-                    'jumlah' => $pembayaran->jumlah, // Use $pembayaran->jumlah
-                    'keterangan' => 'Update Penerimaan piutang dari ' . $customerName . ' (Inv: ' . $invoiceNumber . ')',
-                    'no_referensi' => $pembayaran->no_referensi,
-                    'no_bukti' => $pembayaran->nomor, // Use $pembayaran->nomor
-                    'related_id' => $pembayaran->id,
-                    'related_type' => PembayaranPiutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            }
+            // NOTE: Automatic journal entries dan update saldo kas/bank di-handle oleh model observer
+            // Tidak perlu manual update saldo atau buat TransaksiKas/TransaksiBank
 
             DB::commit();
             return redirect()->route('keuangan.pembayaran-piutang.show', $pembayaran->id)
@@ -529,18 +458,10 @@ class PembayaranPiutangController extends Controller
             $originalInvoiceId = $pembayaran->invoice_id;
 
             if ($pembayaran->metode_pembayaran === 'Kas' && $pembayaran->kas_id) {
-                $kas = Kas::find($pembayaran->kas_id);
-                if ($kas) {
-                    $kas->saldo -= $pembayaran->jumlah; // Use $pembayaran->jumlah
-                    $kas->save();
-                }
+                // NOTE: Saldo kas akan diupdate otomatis melalui automatic journal system
                 TransaksiKas::where('related_id', $pembayaran->id)->where('related_type', PembayaranPiutang::class)->delete();
             } elseif ($pembayaran->metode_pembayaran === 'Bank Transfer' && $pembayaran->rekening_bank_id) {
-                $rekening = RekeningBank::find($pembayaran->rekening_bank_id);
-                if ($rekening) {
-                    $rekening->saldo -= $pembayaran->jumlah; // Use $pembayaran->jumlah
-                    $rekening->save();
-                }
+                // NOTE: Saldo bank akan diupdate otomatis melalui automatic journal system 
                 TransaksiBank::where('related_id', $pembayaran->id)->where('related_type', PembayaranPiutang::class)->delete();
             }
 
@@ -549,9 +470,11 @@ class PembayaranPiutangController extends Controller
             if ($pembayaran->invoice_id) {
                 $invoice = Invoice::find($pembayaran->invoice_id);
                 if ($invoice) {
-                    $invoice->sisa_piutang += $pembayaran->jumlah; // Use $pembayaran->jumlah
-                    if (round($invoice->sisa_piutang, 2) >= round($invoice->total_invoice, 2) - 0.001) { // Check against total_invoice
-                        $invoice->status = 'lunas';
+                    // Don't manually update sisa_piutang as it's an accessor
+                    // Calculate what sisa_piutang would be after removing this payment
+                    $sisaPiutangAfterDeletion = $invoice->sisa_piutang + $pembayaran->jumlah;
+                    if ($sisaPiutangAfterDeletion >= $invoice->total - 0.001) {
+                        $invoice->status = 'belum_bayar';
                     } else {
                         $invoice->status = 'sebagian';
                     }
@@ -600,12 +523,6 @@ class PembayaranPiutangController extends Controller
     public function print(string $id)
     {
         $pembayaran = PembayaranPiutang::with(['invoice.customer', 'customer', 'user', 'kas', 'rekeningBank', 'invoice.details.produk'])->findOrFail($id);
-        // For DOMPDF or other PDF libraries, ensure they are installed and configured.
-        // Example:
-        // if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
-        //     $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('keuangan.pembayaran_piutang.print', compact('pembayaran'));
-        //     return $pdf->stream('pembayaran-'.$pembayaran->nomor.'.pdf'); // Changed nomor_pembayaran to nomor
-        // }
         return view('keuangan.pembayaran_piutang.print', compact('pembayaran'));
     }
 

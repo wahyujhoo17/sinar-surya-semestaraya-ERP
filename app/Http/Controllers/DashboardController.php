@@ -40,8 +40,605 @@ class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard utama sistem ERP Sinar Surya Semestaraya
+     * Redirects to role-based dashboard based on user permissions
      */
     public function index()
+    {
+        $user = auth()->user();
+
+        // Determine role group based on permissions
+        $roleGroup = $this->determineRoleGroup($user);
+
+        // Route to specific dashboard based on role group
+        switch ($roleGroup) {
+            case 'management':
+                return $this->managementDashboard();
+            case 'finance':
+                return $this->financeRoleDashboard();
+            case 'sales':
+                return $this->salesRoleDashboard();
+            case 'production':
+                return $this->productionRoleDashboard();
+            case 'hr':
+                return $this->hrRoleDashboard();
+            case 'inventory':
+                return $this->inventoryRoleDashboard();
+            case 'purchasing':
+                return $this->purchasingRoleDashboard();
+            default:
+                return $this->defaultDashboard();
+        }
+    }
+
+    /**
+     * Determine user's role group based on permissions
+     */
+    private function determineRoleGroup($user)
+    {
+        // Check for management role (has access to multiple modules or reporting)
+        if (
+            $user->hasPermission('laporan.view') &&
+            ($user->hasPermission('produk.view') || $user->hasPermission('sales_order.view') || $user->hasPermission('purchase_order.view'))
+        ) {
+            return 'management';
+        }
+
+        // Check for finance role
+        if (
+            $user->hasPermission('jurnal_umum.view') || $user->hasPermission('kas.view') ||
+            $user->hasPermission('invoice.view') || $user->hasPermission('laporan_pajak.view')
+        ) {
+            return 'finance';
+        }
+
+        // Check for sales role
+        if (
+            $user->hasPermission('quotation.view') || $user->hasPermission('sales_order.view') ||
+            $user->hasPermission('delivery_order.view') || $user->hasPermission('pelanggan.view')
+        ) {
+            return 'sales';
+        }
+
+        // Check for production role
+        if (
+            $user->hasPermission('work_order.view') || $user->hasPermission('bill_of_material.view') ||
+            $user->hasPermission('bahan_baku.view')
+        ) {
+            return 'production';
+        }
+
+        // Check for HR role
+        if (
+            $user->hasPermission('karyawan.view') || $user->hasPermission('absensi.view') ||
+            $user->hasPermission('cuti.view') || $user->hasPermission('department.view')
+        ) {
+            return 'hr';
+        }
+
+        // Check for inventory role
+        if (
+            $user->hasPermission('stok_barang.view') || $user->hasPermission('transfer_gudang.view') ||
+            $user->hasPermission('gudang.view') || $user->hasPermission('penyesuaian_stok.view')
+        ) {
+            return 'inventory';
+        }
+
+        // Check for purchasing role
+        if (
+            $user->hasPermission('purchase_order.view') || $user->hasPermission('purchase_request.view') ||
+            $user->hasPermission('penerimaan_barang.view') || $user->hasPermission('supplier.view')
+        ) {
+            return 'purchasing';
+        }
+
+        // Default role for users who don't fit into specific groups
+        return 'default';
+    }
+
+    /**
+     * Management/Executive Dashboard - High-level overview
+     */
+    private function managementDashboard()
+    {
+        // === Key Performance Indicators ===
+        $totalProduk = Produk::count();
+        $totalPelanggan = Customer::count();
+        $totalSupplier = Supplier::count();
+        $totalKaryawan = Karyawan::count();
+
+        // Financial Overview
+        $totalPiutang = Invoice::where('status', 'belum_bayar')->sum('total');
+        $totalHutang = PurchaseOrder::where('status_pembayaran', 'belum_bayar')->sum('total');
+
+        // Sales Performance
+        $penjualanBulanIni = Invoice::whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->sum('total');
+
+        $penjualanBulanLalu = Invoice::whereMonth('tanggal', now()->subMonth()->month)
+            ->whereYear('tanggal', now()->subMonth()->year)
+            ->sum('total');
+
+        $pertumbuhanPenjualan = $penjualanBulanLalu > 0 ?
+            (($penjualanBulanIni - $penjualanBulanLalu) / $penjualanBulanLalu) * 100 : 0;
+
+        // Operational Overview
+        $workOrderAktif = WorkOrder::whereIn('status', ['direncanakan', 'berjalan'])->count();
+        $deliveryPending = DeliveryOrder::where('status', 'draft')->count();
+        $prPending = PurchaseRequest::where('status', 'pending')->count();
+
+        // Recent Activities
+        $aktivitasTerbaru = LogAktivitas::with('user')
+            ->latest()
+            ->limit(15)
+            ->get();
+
+        // Charts Data
+        $penjualanPerBulan = $this->getPenjualanBulanan();
+        $produkPerKategori = KategoriProduk::withCount('produk')
+            ->where('is_active', true)
+            ->get()
+            ->filter(function ($kategori) {
+                return $kategori->produk_count > 0;
+            })
+            ->map(function ($kategori) {
+                return [
+                    'nama' => $kategori->nama,
+                    'total' => $kategori->produk_count
+                ];
+            })
+            ->values();
+
+        return view('dashboards.management', compact(
+            'totalProduk',
+            'totalPelanggan',
+            'totalSupplier',
+            'totalKaryawan',
+            'totalPiutang',
+            'totalHutang',
+            'penjualanBulanIni',
+            'penjualanBulanLalu',
+            'pertumbuhanPenjualan',
+            'workOrderAktif',
+            'deliveryPending',
+            'prPending',
+            'aktivitasTerbaru',
+            'penjualanPerBulan',
+            'produkPerKategori'
+        ));
+    }
+
+    /**
+     * Finance Role Dashboard
+     */
+    private function financeRoleDashboard()
+    {
+        // Piutang & hutang berdasarkan umur (aging)
+        $piutangAging = [
+            '0-30' => Invoice::where('status', 'belum_bayar')
+                ->whereRaw('DATEDIFF(NOW(), tanggal) <= 30')
+                ->sum('total'),
+            '31-60' => Invoice::where('status', 'belum_bayar')
+                ->whereRaw('DATEDIFF(NOW(), tanggal) BETWEEN 31 AND 60')
+                ->sum('total'),
+            '61-90' => Invoice::where('status', 'belum_bayar')
+                ->whereRaw('DATEDIFF(NOW(), tanggal) BETWEEN 61 AND 90')
+                ->sum('total'),
+            '>90' => Invoice::where('status', 'belum_bayar')
+                ->whereRaw('DATEDIFF(NOW(), tanggal) > 90')
+                ->sum('total'),
+        ];
+
+        // Faktur yang akan jatuh tempo minggu ini
+        $fakturJatuhTempo = Invoice::where('status', 'belum_bayar')
+            ->whereBetween('jatuh_tempo', [now(), now()->addDays(7)])
+            ->with('salesOrder.customer')
+            ->get();
+
+        // Laporan kas & bank
+        $totalKas = Kas::sum('saldo');
+
+        // Transaksi kas terakhir
+        $transaksiTerakhir = TransaksiKas::with('user', 'kas')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Monthly revenue/expense chart
+        $monthlyFinancial = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $revenue = Invoice::whereMonth('tanggal', $month->month)
+                ->whereYear('tanggal', $month->year)
+                ->sum('total');
+            $expense = PurchaseOrder::whereMonth('tanggal', $month->month)
+                ->whereYear('tanggal', $month->year)
+                ->sum('total');
+
+            $monthlyFinancial[] = [
+                'bulan' => $month->format('M Y'),
+                'pendapatan' => $revenue,
+                'pengeluaran' => $expense
+            ];
+        }
+
+        return view('dashboards.finance', compact(
+            'piutangAging',
+            'fakturJatuhTempo',
+            'totalKas',
+            'transaksiTerakhir',
+            'monthlyFinancial'
+        ));
+    }
+
+    /**
+     * Sales Role Dashboard
+     */
+    private function salesRoleDashboard()
+    {
+        // Sales metrics
+        $quotationBulanIni = Quotation::whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->count();
+
+        $salesOrderBulanIni = SalesOrder::whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->count();
+
+        $penjualanBulanIni = Invoice::whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->sum('total');
+
+        // Quotation conversion rate
+        $totalQuotation = Quotation::count();
+        $convertedQuotation = Quotation::whereHas('salesOrder')->count();
+        $conversionRate = $totalQuotation > 0 ? ($convertedQuotation / $totalQuotation) * 100 : 0;
+
+        // Recent activities
+        $quotationTerbaru = Quotation::with('customer')
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        $salesOrderTerbaru = SalesOrder::with('customer')
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        // Top customers this month
+        $topCustomers = Customer::select('customer.id', 'customer.nama', DB::raw('SUM(invoice.total) as total_pembelian'))
+            ->leftJoin('sales_order', 'customer.id', '=', 'sales_order.customer_id')
+            ->leftJoin('invoice', 'sales_order.id', '=', 'invoice.sales_order_id')
+            ->whereMonth('invoice.tanggal', now()->month)
+            ->whereYear('invoice.tanggal', now()->year)
+            ->groupBy('customer.id', 'customer.nama')
+            ->orderBy('total_pembelian', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Delivery status
+        $deliveryOrders = DeliveryOrder::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('total', 'status')
+            ->toArray();
+
+        return view('dashboards.sales', compact(
+            'quotationBulanIni',
+            'salesOrderBulanIni',
+            'penjualanBulanIni',
+            'conversionRate',
+            'quotationTerbaru',
+            'salesOrderTerbaru',
+            'topCustomers',
+            'deliveryOrders'
+        ));
+    }
+
+    /**
+     * Production Role Dashboard
+     */
+    private function productionRoleDashboard()
+    {
+        // Work Orders status
+        $workOrderStats = [
+            'direncanakan' => WorkOrder::where('status', 'direncanakan')->count(),
+            'berjalan' => WorkOrder::where('status', 'berjalan')->count(),
+            'selesai' => WorkOrder::where('status', 'selesai')->count(),
+            'dibatalkan' => WorkOrder::where('status', 'dibatalkan')->count(),
+        ];
+
+        // Active Work Orders
+        $workOrderAktif = WorkOrder::whereIn('status', ['direncanakan', 'berjalan'])
+            ->with(['produk', 'bom'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Material usage
+        $materialTerpakai = WorkOrderMaterial::select('produk_id', DB::raw('SUM(quantity) as total_used'))
+            ->with('produk')
+            ->whereHas('workOrder', function ($q) {
+                $q->whereMonth('tanggal_mulai', now()->month);
+            })
+            ->groupBy('produk_id')
+            ->orderBy('total_used', 'desc')
+            ->limit(10)
+            ->get();
+
+        // Production capacity
+        $kapasitasProduksi = BillOfMaterial::where('is_active', true)
+            ->with(['produk'])
+            ->get();
+
+        // Stok di gudang produksi
+        $gudangProduksi = Gudang::where('tipe', 'produksi')->first();
+        $stokProduksi = $gudangProduksi ? StokProduk::where('gudang_id', $gudangProduksi->id)
+            ->with('produk')
+            ->orderBy('jumlah', 'asc')
+            ->limit(10)
+            ->get() : collect();
+
+        return view('dashboards.production', compact(
+            'workOrderStats',
+            'workOrderAktif',
+            'materialTerpakai',
+            'kapasitasProduksi',
+            'stokProduksi'
+        ));
+    }
+
+    /**
+     * HR Role Dashboard
+     */
+    private function hrRoleDashboard()
+    {
+        // Attendance today
+        $absensiHariIni = Absensi::whereDate('tanggal', Carbon::today())
+            ->with('karyawan')
+            ->get();
+
+        $totalKaryawan = Karyawan::count();
+        $persentaseKehadiran = $totalKaryawan > 0 ? ($absensiHariIni->count() / $totalKaryawan) * 100 : 0;
+
+        // Leave requests
+        $cutiPending = Cuti::where('status', 'diajukan')
+            ->with('karyawan')
+            ->get();
+
+        $cutiApproved = Cuti::where('status', 'disetujui')
+            ->whereDate('tanggal_mulai', '<=', now())
+            ->whereDate('tanggal_selesai', '>=', now())
+            ->with('karyawan')
+            ->get();
+
+        // Department statistics
+        $karyawanPerDept = Department::withCount('karyawan')
+            ->get();
+
+        // Recent activities
+        $aktivitasTerbaru = LogAktivitas::with('user')
+            ->where('modul', 'karyawan')
+            ->orWhere('modul', 'absensi')
+            ->orWhere('modul', 'cuti')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Monthly attendance chart
+        $kehadiranBulanan = DB::table('absensi')
+            ->select(DB::raw('DATE(tanggal) as tanggal, COUNT(*) as total'))
+            ->whereRaw('tanggal >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)')
+            ->groupBy(DB::raw('DATE(tanggal)'))
+            ->orderBy('tanggal')
+            ->get();
+
+        return view('dashboards.hr', compact(
+            'absensiHariIni',
+            'totalKaryawan',
+            'persentaseKehadiran',
+            'cutiPending',
+            'cutiApproved',
+            'karyawanPerDept',
+            'aktivitasTerbaru',
+            'kehadiranBulanan'
+        ));
+    }
+
+    /**
+     * Inventory Role Dashboard
+     */
+    private function inventoryRoleDashboard()
+    {
+        // Stock overview
+        $totalProduk = Produk::count();
+        $produkAktif = Produk::where('is_active', true)->count();
+
+        // Low stock products
+        $produkStokMinimum = DB::table('produk')
+            ->join('stok_produk', 'produk.id', '=', 'stok_produk.produk_id')
+            ->join('kategori_produk', 'produk.kategori_id', '=', 'kategori_produk.id')
+            ->select('produk.*', 'kategori_produk.nama as kategori_nama', 'stok_produk.jumlah as stok')
+            ->whereRaw('stok_produk.jumlah < produk.stok_minimum')
+            ->distinct('produk.id')
+            ->get();
+
+        // Warehouse overview
+        $gudangStok = Gudang::with(['stok' => function ($q) {
+            $q->with('produk')->where('jumlah', '>', 0);
+        }])->get();
+
+        // Recent transfers
+        $transferTerbaru = TransferBarang::with(['gudangAsal', 'gudangTujuan', 'user'])
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // Stock by category
+        $stokPerKategori = DB::table('kategori_produk')
+            ->leftJoin('produk', 'kategori_produk.id', '=', 'produk.kategori_id')
+            ->leftJoin('stok_produk', 'produk.id', '=', 'stok_produk.produk_id')
+            ->select('kategori_produk.nama', DB::raw('SUM(stok_produk.jumlah) as total_stok'))
+            ->groupBy('kategori_produk.nama')
+            ->get();
+
+        // Stock movements this month
+        $pergerakanStok = DB::table('log_aktivitas')
+            ->where('modul', 'stok_produk')
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
+        return view('dashboards.inventory', compact(
+            'totalProduk',
+            'produkAktif',
+            'produkStokMinimum',
+            'gudangStok',
+            'transferTerbaru',
+            'stokPerKategori',
+            'pergerakanStok'
+        ));
+    }
+
+    /**
+     * Purchasing Role Dashboard
+     */
+    private function purchasingRoleDashboard()
+    {
+        // Purchase metrics
+        $prPending = PurchaseRequest::where('status', 'pending')->count();
+        $prApproved = PurchaseRequest::where('status', 'approved')->count();
+        $poBulanIni = PurchaseOrder::whereMonth('tanggal', now()->month)
+            ->whereYear('tanggal', now()->year)
+            ->count();
+
+        // Recent activities
+        $purchaseOrderTerbaru = PurchaseOrder::with(['supplier'])
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        $penerimaanTerbaru = PenerimaanBarang::with(['purchaseOrder', 'supplier'])
+            ->latest()
+            ->limit(8)
+            ->get();
+
+        // Top suppliers
+        $topSuppliers = Supplier::select('supplier.id', 'supplier.nama', DB::raw('SUM(purchase_order.total) as total_pembelian'))
+            ->leftJoin('purchase_order', 'supplier.id', '=', 'purchase_order.supplier_id')
+            ->whereMonth('purchase_order.tanggal', now()->month)
+            ->whereYear('purchase_order.tanggal', now()->year)
+            ->groupBy('supplier.id', 'supplier.nama')
+            ->orderBy('total_pembelian', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Outstanding purchase orders
+        $poBelumLunas = PurchaseOrder::where('status_pembayaran', 'belum_bayar')
+            ->with('supplier')
+            ->orderBy('tanggal')
+            ->limit(10)
+            ->get();
+
+        // Purchase request statistics
+        $purchaseRequestStats = PurchaseRequest::select('status', DB::raw('COUNT(*) as total'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('total', 'status')
+            ->toArray();
+
+        return view('dashboards.purchasing', compact(
+            'prPending',
+            'prApproved',
+            'poBulanIni',
+            'purchaseOrderTerbaru',
+            'penerimaanTerbaru',
+            'topSuppliers',
+            'poBelumLunas',
+            'purchaseRequestStats'
+        ));
+    }
+
+    /**
+     * Default Dashboard for users who don't fit into specific role groups
+     */
+    private function defaultDashboard()
+    {
+        $user = auth()->user();
+
+        // Basic overview based on available permissions
+        $data = [];
+
+        // Product data if user has product access
+        if ($user->hasPermission('produk.view')) {
+            $data['totalProduk'] = Produk::count();
+            $data['produkAktif'] = Produk::where('is_active', true)->count();
+        }
+
+        // Customer data if user has customer access
+        if ($user->hasPermission('pelanggan.view')) {
+            $data['totalPelanggan'] = Customer::count();
+        }
+
+        // Supplier data if user has supplier access
+        if ($user->hasPermission('supplier.view')) {
+            $data['totalSupplier'] = Supplier::count();
+        }
+
+        // Recent activities
+        $data['aktivitasTerbaru'] = LogAktivitas::with('user')
+            ->latest()
+            ->limit(10)
+            ->get();
+
+        // User's available modules based on permissions
+        $availableModules = $this->getAvailableModules($user);
+        $data['availableModules'] = $availableModules;
+
+        return view('dashboards.default', $data);
+    }
+
+    /**
+     * Get available modules for user based on permissions
+     */
+    private function getAvailableModules($user)
+    {
+        $modules = [];
+
+        if ($user->hasPermission('produk.view')) {
+            $modules[] = ['name' => 'Master Data', 'icon' => 'database', 'route' => 'produk.index'];
+        }
+
+        if ($user->hasPermission('stok_barang.view')) {
+            $modules[] = ['name' => 'Inventaris', 'icon' => 'package', 'route' => 'stok.index'];
+        }
+
+        if ($user->hasPermission('quotation.view')) {
+            $modules[] = ['name' => 'Penjualan', 'icon' => 'shopping-cart', 'route' => 'quotation.index'];
+        }
+
+        if ($user->hasPermission('purchase_order.view')) {
+            $modules[] = ['name' => 'Pembelian', 'icon' => 'truck', 'route' => 'purchase-order.index'];
+        }
+
+        if ($user->hasPermission('work_order.view')) {
+            $modules[] = ['name' => 'Produksi', 'icon' => 'cog', 'route' => 'work-order.index'];
+        }
+
+        if ($user->hasPermission('karyawan.view')) {
+            $modules[] = ['name' => 'HR & Karyawan', 'icon' => 'users', 'route' => 'karyawan.index'];
+        }
+
+        if ($user->hasPermission('jurnal_umum.view')) {
+            $modules[] = ['name' => 'Keuangan', 'icon' => 'dollar-sign', 'route' => 'jurnal.index'];
+        }
+
+        return $modules;
+    }
+
+    /**
+     * Original dashboard method (kept for backward compatibility)
+     */
+    public function originalDashboard()
     {
         // === Modul Inventory ===
         $totalProduk = Produk::count();

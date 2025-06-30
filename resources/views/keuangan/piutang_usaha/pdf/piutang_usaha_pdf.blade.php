@@ -136,7 +136,7 @@
                 @forelse ($invoices as $index => $invoice)
                     @php
                         $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-                        $sisaPiutang = $invoice->total - $totalPayments;
+                        $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
 
                         // Status display logic for the invoice
                         $isOverdue =

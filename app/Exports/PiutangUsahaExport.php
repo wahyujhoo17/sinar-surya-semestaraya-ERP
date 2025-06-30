@@ -81,7 +81,7 @@ class PiutangUsahaExport implements FromCollection, WithHeadings, WithMapping, S
         $invoices->transform(function ($invoice) {
             $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
             $invoice->total_pembayaran_invoice = $totalPayments;
-            $invoice->sisa_piutang_invoice = $invoice->total - $totalPayments;
+            $invoice->sisa_piutang_invoice = $invoice->sisa_piutang; // Use accessor that includes nota kredit
 
             // Status display logic for the export
             $sisaPiutang = $invoice->sisa_piutang_invoice;

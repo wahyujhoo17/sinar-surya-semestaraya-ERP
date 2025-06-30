@@ -21,6 +21,15 @@
                 </p>
             </div>
             <div class="mt-4 md:mt-0 flex space-x-2">
+                <a href="{{ route('keuangan.jurnal-umum.export-excel') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Excel
+                </a>
                 <a href="{{ route('keuangan.jurnal-umum.create') }}"
                     class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
                     <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -33,108 +42,116 @@
             </div>
         </div>
 
-        {{-- Filter and Search Section --}}
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-5 mb-6">
-            <div class="mb-4 flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-600 dark:text-primary-400 mr-2"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                <h3 class="text-md font-semibold text-gray-700 dark:text-gray-300">Filter Data Jurnal</h3>
-            </div>
-
-            <form action="{{ route('keuangan.jurnal-umum.index') }}" method="GET" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="relative">
-                        <label for="start_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tanggal Awal
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <input type="date" id="start_date" name="start_date" value="{{ request('start_date') }}"
-                                class="pl-10 mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                        </div>
-                    </div>
-                    <div class="relative">
-                        <label for="end_date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Tanggal Akhir
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <input type="date" id="end_date" name="end_date" value="{{ request('end_date') }}"
-                                class="pl-10 mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                        </div>
-                    </div>
+        {{-- Minimalist Filter Section --}}
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-6">
+            <form method="GET" action="{{ route('keuangan.jurnal-umum.index') }}" id="filterForm" class="space-y-3">
+                {{-- Main Filter Row --}}
+                <div class="flex flex-wrap items-end gap-3">
+                    {{-- Date Inputs --}}
                     <div>
-                        <label for="akun_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Akun
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                            </div>
-                            <select id="akun_id" name="akun_id"
-                                class="pl-10 mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                                <option value="">Semua Akun</option>
-                                @foreach ($akuns as $akun)
-                                    <option value="{{ $akun->id }}"
-                                        {{ request('akun_id') == $akun->id ? 'selected' : '' }}>
-                                        {{ $akun->kode }} - {{ $akun->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
+                        <label for="start_date"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Dari</label>
+                        <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}"
+                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="md:col-span-3">
+
+                    <div>
+                        <label for="end_date"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sampai</label>
+                        <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}"
+                            class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                    </div>
+
+                    {{-- Account Dropdown --}}
+                    <div class="flex-1 min-w-64">
+                        <label for="akun_id"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Pilih Akun</label>
+                        <select name="akun_id" id="akun_id"
+                            class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                            <option value="">Semua Akun</option>
+                            @php
+                                $groupedAccounts = $akuns->groupBy('kategori');
+                                $categoryLabels = [
+                                    'asset' => 'ASET',
+                                    'liability' => 'KEWAJIBAN',
+                                    'equity' => 'MODAL',
+                                    'income' => 'PENDAPATAN',
+                                    'expense' => 'BEBAN',
+                                    'other' => 'LAINNYA',
+                                ];
+                            @endphp
+                            @foreach (['asset', 'liability', 'equity', 'income', 'expense', 'other'] as $category)
+                                @if (isset($groupedAccounts[$category]) && $groupedAccounts[$category]->count() > 0)
+                                    <optgroup label="{{ $categoryLabels[$category] }}">
+                                        @foreach ($groupedAccounts[$category] as $akun)
+                                            <option value="{{ $akun->id }}"
+                                                {{ request('akun_id') == $akun->id ? 'selected' : '' }}>
+                                                {{ $akun->kode }} - {{ $akun->nama }}
+                                            </option>
+                                        @endforeach
+                                    </optgroup>
+                                @endif
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- Reference Number Search --}}
+                    <div class="flex-1 min-w-48">
                         <label for="no_referensi"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Nomor Referensi
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                            </div>
-                            <input type="text" id="no_referensi" name="no_referensi"
-                                value="{{ request('no_referensi') }}"
-                                placeholder="Cari berdasarkan nomor referensi..."
-                                class="pl-10 mt-1 shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                        </div>
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">No.
+                            Referensi</label>
+                        <input type="text" name="no_referensi" id="no_referensi"
+                            value="{{ request('no_referensi') }}" placeholder="Cari nomor referensi..."
+                            class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
                     </div>
-                    <div class="flex items-end">
-                        <button type="submit"
-                            class="w-full inline-flex justify-center py-2.5 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
+
+                    {{-- Action Buttons --}}
+                    <div class="flex gap-2">
+                        <button type="submit" title="Tampilkan Data"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md transition-colors text-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                             </svg>
-                            Terapkan Filter
+                            Filter
+                        </button>
+
+                        <a href="{{ route('keuangan.jurnal-umum.index') }}" title="Tampilkan Semua Jurnal"
+                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md transition-colors text-sm flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01">
+                                </path>
+                            </svg>
+                            All
+                        </a>
+
+                        <button type="button" onclick="resetFilters()" title="Reset Filter"
+                            class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-2 rounded-md transition-colors text-sm flex items-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
+                            </svg>
                         </button>
                     </div>
+                </div>
+
+                {{-- Quick Period Buttons --}}
+                <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">Quick:</span>
+                    <button type="button" onclick="setQuickPeriod('today')"
+                        class="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors">
+                        Hari Ini
+                    </button>
+                    <button type="button" onclick="setQuickPeriod('thisMonth')"
+                        class="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors">
+                        Bulan Ini
+                    </button>
+                    <button type="button" onclick="setQuickPeriod('thisYear')"
+                        class="px-2 py-1 text-xs text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors">
+                        Tahun Ini
+                    </button>
                 </div>
             </form>
         </div>
@@ -274,23 +291,33 @@
                                 $key = $jurnal->tanggal . '-' . $jurnal->no_referensi;
 
                                 if (!isset($groupedJurnals[$key])) {
+                                    // Untuk setiap grup jurnal, ambil semua entri terkait (termasuk yang tidak terfilter)
+                                    // untuk mendapatkan total debit/kredit yang benar
+                                    $allRelatedEntries = \App\Models\JurnalUmum::where(
+                                        'no_referensi',
+                                        $jurnal->no_referensi,
+                                    )
+                                        ->where('tanggal', $jurnal->tanggal)
+                                        ->get();
+
+                                    $totalDebitForEntry = $allRelatedEntries->sum('debit');
+                                    $totalKreditForEntry = $allRelatedEntries->sum('kredit');
+                                    $countEntries = $allRelatedEntries->count();
+
                                     $groupedJurnals[$key] = [
                                         'id' => $jurnal->id,
                                         'tanggal' => $jurnal->tanggal,
                                         'no_referensi' => $jurnal->no_referensi,
                                         'keterangan' => $jurnal->keterangan,
-                                        'total_debit' => 0,
-                                        'total_kredit' => 0,
-                                        'count' => 0,
+                                        'total_debit' => $totalDebitForEntry,
+                                        'total_kredit' => $totalKreditForEntry,
+                                        'count' => $countEntries,
                                     ];
+
+                                    // Tambahkan ke total keseluruhan hanya sekali per grup
+                                    $totalDebit += $totalDebitForEntry;
+                                    $totalKredit += $totalKreditForEntry;
                                 }
-
-                                $groupedJurnals[$key]['total_debit'] += $jurnal->debit;
-                                $groupedJurnals[$key]['total_kredit'] += $jurnal->kredit;
-                                $groupedJurnals[$key]['count']++;
-
-                                $totalDebit += $jurnal->debit;
-                                $totalKredit += $jurnal->kredit;
                             }
                         @endphp
 
@@ -430,6 +457,37 @@
                 )) {
                 document.getElementById('delete-form-' + id).submit();
             }
+        }
+
+        function setQuickPeriod(period) {
+            const today = new Date();
+            let startDate, endDate;
+
+            switch (period) {
+                case 'today':
+                    startDate = endDate = today.toISOString().split('T')[0];
+                    break;
+                case 'thisMonth':
+                    startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                    endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+                    break;
+                case 'thisYear':
+                    startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
+                    endDate = new Date(today.getFullYear(), 11, 31).toISOString().split('T')[0];
+                    break;
+            }
+
+            document.getElementById('start_date').value = startDate;
+            document.getElementById('end_date').value = endDate;
+            document.getElementById('filterForm').submit();
+        }
+
+        function resetFilters() {
+            document.getElementById('start_date').value = '';
+            document.getElementById('end_date').value = '';
+            document.getElementById('akun_id').selectedIndex = 0;
+            document.getElementById('no_referensi').value = '';
+            document.getElementById('filterForm').submit();
         }
     </script>
 </x-app-layout>

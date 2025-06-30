@@ -1006,76 +1006,43 @@ class PenggajianController extends Controller
                 $transactionDescription .= " - " . $request->payment_note;
             }
 
-            // Process payment based on method
+            // Validate account exists and has sufficient balance
+            // Balance checks are done for validation only - actual deduction will be handled by observer
             if ($request->payment_method == 'cash') {
-                Log::info('Processing cash payment', ['kas_id' => $request->kas_id]);
+                Log::info('Validating cash payment account', ['kas_id' => $request->kas_id]);
                 $kas = \App\Models\Kas::findOrFail($request->kas_id);
-
-                Log::info('Updating kas balance', [
+                Log::info('Cash account validated', [
                     'kas_name' => $kas->nama,
-                    'old_balance' => $kas->saldo,
-                    'new_balance' => $kas->saldo - $paymentAmount
+                    'current_balance' => $kas->saldo,
+                    'payment_amount' => $paymentAmount
                 ]);
-
-                // Deduct from cash account
-                $kas->update([
-                    'saldo' => $kas->saldo - $paymentAmount
-                ]);
-
-                Log::info('Creating cash transaction record');
-                // Create cash transaction record
-                $transactionRecord = \App\Models\TransaksiKas::create([
-                    'tanggal' => $paymentDate,
-                    'kas_id' => $kas->id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $paymentAmount,
-                    'keterangan' => $transactionDescription,
-                    'no_bukti' => 'GAJI-' . date('YmdHis'),
-                    'related_id' => $penggajian->id,
-                    'related_type' => 'App\Models\Penggajian',
-                    'user_id' => Auth::id()
-                ]);
-
-                Log::info('Cash transaction created', ['transaction_id' => $transactionRecord->id]);
             } else { // bank transfer
-                Log::info('Processing bank payment', ['rekening_id' => $request->rekening_id]);
+                Log::info('Validating bank payment account', ['rekening_id' => $request->rekening_id]);
                 $rekening = \App\Models\RekeningBank::findOrFail($request->rekening_id);
-
-                Log::info('Updating bank balance', [
+                Log::info('Bank account validated', [
                     'bank_name' => $rekening->nama_bank,
                     'account_number' => $rekening->nomor_rekening,
-                    'old_balance' => $rekening->saldo,
-                    'new_balance' => $rekening->saldo - $paymentAmount
+                    'current_balance' => $rekening->saldo,
+                    'payment_amount' => $paymentAmount
                 ]);
-
-                // Deduct from bank account
-                $rekening->update([
-                    'saldo' => $rekening->saldo - $paymentAmount
-                ]);
-
-                Log::info('Creating bank transaction record');
-                // Create bank transaction record
-                $transactionRecord = \App\Models\TransaksiBank::create([
-                    'tanggal' => $paymentDate,
-                    'rekening_id' => $rekening->id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $paymentAmount,
-                    'keterangan' => $transactionDescription,
-                    'no_referensi' => 'GAJI-' . date('YmdHis'),
-                    'related_id' => $penggajian->id,
-                    'related_type' => 'App\Models\Penggajian',
-                    'user_id' => Auth::id()
-                ]);
-
-                Log::info('Bank transaction created', ['transaction_id' => $transactionRecord->id]);
             }
 
             Log::info('Updating payroll status to paid', ['penggajian_id' => $penggajian->id]);
-            // Update payroll status to paid
-            $penggajian->update([
+            // Update payroll status to paid and save payment method information
+            $updateData = [
                 'status' => 'dibayar',
-                'tanggal_bayar' => $paymentDate
-            ]);
+                'tanggal_bayar' => $paymentDate,
+                'metode_pembayaran' => $request->payment_method === 'cash' ? 'kas' : 'bank',
+                'kas_id' => $request->payment_method === 'cash' ? $request->kas_id : null,
+                'rekening_id' => $request->payment_method === 'bank' ? $request->rekening_id : null,
+            ];
+
+            if ($request->payment_note) {
+                $updateData['catatan'] = ($penggajian->catatan ? $penggajian->catatan . "\n\n" : '') .
+                    "Catatan Pembayaran: " . $request->payment_note;
+            }
+
+            $penggajian->update($updateData);
 
             Log::info('Committing transaction');
             DB::commit();

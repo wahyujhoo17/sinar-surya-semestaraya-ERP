@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\JournalEntryService;
 use App\Traits\AutomaticJournalEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -94,11 +93,11 @@ class PembayaranPiutang extends Model
         try {
             // Mendapatkan ID akun dari konfigurasi
             $akunPiutangUsaha = config('accounting.pembayaran_piutang.piutang_usaha');
-            $akunKas = config('accounting.pembayaran_piutang.kas');
-            $akunBank = config('accounting.pembayaran_piutang.bank');
+            $akunKasDefault = config('accounting.pembayaran_piutang.kas');
+            $akunBankDefault = config('accounting.pembayaran_piutang.bank');
 
-            if (!$akunPiutangUsaha || (!$akunKas && !$akunBank)) {
-                Log::error("Akun untuk jurnal pembayaran piutang belum dikonfigurasi", [
+            if (!$akunPiutangUsaha) {
+                Log::error("Akun piutang usaha untuk jurnal pembayaran piutang belum dikonfigurasi", [
                     'pembayaran_id' => $this->id,
                     'nomor' => $this->nomor
                 ]);
@@ -108,27 +107,48 @@ class PembayaranPiutang extends Model
             // Menyiapkan entri jurnal
             $entries = [];
 
-            // Debit: Kas atau Bank, tergantung metode pembayaran
-            if ($this->metode_pembayaran == 'kas' && $akunKas) {
-                $entries[] = [
-                    'akun_id' => $akunKas,
-                    'debit' => $this->jumlah,
-                    'kredit' => 0
-                ];
-            } elseif (($this->metode_pembayaran == 'transfer' || $this->metode_pembayaran == 'bank') && $akunBank) {
-                $entries[] = [
-                    'akun_id' => $akunBank,
-                    'debit' => $this->jumlah,
-                    'kredit' => 0
-                ];
+            // Debit: Kas atau Bank, tergantung metode pembayaran dan akun yang dipilih
+            $akunSumber = null;
+
+            if ($this->metode_pembayaran == 'Kas' || $this->metode_pembayaran == 'kas' || $this->metode_pembayaran == 'tunai') {
+                // Jika ada kas_id, cari akun akuntansi yang terkait dengan kas tersebut
+                if ($this->kas_id) {
+                    $akunKas = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\Kas')
+                        ->where('ref_id', $this->kas_id)
+                        ->first();
+                    $akunSumber = $akunKas ? $akunKas->id : $akunKasDefault;
+                } else {
+                    $akunSumber = $akunKasDefault;
+                }
             } else {
-                // Jika metode pembayaran tidak dikenali, gunakan Kas sebagai default
-                $entries[] = [
-                    'akun_id' => $akunKas,
-                    'debit' => $this->jumlah,
-                    'kredit' => 0
-                ];
+                // Untuk pembayaran bank (Bank Transfer, transfer, bank)
+                if ($this->rekening_bank_id) {
+                    // Cari akun akuntansi yang terkait dengan rekening bank yang dipilih
+                    $akunBank = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\RekeningBank')
+                        ->where('ref_id', $this->rekening_bank_id)
+                        ->first();
+                    $akunSumber = $akunBank ? $akunBank->id : $akunBankDefault;
+                } else {
+                    $akunSumber = $akunBankDefault;
+                }
             }
+
+            if (!$akunSumber) {
+                Log::error("Akun sumber pembayaran tidak ditemukan", [
+                    'pembayaran_id' => $this->id,
+                    'nomor' => $this->nomor,
+                    'metode_pembayaran' => $this->metode_pembayaran,
+                    'kas_id' => $this->kas_id,
+                    'rekening_bank_id' => $this->rekening_bank_id
+                ]);
+                return false;
+            }
+
+            $entries[] = [
+                'akun_id' => $akunSumber,
+                'debit' => $this->jumlah,
+                'kredit' => 0
+            ];
 
             // Kredit: Piutang Usaha
             $entries[] = [
@@ -137,15 +157,15 @@ class PembayaranPiutang extends Model
                 'kredit' => $this->jumlah
             ];
 
-            // Buat jurnal otomatis
-            $service = new JournalEntryService();
-            return $service->createJournalEntries(
+            // Buat jurnal otomatis dengan sinkronisasi saldo
+            $this->createJournalEntries(
                 $entries,
                 $this->nomor,
                 "Penerimaan pembayaran piutang: {$this->nomor} dari {$this->customer->nama}",
-                $this->tanggal,
-                $this
+                $this->tanggal
             );
+
+            return true;
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal otomatis untuk pembayaran piutang: " . $e->getMessage(), [
                 'exception' => $e,

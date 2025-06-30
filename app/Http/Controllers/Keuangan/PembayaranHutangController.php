@@ -150,56 +150,8 @@ class PembayaranHutangController extends Controller
             // Create payment
             $payment = PembayaranHutang::create($validated);
 
-            // Record transaction based on payment method
-            if ($request->metode_pembayaran === 'kas') {
-                // Update the kas balance
-                $kas = Kas::findOrFail($request->kas_id);
-                if ($kas->saldo < $request->jumlah) {
-                    throw new \Exception('Saldo kas tidak mencukupi untuk melakukan pembayaran ini.');
-                }
-                $kas->saldo -= $request->jumlah;
-                $kas->save();
-
-                // Get PO number
-                $po = PurchaseOrder::findOrFail($request->purchase_order_id);
-                $supplierName = Supplier::find($request->supplier_id)->nama;
-
-                TransaksiKas::create([
-                    'tanggal' => $request->tanggal,
-                    'kas_id' => $request->kas_id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $request->jumlah,
-                    'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
-                    'no_bukti' => $validated['nomor'],
-                    'related_id' => $po->id,
-                    'related_type' => PembayaranHutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            } elseif ($request->metode_pembayaran === 'bank') {
-                // Update the bank account balance
-                $rekening = RekeningBank::findOrFail($request->rekening_id);
-                if ($rekening->saldo < $request->jumlah) {
-                    throw new \Exception('Saldo rekening bank tidak mencukupi untuk melakukan pembayaran ini.');
-                }
-                $rekening->saldo -= $request->jumlah;
-                $rekening->save();
-
-                // Get PO number
-                $po = PurchaseOrder::findOrFail($request->purchase_order_id);
-                $supplierName = Supplier::find($request->supplier_id)->nama;
-
-                TransaksiBank::create([
-                    'tanggal' => $request->tanggal,
-                    'rekening_id' => $request->rekening_id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $request->jumlah,
-                    'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
-                    'no_referensi' => $request->no_referensi,
-                    'related_id' => $po->id,
-                    'related_type' => PembayaranHutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            }
+            // NOTE: Jurnal otomatis dibuat melalui model observer (AutomaticJournalEntry trait)
+            // Tidak perlu manual membuat jurnal atau update saldo kas/bank
 
             // Update PO payment status
             $po = PurchaseOrder::find($request->purchase_order_id);
@@ -339,88 +291,8 @@ class PembayaranHutangController extends Controller
         DB::beginTransaction();
 
         try {
-            // Find related transactions and restore the original balance first
-            if ($payment->metode_pembayaran === 'kas') {
-                $transaksi = TransaksiKas::where('related_id', $payment->id)
-                    ->where('related_type', PembayaranHutang::class)
-                    ->first();
-
-                if ($transaksi) {
-                    $kas = Kas::findOrFail($transaksi->kas_id);
-                    $kas->saldo += $payment->jumlah; // Restore the original balance
-                    $kas->save();
-
-                    // Delete the old transaction
-                    $transaksi->delete();
-                }
-            } elseif ($payment->metode_pembayaran === 'bank') {
-                $transaksi = TransaksiBank::where('related_id', $payment->id)
-                    ->where('related_type', PembayaranHutang::class)
-                    ->first();
-
-                if ($transaksi) {
-                    $rekening = RekeningBank::findOrFail($transaksi->rekening_id);
-                    $rekening->saldo += $payment->jumlah; // Restore the original balance
-                    $rekening->save();
-
-                    // Delete the old transaction
-                    $transaksi->delete();
-                }
-            }
-
-            // Update payment
+            // Update payment - automatic journal akan di-handle oleh model observer
             $payment->update($validated);
-
-            // Create new transaction based on updated payment method
-            if ($request->metode_pembayaran === 'kas') {
-                // Update the kas balance
-                $kas = Kas::findOrFail($request->kas_id);
-                if ($kas->saldo < $request->jumlah) {
-                    throw new \Exception('Saldo kas tidak mencukupi untuk melakukan pembayaran ini.');
-                }
-                $kas->saldo -= $request->jumlah;
-                $kas->save();
-
-                // Get PO number
-                $po = PurchaseOrder::findOrFail($request->purchase_order_id);
-                $supplierName = Supplier::find($request->supplier_id)->nama;
-
-                TransaksiKas::create([
-                    'tanggal' => $request->tanggal,
-                    'kas_id' => $request->kas_id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $request->jumlah,
-                    'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
-                    'no_bukti' => $request->nomor,
-                    'related_id' => $payment->id,
-                    'related_type' => PembayaranHutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            } elseif ($request->metode_pembayaran === 'bank') {
-                // Update the bank account balance
-                $rekening = RekeningBank::findOrFail($request->rekening_id);
-                if ($rekening->saldo < $request->jumlah) {
-                    throw new \Exception('Saldo rekening bank tidak mencukupi untuk melakukan pembayaran ini.');
-                }
-                $rekening->saldo -= $request->jumlah;
-                $rekening->save();
-
-                // Get PO number
-                $po = PurchaseOrder::findOrFail($request->purchase_order_id);
-                $supplierName = Supplier::find($request->supplier_id)->nama;
-
-                TransaksiBank::create([
-                    'tanggal' => $request->tanggal,
-                    'rekening_id' => $request->rekening_id,
-                    'jenis' => 'keluar',
-                    'jumlah' => $request->jumlah,
-                    'keterangan' => 'Pembayaran PO #' . $po->nomor . ' ke ' . $supplierName,
-                    'no_referensi' => $request->no_referensi,
-                    'related_id' => $payment->id,
-                    'related_type' => PembayaranHutang::class,
-                    'user_id' => Auth::id()
-                ]);
-            }
 
             // Update PO payment status
             $po = PurchaseOrder::find($request->purchase_order_id);
@@ -490,36 +362,7 @@ class PembayaranHutangController extends Controller
         DB::beginTransaction();
 
         try {
-            // Restore the cash or bank balance before deleting the payment
-            if ($payment->metode_pembayaran === 'kas') {
-                $transaksi = TransaksiKas::where('related_id', $payment->id)
-                    ->where('related_type', PembayaranHutang::class)
-                    ->first();
-
-                if ($transaksi) {
-                    $kas = Kas::findOrFail($transaksi->kas_id);
-                    $kas->saldo += $payment->jumlah; // Add the money back to the cash balance
-                    $kas->save();
-
-                    // Delete the transaction
-                    $transaksi->delete();
-                }
-            } elseif ($payment->metode_pembayaran === 'bank') {
-                $transaksi = TransaksiBank::where('related_id', $payment->id)
-                    ->where('related_type', PembayaranHutang::class)
-                    ->first();
-
-                if ($transaksi) {
-                    $rekening = RekeningBank::findOrFail($transaksi->rekening_id);
-                    $rekening->saldo += $payment->jumlah; // Add the money back to the bank account
-                    $rekening->save();
-
-                    // Delete the transaction
-                    $transaksi->delete();
-                }
-            }
-
-            // Delete payment
+            // Delete payment - automatic journal deletion akan di-handle oleh model observer
             $payment->delete();
 
             // Update PO payment status

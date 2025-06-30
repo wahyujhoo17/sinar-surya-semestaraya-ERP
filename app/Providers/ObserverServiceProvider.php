@@ -10,6 +10,7 @@ use App\Models\ReturPenjualan;
 use App\Models\ReturPembelian;
 use App\Models\PenyesuaianStok;
 use App\Models\BiayaOperasional;
+use App\Models\Penggajian;
 use App\Observers\InvoiceObserver;
 use App\Observers\PembayaranPiutangObserver;
 use App\Observers\PembelianObserver;
@@ -18,6 +19,7 @@ use App\Observers\ReturPenjualanObserver;
 use App\Observers\ReturPembelianObserver;
 use App\Observers\PenyesuaianStokObserver;
 use App\Observers\BiayaOperasionalObserver;
+use App\Observers\PenggajianObserver;
 use Illuminate\Support\ServiceProvider;
 
 class ObserverServiceProvider extends ServiceProvider
@@ -44,5 +46,6 @@ class ObserverServiceProvider extends ServiceProvider
         ReturPembelian::observe(ReturPembelianObserver::class);
         PenyesuaianStok::observe(PenyesuaianStokObserver::class);
         BiayaOperasional::observe(BiayaOperasionalObserver::class);
+        Penggajian::observe(PenggajianObserver::class);
     }
 }
