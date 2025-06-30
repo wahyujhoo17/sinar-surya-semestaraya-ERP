@@ -13,6 +13,11 @@ use Illuminate\Support\Facades\Auth;
 
 class PengembalianMaterialController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:pengembalian_material.create')->only(['create', 'store']);
+    }
+
     /**
      * Show the form for creating a new pengembalian material.
      *

@@ -19,6 +19,14 @@ use Illuminate\Http\JsonResponse;
 
 class TransferGudangController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:transfer_gudang.view')->only(['index', 'show']);
+        $this->middleware('permission:transfer_gudang.create')->only(['create', 'store']);
+        $this->middleware('permission:transfer_gudang.edit')->only(['edit', 'update']);
+        $this->middleware('permission:transfer_gudang.delete')->only(['destroy']);
+        $this->middleware('permission:transfer_gudang.process')->only(['prosesTransfer', 'selesaikanTransfer']);
+    }
     /**
      * Display a listing of the resource.
      */

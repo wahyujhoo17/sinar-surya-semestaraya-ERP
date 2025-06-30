@@ -188,21 +188,23 @@
                         </td>
                         <td class="px-5 py-4 text-right">
                             <div class="flex gap-1 justify-end items-center">
-                                <!-- View button - always visible -->
-                                <a href="{{ route('pembelian.permintaan-pembelian.show', $pr->id) }}"
-                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
-                                    title="Detail">
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                        class="w-4 h-4">
-                                        <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                                        <path fill-rule="evenodd"
-                                            d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </a>
+                                <!-- View button - always visible for users with view permission -->
+                                @if (auth()->user()->hasPermission('purchase_request.view'))
+                                    <a href="{{ route('pembelian.permintaan-pembelian.show', $pr->id) }}"
+                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
+                                        title="Detail">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                            class="w-4 h-4">
+                                            <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                            <path fill-rule="evenodd"
+                                                d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    </a>
+                                @endif
 
                                 <!-- Edit button -->
-                                @if ($pr->status == 'draft')
+                                @if (auth()->user()->hasPermission('purchase_request.edit') && $pr->status == 'draft')
                                     <a href="{{ route('pembelian.permintaan-pembelian.edit', $pr->id) }}"
                                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
                                         title="Edit">
@@ -214,7 +216,7 @@
                                                 d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
                                         </svg>
                                     </a>
-                                @else
+                                @elseif (!auth()->user()->hasPermission('purchase_request.edit') || $pr->status != 'draft')
                                     <span
                                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-gray-400 dark:text-gray-600 dark:bg-gray-800 border border-dashed border-gray-300"
                                         title="Edit tidak tersedia">
@@ -229,7 +231,7 @@
                                 @endif
 
                                 <!-- Delete button with Modern Alert -->
-                                @if ($pr->status == 'draft')
+                                @if (auth()->user()->hasPermission('purchase_request.delete') && $pr->status == 'draft')
                                     <div x-data="{ showConfirmModal: false }">
                                         <!-- Delete Button -->
                                         <button type="button" @click="showConfirmModal = true"
@@ -309,7 +311,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                @else
+                                @elseif (!auth()->user()->hasPermission('purchase_request.delete') || $pr->status != 'draft')
                                     <span
                                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-50 text-gray-400 dark:text-gray-600 dark:bg-gray-800 border border-dashed border-gray-300"
                                         title="Hapus tidak tersedia">
@@ -344,10 +346,12 @@
                                         Belum ada permintaan pembelian dengan status ini.
                                     </p>
                                 </div>
-                                <a href="{{ route('pembelian.permintaan-pembelian.create') }}"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                                    Buat Permintaan
-                                </a>
+                                @if (auth()->user()->hasPermission('purchase_request.create'))
+                                    <a href="{{ route('pembelian.permintaan-pembelian.create') }}"
+                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                                        Buat Permintaan
+                                    </a>
+                                @endif
                             </div>
                         </td>
                     </tr>

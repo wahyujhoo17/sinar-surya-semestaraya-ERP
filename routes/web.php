@@ -126,146 +126,239 @@ Route::middleware(['auth'])->group(function () {
     // --- Master Data Group ---
     Route::prefix('master-data')->name('master.')->group(function () {
 
-
-        // PRODUK
-        Route::delete('produk/bulk-destroy', [ProdukController::class, 'bulkDestroy'])->name('produk.bulk-destroy.any');
-        Route::get('produk/{produk}/get', [ProdukController::class, 'getById'])->name('produk.get');
-        Route::get('/produk/generate-code', [ProdukController::class, 'generateCode'])
-            ->name('produk.generate-code');
-        Route::post('produk/import', [ProdukController::class, 'import'])->name('produk.import');
-        Route::post('produk/{produk}', [ProdukController::class, 'update'])->name('produk.custom-update');
-        Route::get('produk/export', [ProdukController::class, 'export'])->name('produk.export');
-        Route::get('produk/template', [ProdukController::class, 'downloadTemplate'])->name('produk.template');
+        // PRODUK - with permission middleware
+        Route::middleware('permission:produk.delete')->group(function () {
+            Route::delete('produk/bulk-destroy', [ProdukController::class, 'bulkDestroy'])->name('produk.bulk-destroy.any');
+        });
+        Route::middleware('permission:produk.view')->group(function () {
+            Route::get('produk/{produk}/get', [ProdukController::class, 'getById'])->name('produk.get');
+        });
+        Route::middleware('permission:produk.create')->group(function () {
+            Route::get('/produk/generate-code', [ProdukController::class, 'generateCode'])->name('produk.generate-code');
+        });
+        Route::middleware('permission:produk.import')->group(function () {
+            Route::post('produk/import', [ProdukController::class, 'import'])->name('produk.import');
+        });
+        Route::middleware('permission:produk.edit')->group(function () {
+            Route::post('produk/{produk}', [ProdukController::class, 'update'])->name('produk.custom-update');
+        });
+        Route::middleware('permission:produk.export')->group(function () {
+            Route::get('produk/export', [ProdukController::class, 'export'])->name('produk.export');
+            Route::get('produk/template', [ProdukController::class, 'downloadTemplate'])->name('produk.template');
+        });
         Route::resource('produk', ProdukController::class);
 
-        // KATEGORI PRODUK
-        Route::delete('kategori-produk/bulk-destroy', [KategoriProdukController::class, 'bulkDestroy'])->name('kategori-produk.bulk-destroy');
-        Route::get('kategori-produk/{kategoriProduk}/get', [KategoriProdukController::class, 'getKategori'])->name('kategori-produk.get');
+        // KATEGORI PRODUK - with permission middleware
+        Route::middleware('permission:kategori_produk.delete')->group(function () {
+            Route::delete('kategori-produk/bulk-destroy', [KategoriProdukController::class, 'bulkDestroy'])->name('kategori-produk.bulk-destroy');
+        });
+        Route::middleware('permission:kategori_produk.view')->group(function () {
+            Route::get('kategori-produk/{kategoriProduk}/get', [KategoriProdukController::class, 'getKategori'])->name('kategori-produk.get');
+        });
         Route::resource('kategori-produk', KategoriProdukController::class)->parameters([
             'kategori-produk' => 'kategoriProduk' // Ensure parameter name matches controller type hint
         ]);
 
-
-        // CUSTOMER
-        Route::post('pelanggan/bulk-destroy', [CustomerController::class, 'bulkDestroy'])->name('pelanggan.bulk-destroy.any');
-        Route::get('pelanggan/{pelanggan}/get', [CustomerController::class, 'getById'])->name('pelanggan.get');
-        Route::get('pelanggan/generate-code', [CustomerController::class, 'generateCode'])->name('pelanggan.generate-code');
-        Route::get('pelanggan/get-sales-users', [CustomerController::class, 'getSalesUsers'])->name('pelanggan.get-sales-users');
-        Route::get('pelanggan/export', [CustomerController::class, 'export'])->name('pelanggan.export');
-        Route::post('pelanggan/import', [CustomerController::class, 'import'])->name('pelanggan.import');
+        // CUSTOMER - with permission middleware
+        Route::middleware('permission:pelanggan.delete')->group(function () {
+            Route::post('pelanggan/bulk-destroy', [CustomerController::class, 'bulkDestroy'])->name('pelanggan.bulk-destroy.any');
+        });
+        Route::middleware('permission:pelanggan.view')->group(function () {
+            Route::get('pelanggan/{pelanggan}/get', [CustomerController::class, 'getById'])->name('pelanggan.get');
+        });
+        Route::middleware('permission:pelanggan.create')->group(function () {
+            Route::get('pelanggan/generate-code', [CustomerController::class, 'generateCode'])->name('pelanggan.generate-code');
+            Route::get('pelanggan/get-sales-users', [CustomerController::class, 'getSalesUsers'])->name('pelanggan.get-sales-users');
+        });
+        Route::middleware('permission:pelanggan.export')->group(function () {
+            Route::get('pelanggan/export', [CustomerController::class, 'export'])->name('pelanggan.export');
+        });
+        Route::middleware('permission:pelanggan.import')->group(function () {
+            Route::post('pelanggan/import', [CustomerController::class, 'import'])->name('pelanggan.import');
+        });
         Route::resource('pelanggan', CustomerController::class);
 
-        // SUPPLIER
-        Route::post('supplier/bulk-destroy', [SupplierController::class, 'bulkDestroy'])->name('supplier.bulk-destroy.any');
-        Route::get('supplier/{supplier}/get', [SupplierController::class, 'getById'])->name('supplier.get');
-        Route::get('supplier/generate-code', [SupplierController::class, 'generateCode'])->name('supplier.generate-code');
-        Route::post('supplier/import', [SupplierController::class, 'import'])->name('supplier.import');
-        Route::get('supplier/export', [SupplierController::class, 'export'])->name('supplier.export');
+        // SUPPLIER - with permission middleware
+        Route::middleware('permission:supplier.delete')->group(function () {
+            Route::post('supplier/bulk-destroy', [SupplierController::class, 'bulkDestroy'])->name('supplier.bulk-destroy.any');
+        });
+        Route::middleware('permission:supplier.view')->group(function () {
+            Route::get('supplier/{supplier}/get', [SupplierController::class, 'getById'])->name('supplier.get');
+        });
+        Route::middleware('permission:supplier.create')->group(function () {
+            Route::get('supplier/generate-code', [SupplierController::class, 'generateCode'])->name('supplier.generate-code');
+        });
+        Route::middleware('permission:supplier.import')->group(function () {
+            Route::post('supplier/import', [SupplierController::class, 'import'])->name('supplier.import');
+        });
+        Route::middleware('permission:supplier.export')->group(function () {
+            Route::get('supplier/export', [SupplierController::class, 'export'])->name('supplier.export');
+        });
         Route::resource('supplier', SupplierController::class);
 
-        // GUDANG
-        Route::delete('gudang/bulk-destroy', [GudangController::class, 'bulkDestroy'])->name('gudang.bulk-destroy');
-        Route::get('gudang/{gudang}/get', [GudangController::class, 'getGudang'])->name('gudang.get');
+        // GUDANG - with permission middleware
+        Route::middleware('permission:gudang.delete')->group(function () {
+            Route::delete('gudang/bulk-destroy', [GudangController::class, 'bulkDestroy'])->name('gudang.bulk-destroy');
+        });
+        Route::middleware('permission:gudang.view')->group(function () {
+            Route::get('gudang/{gudang}/get', [GudangController::class, 'getGudang'])->name('gudang.get');
+        });
         Route::resource('gudang', GudangController::class);
 
-        // SATUAN
-        Route::delete('satuan/bulk-destroy', [SatuanController::class, 'bulkDestroy'])->name('satuan.bulk-destroy');
-        Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSSatuan'])->name('satuan.get');
+        // SATUAN - with permission middleware
+        Route::middleware('permission:satuan.delete')->group(function () {
+            Route::delete('satuan/bulk-destroy', [SatuanController::class, 'bulkDestroy'])->name('satuan.bulk-destroy');
+        });
+        Route::middleware('permission:satuan.view')->group(function () {
+            Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSSatuan'])->name('satuan.get');
+        });
         Route::resource('satuan', SatuanController::class);
     });
 
     // --- INVENTARIS ----
     Route::prefix('inventaris')->name('inventaris.')->group(function () {
-        // Stok Barang
+        // Stok Barang - with permission middleware
         Route::resource('stok', StokBarangController::class);
 
-        // Transfer Barang
-        Route::post('transfer-gudang/{id}/proses', [TransferGudangController::class, 'prosesTransfer'])->name('transfer-gudang.proses');
-        Route::post('transfer-gudang/{id}/selesai', [TransferGudangController::class, 'selesaikanTransfer'])->name('transfer-gudang.selesai');
-        Route::get('transfer-gudang/get-stok', [TransferGudangController::class, 'getStokProduk'])->name('transfer-gudang.get-stok');
+        // Transfer Barang - with permission middleware
+        Route::middleware('permission:transfer_gudang.process')->group(function () {
+            Route::post('transfer-gudang/{id}/proses', [TransferGudangController::class, 'prosesTransfer'])->name('transfer-gudang.proses');
+            Route::post('transfer-gudang/{id}/selesai', [TransferGudangController::class, 'selesaikanTransfer'])->name('transfer-gudang.selesai');
+        });
+        Route::middleware('permission:transfer_gudang.view')->group(function () {
+            Route::get('transfer-gudang/get-stok', [TransferGudangController::class, 'getStokProduk'])->name('transfer-gudang.get-stok');
+        });
         Route::resource('transfer-gudang', TransferGudangController::class);
 
-        // Penyesuaian Stok
-        Route::post('penyesuaian-stok/{id}/proses', [PenyesuaianStokController::class, 'prosesPenyesuaian'])->name('penyesuaian-stok.proses');
-        Route::get('penyesuaian-stok/get-stok', [PenyesuaianStokController::class, 'getStokProduk'])->name('penyesuaian-stok.get-stok');
-        Route::get('gudang/{id}/produks', [PenyesuaianStokController::class, 'getProduksByGudang'])->name('penyesuaian-stok.get-produks');
-        Route::get('penyesuaian-stok/{id}/pdf', [PenyesuaianStokController::class, 'printPdf'])->name('penyesuaian-stok.pdf');
-        Route::get('penyesuaian-stok/pdf/draft', [PenyesuaianStokController::class, 'printDraftPdf'])->name('penyesuaian-stok.pdf.draft');
+        // Penyesuaian Stok - with permission middleware
+        Route::middleware('permission:penyesuaian_stok.process')->group(function () {
+            Route::post('penyesuaian-stok/{id}/proses', [PenyesuaianStokController::class, 'prosesPenyesuaian'])->name('penyesuaian-stok.proses');
+        });
+        Route::middleware('permission:penyesuaian_stok.view')->group(function () {
+            Route::get('penyesuaian-stok/get-stok', [PenyesuaianStokController::class, 'getStokProduk'])->name('penyesuaian-stok.get-stok');
+            Route::get('gudang/{id}/produks', [PenyesuaianStokController::class, 'getProduksByGudang'])->name('penyesuaian-stok.get-produks');
+            Route::get('penyesuaian-stok/{id}/pdf', [PenyesuaianStokController::class, 'printPdf'])->name('penyesuaian-stok.pdf');
+            Route::get('penyesuaian-stok/pdf/draft', [PenyesuaianStokController::class, 'printDraftPdf'])->name('penyesuaian-stok.pdf.draft');
+        });
         Route::resource('penyesuaian-stok', PenyesuaianStokController::class);
 
-        // Permintaan Barang
-        Route::post('permintaan-barang/auto-generate', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'generateFromSalesOrder'])->name('permintaan-barang.auto-generate');
-        Route::post('permintaan-barang/auto-proses', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'autoProsesFromSalesOrder'])->name('permintaan-barang.auto-proses');
-        Route::put('permintaan-barang/{permintaanBarang}/update-status', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'updateStatus'])->name('permintaan-barang.update-status');
-        Route::get('permintaan-barang/{permintaanBarang}/create-do', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'createDeliveryOrder'])->name('permintaan-barang.create-do');
+        // Permintaan Barang - with permission middleware
+        Route::middleware('permission:permintaan_barang.create')->group(function () {
+            Route::post('permintaan-barang/auto-generate', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'generateFromSalesOrder'])->name('permintaan-barang.auto-generate');
+            Route::post('permintaan-barang/auto-proses', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'autoProsesFromSalesOrder'])->name('permintaan-barang.auto-proses');
+        });
+        Route::middleware('permission:permintaan_barang.edit')->group(function () {
+            Route::put('permintaan-barang/{permintaanBarang}/update-status', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'updateStatus'])->name('permintaan-barang.update-status');
+        });
+        Route::middleware('permission:permintaan_barang.view')->group(function () {
+            Route::get('permintaan-barang/{permintaanBarang}/create-do', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'createDeliveryOrder'])->name('permintaan-barang.create-do');
+        });
         Route::resource('permintaan-barang', App\Http\Controllers\Inventaris\PermintaanBarangController::class);
     });
 
     Route::prefix('penjualan')->name('penjualan.')->group(function () {
 
         // Quotation routes
-        Route::post('quotation/{quotation}/change-status', [QuotationController::class, 'changeStatus'])->name('quotation.changeStatus');
-        Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
-        Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
+        Route::middleware('permission:quotation.change_status')->group(function () {
+            Route::post('quotation/{quotation}/change-status', [QuotationController::class, 'changeStatus'])->name('quotation.changeStatus');
+        });
+        Route::middleware('permission:quotation.export_pdf')->group(function () {
+            Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
+        });
+        Route::middleware('permission:quotation.view')->group(function () {
+            Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
+        });
         Route::resource('quotation', QuotationController::class);
 
         // Sales Order routes
-        Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
-        Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
-        Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
+        Route::middleware('permission:sales_order.change_status')->group(function () {
+            Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
+        });
+        Route::middleware('permission:sales_order.export_pdf')->group(function () {
+            Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
+        });
+        Route::middleware('permission:sales_order.view')->group(function () {
+            Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
+        });
         Route::resource('sales-order', SalesOrderController::class);
 
         // Invoice routes
-        Route::get('invoice/get-sales-order/{id}', [InvoiceController::class, 'getSalesOrderData'])->name('invoice.get-sales-order');
-        Route::get('invoice/{invoice}/print', [InvoiceController::class, 'print'])->name('invoice.print');
-        Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
+        Route::middleware('permission:invoice.view')->group(function () {
+            Route::get('invoice/get-sales-order/{id}', [InvoiceController::class, 'getSalesOrderData'])->name('invoice.get-sales-order');
+        });
+        Route::middleware('permission:invoice.print')->group(function () {
+            Route::get('invoice/{invoice}/print', [InvoiceController::class, 'print'])->name('invoice.print');
+        });
+        Route::middleware('permission:sales_order.generate_invoice')->group(function () {
+            Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
+        });
         Route::resource('invoice', InvoiceController::class);
 
         // Delivery Order routes
-        Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
-        Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');
-        Route::post('delivery-order/{id}/selesai', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesai');
-        Route::post('delivery-order/{id}/batalkan', [DeliveryOrderController::class, 'batalkanDelivery'])->name('delivery-order.batalkan');
-        Route::get('delivery-order/get-sales-order-data/{id}', [DeliveryOrderController::class, 'getSalesOrderData'])->name('delivery-order.get-sales-order-data');
-        Route::get('delivery-order/get-stock-info', [DeliveryOrderController::class, 'getStockInformation'])->name('delivery-order.get-stock-info');
-        Route::get('delivery-orders/ajax/table', [DeliveryOrderController::class, 'table'])->name('delivery-order.table');
-        Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
+        Route::middleware('permission:delivery_order.process')->group(function () {
+            Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
+            Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');
+            Route::post('delivery-order/{id}/selesai', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesai');
+        });
+        Route::middleware('permission:delivery_order.cancel')->group(function () {
+            Route::post('delivery-order/{id}/batalkan', [DeliveryOrderController::class, 'batalkanDelivery'])->name('delivery-order.batalkan');
+        });
+        Route::middleware('permission:delivery_order.view')->group(function () {
+            Route::get('delivery-order/get-sales-order-data/{id}', [DeliveryOrderController::class, 'getSalesOrderData'])->name('delivery-order.get-sales-order-data');
+            Route::get('delivery-order/get-stock-info', [DeliveryOrderController::class, 'getStockInformation'])->name('delivery-order.get-stock-info');
+            Route::get('delivery-orders/ajax/table', [DeliveryOrderController::class, 'table'])->name('delivery-order.table');
+        });
+        Route::middleware('permission:delivery_order.print')->group(function () {
+            Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
+        });
         Route::resource('delivery-order', DeliveryOrderController::class);
 
         // Retur Penjualan routes
-        Route::post('retur/{id}/proses', [ReturPenjualanController::class, 'prosesRetur'])->name('retur.proses');
-        Route::post('retur/{id}/selesai', [ReturPenjualanController::class, 'selesaikanRetur'])->name('retur.selesai');
-        Route::post('retur/{id}/kirim-pengganti', [ReturPenjualanController::class, 'prosesKirimPengganti'])->name('retur.kirim-pengganti');
-        Route::get('retur/{id}/pdf', [ReturPenjualanController::class, 'exportPdf'])->name('retur.pdf');
-        Route::get('retur/get-sales-orders', [ReturPenjualanController::class, 'getSalesOrders'])->name('retur.get-sales-orders');
-        Route::get('retur/get-sales-order-details', [ReturPenjualanController::class, 'getSalesOrderDetails'])->name('retur.get-sales-order-details');
-        Route::get('retur/analyze', [ReturPenjualanController::class, 'analyzeReturns'])->name('retur.analyze');
-        Route::post('retur/{id}/submit-approval', [ReturPenjualanController::class, 'submitForApproval'])->name('retur.submit-approval');
-        Route::post('retur/{id}/approve', [ReturPenjualanController::class, 'approveReturn'])->name('retur.approve');
-        Route::post('retur/{id}/reject', [ReturPenjualanController::class, 'rejectReturn'])->name('retur.reject');
-        Route::get('retur/{id}/quality-control', [ReturPenjualanController::class, 'showQualityControlForm'])->name('retur.quality-control');
-        Route::post('retur/{id}/quality-control', [ReturPenjualanController::class, 'processQualityControl'])->name('retur.process-quality-control');
-        Route::get('retur/{id}/quality-control-detail', [ReturPenjualanController::class, 'showQualityControlDetail'])->name('retur.quality-control-detail');
-        Route::get('retur/{id}/create-credit-note', [ReturPenjualanController::class, 'createCreditNote'])->name('retur.create-credit-note');
-        Route::get('retur/qc-report', [ReturPenjualanController::class, 'qcReport'])->name('retur.qc-report');
-        Route::get('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'showTerimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
-        Route::post('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'terimaBarangPengganti'])->name('retur.proses-kirim-barang-pengganti');
-        Route::get('retur/get-stok', [ReturPenjualanController::class, 'getStokProduk'])->name('retur.get-stok');
+        Route::middleware('permission:retur_penjualan.process')->group(function () {
+            Route::post('retur/{id}/proses', [ReturPenjualanController::class, 'prosesRetur'])->name('retur.proses');
+            Route::post('retur/{id}/selesai', [ReturPenjualanController::class, 'selesaikanRetur'])->name('retur.selesai');
+            Route::post('retur/{id}/kirim-pengganti', [ReturPenjualanController::class, 'prosesKirimPengganti'])->name('retur.kirim-pengganti');
+        });
+        Route::middleware('permission:retur_penjualan.print')->group(function () {
+            Route::get('retur/{id}/pdf', [ReturPenjualanController::class, 'exportPdf'])->name('retur.pdf');
+        });
+        Route::middleware('permission:retur_penjualan.view')->group(function () {
+            Route::get('retur/get-sales-orders', [ReturPenjualanController::class, 'getSalesOrders'])->name('retur.get-sales-orders');
+            Route::get('retur/get-sales-order-details', [ReturPenjualanController::class, 'getSalesOrderDetails'])->name('retur.get-sales-order-details');
+            Route::get('retur/analyze', [ReturPenjualanController::class, 'analyzeReturns'])->name('retur.analyze');
+            Route::get('retur/{id}/quality-control', [ReturPenjualanController::class, 'showQualityControlForm'])->name('retur.quality-control');
+            Route::get('retur/{id}/quality-control-detail', [ReturPenjualanController::class, 'showQualityControlDetail'])->name('retur.quality-control-detail');
+            Route::get('retur/{id}/create-credit-note', [ReturPenjualanController::class, 'createCreditNote'])->name('retur.create-credit-note');
+            Route::get('retur/qc-report', [ReturPenjualanController::class, 'qcReport'])->name('retur.qc-report');
+            Route::get('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'showTerimaBarangPengganti'])->name('retur.kirim-barang-pengganti');
+            Route::get('retur/get-stok', [ReturPenjualanController::class, 'getStokProduk'])->name('retur.get-stok');
+            Route::post('retur/{id}/submit-approval', [ReturPenjualanController::class, 'submitForApproval'])->name('retur.submit-approval');
+            Route::post('retur/{id}/kirim-barang-pengganti', [ReturPenjualanController::class, 'terimaBarangPengganti'])->name('retur.proses-kirim-barang-pengganti');
+            Route::post('retur/{id}/quality-control', [ReturPenjualanController::class, 'processQualityControl'])->name('retur.process-quality-control');
+        });
+        Route::middleware('permission:retur_penjualan.approve')->group(function () {
+            Route::post('retur/{id}/approve', [ReturPenjualanController::class, 'approveReturn'])->name('retur.approve');
+            Route::post('retur/{id}/reject', [ReturPenjualanController::class, 'rejectReturn'])->name('retur.reject');
+        });
         Route::resource('retur', ReturPenjualanController::class);
 
         // Nota Kredit routes
-        Route::post('nota-kredit/{notaKredit}/finalize', [NotaKreditController::class, 'finalize'])->name('nota-kredit.finalize');
-
-        // Nota Kredit (Credit Note) routes
-        Route::get('nota-kredit/{id}/pdf', [NotaKreditController::class, 'exportPdf'])->name('nota-kredit.pdf');
-        Route::post('nota-kredit/{notaKredit}/complete', [NotaKreditController::class, 'completeNotaKredit'])->name('nota-kredit.complete');
-        Route::post('nota-kredit/{notaKredit}/apply-to-invoice/{invoice}', [NotaKreditController::class, 'applyToInvoice'])->name('nota-kredit.apply-to-invoice');
+        Route::middleware('permission:nota_kredit.edit')->group(function () {
+            Route::post('nota-kredit/{notaKredit}/finalize', [NotaKreditController::class, 'finalize'])->name('nota-kredit.finalize');
+            Route::post('nota-kredit/{notaKredit}/complete', [NotaKreditController::class, 'completeNotaKredit'])->name('nota-kredit.complete');
+            Route::post('nota-kredit/{notaKredit}/apply-to-invoice/{invoice}', [NotaKreditController::class, 'applyToInvoice'])->name('nota-kredit.apply-to-invoice');
+        });
+        Route::middleware('permission:nota_kredit.print')->group(function () {
+            Route::get('nota-kredit/{id}/pdf', [NotaKreditController::class, 'exportPdf'])->name('nota-kredit.pdf');
+        });
         Route::resource('nota-kredit', NotaKreditController::class);
 
         // Riwayat Transaksi routes
-        Route::get('riwayat-transaksi', [RiwayatTransaksiPenjualanController::class, 'index'])->name('riwayat-transaksi.index');
-        Route::get('riwayat-transaksi/data', [RiwayatTransaksiPenjualanController::class, 'getData'])->name('riwayat-transaksi.data');
-        Route::get('riwayat-transaksi/export/{type}', [RiwayatTransaksiPenjualanController::class, 'export'])->name('riwayat-transaksi.export');
+        Route::middleware('permission:sales_order.view,invoice.view')->group(function () {
+            Route::get('riwayat-transaksi', [RiwayatTransaksiPenjualanController::class, 'index'])->name('riwayat-transaksi.index');
+            Route::get('riwayat-transaksi/data', [RiwayatTransaksiPenjualanController::class, 'getData'])->name('riwayat-transaksi.data');
+            Route::get('riwayat-transaksi/export/{type}', [RiwayatTransaksiPenjualanController::class, 'export'])->name('riwayat-transaksi.export');
+        });
     });
 
     // API route for product details (used in Sales Order form)
@@ -318,63 +411,87 @@ Route::middleware(['auth'])->group(function () {
         Route::get('riwayat-transaksi/{id}', [RiwayatTransaksiController::class, 'show'])->name('riwayat-transaksi.show');
     });
 
+    // --- Production Module Routes ---
     Route::prefix('produksi')->name('produksi.')->group(function () {
-        // Bill of Material (BOM) Routes
-        Route::get('bom/{id}/get', [BOMController::class, 'getById'])->name('bom.get');
-        Route::get('bom-data', [BOMController::class, 'data'])->name('bom.data');
-        Route::post('bom/{id}/components', [BOMController::class, 'addComponent'])->name('bom.add-component');
-        Route::put('bom-component/{id}', [BOMController::class, 'updateComponent'])->name('bom.update-component');
-        Route::delete('bom-component/{id}', [BOMController::class, 'deleteComponent'])->name('bom.delete-component');
-        Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');
+
+        // BOM (Bill of Materials) Routes - with permission middleware
+        Route::middleware('permission:bill_of_material.view')->group(function () {
+            Route::get('bom/{id}/get', [BOMController::class, 'getById'])->name('bom.get');
+            Route::get('bom-data', [BOMController::class, 'data'])->name('bom.data');
+            Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');
+        });
+        Route::middleware('permission:bill_of_material.add_component')->group(function () {
+            Route::post('bom/{id}/components', [BOMController::class, 'addComponent'])->name('bom.add-component');
+        });
+        Route::middleware('permission:bill_of_material.edit_component')->group(function () {
+            Route::put('bom-component/{id}', [BOMController::class, 'updateComponent'])->name('bom.update-component');
+        });
+        Route::middleware('permission:bill_of_material.delete_component')->group(function () {
+            Route::delete('bom-component/{id}', [BOMController::class, 'deleteComponent'])->name('bom.delete-component');
+        });
         Route::resource('bom', BOMController::class);
 
-        // Perencanaan Produksi Routes
-        Route::get('perencanaan-produksi/get-so-items', [PerencanaanProduksiController::class, 'getSoItems'])->name('perencanaan-produksi.get-so-items');
-        Route::put('perencanaan-produksi/{id}/submit', [PerencanaanProduksiController::class, 'submit'])->name('perencanaan-produksi.submit');
-        Route::put('perencanaan-produksi/{id}/approve', [PerencanaanProduksiController::class, 'approve'])->name('perencanaan-produksi.approve');
-        Route::put('perencanaan-produksi/{id}/reject', [PerencanaanProduksiController::class, 'reject'])->name('perencanaan-produksi.reject');
-        Route::get('perencanaan-produksi/{id}/create-work-order', [PerencanaanProduksiController::class, 'createWorkOrder'])->name('perencanaan-produksi.create-work-order');
-        Route::post('perencanaan-produksi/{id}/change-status', [PerencanaanProduksiController::class, 'changeStatus'])->name('perencanaan-produksi.change-status');
-        Route::get('perencanaan-produksi/get-sales-order/{id}', [PerencanaanProduksiController::class, 'getSalesOrderData'])->name('perencanaan-produksi.get-sales-order');
+        // Perencanaan Produksi Routes - with permission middleware
+        Route::middleware('permission:perencanaan_produksi.view')->group(function () {
+            Route::get('perencanaan-produksi/get-so-items', [PerencanaanProduksiController::class, 'getSoItems'])->name('perencanaan-produksi.get-so-items');
+            Route::get('perencanaan-produksi/get-sales-order/{id}', [PerencanaanProduksiController::class, 'getSalesOrderData'])->name('perencanaan-produksi.get-sales-order');
+            Route::get('perencanaan-produksi/{id}/create-work-order', [PerencanaanProduksiController::class, 'createWorkOrder'])->name('perencanaan-produksi.create-work-order');
+            Route::post('perencanaan-produksi/{id}/change-status', [PerencanaanProduksiController::class, 'changeStatus'])->name('perencanaan-produksi.change-status');
+        });
+        Route::middleware('permission:perencanaan_produksi.edit')->group(function () {
+            Route::put('perencanaan-produksi/{id}/submit', [PerencanaanProduksiController::class, 'submit'])->name('perencanaan-produksi.submit');
+        });
+        Route::middleware('permission:perencanaan_produksi.approve')->group(function () {
+            Route::put('perencanaan-produksi/{id}/approve', [PerencanaanProduksiController::class, 'approve'])->name('perencanaan-produksi.approve');
+            Route::put('perencanaan-produksi/{id}/reject', [PerencanaanProduksiController::class, 'reject'])->name('perencanaan-produksi.reject');
+        });
         Route::resource('perencanaan-produksi', PerencanaanProduksiController::class);
 
-        // Work Order Routes
-        Route::post('work-order/{id}/change-status', [WorkOrderController::class, 'changeStatus'])->name('work-order.change-status');
-        // Routes for Pengambilan Bahan Baku
-        Route::get('work-order/{id}/create-pengambilan', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.create-pengambilan');
-        Route::post('work-order/{id}/store-pengambilan', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan');
-        Route::get('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.pengambilan-bahan-baku');
-        Route::post('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan-bahan-baku');
-
-        // Routes for Quality Control
-        Route::get('work-order/{id}/create-qc', [WorkOrderController::class, 'createQualityControl'])->name('work-order.create-qc');
-        Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
-        Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
-        Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
-
-        // Routes for Material Return
-        Route::get('work-order/{id}/create-pengembalian', [PengembalianMaterialController::class, 'create'])->name('work-order.create-pengembalian');
-        Route::post('work-order/{id}/store-pengembalian', [PengembalianMaterialController::class, 'store'])->name('work-order.store-pengembalian');
-
-        // Route for Select Product
-        Route::get('work-order/select-product/{perencanaan_id}', [WorkOrderController::class, 'create'])->name('work-order.select-product');
+        // Work Order Routes - with permission middleware
+        Route::middleware('permission:work_order.change_status')->group(function () {
+            Route::post('work-order/{id}/change-status', [WorkOrderController::class, 'changeStatus'])->name('work-order.change-status');
+            // Routes for Pengambilan Bahan Baku
+            Route::get('work-order/{id}/create-pengambilan', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.create-pengambilan');
+            Route::post('work-order/{id}/store-pengambilan', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan');
+            Route::get('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.pengambilan-bahan-baku');
+            Route::post('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan-bahan-baku');
+            // Routes for Quality Control
+            Route::get('work-order/{id}/create-qc', [WorkOrderController::class, 'createQualityControl'])->name('work-order.create-qc');
+            Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
+            Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
+            Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
+        });
+        Route::middleware('permission:work_order.view')->group(function () {
+            Route::get('work-order/select-product/{perencanaan_id}', [WorkOrderController::class, 'create'])->name('work-order.select-product');
+        });
         Route::resource('work-order', WorkOrderController::class);
 
-        // Pengambilan Bahan Baku Routes
-        Route::get('pengambilan-bahan-baku/{id}/pdf', [PengambilanBahanBakuController::class, 'exportPdf'])->name('pengambilan-bahan-baku.pdf');
-        Route::get('pengambilan-bahan-baku/check-stok', [PengambilanBahanBakuController::class, 'checkStok'])->name('pengambilan-bahan-baku.check-stok');
+        // Pengambilan Bahan Baku Routes - with permission middleware (using existing permissions)
+        Route::middleware('permission:work_order.view')->group(function () {
+            Route::get('pengambilan-bahan-baku/check-stok', [PengambilanBahanBakuController::class, 'checkStok'])->name('pengambilan-bahan-baku.check-stok');
+        });
+        Route::middleware('permission:work_order.view')->group(function () {
+            Route::get('pengambilan-bahan-baku/{id}/pdf', [PengambilanBahanBakuController::class, 'exportPdf'])->name('pengambilan-bahan-baku.pdf');
+        });
         Route::resource('pengambilan-bahan-baku', PengambilanBahanBakuController::class)->only(['index', 'show']);
 
-        // Quality Control Routes
-        Route::get('quality-control/{id}/pdf', [QualityControlController::class, 'exportPdf'])->name('quality-control.pdf');
-        Route::put('quality-control/{id}/approve', [QualityControlController::class, 'approve'])->name('quality-control.approve');
-        Route::put('quality-control/{id}/reject', [QualityControlController::class, 'reject'])->name('quality-control.reject');
-        Route::resource('quality-control', QualityControlController::class)->only(['index', 'show']);
+        // Pengembalian Material Routes - with permission middleware (using existing permissions)
+        Route::middleware('permission:work_order.edit')->group(function () {
+            Route::get('work-order/{id}/create-pengembalian', [PengembalianMaterialController::class, 'create'])->name('work-order.create-pengembalian');
+            Route::post('work-order/{id}/store-pengembalian', [PengembalianMaterialController::class, 'store'])->name('work-order.store-pengembalian');
+        });
 
-        // Quality Control Routes
-        Route::get('quality-control/report', [App\Http\Controllers\Produksi\QualityControlController::class, 'report'])->name('quality-control.report');
-        Route::get('quality-control/export-pdf', [App\Http\Controllers\Produksi\QualityControlController::class, 'exportPdf'])->name('quality-control.export-pdf');
-        Route::resource('quality-control', App\Http\Controllers\Produksi\QualityControlController::class)->only(['index', 'show']);
+        // Quality Control Routes - with permission middleware  
+        Route::middleware('permission:quality_control.print')->group(function () {
+            Route::get('quality-control/{id}/pdf', [QualityControlController::class, 'exportPdf'])->name('quality-control.pdf');
+            Route::get('quality-control/report', [QualityControlController::class, 'report'])->name('quality-control.report');
+            Route::get('quality-control/export-pdf', [QualityControlController::class, 'exportPdf'])->name('quality-control.export-pdf');
+        });
+        Route::middleware('permission:quality_control.approve')->group(function () {
+            Route::put('quality-control/{id}/approve', [QualityControlController::class, 'approve'])->name('quality-control.approve');
+            Route::put('quality-control/{id}/reject', [QualityControlController::class, 'reject'])->name('quality-control.reject');
+        });
+        Route::resource('quality-control', QualityControlController::class)->only(['index', 'show']);
     });
 
     // -- HR & Karyawan --

@@ -331,7 +331,7 @@
                                     Transaksi</span></a>
                         @endif
                     </div>
-                </div>
+                </div> 
             @endif
 
             <!-- HR & Karyawan -->

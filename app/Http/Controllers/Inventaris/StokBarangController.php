@@ -9,6 +9,13 @@ use Illuminate\Support\Facades\Log;
 
 class StokBarangController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:stok_barang.view')->only(['index', 'show']);
+        $this->middleware('permission:stok_barang.create')->only(['create', 'store']);
+        $this->middleware('permission:stok_barang.edit')->only(['edit', 'update']);
+        $this->middleware('permission:stok_barang.delete')->only(['destroy', 'bulkDestroy']);
+    }
     public function index(Request $request)
     {
         $breadcrumbs = [

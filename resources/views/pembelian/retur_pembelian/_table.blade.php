@@ -184,21 +184,23 @@
                 </td>
                 <td class="px-5 py-4 whitespace-nowrap text-right">
                     <div class="flex justify-end space-x-2">
-                        <!-- Show button - always visible -->
-                        <a href="{{ route('pembelian.retur-pembelian.show', $retur) }}"
-                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
-                            title="Detail">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                class="w-4 h-4">
-                                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                                <path fill-rule="evenodd"
-                                    d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </a>
+                        <!-- Show button - visible with view permission -->
+                        @if (auth()->user()->hasPermission('retur_pembelian.view'))
+                            <a href="{{ route('pembelian.retur-pembelian.show', $retur) }}"
+                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
+                                title="Detail">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                    class="w-4 h-4">
+                                    <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                    <path fill-rule="evenodd"
+                                        d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        @endif
 
-                        <!-- Edit button - only visible for draft status -->
-                        @if ($retur->status === 'draft')
+                        <!-- Edit button - only visible for draft status with edit permission -->
+                        @if (auth()->user()->hasPermission('retur_pembelian.edit') && $retur->status === 'draft')
                             <a href="{{ route('pembelian.retur-pembelian.edit', $retur) }}"
                                 class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
                                 title="Edit">
@@ -210,8 +212,10 @@
                                         d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
                                 </svg>
                             </a>
+                        @endif
 
-                            <!-- Delete button - only visible for draft status -->
+                        <!-- Delete button - only visible for draft status with delete permission -->
+                        @if (auth()->user()->hasPermission('retur_pembelian.delete') && $retur->status === 'draft')
                             <form action="{{ route('pembelian.retur-pembelian.destroy', $retur) }}" method="POST"
                                 class="inline-block">
                                 @csrf
@@ -242,10 +246,12 @@
                                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                         </svg>
                         <span>Belum ada data Retur Pembelian.</span>
-                        <a href="{{ route('pembelian.retur-pembelian.create') }}"
-                            class="mt-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium">
-                            Buat Retur Pembelian
-                        </a>
+                        @if (auth()->user()->hasPermission('retur_pembelian.create'))
+                            <a href="{{ route('pembelian.retur-pembelian.create') }}"
+                                class="mt-2 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium">
+                                Buat Retur Pembelian
+                            </a>
+                        @endif
                     </div>
                 </td>
             </tr>

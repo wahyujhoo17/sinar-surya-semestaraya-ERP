@@ -14,6 +14,15 @@ class KategoriProdukController extends Controller
 {
     use HasNotifications;
 
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:kategori_produk.view')->only(['index', 'show']);
+        $this->middleware('permission:kategori_produk.create')->only(['create', 'store', 'ajaxStore']);
+        $this->middleware('permission:kategori_produk.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:kategori_produk.delete')->only(['destroy', 'bulkDestroy']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -92,7 +101,7 @@ class KategoriProdukController extends Controller
 
 
         return response()->json([
-            'success' => true, 
+            'success' => true,
             'message' => 'Kategori Produk berhasil ditambahkan.',
         ]);
     }

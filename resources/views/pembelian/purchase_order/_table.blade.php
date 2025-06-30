@@ -108,18 +108,20 @@
                             Rp {{ number_format($po->total, 0, ',', '.') }}
                         </td>
                         <td class="px-5 py-4 text-right">
-                            <a href="{{ route('pembelian.purchasing-order.show', $po->id) }}"
-                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
-                                title="Detail">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
-                                    class="w-4 h-4">
-                                    <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                                    <path fill-rule="evenodd"
-                                        d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                        clip-rule="evenodd" />
-                                </svg>
-                            </a>
-                            @if ($po->status == 'draft')
+                            @if (auth()->user()->hasPermission('purchase_order.view'))
+                                <a href="{{ route('pembelian.purchasing-order.show', $po->id) }}"
+                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300"
+                                    title="Detail">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                        class="w-4 h-4">
+                                        <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                        <path fill-rule="evenodd"
+                                            d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            @endif
+                            @if (auth()->user()->hasPermission('purchase_order.edit') && $po->status == 'draft')
                                 <a href="{{ route('pembelian.purchasing-order.edit', $po->id) }}"
                                     class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
                                     title="Edit">
@@ -154,10 +156,12 @@
                                         Belum ada purchase order dengan filter/status ini.
                                     </p>
                                 </div>
-                                <a href="{{ route('pembelian.purchasing-order.create') }}"
-                                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
-                                    Buat Purchase Order
-                                </a>
+                                @if (auth()->user()->hasPermission('purchase_order.create'))
+                                    <a href="{{ route('pembelian.purchasing-order.create') }}"
+                                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                                        Buat Purchase Order
+                                    </a>
+                                @endif
                             </div>
                         </td>
                     </tr>

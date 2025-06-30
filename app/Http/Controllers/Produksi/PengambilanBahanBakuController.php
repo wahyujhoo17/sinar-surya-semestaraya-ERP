@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\Auth;
 
 class PengambilanBahanBakuController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:pengambilan_bahan_baku.view')->only(['index', 'show', 'checkStok']);
+        $this->middleware('permission:pengambilan_bahan_baku.export')->only(['exportPdf']);
+    }
+
     /**
      * Menampilkan daftar pengambilan bahan baku
      */

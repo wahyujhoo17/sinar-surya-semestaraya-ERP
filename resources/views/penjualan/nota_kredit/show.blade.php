@@ -48,7 +48,7 @@
                         </svg>
                         Kembali
                     </a>
-                    @if ($notaKredit->status == 'draft')
+                    @if (auth()->user()->hasPermission('nota_kredit.edit') && $notaKredit->status == 'draft')
                         <a href="{{ route('penjualan.nota-kredit.edit', $notaKredit->id) }}"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,24 +58,29 @@
                             </svg>
                             Edit
                         </a>
-                        <button type="button" data-modal-target="finalizeModal" data-modal-toggle="finalizeModal"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+
+                        @if (auth()->user()->hasPermission('nota_kredit.edit'))
+                            <button type="button" data-modal-target="finalizeModal" data-modal-toggle="finalizeModal"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Finalisasi
+                            </button>
+                        @endif
+                    @endif
+                    @if (auth()->user()->hasPermission('nota_kredit.print'))
+                        <a href="{{ route('penjualan.nota-kredit.pdf', $notaKredit->id) }}" target="_blank"
+                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
                             </svg>
-                            Finalisasi
-                        </button>
+                            Cetak PDF
+                        </a>
                     @endif
-                    <a href="{{ route('penjualan.nota-kredit.pdf', $notaKredit->id) }}" target="_blank"
-                        class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                            </path>
-                        </svg>
-                        Cetak PDF
-                    </a>
                 </div>
             </div>
         </div>

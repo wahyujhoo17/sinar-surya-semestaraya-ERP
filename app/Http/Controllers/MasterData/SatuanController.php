@@ -9,6 +9,15 @@ use Illuminate\Support\Facades\DB;
 
 class SatuanController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:satuan.view')->only(['index', 'show']);
+        $this->middleware('permission:satuan.create')->only(['create', 'store', 'ajaxStore']);
+        $this->middleware('permission:satuan.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:satuan.delete')->only(['destroy', 'bulkDestroy']);
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');

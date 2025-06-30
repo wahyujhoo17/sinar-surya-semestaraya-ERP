@@ -354,37 +354,43 @@
                     <!-- Action Buttons -->
                     <div class="flex flex-wrap gap-2 mt-4 lg:mt-0 lg:ml-4" x-data="{ statusDropdownOpen: false, confirmModal: false, formData: { status_pembayaran: '{{ $salesOrder->status_pembayaran }}', status_pengiriman: '{{ $salesOrder->status_pengiriman }}', catatan_status: '' } }">
                         <!-- Create Invoice Button -->
-                        <a href="{{ route('penjualan.sales-order.generate-invoice', $salesOrder->id) }}"
-                            class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Buat Invoice
-                        </a>
+                        @if (auth()->user()->hasPermission('sales_order.generate_invoice'))
+                            <a href="{{ route('penjualan.sales-order.generate-invoice', $salesOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Buat Invoice
+                            </a>
+                        @endif
 
                         <!-- Print Button -->
-                        <a href="{{ route('penjualan.sales-order.pdf', $salesOrder->id) }}" target="_blank"
-                            class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                            </svg>
-                            Cetak
-                        </a>
+                        @if (auth()->user()->hasPermission('sales_order.print'))
+                            <a href="{{ route('penjualan.sales-order.pdf', $salesOrder->id) }}" target="_blank"
+                                class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Cetak
+                            </a>
+                        @endif
 
                         <!-- Change Status Button -->
-                        <button type="button" @click="statusDropdownOpen = !statusDropdownOpen"
-                            class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                            </svg>
-                            Ubah Status
-                        </button>
+                        @if (auth()->user()->hasPermission('sales_order.change_status'))
+                            <button type="button" @click="statusDropdownOpen = !statusDropdownOpen"
+                                class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200 relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                                </svg>
+                                Ubah Status
+                            </button>
+                        @endif
 
                         <!-- Status Change Dropdown -->
                         <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
@@ -529,8 +535,8 @@
                         </div>
 
                         <!-- Edit Button (only if allowed) -->
-                        @if (
-                            !$salesOrder->deliveryOrders()->exists() &&
+                        @if (auth()->user()->hasPermission('sales_order.edit') &&
+                                !$salesOrder->deliveryOrders()->exists() &&
                                 !$salesOrder->invoices()->exists() &&
                                 !$salesOrder->workOrders()->exists())
                             <a href="{{ route('penjualan.sales-order.edit', $salesOrder->id) }}"

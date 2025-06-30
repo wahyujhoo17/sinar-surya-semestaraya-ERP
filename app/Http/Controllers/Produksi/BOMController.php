@@ -13,6 +13,14 @@ use Illuminate\Support\Facades\Log;
 
 class BOMController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:bill_of_material.view')->only(['index', 'show', 'getById', 'data', 'getComponentUnit']);
+        $this->middleware('permission:bill_of_material.create')->only(['create', 'store', 'addComponent']);
+        $this->middleware('permission:bill_of_material.edit')->only(['edit', 'update', 'updateComponent']);
+        $this->middleware('permission:bill_of_material.delete')->only(['destroy', 'deleteComponent']);
+    }
+
     /**
      * Display a listing of the resource.
      */

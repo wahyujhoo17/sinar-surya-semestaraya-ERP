@@ -13,6 +13,13 @@ use Illuminate\Support\Facades\Auth;
 
 class QualityControlController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:quality_control.view')->only(['index', 'show', 'report']);
+        $this->middleware('permission:quality_control.process')->only(['approve', 'reject']);
+        $this->middleware('permission:quality_control.export')->only(['exportPdf']);
+    }
+
     /**
      * Menampilkan daftar quality control
      */

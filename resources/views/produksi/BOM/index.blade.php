@@ -87,24 +87,49 @@
             </div>
 
             {{-- Quick Action Card --}}
-            <a href="#" @click.prevent="window.dispatchEvent(new CustomEvent('open-bom-modal', {detail: {}}))"
-                class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
-                <div class="p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
-                            <p class="mt-1 text-lg font-semibold text-white">Buat BOM Baru</p>
+            @if (auth()->user()->hasPermission('bill_of_material.create'))
+                <a href="#" @click.prevent="window.dispatchEvent(new CustomEvent('open-bom-modal', {detail: {}}))"
+                    class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-white">Buat BOM Baru</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </div>
                         </div>
-                        <div
-                            class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                    </div>
+                </a>
+            @else
+                <div class="bg-gray-100 dark:bg-gray-700 overflow-hidden shadow-lg rounded-xl opacity-50">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p
+                                    class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-gray-600 dark:text-gray-300">Buat BOM Baru</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Tidak ada akses</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728">
+                                    </path>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </a>
+            @endif
         </div>
 
         {{-- Enhanced Search and Filter --}}

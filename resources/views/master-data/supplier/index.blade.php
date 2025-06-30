@@ -86,28 +86,52 @@
             </div>
 
             {{-- Quick Action Card --}}
-            <a href="#"
-                @click.prevent="window.dispatchEvent(new CustomEvent('open-supplier-modal', {detail: {}}))"
-                class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
-                <div class="p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
-                            <p class="mt-1 text-lg font-semibold text-white">Tambah Supplier Baru</p>
+            @if (auth()->user()->hasPermission('supplier.create'))
+                <a href="#"
+                    @click.prevent="window.dispatchEvent(new CustomEvent('open-supplier-modal', {detail: {}}))"
+                    class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-white">Tambah Supplier Baru</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </div>
                         </div>
-                        <div
-                            class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                    </div>
+                </a>
+            @else
+                <div class="bg-gray-300 dark:bg-gray-600 overflow-hidden shadow-lg rounded-xl opacity-60">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p
+                                    class="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                    Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-gray-700 dark:text-gray-300">Tidak Ada Akses
+                                </p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-400/30 text-gray-600 dark:text-gray-400">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v7.5a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </a>
+            @endif
         </div>
 
-        <div x-data="supplierTableManager()">
+        <div x-data="supplierTableManager()">>
             <div
                 class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
                 <div class="p-6 sm:p-7 text-gray-900 dark:text-gray-100">
@@ -121,29 +145,33 @@
                             </div>
                             <div
                                 class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                                <div x-show="selectedSuppliers.length > 0"
-                                    x-transition:enter="transition ease-out duration-300"
-                                    x-transition:enter-start="opacity-0 transform scale-95"
-                                    x-transition:enter-end="opacity-100 transform scale-100"
-                                    x-transition:leave="transition ease-in duration-200"
-                                    x-transition:leave-start="opacity-100 transform scale-100"
-                                    x-transition:leave-end="opacity-0 transform scale-95"
-                                    class="flex items-center mr-3 bg-white dark:bg-gray-700/60 border border-gray-300 dark:border-gray-600 rounded-lg p-1 shadow-sm">
-                                    <span class="px-2 text-sm text-gray-600 dark:text-gray-300"><span
-                                            x-text="selectedSuppliers.length"></span> item dipilih</span>
-                                    <button @click="confirmDeleteSelected"
-                                        class="ml-1 px-2 py-1 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
-                                        <span class="flex items-center">
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                </path>
-                                            </svg>
-                                            Hapus
-                                        </span>
-                                    </button>
-                                </div>
+                                {{-- Bulk Actions --}}
+                                @if (auth()->user()->hasPermission('supplier.delete'))
+                                    <div x-show="selectedSuppliers.length > 0"
+                                        x-transition:enter="transition ease-out duration-300"
+                                        x-transition:enter-start="opacity-0 transform scale-95"
+                                        x-transition:enter-end="opacity-100 transform scale-100"
+                                        x-transition:leave="transition ease-in duration-200"
+                                        x-transition:leave-start="opacity-100 transform scale-100"
+                                        x-transition:leave-end="opacity-0 transform scale-95"
+                                        class="flex items-center mr-3 bg-white dark:bg-gray-700/60 border border-gray-300 dark:border-gray-600 rounded-lg p-1 shadow-sm">
+                                        <span class="px-2 text-sm text-gray-600 dark:text-gray-300"><span
+                                                x-text="selectedSuppliers.length"></span> item dipilih</span>
+                                        <button @click="confirmDeleteSelected"
+                                            class="ml-1 px-2 py-1 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+                                            <span class="flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                    </path>
+                                                </svg>
+                                                Hapus
+                                            </span>
+                                        </button>
+                                    </div>
+                                @endif
 
                                 {{-- Column Selector Dropdown --}}
                                 <div x-data="{ open: false }" class="relative">
@@ -259,29 +287,55 @@
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Export and Import buttons with permission checks -->
                                 <div class="flex items-center space-x-2">
                                     {{-- Export --}}
-                                    <a href="{{ route('master.supplier.export') }}"
-                                        class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" />
-                                        </svg>
-                                        Export
-                                    </a>
+                                    @if (auth()->user()->hasPermission('supplier.export'))
+                                        <a href="{{ route('master.supplier.export') }}"
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                            <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            Export
+                                        </a>
+                                    @else
+                                        <div
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-600 opacity-60 cursor-not-allowed">
+                                            <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v7.5a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                            Export
+                                        </div>
+                                    @endif
                                     {{-- Import --}}
-                                    <button type="button" @click="$dispatch('open-modal', 'import-supplier-modal')"
-                                        class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                        </svg>
-                                        Import
-                                    </button>
+                                    @if (auth()->user()->hasPermission('supplier.import'))
+                                        <button type="button"
+                                            @click="$dispatch('open-modal', 'import-supplier-modal')"
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                            <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            Import
+                                        </button>
+                                    @else
+                                        <div
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-600 opacity-60 cursor-not-allowed">
+                                            <svg class="h-4 w-4 mr-1.5" xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v7.5a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                            Import
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -292,7 +346,8 @@
                                 class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex flex-wrap items-center justify-between">
                                 <div class="text-sm text-gray-500 dark:text-gray-400">
                                     Menampilkan <span x-text="firstItem"></span> sampai <span
-                                        x-text="lastItem"></span> dari <span x-text="totalResults"></span> hasil
+                                        x-text="lastItem"></span>
+                                    dari <span x-text="totalResults"></span> hasil
                                 </div>
                                 {{-- Tambahkan di atas tabel, setelah info jumlah hasil --}}
                                 <div class="flex items-center space-x-2">
@@ -310,11 +365,14 @@
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-700/50">
                                     <tr>
-                                        <th
-                                            class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 w-8">
-                                            <input type="checkbox" :checked="allSelected" @click="toggleSelectAll()"
-                                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
-                                        </th>
+                                        @if (auth()->user()->hasPermission('supplier.delete'))
+                                            <th
+                                                class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 w-8">
+                                                <input type="checkbox" :checked="allSelected"
+                                                    @click="toggleSelectAll()"
+                                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
+                                            </th>
+                                        @endif
                                         {{-- Kode --}}
                                         <template x-if="visibleColumns.kode">
                                             <th

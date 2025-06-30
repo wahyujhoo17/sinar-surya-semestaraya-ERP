@@ -21,6 +21,16 @@ use App\Services\NotificationService;
 
 class PerencanaanProduksiController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:perencanaan_produksi.view')->only(['index', 'show', 'getSoItems', 'getSalesOrderData']);
+        $this->middleware('permission:perencanaan_produksi.create')->only(['create', 'store', 'createWorkOrder']);
+        $this->middleware('permission:perencanaan_produksi.edit')->only(['edit', 'update', 'submit']);
+        $this->middleware('permission:perencanaan_produksi.delete')->only(['destroy']);
+        $this->middleware('permission:perencanaan_produksi.approve')->only(['approve', 'reject']);
+        $this->middleware('permission:perencanaan_produksi.view')->only(['changeStatus']);
+    }
+
     /**
      * Menampilkan daftar perencanaan produksi
      */

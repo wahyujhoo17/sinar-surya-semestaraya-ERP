@@ -153,23 +153,34 @@
                     </p>
                 </div>
                 <div class="mt-4 md:mt-0 flex flex-wrap gap-3">
-                    <button type="button" id="autoCreateBtn"
-                        class="inline-flex items-center px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:scale-105 {{ isset($pendingSalesOrders) && count($pendingSalesOrders) == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                        {{ isset($pendingSalesOrders) && count($pendingSalesOrders) == 0 ? 'disabled' : '' }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                        </svg>
-                        Otomatis dari Sales Order
-                        @if (isset($pendingSalesOrders) && count($pendingSalesOrders) > 0)
-                            <span
-                                class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
-                                {{ count($pendingSalesOrders) }}
-                            </span>
-                        @endif
-                    </button>
-
+                    @if (auth()->user()->hasPermission('permintaan_barang.create'))
+                        <button type="button" id="autoCreateBtn"
+                            class="inline-flex items-center px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-300 transform hover:scale-105 {{ isset($pendingSalesOrders) && count($pendingSalesOrders) == 0 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            {{ isset($pendingSalesOrders) && count($pendingSalesOrders) == 0 ? 'disabled' : '' }}>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                            </svg>
+                            Otomatis dari Sales Order
+                            @if (isset($pendingSalesOrders) && count($pendingSalesOrders) > 0)
+                                <span
+                                    class="ml-2 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                    {{ count($pendingSalesOrders) }}
+                                </span>
+                            @endif
+                        </button>
+                    @else
+                        <button disabled
+                            class="inline-flex items-center px-4 py-2.5 border border-transparent rounded-md shadow-sm text-sm font-medium text-gray-500 bg-gray-300 cursor-not-allowed">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Tidak Ada Akses
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>

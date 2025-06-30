@@ -39,7 +39,7 @@
                         Kembali
                     </a>
 
-                    @if ($returPenjualan->status === 'draft')
+                    @if (auth()->user()->hasPermission('retur_penjualan.edit') && $returPenjualan->status === 'draft')
                         <a href="{{ route('penjualan.retur.edit', $returPenjualan) }}"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,17 +50,19 @@
                             Edit
                         </a>
 
-                        <button type="button" onclick="confirmSubmitApproval()"
-                            class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            Ajukan Persetujuan
-                        </button>
+                        @if (auth()->user()->hasPermission('retur_penjualan.edit') && $returPenjualan->status === 'draft')
+                            <button type="button" onclick="confirmSubmitApproval()"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Ajukan Persetujuan
+                            </button>
+                        @endif
                     @endif
 
-                    @if ($returPenjualan->status === 'menunggu_persetujuan')
+                    @if (auth()->user()->hasPermission('retur_penjualan.approve') && $returPenjualan->status === 'menunggu_persetujuan')
                         <button type="button" onclick="showApprovalModal()"
                             class="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -683,55 +685,67 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
                         </div>
 
                         <div class="space-y-3">
+
                             @if ($returPenjualan->status === 'draft')
-                                <a href="{{ route('penjualan.retur.edit', $returPenjualan) }}"
-                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                                        </path>
-                                    </svg>
-                                    Edit Retur
-                                </a>
+                                @if (auth()->user()->hasPermission('retur_penjualan.edit'))
+                                    <a href="{{ route('penjualan.retur.edit', $returPenjualan) }}"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
+                                        </svg>
+                                        Edit Retur
+                                    </a>
 
-                                <button type="button" onclick="confirmSubmitApproval()"
-                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    Ajukan Persetujuan
-                                </button>
+                                    <button type="button" onclick="confirmSubmitApproval()"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Ajukan Persetujuan
+                                    </button>
+                                @endif
 
-                                <button type="button" onclick="showDeleteModal()"
-                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                        </path>
-                                    </svg>
-                                    Hapus Retur
-                                </button>
+                                @if (auth()->user()->hasPermission('retur_penjualan.delete'))
+                                    <button type="button" onclick="showDeleteModal()"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                        Hapus Retur
+                                    </button>
+                                @endif
                             @endif
 
                             @if ($returPenjualan->status === 'menunggu_persetujuan')
-                                <button type="button" onclick="showApprovalModal()"
-                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    Setujui Retur
-                                </button>
+                                @if (auth()->user()->hasPermission('retur_penjualan.approve'))
+                                    <button type="button" onclick="showApprovalModal()"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        Setujui Retur
+                                    </button>
 
-                                <button type="button" onclick="showRejectionModal()"
-                                    class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                    Tolak Retur
-                                </button>
+                                    <button type="button" onclick="showRejectionModal()"
+                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        Tolak Retur
+                                    </button>
+                                @endif
                             @endif
 
                             @if ($returPenjualan->status === 'disetujui')
@@ -745,20 +759,23 @@ if ($returPenjualan->tipe_retur !== 'tukar_barang') {
                                     Quality Control
                                 </a>
 
-                                <form action="{{ route('penjualan.retur.proses', $returPenjualan) }}" method="POST"
-                                    onsubmit="return confirm('Yakin ingin memproses retur ini? Status tidak dapat diubah setelah diproses.')">
-                                    @csrf
-                                    <button type="submit"
-                                        class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M13 10V3L4 14h7v7l9-11h-7z">
-                                            </path>
-                                        </svg>
-                                        Proses Retur
-                                    </button>
-                                </form>
+                                @if (auth()->user()->hasPermission('retur_penjualan.process'))
+                                    <form action="{{ route('penjualan.retur.proses', $returPenjualan) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Yakin ingin memproses retur ini? Status tidak dapat diubah setelah diproses.')">
+                                        @csrf
+                                        <button type="submit"
+                                            class="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-lg transition-colors duration-200">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 10V3L4 14h7v7l9-11h-7z">
+                                                </path>
+                                            </svg>
+                                            Proses Retur
+                                        </button>
+                                    </form>
+                                @endif
                             @endif
 
                             @if ($returPenjualan->status === 'diproses')

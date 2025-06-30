@@ -41,15 +41,32 @@
                     </p>
                 </div>
                 <div class="mt-4 md:mt-0">
-                    <a href="{{ route('inventaris.penyesuaian-stok.create') }}"
-                        class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-lg font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-all duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Buat Penyesuaian Baru
-                    </a>
+                    @if (auth()->user()->hasPermission('penyesuaian_stok.create'))
+                        <a href="{{ route('inventaris.penyesuaian-stok.create') }}"
+                            class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-lg font-semibold text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 shadow-sm transition-all duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Buat Penyesuaian Baru
+                        </a>
+                    @else
+                        <button disabled
+                            class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-lg font-semibold text-gray-500 cursor-not-allowed shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m0 0v-2m0 2l4-4m-4 4l-4-4" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-1 h-4 w-4" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Tidak Ada Akses
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -257,8 +274,8 @@
                         <div class="mt-3 sm:mt-0 w-full sm:w-auto flex flex-col sm:flex-row gap-2">
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
@@ -457,53 +474,97 @@
                                                 class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-gray-200 dark:border-gray-700">
                                                 <div class="flex justify-end space-x-2">
                                                     {{-- View button --}}
-                                                    <a :href="'{{ url('inventaris/penyesuaian-stok') }}/' + item.id"
-                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300 opacity-90 hover:opacity-100"
-                                                        title="Lihat Detail">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                            fill="currentColor" class="w-4 h-4">
-                                                            <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                                                            <path fill-rule="evenodd"
-                                                                d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                                                                clip-rule="evenodd" />
-                                                        </svg>
-                                                    </a>
+                                                    @if (auth()->user()->hasPermission('penyesuaian_stok.view'))
+                                                        <a :href="'{{ url('inventaris/penyesuaian-stok') }}/' + item.id"
+                                                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-blue-100 text-gray-700 dark:text-white dark:bg-blue-900/20 dark:hover:bg-blue-900/30 transition-colors border border-dashed border-blue-300 opacity-90 hover:opacity-100"
+                                                            title="Lihat Detail">
+                                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                                viewBox="0 0 20 20" fill="currentColor"
+                                                                class="w-4 h-4">
+                                                                <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
+                                                                <path fill-rule="evenodd"
+                                                                    d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
+                                                                    clip-rule="evenodd" />
+                                                            </svg>
+                                                        </a>
+                                                    @else
+                                                        <span
+                                                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 border border-dashed border-gray-300 cursor-not-allowed"
+                                                            title="Tidak Ada Akses">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4"
+                                                                fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                            </svg>
+                                                        </span>
+                                                    @endif
 
                                                     {{-- Edit and Delete buttons (only visible for draft status) --}}
                                                     <template x-if="item.status === 'draft'">
                                                         <div class="flex space-x-2">
-                                                            <a :href="'{{ url('inventaris/penyesuaian-stok') }}/' + item.id +
-                                                                '/edit'"
-                                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300 opacity-90 hover:opacity-100"
-                                                                title="Edit">
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    viewBox="0 0 20 20" fill="currentColor"
-                                                                    class="w-4 h-4">
-                                                                    <path
-                                                                        d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
-                                                                    <path
-                                                                        d="M3.5 5.75c0 .69.56 1.25 1.25 1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
-                                                                </svg>
-                                                            </a>
-
-                                                            <form
-                                                                :action="'{{ url('inventaris/penyesuaian-stok') }}/' + item.id"
-                                                                method="POST" class="inline"
-                                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus penyesuaian stok ini?');">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit"
-                                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300 opacity-90 hover:opacity-100"
-                                                                    title="Hapus">
+                                                            @if (auth()->user()->hasPermission('penyesuaian_stok.edit'))
+                                                                <a :href="'{{ url('inventaris/penyesuaian-stok') }}/' + item.id +
+                                                                    '/edit'"
+                                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300 opacity-90 hover:opacity-100"
+                                                                    title="Edit">
                                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                                         viewBox="0 0 20 20" fill="currentColor"
                                                                         class="w-4 h-4">
-                                                                        <path fill-rule="evenodd"
-                                                                            d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
-                                                                            clip-rule="evenodd" />
+                                                                        <path
+                                                                            d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
+                                                                        <path
+                                                                            d="M3.5 5.75c0 .69.56 1.25 1.25 1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
                                                                     </svg>
-                                                                </button>
-                                                            </form>
+                                                                </a>
+                                                            @else
+                                                                <span
+                                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 border border-dashed border-gray-300 cursor-not-allowed"
+                                                                    title="Tidak Ada Akses">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="w-4 h-4" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                </span>
+                                                            @endif
+
+                                                            @if (auth()->user()->hasPermission('penyesuaian_stok.delete'))
+                                                                <form
+                                                                    :action="'{{ url('inventaris/penyesuaian-stok') }}/' + item
+                                                                        .id"
+                                                                    method="POST" class="inline"
+                                                                    onsubmit="return confirm('Apakah Anda yakin ingin menghapus penyesuaian stok ini?');">
+                                                                    @csrf
+                                                                    @method('DELETE')
+                                                                    <button type="submit"
+                                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300 opacity-90 hover:opacity-100"
+                                                                        title="Hapus">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                                            viewBox="0 0 20 20" fill="currentColor"
+                                                                            class="w-4 h-4">
+                                                                            <path fill-rule="evenodd"
+                                                                                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                                                                                clip-rule="evenodd" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </form>
+                                                            @else
+                                                                <span
+                                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 border border-dashed border-gray-300 cursor-not-allowed"
+                                                                    title="Tidak Ada Akses">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="w-4 h-4" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                    </svg>
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </template>
                                                 </div>

@@ -13,7 +13,7 @@
         <div class="mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Perencanaan Produksi</h1>
             <p class="mt-2 text-gray-600 dark:text-gray-400">
-                Kelola daftar rencana produksi untuk PT Sinar Surya Semestaraya
+                Kelola daftar rencana produksi untuk PT Sinar Surya Semesta.
             </p>
         </div>
 
@@ -97,24 +97,46 @@
             </div>
 
             {{-- Quick Action Card --}}
-            <a href="{{ route('produksi.perencanaan-produksi.create') }}"
-                class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
-                <div class="p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
-                            <p class="mt-1 text-lg font-semibold text-white">Buat Perencanaan Baru</p>
+            @if (auth()->user()->hasPermission('perencanaan_produksi.create'))
+                <a href="{{ route('produksi.perencanaan-produksi.create') }}"
+                    class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-white">Buat Perencanaan Baru</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </div>
                         </div>
-                        <div
-                            class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                    </div>
+                </a>
+            @else
+                <div
+                    class="bg-gradient-to-r from-gray-400 to-gray-500 dark:from-gray-600 dark:to-gray-700 overflow-hidden shadow-lg rounded-xl cursor-not-allowed opacity-60">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-white">Tidak Ada Akses</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 text-white">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </a>
+            @endif
         </div>
 
         {{-- Enhanced Search and Filter --}}
@@ -248,15 +270,13 @@
                                                 <path fill-rule="evenodd"
                                                     d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
                                                     clip-rule="evenodd" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                                                        clip-rule="evenodd" />
                                         @endif
                                     @else
                                         <svg class="h-4 w-4 text-gray-200 group-hover:text-gray-400"
@@ -286,15 +306,13 @@
                                                 <path fill-rule="evenodd"
                                                     d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
                                                     clip-rule="evenodd" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                                                        clip-rule="evenodd" />
                                         @endif
                                     @else
                                         <svg class="h-4 w-4 text-gray-200 group-hover:text-gray-400"
@@ -324,15 +342,13 @@
                                                 <path fill-rule="evenodd"
                                                     d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
                                                     clip-rule="evenodd" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                                                        clip-rule="evenodd" />
                                         @endif
                                     @else
                                         <svg class="h-4 w-4 text-gray-200 group-hover:text-gray-400"
@@ -362,15 +378,13 @@
                                                 <path fill-rule="evenodd"
                                                     d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
                                                     clip-rule="evenodd" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                                                        clip-rule="evenodd" />
                                         @endif
                                     @else
                                         <svg class="h-4 w-4 text-gray-200 group-hover:text-gray-400"
@@ -400,15 +414,13 @@
                                                 <path fill-rule="evenodd"
                                                     d="M5.293 7.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L6.707 7.707a1 1 0 01-1.414 0z"
                                                     clip-rule="evenodd" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
+                                            @else
+                                                <svg class="h-4 w-4 text-gray-400 group-hover:text-gray-500"
+                                                    xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                                    fill="currentColor">
+                                                    <path fill-rule="evenodd"
+                                                        d="M14.707 12.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l2.293-2.293a1 1 0 011.414 0z"
+                                                        clip-rule="evenodd" />
                                         @endif
                                     @else
                                         <svg class="h-4 w-4 text-gray-200 group-hover:text-gray-400"
@@ -508,133 +520,199 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <a href="{{ route('produksi.perencanaan-produksi.show', $item->id) }}"
-                                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 text-gray-700 dark:text-white dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors border border-dashed border-indigo-300"
-                                            title="Lihat">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                            </svg>
-                                        </a>
-
-                                        @if ($item->status == 'draft')
-                                            <a href="{{ route('produksi.perencanaan-produksi.edit', $item->id) }}"
-                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
-                                                title="Edit">
+                                        @if (auth()->user()->hasPermission('perencanaan_produksi.view'))
+                                            <a href="{{ route('produksi.perencanaan-produksi.show', $item->id) }}"
+                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 text-gray-700 dark:text-white dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors border border-dashed border-indigo-300"
+                                                title="Lihat">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
                                                         stroke-width="2"
-                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
+                                        @else
+                                            <span
+                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed border border-dashed border-gray-300"
+                                                title="Tidak Ada Akses">
+                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                </svg>
+                                            </span>
+                                        @endif
 
-                                            <form
-                                                action="{{ route('produksi.perencanaan-produksi.submit', $item->id) }}"
-                                                method="POST" class="inline-block" x-data="{ processing: false }"
-                                                @submit.prevent="
-                                                    if (processing) return;
-                                                    processing = true;
-                                                    $dispatch('open-modal', {
-                                                        id: 'confirmationModal',
-                                                        title: 'Konfirmasi',
-                                                        message: 'Yakin ingin mengajukan perencanaan produksi ini?',
-                                                        onConfirm: () => { 
-                                                            setTimeout(() => { $el.submit(); }, 300);
-                                                        },
-                                                        onCancel: () => { processing = false; }
-                                                    })
-                                                ">
-                                                @csrf
-                                                @method('PUT')
-                                                <button type="submit"
-                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 text-gray-700 dark:text-white dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors border border-dashed border-indigo-300"
-                                                    title="Ajukan">
+                                        @if ($item->status == 'draft')
+                                            @if (auth()->user()->hasPermission('perencanaan_produksi.edit'))
+                                                <a href="{{ route('produksi.perencanaan-produksi.edit', $item->id) }}"
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
+                                                    title="Edit">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                            stroke-width="2"
+                                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
-                                                </button>
-                                            </form>
+                                                </a>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed border border-dashed border-gray-300"
+                                                    title="Tidak Ada Akses">
+                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                    </svg>
+                                                </span>
+                                            @endif
+
+                                            @if (auth()->user()->hasPermission('perencanaan_produksi.approve'))
+                                                <form
+                                                    action="{{ route('produksi.perencanaan-produksi.submit', $item->id) }}"
+                                                    method="POST" class="inline-block" x-data="{ processing: false }"
+                                                    @submit.prevent="
+                                                        if (processing) return;
+                                                        processing = true;
+                                                        $dispatch('open-modal', {
+                                                            id: 'confirmationModal',
+                                                            title: 'Konfirmasi',
+                                                            message: 'Yakin ingin mengajukan perencanaan produksi ini?',
+                                                            onConfirm: () => { 
+                                                                setTimeout(() => { $el.submit(); }, 300);
+                                                            },
+                                                            onCancel: () => { processing = false; }
+                                                        })
+                                                    ">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" :disabled="processing"
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-green-100 text-gray-700 dark:text-white dark:bg-green-900/20 dark:hover:bg-green-900/30 transition-colors border border-dashed border-green-300"
+                                                        title="Ajukan">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed border border-dashed border-gray-300"
+                                                    title="Tidak Ada Akses">
+                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                    </svg>
+                                                </span>
+                                            @endif
                                         @endif
 
                                         @if ($item->status == 'menunggu_persetujuan')
-                                            <form
-                                                action="{{ route('produksi.perencanaan-produksi.approve', $item->id) }}"
-                                                method="POST" class="inline-block" x-data="{ processing: false }"
-                                                @submit.prevent="
-                                                    if (processing) return;
-                                                    processing = true;
-                                                    $dispatch('open-modal', {
-                                                        id: 'confirmationModal',
-                                                        title: 'Konfirmasi',
-                                                        message: 'Yakin ingin menyetujui perencanaan produksi ini?',
-                                                        onConfirm: () => { 
-                                                            setTimeout(() => { $el.submit(); }, 300);
-                                                        },
-                                                        onCancel: () => { processing = false; }
-                                                    })
-                                                ">
-                                                @csrf
-                                                @method('PUT')
-                                                <button type="submit"
-                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-green-100 text-gray-700 dark:text-white dark:bg-green-900/20 dark:hover:bg-green-900/30 transition-colors border border-dashed border-green-300"
-                                                    title="Setujui">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M5 13l4 4L19 7" />
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            @if (auth()->user()->hasPermission('perencanaan_produksi.approve'))
+                                                <form
+                                                    action="{{ route('produksi.perencanaan-produksi.approve', $item->id) }}"
+                                                    method="POST" class="inline-block" x-data="{ processing: false }"
+                                                    @submit.prevent="
+                                                        if (processing) return;
+                                                        processing = true;
+                                                        $dispatch('open-modal', {
+                                                            id: 'confirmationModal',
+                                                            title: 'Konfirmasi',
+                                                            message: 'Yakin ingin menyetujui perencanaan produksi ini?',
+                                                            onConfirm: () => { 
+                                                                setTimeout(() => { $el.submit(); }, 300);
+                                                            },
+                                                            onCancel: () => { processing = false; }
+                                                        })
+                                                    ">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit" :disabled="processing"
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-green-100 text-gray-700 dark:text-white dark:bg-green-900/20 dark:hover:bg-green-900/30 transition-colors border border-dashed border-green-300"
+                                                        title="Setujui">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
 
-                                            <form
-                                                action="{{ route('produksi.perencanaan-produksi.reject', $item->id) }}"
-                                                method="POST" class="inline-block" x-data="{ processing: false }"
-                                                @submit.prevent="
-                                                    if (processing) return;
-                                                    processing = true;
-                                                    $dispatch('open-modal', {
-                                                        id: 'confirmationModal',
-                                                        title: 'Konfirmasi',
-                                                        message: 'Yakin ingin menolak perencanaan produksi ini?',
-                                                        onConfirm: () => { 
-                                                            setTimeout(() => { $el.submit(); }, 300);
-                                                        },
-                                                        onCancel: () => { processing = false; }
-                                                    })
-                                                ">
-                                                @csrf
-                                                @method('PUT')
-                                                <button type="submit"
-                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
-                                                    title="Tolak">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <form
+                                                    action="{{ route('produksi.perencanaan-produksi.reject', $item->id) }}"
+                                                    method="POST" class="inline-block" x-data="{ processing: false }"
+                                                    @submit.prevent="
+                                                        if (processing) return;
+                                                        processing = true;
+                                                        $dispatch('open-modal', {
+                                                            id: 'confirmationModal',
+                                                            title: 'Konfirmasi',
+                                                            message: 'Yakin ingin menolak perencanaan produksi ini?',
+                                                            onConfirm: () => { 
+                                                                setTimeout(() => { $el.submit(); }, 300);
+                                                            },
+                                                            onCancel: () => { processing = false; }
+                                                        })
+                                                    ">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <button type="submit"
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
+                                                        title="Tolak">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed border border-dashed border-gray-300"
+                                                    title="Tidak Ada Akses">
+                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                                     </svg>
-                                                </button>
-                                            </form>
+                                                </span>
+                                            @endif
                                         @endif
 
                                         @if ($item->status == 'disetujui' && !$item->workOrders->count())
-                                            <a href="{{ route('produksi.perencanaan-produksi.create-work-order', $item->id) }}"
-                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 text-gray-700 dark:text-white dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors border border-dashed border-indigo-300"
-                                                title="Buat Work Order">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            </a>
+                                            @if (auth()->user()->hasPermission('perencanaan_produksi.approve'))
+                                                <a href="{{ route('produksi.perencanaan-produksi.create-work-order', $item->id) }}"
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-indigo-100 text-gray-700 dark:text-white dark:bg-indigo-900/20 dark:hover:bg-indigo-900/30 transition-colors border border-dashed border-indigo-300"
+                                                    title="Buat Work Order">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                </a>
+                                            @else
+                                                <span
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-700 dark:text-gray-500 cursor-not-allowed border border-dashed border-gray-300"
+                                                    title="Tidak Ada Akses">
+                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                    </svg>
+                                                </span>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
@@ -652,15 +730,27 @@
                                         </svg>
                                         <span class="text-gray-500 dark:text-gray-400 text-base">Tidak ada data
                                             perencanaan produksi</span>
-                                        <a href="{{ route('produksi.perencanaan-produksi.create') }}"
-                                            class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                            <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M12 4v16m8-8H4" />
-                                            </svg>
-                                            Buat Perencanaan Baru
-                                        </a>
+                                        @if (auth()->user()->hasPermission('perencanaan_produksi.create'))
+                                            <a href="{{ route('produksi.perencanaan-produksi.create') }}"
+                                                class="mt-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                                <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                                Buat Perencanaan Baru
+                                            </a>
+                                        @else
+                                            <div
+                                                class="mt-3 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-400 bg-gray-100 cursor-not-allowed">
+                                                <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                                </svg>
+                                                Tidak Ada Akses
+                                            </div>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

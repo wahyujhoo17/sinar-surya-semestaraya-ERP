@@ -185,7 +185,7 @@
                     Cetak
                 </a>
 
-                @if ($deliveryOrder->status == 'draft')
+                @if (auth()->user()->hasPermission('delivery_order.edit') && $deliveryOrder->status == 'draft')
                     <a href="{{ route('penjualan.delivery-order.edit', $deliveryOrder->id) }}"
                         class="inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-md text-sm font-medium text-white hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
@@ -198,95 +198,103 @@
                 @endif
 
                 <!-- Status Actions Dropdown -->
-                <div class="relative" x-cloak>
-                    <button @click="statusDropdownOpen = !statusDropdownOpen" type="button"
-                        class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
-                        <span>Tindakan</span>
-                        <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                            fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
+                @if (auth()->user()->hasPermission('delivery_order.process') || auth()->user()->hasPermission('delivery_order.cancel'))
+                    <div class="relative" x-cloak>
+                        <button @click="statusDropdownOpen = !statusDropdownOpen" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
+                            <span>Tindakan</span>
+                            <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
 
-                    <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
-                        class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-10"
-                        role="menu" aria-orientation="vertical"
-                        style="display: none; z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+                        <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
+                            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-10"
+                            role="menu" aria-orientation="vertical"
+                            style="display: none; z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
 
-                        <div class="py-1" role="none">
-                            <span class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">
-                                Status Saat Ini: <span
-                                    class="font-semibold capitalize">{{ statusLabel($deliveryOrder->status) }}</span>
-                            </span>
-                        </div>
+                            <div class="py-1" role="none">
+                                <span class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">
+                                    Status Saat Ini: <span
+                                        class="font-semibold capitalize">{{ statusLabel($deliveryOrder->status) }}</span>
+                                </span>
+                            </div>
 
-                        <div class="py-1" role="none">
-                            @if ($deliveryOrder->status == 'draft')
-                                <!-- Process Delivery -->
-                                <form id="processDOForm"
-                                    action="{{ route('penjualan.delivery-order.proses', $deliveryOrder->id) }}"
-                                    method="POST">
-                                    @csrf
-                                </form>
-                                <button @click="openConfirmationModal('process')"
-                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    role="menuitem">
-                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                    <span class="text-blue-600 dark:text-blue-400">Proses Pengiriman</span>
-                                </button>
+                            <div class="py-1" role="none">
+                                @if ($deliveryOrder->status == 'draft')
+                                    <!-- Process Delivery -->
+                                    <form id="processDOForm"
+                                        action="{{ route('penjualan.delivery-order.proses', $deliveryOrder->id) }}"
+                                        method="POST">
+                                        @csrf
+                                    </form>
+                                    <button @click="openConfirmationModal('process')"
+                                        class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        role="menuitem">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                        <span class="text-blue-600 dark:text-blue-400">Proses Pengiriman</span>
+                                    </button>
 
-                                <!-- Delete -->
-                                <form id="deleteDOForm"
-                                    action="{{ route('penjualan.delivery-order.destroy', $deliveryOrder->id) }}"
-                                    method="POST">
-                                    @csrf
-                                    @method('DELETE')
-                                </form>
-                                <button @click="openConfirmationModal('delete')"
-                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    role="menuitem">
-                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                    <span class="text-red-600 dark:text-red-400">Hapus</span>
-                                </button>
-                            @endif
+                                    <!-- Delete -->
+                                    <form id="deleteDOForm"
+                                        action="{{ route('penjualan.delivery-order.destroy', $deliveryOrder->id) }}"
+                                        method="POST">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    <button @click="openConfirmationModal('delete')"
+                                        class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                        role="menuitem">
+                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                        <span class="text-red-600 dark:text-red-400">Hapus</span>
+                                    </button>
+                                @endif
 
-                            @if ($deliveryOrder->status == 'dikirim')
-                                <!-- Mark as Complete -->
-                                <button @click="showModal = true; statusDropdownOpen = false"
-                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    role="menuitem">
-                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                    <span class="text-emerald-600 dark:text-emerald-400">Tandai Selesai</span>
-                                </button>
+                                @if ($deliveryOrder->status == 'dikirim')
+                                    <!-- Mark as Complete -->
+                                    @if (auth()->user()->hasPermission('delivery_order.complete'))
+                                        <button @click="showModal = true; statusDropdownOpen = false"
+                                            class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            role="menuitem">
+                                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                            <span class="text-emerald-600 dark:text-emerald-400">Tandai Selesai</span>
+                                        </button>
+                                    @endif
 
-                                <!-- Cancel Delivery Order -->
-                                <form id="cancelDOForm"
-                                    action="{{ route('penjualan.delivery-order.batalkan', $deliveryOrder->id) }}"
-                                    method="POST">
-                                    @csrf
-                                </form>
-                                <button @click="actionType = 'cancel'; confirmModal = true; statusDropdownOpen = false"
-                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                    role="menuitem">
-                                    <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
-                                    <span class="text-yellow-600 dark:text-yellow-400">Batalkan Pengiriman</span>
-                                </button>
-                            @endif
+                                    <!-- Cancel Delivery Order -->
+                                    @if (auth()->user()->hasPermission('delivery_order.cancel'))
+                                        <form id="cancelDOForm"
+                                            action="{{ route('penjualan.delivery-order.batalkan', $deliveryOrder->id) }}"
+                                            method="POST">
+                                            @csrf
+                                        </form>
+                                        <button
+                                            @click="actionType = 'cancel'; confirmModal = true; statusDropdownOpen = false"
+                                            class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            role="menuitem">
+                                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                                            <span class="text-yellow-600 dark:text-yellow-400">Batalkan
+                                                Pengiriman</span>
+                                        </button>
+                                    @endif
+                                @endif
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <!-- Left Column - Delivery Order Info -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column - Order Details -->
             <div class="lg:col-span-2 space-y-6">
-                <!-- General Information -->
+                <!-- Order Information -->
                 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informasi Delivery Order</h2>
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Informasi Pengiriman</h2>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Basic Info -->
@@ -340,7 +348,8 @@
                         <!-- Delivery Info -->
                         <div class="space-y-4">
                             <div>
-                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat Pengiriman</h3>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat Pengiriman
+                                </h3>
                                 <p class="mt-1 text-sm text-gray-900 dark:text-white">
                                     {{ $deliveryOrder->alamat_pengiriman }}
                                 </p>
@@ -435,7 +444,8 @@
                     <div class="space-y-4">
                         <!-- Status Timeline -->
                         <div>
-                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Progress Pengiriman
+                            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Progress
+                                Pengiriman
                             </h3>
                             <div class="relative">
                                 <div class="status-timeline flex justify-between items-center mb-6">
@@ -557,7 +567,8 @@
                                             {{ $deliveryOrder->nama_penerima }}</p>
                                     </div>
                                     <div>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Tanggal Diterima:</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Tanggal
+                                            Diterima:</span>
                                         <p class="text-sm text-gray-900 dark:text-white">
                                             {{ date('d F Y', strtotime($deliveryOrder->tanggal_diterima)) }}
                                         </p>
@@ -591,7 +602,8 @@
 
                         @if ($deliveryOrder->updatedBy)
                             <div>
-                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Terakhir Diupdate</h3>
+                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Terakhir Diupdate
+                                </h3>
                                 <p class="mt-1 text-sm text-gray-900 dark:text-white">
                                     {{ $deliveryOrder->updatedBy->name ?? 'User tidak ditemukan' }}
                                 </p>
@@ -607,7 +619,8 @@
                 @if ($deliveryOrder->salesOrder)
                     <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Order Terkait</h2>
+                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Order Terkait
+                            </h2>
                         </div>
                         <div class="p-6">
                             <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 flex items-center">
@@ -688,7 +701,8 @@
                                 </h3>
                                 <div class="mt-2">
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
-                                        Silakan isi informasi penerimaan barang untuk menyelesaikan proses pengiriman.
+                                        Silakan isi informasi penerimaan barang untuk menyelesaikan proses
+                                        pengiriman.
                                         Pastikan data yang dimasukkan sudah benar dan sesuai.
                                     </p>
 
@@ -824,7 +838,8 @@
                                 <div class="mt-2">
                                     <p class="text-sm text-gray-500 dark:text-gray-400">
                                         <span x-show="actionType == 'process'">
-                                            Apakah Anda yakin ingin memproses pengiriman ini? Stok akan dikurangi sesuai
+                                            Apakah Anda yakin ingin memproses pengiriman ini? Stok akan dikurangi
+                                            sesuai
                                             dengan kuantitas barang dalam delivery order.
                                         </span>
                                         <span x-show="actionType == 'delete'">
@@ -832,7 +847,8 @@
                                             dapat dibatalkan.
                                         </span>
                                         <span x-show="actionType == 'cancel'">
-                                            Apakah Anda yakin ingin membatalkan delivery order ini? Status akan diubah
+                                            Apakah Anda yakin ingin membatalkan delivery order ini? Status akan
+                                            diubah
                                             menjadi dibatalkan.
                                         </span>
                                     </p>
@@ -855,13 +871,15 @@
                                                 </h3>
                                                 <div class="mt-2 text-sm text-amber-700 dark:text-amber-300">
                                                     <span x-show="actionType == 'delete'">
-                                                        Menghapus delivery order akan menghilangkan semua data terkait.
+                                                        Menghapus delivery order akan menghilangkan semua data
+                                                        terkait.
                                                         Jika DO sudah memiliki referensi ke dokumen lain, sebaiknya
                                                         gunakan opsi batalkan sebagai gantinya.
                                                     </span>
                                                     <span x-show="actionType == 'cancel'">
                                                         Membatalkan delivery order akan mengubah status menjadi
-                                                        'dibatalkan' dan jika sudah diproses, stok akan dikembalikan.
+                                                        'dibatalkan' dan jika sudah diproses, stok akan
+                                                        dikembalikan.
                                                     </span>
                                                 </div>
                                             </div>

@@ -93,28 +93,52 @@
                     <td
                         class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium border-b border-gray-200 dark:border-gray-700">
                         <div class="flex items-center justify-end space-x-3">
-                            <a href="{{ route('inventaris.permintaan-barang.show', $pb->id) }}"
-                                class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 flex items-center p-1.5 rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-300"
-                                data-tooltip="Lihat Detail">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </a>
-                            @if ($pb->status == 'diproses')
-                                <a href="{{ route('inventaris.permintaan-barang.create-do', $pb->id) }}"
-                                    class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 flex items-center p-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
-                                    data-tooltip="Buat Delivery Order">
+                            @if (auth()->user()->hasPermission('permintaan_barang.view'))
+                                <a href="{{ route('inventaris.permintaan-barang.show', $pb->id) }}"
+                                    class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 flex items-center p-1.5 rounded-full hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-300"
+                                    data-tooltip="Lihat Detail">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
-                                        <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                 </a>
+                            @else
+                                <span
+                                    class="flex items-center p-1.5 rounded-full bg-gray-100 text-gray-400 cursor-not-allowed"
+                                    data-tooltip="Tidak Ada Akses">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </span>
+                            @endif
+                            @if ($pb->status == 'diproses')
+                                @if (auth()->user()->hasPermission('permintaan_barang.create'))
+                                    <a href="{{ route('inventaris.permintaan-barang.create-do', $pb->id) }}"
+                                        class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 flex items-center p-1.5 rounded-full hover:bg-green-50 dark:hover:bg-green-900/20 transition-all duration-300"
+                                        data-tooltip="Buat Delivery Order">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                        </svg>
+                                    </a>
+                                @else
+                                    <span
+                                        class="flex items-center p-1.5 rounded-full bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        data-tooltip="Tidak Ada Akses">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 15v2m-3 4h6m-6 0h6m3-4a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </span>
+                                @endif
                             @endif
                         </div>
                     </td>

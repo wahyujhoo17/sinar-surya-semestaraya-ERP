@@ -18,6 +18,17 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProdukController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:produk.view')->only(['index', 'show', 'getById', 'apiGetById']);
+        $this->middleware('permission:produk.create')->only(['create', 'store', 'ajaxStore', 'generateCode']);
+        $this->middleware('permission:produk.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:produk.delete')->only(['destroy', 'bulkDestroy']);
+        $this->middleware('permission:produk.export')->only(['export', 'downloadTemplate']);
+        $this->middleware('permission:produk.import')->only(['import']);
+    }
+
     /**
      * Display a listing of the resource.
      */

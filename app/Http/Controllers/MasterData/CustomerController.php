@@ -14,6 +14,17 @@ use App\Imports\CustomerImport;
 
 class CustomerController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:pelanggan.view')->only(['index', 'show', 'getById']);
+        $this->middleware('permission:pelanggan.create')->only(['create', 'store', 'ajaxStore']);
+        $this->middleware('permission:pelanggan.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:pelanggan.delete')->only(['destroy', 'bulkDestroy']);
+        $this->middleware('permission:pelanggan.export')->only(['export']);
+        $this->middleware('permission:pelanggan.import')->only(['import']);
+    }
+
     /**
      * Check if current user can access all customers (admin/manager_penjualan)
      */

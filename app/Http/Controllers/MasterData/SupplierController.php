@@ -12,6 +12,17 @@ use App\Models\SupplierProduk; // Import SupplierProduk
 
 class SupplierController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:supplier.view')->only(['index', 'show', 'getById']);
+        $this->middleware('permission:supplier.create')->only(['create', 'store', 'ajaxStore']);
+        $this->middleware('permission:supplier.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:supplier.delete')->only(['destroy', 'bulkDestroy']);
+        $this->middleware('permission:supplier.export')->only(['export']);
+        $this->middleware('permission:supplier.import')->only(['import']);
+    }
+
     /**
      * Display a listing of the resource.
      */

@@ -142,7 +142,7 @@
                     Cetak
                 </a>
 
-                @if ($purchaseOrder->status == 'draft')
+                @if (auth()->user()->hasPermission('purchase_order.edit') && $purchaseOrder->status == 'draft')
                     <a href="{{ route('pembelian.purchasing-order.edit', $purchaseOrder->id) }}"
                         class="inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-md text-sm font-medium text-white hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
@@ -155,154 +155,158 @@
                 @endif
 
                 <!-- Professional Status dropdown -->
-                <div class="relative" x-cloak>
-                    <button @click="statusDropdownOpen = !statusDropdownOpen" type="button"
-                        class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
-                        <span
-                            :class="{
-                                'text-gray-700 dark:text-gray-200': currentStatus == 'draft',
-                                'text-blue-600 dark:text-blue-400': currentStatus == 'diproses',
-                                'text-amber-600 dark:text-amber-400': currentStatus == 'dikirim',
-                                'text-emerald-600 dark:text-emerald-400': currentStatus == 'selesai',
-                                'text-red-600 dark:text-red-400': currentStatus == 'dibatalkan'
-                            }">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 inline" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
-                            </svg>
-                        </span>
-                        Ubah Status
-                        <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                            fill="currentColor" aria-hidden="true">
-                            <path fill-rule="evenodd"
-                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </button>
-
-                    <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
-                        class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-50"
-                        role="menu" aria-orientation="vertical" aria-labelledby="options-menu"
-                        style="z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
-
-                        <div class="py-1" role="none">
-                            <span class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">
-                                Status Saat Ini: <span
-                                    class="font-semibold capitalize">{{ $purchaseOrder->status }}</span>
-                            </span>
-                        </div>
-
-                        <div class="py-1" role="none">
-                            <!-- Draft status -->
-                            <button @click="newStatus = 'draft'; confirmModal = true; statusDropdownOpen = false"
-                                class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'draft' ? 'bg-gray-100 dark:bg-gray-700 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'draft' }" role="menuitem"
-                                :disabled="currentStatus == 'draft'">
-                                <span class="w-2 h-2 rounded-full bg-gray-500"></span>
-                                <span>Draft</span>
-                                @if ($purchaseOrder->status == 'draft')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-gray-500"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                @endif
-                            </button>
-
-                            <!-- Diproses status -->
-                            <button @click="newStatus = 'diproses'; confirmModal = true; statusDropdownOpen = false"
-                                class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'diproses' ? 'bg-blue-50 dark:bg-blue-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'diproses' }"
-                                role="menuitem" :disabled="currentStatus == 'diproses'">
-                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                <span class="text-blue-600 dark:text-blue-400">Diproses</span>
-                                @if ($purchaseOrder->status == 'diproses')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-blue-500"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                @endif
-                            </button>
-
-                            <!-- Dikirim status -->
-                            <button @click="newStatus = 'dikirim'; confirmModal = true; statusDropdownOpen = false"
-                                class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'dikirim' ? 'bg-amber-50 dark:bg-amber-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dikirim' }"
-                                role="menuitem" :disabled="currentStatus == 'dikirim'">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <span class="text-amber-600 dark:text-amber-400">Dikirim</span>
-                                @if ($purchaseOrder->status == 'dikirim')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-amber-500"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                @endif
-                            </button>
-
-                            <!-- Selesai status - with conditional disabling -->
-                            <button @click="newStatus = 'selesai'; confirmModal = true; statusDropdownOpen = false"
-                                class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'selesai' ? 'bg-emerald-50 dark:bg-emerald-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
+                @if (auth()->user()->hasPermission('purchase_order.change_status'))
+                    <div class="relative" x-cloak>
+                        <button @click="statusDropdownOpen = !statusDropdownOpen" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
+                            <span
                                 :class="{
-                                    'opacity-50 cursor-not-allowed': currentStatus == 'selesai' ||
-                                        ('{{ $purchaseOrder->status_pembayaran }}'
-                                            !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
-                                            !== 'diterima')
-                                }"
-                                role="menuitem"
-                                :disabled="currentStatus == 'selesai' || ('{{ $purchaseOrder->status_pembayaran }}'
-                                    !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
-                                    !== 'diterima')">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                <span class="text-emerald-600 dark:text-emerald-400">Selesai</span>
-                                <span class="ml-auto flex-shrink-0">
-                                    @if ($purchaseOrder->status_pembayaran !== 'lunas' || $purchaseOrder->status_penerimaan !== 'diterima')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500"
-                                            viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    @elseif($purchaseOrder->status == 'selesai')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500"
+                                    'text-gray-700 dark:text-gray-200': currentStatus == 'draft',
+                                    'text-blue-600 dark:text-blue-400': currentStatus == 'diproses',
+                                    'text-amber-600 dark:text-amber-400': currentStatus == 'dikirim',
+                                    'text-emerald-600 dark:text-emerald-400': currentStatus == 'selesai',
+                                    'text-red-600 dark:text-red-400': currentStatus == 'dibatalkan'
+                                }">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 inline" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11" />
+                                </svg>
+                            </span>
+                            Ubah Status
+                            <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                                fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <div x-show="statusDropdownOpen" @click.away="statusDropdownOpen = false"
+                            class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-50"
+                            role="menu" aria-orientation="vertical" aria-labelledby="options-menu"
+                            style="z-index: 50; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">
+
+                            <div class="py-1" role="none">
+                                <span class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase">
+                                    Status Saat Ini: <span
+                                        class="font-semibold capitalize">{{ $purchaseOrder->status }}</span>
+                                </span>
+                            </div>
+
+                            <div class="py-1" role="none">
+                                <!-- Draft status -->
+                                <button @click="newStatus = 'draft'; confirmModal = true; statusDropdownOpen = false"
+                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
+                                {{ $purchaseOrder->status == 'draft' ? 'bg-gray-100 dark:bg-gray-700 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
+                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'draft' }"
+                                    role="menuitem" :disabled="currentStatus == 'draft'">
+                                    <span class="w-2 h-2 rounded-full bg-gray-500"></span>
+                                    <span>Draft</span>
+                                    @if ($purchaseOrder->status == 'draft')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-gray-500"
                                             viewBox="0 0 20 20" fill="currentColor">
                                             <path fill-rule="evenodd"
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
                                         </svg>
                                     @endif
-                                </span>
-                            </button>
+                                </button>
 
-                            <!-- Dibatalkan status -->
-                            <button @click="newStatus = 'dibatalkan'; confirmModal = true; statusDropdownOpen = false"
-                                class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
+                                <!-- Diproses status -->
+                                <button
+                                    @click="newStatus = 'diproses'; confirmModal = true; statusDropdownOpen = false"
+                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
+                                {{ $purchaseOrder->status == 'diproses' ? 'bg-blue-50 dark:bg-blue-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
+                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'diproses' }"
+                                    role="menuitem" :disabled="currentStatus == 'diproses'">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    <span class="text-blue-600 dark:text-blue-400">Diproses</span>
+                                    @if ($purchaseOrder->status == 'diproses')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-blue-500"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    @endif
+                                </button>
+
+                                <!-- Dikirim status -->
+                                <button @click="newStatus = 'dikirim'; confirmModal = true; statusDropdownOpen = false"
+                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
+                                {{ $purchaseOrder->status == 'dikirim' ? 'bg-amber-50 dark:bg-amber-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
+                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dikirim' }"
+                                    role="menuitem" :disabled="currentStatus == 'dikirim'">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <span class="text-amber-600 dark:text-amber-400">Dikirim</span>
+                                    @if ($purchaseOrder->status == 'dikirim')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-amber-500"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    @endif
+                                </button>
+
+                                <!-- Selesai status - with conditional disabling -->
+                                <button @click="newStatus = 'selesai'; confirmModal = true; statusDropdownOpen = false"
+                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
+                                {{ $purchaseOrder->status == 'selesai' ? 'bg-emerald-50 dark:bg-emerald-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
+                                    :class="{
+                                        'opacity-50 cursor-not-allowed': currentStatus == 'selesai' ||
+                                            ('{{ $purchaseOrder->status_pembayaran }}'
+                                                !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
+                                                !== 'diterima')
+                                    }"
+                                    role="menuitem"
+                                    :disabled="currentStatus == 'selesai' || ('{{ $purchaseOrder->status_pembayaran }}'
+                                        !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
+                                        !== 'diterima')">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span class="text-emerald-600 dark:text-emerald-400">Selesai</span>
+                                    <span class="ml-auto flex-shrink-0">
+                                        @if ($purchaseOrder->status_pembayaran !== 'lunas' || $purchaseOrder->status_penerimaan !== 'diterima')
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        @elseif($purchaseOrder->status == 'selesai')
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-emerald-500"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        @endif
+                                    </span>
+                                </button>
+
+                                <!-- Dibatalkan status -->
+                                <button
+                                    @click="newStatus = 'dibatalkan'; confirmModal = true; statusDropdownOpen = false"
+                                    class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
                                 {{ $purchaseOrder->status == 'dibatalkan' ? 'bg-red-50 dark:bg-red-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dibatalkan' }"
-                                role="menuitem" :disabled="currentStatus == 'dibatalkan'">
-                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                <span class="text-red-600 dark:text-red-400">Dibatalkan</span>
-                                @if ($purchaseOrder->status == 'dibatalkan')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-red-500"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                @endif
-                            </button>
+                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dibatalkan' }"
+                                    role="menuitem" :disabled="currentStatus == 'dibatalkan'">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    <span class="text-red-600 dark:text-red-400">Dibatalkan</span>
+                                    @if ($purchaseOrder->status == 'dibatalkan')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-red-500"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                    @endif
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
 
                 <!-- Confirmation Modal -->
                 <div x-show="confirmModal" class="fixed inset-0 overflow-y-auto z-50" x-cloak>

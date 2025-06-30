@@ -174,20 +174,23 @@
                     </td>
                     <td class="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div class="flex items-center justify-end gap-2">
-                            <a href="{{ route('penjualan.retur.show', $retur) }}"
-                                class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors duration-150"
-                                title="Lihat Detail">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
-                                    </path>
-                                </svg>
-                                <span class="hidden sm:inline">Detail</span>
-                            </a>
+                            @if (auth()->user()->hasPermission('retur_penjualan.view'))
+                                <a href="{{ route('penjualan.retur.show', $retur) }}"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors duration-150"
+                                    title="Lihat Detail">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                        </path>
+                                    </svg>
+                                    <span class="hidden sm:inline">Detail</span>
+                                </a>
+                            @endif
 
-                            @if ($retur->status === 'draft')
+                            @if (auth()->user()->hasPermission('retur_penjualan.edit') && $retur->status === 'draft')
                                 <a href="{{ route('penjualan.retur.edit', $retur) }}"
                                     class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-300 rounded-md hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-600 dark:hover:bg-blue-900/50 transition-colors duration-150"
                                     title="Edit Retur">
@@ -212,7 +215,7 @@
                                 <span class="hidden sm:inline">PDF</span>
                             </a>
 
-                            @if ($retur->status === 'draft')
+                            @if (auth()->user()->hasPermission('retur_penjualan.delete') && $retur->status === 'draft')
                                 <form action="{{ route('penjualan.retur.destroy', $retur) }}" method="POST"
                                     class="inline-block"
                                     onsubmit="return confirm('Yakin ingin menghapus retur ini?')">

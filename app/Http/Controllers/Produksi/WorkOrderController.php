@@ -20,12 +20,22 @@ use App\Models\RiwayatStok;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Services\NotificationService;
 
 class WorkOrderController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:work_order.view')->only(['index', 'show']);
+        $this->middleware('permission:work_order.create')->only(['create', 'store', 'createPengambilanBahanBaku', 'storePengambilanBahanBaku', 'createQualityControl', 'storeQualityControl']);
+        $this->middleware('permission:work_order.edit')->only(['edit', 'update']);
+        $this->middleware('permission:work_order.delete')->only(['destroy']);
+        $this->middleware('permission:work_order.change_status')->only(['changeStatus']);
+    }
+
     /**
      * Menampilkan daftar work order
      */
@@ -425,6 +435,10 @@ class WorkOrderController extends Controller
 
             // Jika status menjadi selesai, tambahkan stok barang jadi
             if ($newStatus === 'selesai') {
+                // Determine the quantity to add to stock
+                // If QC exists, use passed quantity; otherwise use full work order quantity
+                $quantityToAdd = $workOrder->qualityControl ? $workOrder->qualityControl->jumlah_lolos : $workOrder->quantity;
+
                 // Tambahkan stok barang jadi ke gudang hasil
                 $stokProduk = StokProduk::updateOrCreate(
                     [
@@ -432,7 +446,7 @@ class WorkOrderController extends Controller
                         'gudang_id' => $workOrder->gudang_hasil_id,
                     ],
                     [
-                        'jumlah' => DB::raw('jumlah + ' . $workOrder->qualityControl->jumlah_lolos),
+                        'jumlah' => DB::raw('jumlah + ' . $quantityToAdd),
                     ]
                 );
 
@@ -445,12 +459,12 @@ class WorkOrderController extends Controller
                     'produk_id' => $workOrder->produk_id,
                     'gudang_id' => $workOrder->gudang_hasil_id,
                     'user_id' => Auth::id(),
-                    'jumlah_sebelum' => $stokProduk->jumlah - $workOrder->qualityControl->jumlah_lolos,
-                    'jumlah_perubahan' => $workOrder->qualityControl->jumlah_lolos,
+                    'jumlah_sebelum' => $stokProduk->jumlah - $quantityToAdd,
+                    'jumlah_perubahan' => $quantityToAdd,
                     'jumlah_setelah' => $stokProduk->jumlah,
                     'jenis' => 'masuk',
                     'referensi_tipe' => 'work_order',
-                    'referensi_id' => $workOrder->nomor,
+                    'referensi_id' => $workOrder->id,
                     'keterangan' => 'Hasil produksi dari Work Order ' . $workOrder->nomor
                 ]);
 
@@ -487,6 +501,14 @@ class WorkOrderController extends Controller
 
             $material->stok_tersedia = $stokTersedia;
             $material->kekurangan = max(0, $material->quantity - $stokTersedia);
+
+            // Debug log untuk memverifikasi data stok
+            Log::info("Material {$material->produk->nama} - Stok Tersedia: {$stokTersedia}", [
+                'produk_id' => $material->produk_id,
+                'gudang_id' => $workOrder->gudang_produksi_id,
+                'quantity_needed' => $material->quantity,
+                'stok_tersedia' => $stokTersedia
+            ]);
         }
 
         return view('produksi.work-order.create-pengambilan', compact('workOrder'));
@@ -501,7 +523,7 @@ class WorkOrderController extends Controller
         $workOrder = WorkOrder::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date_format:d/m/Y',
             'catatan' => 'nullable|string',
             'detail' => 'required|array',
             'detail.*.produk_id' => 'required|exists:produk,id',
@@ -517,13 +539,16 @@ class WorkOrderController extends Controller
         DB::beginTransaction();
 
         try {
+            // Convert date format from d/m/Y to Y-m-d
+            $tanggal = \DateTime::createFromFormat('d/m/Y', $request->tanggal)->format('Y-m-d');
+
             // Generate nomor pengambilan bahan baku
             $nomor = $this->generateNomorPengambilanBahanBaku();
 
             // Buat pengambilan bahan baku
             $pengambilan = PengambilanBahanBaku::create([
                 'nomor' => $nomor,
-                'tanggal' => $request->tanggal,
+                'tanggal' => $tanggal,
                 'work_order_id' => $workOrder->id,
                 'gudang_id' => $workOrder->gudang_produksi_id,
                 'status' => 'completed',
@@ -571,7 +596,7 @@ class WorkOrderController extends Controller
                             'jumlah_setelah' => $jumlahSetelah,
                             'jenis' => 'keluar',
                             'referensi_tipe' => 'pengambilan_bahan_baku',
-                            'referensi_id' => $pengambilan->nomor,
+                            'referensi_id' => $pengambilan->id,
                             'keterangan' => 'Pengambilan bahan baku untuk Work Order ' . $workOrder->nomor
                         ]);
                     }

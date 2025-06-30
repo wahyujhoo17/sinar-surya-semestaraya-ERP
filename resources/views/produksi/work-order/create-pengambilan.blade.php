@@ -168,12 +168,13 @@
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">
                                                 {{ number_format($material->quantity, 2, ',', '.') }}
                                                 {{ $material->satuan->nama ?? '-' }}
-                                                <input type="hidden" name="detail[{{ $index }}][jumlah_diminta]" 
+                                                <input type="hidden"
+                                                    name="detail[{{ $index }}][jumlah_diminta]"
                                                     value="{{ number_format($material->quantity, 2, '.', '') }}">
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right 
-                                                {{ $material->stok_tersedia < $material->jumlah ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400' }}">
+                                                {{ $material->stok_tersedia < $material->quantity ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400' }}">
                                                 {{ number_format($material->stok_tersedia, 2, ',', '.') }}
                                                 {{ $material->satuan->nama ?? '-' }}
                                             </td>
@@ -214,7 +215,14 @@
         </div>
     </div>
 
+    @push('styles')
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+        <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/material_blue.css">
+    @endpush
+
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+        <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 // Datepicker

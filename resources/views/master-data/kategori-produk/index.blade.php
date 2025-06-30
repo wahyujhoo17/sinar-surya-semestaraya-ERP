@@ -85,25 +85,49 @@
                 </div>
             </div>
             {{-- Quick Action Card --}}
-            <a href="#"
-                @click.prevent="window.dispatchEvent(new CustomEvent('open-kategori-produk-modal', {detail: {}}))"
-                class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
-                <div class="p-5">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
-                            <p class="mt-1 text-lg font-semibold text-white">Tambah Kategori Baru</p>
+            @if (auth()->user()->hasPermission('kategori_produk.create'))
+                <a href="#"
+                    @click.prevent="window.dispatchEvent(new CustomEvent('open-kategori-produk-modal', {detail: {}}))"
+                    class="bg-gradient-to-r from-primary-500 to-primary-600 dark:from-primary-700 dark:to-primary-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl transition-all duration-300 hover:-translate-y-1 group">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-white/80 uppercase tracking-wider">Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-white">Tambah Kategori Baru</p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </div>
                         </div>
-                        <div
-                            class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-white/20 group-hover:bg-white/30 text-white transition-all duration-200">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
+                    </div>
+                </a>
+            @else
+                <div class="bg-gray-300 dark:bg-gray-600 overflow-hidden shadow-lg rounded-xl opacity-60">
+                    <div class="p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p
+                                    class="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                                    Aksi Cepat</p>
+                                <p class="mt-1 text-lg font-semibold text-gray-700 dark:text-gray-300">Tidak Ada Akses
+                                </p>
+                            </div>
+                            <div
+                                class="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gray-400/30 text-gray-600 dark:text-gray-400">
+                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-7.5a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v7.5a2.25 2.25 0 002.25 2.25z" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </a>
+            @endif
         </div>
 
         {{-- Main Content Area --}}
@@ -124,23 +148,26 @@
                             <div
                                 class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
                                 {{-- Bulk Actions --}}
-                                <div x-show="selectedKategoris.length > 0" x-transition
-                                    class="flex items-center mr-3 bg-white dark:bg-gray-700/60 border border-gray-300 dark:border-gray-600 rounded-lg p-1 shadow-sm">
-                                    <span class="px-2 text-sm text-gray-600 dark:text-gray-300"><span
-                                            x-text="selectedKategoris.length"></span> item dipilih</span>
-                                    <button @click="confirmDeleteSelected"
-                                        class="ml-1 px-2 py-1 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
-                                        <span class="flex items-center">
-                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                                </path>
-                                            </svg>
-                                            Hapus
-                                        </span>
-                                    </button>
-                                </div>
+                                @if (auth()->user()->hasPermission('kategori_produk.delete'))
+                                    <div x-show="selectedKategoris.length > 0" x-transition
+                                        class="flex items-center mr-3 bg-white dark:bg-gray-700/60 border border-gray-300 dark:border-gray-600 rounded-lg p-1 shadow-sm">
+                                        <span class="px-2 text-sm text-gray-600 dark:text-gray-300"><span
+                                                x-text="selectedKategoris.length"></span> item dipilih</span>
+                                        <button @click="confirmDeleteSelected"
+                                            class="ml-1 px-2 py-1 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1">
+                                            <span class="flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                    </path>
+                                                </svg>
+                                                Hapus
+                                            </span>
+                                        </button>
+                                    </div>
+                                @endif
                                 {{-- Quick Search --}}
                                 <div class="relative w-full sm:w-auto grow sm:grow-0">
                                     <div class="relative w-full">

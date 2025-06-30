@@ -38,55 +38,65 @@
 
 
                     @if ($returPembelian->status === 'draft')
-                        <a href="{{ route('pembelian.retur-pembelian.edit', $returPembelian->id) }}"
-                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            <span>Edit</span>
-                        </a>
+                        @if (auth()->user()->hasPermission('retur_pembelian.edit'))
+                            <a href="{{ route('pembelian.retur-pembelian.edit', $returPembelian->id) }}"
+                                class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                <span>Edit</span>
+                            </a>
+                        @endif
 
-                        <button type="button" onclick="openModal('prosesReturModal')"
-                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 5l7 7-7 7" />
-                            </svg>
-                            <span>Proses</span>
-                        </button>
+                        @if (auth()->user()->hasPermission('retur_pembelian.edit'))
+                            <button type="button" onclick="openModal('prosesReturModal')"
+                                class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                                <span>Proses</span>
+                            </button>
+                        @endif
 
-                        <button type="button" onclick="openModal('hapusReturModal')"
-                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Hapus</span>
-                        </button>
+                        @if (auth()->user()->hasPermission('retur_pembelian.delete'))
+                            <button type="button" onclick="openModal('hapusReturModal')"
+                                class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-amber-50 dark:bg-amber-900/30 text-sm font-semibold text-amber-700 dark:text-amber-400 shadow-sm ring-1 ring-inset ring-amber-600/20 dark:ring-amber-400/20 hover:bg-amber-100 dark:hover:bg-amber-900/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                                <span>Hapus</span>
+                            </button>
+                        @endif
                     @elseif($returPembelian->status === 'diproses')
-                        <button type="button" onclick="openModal('selesaikanReturModal')"
-                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/30 text-sm font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm ring-1 ring-inset ring-emerald-600/20 dark:ring-emerald-400/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>Selesaikan</span>
-                        </button>
+                        @if (auth()->user()->hasPermission('retur_pembelian.edit'))
+                            <button type="button" onclick="openModal('selesaikanReturModal')"
+                                class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/30 text-sm font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm ring-1 ring-inset ring-emerald-600/20 dark:ring-emerald-400/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>Selesaikan</span>
+                            </button>
+                        @endif
                     @elseif($returPembelian->status === 'menunggu_barang_pengganti')
-                        <a href="{{ route('pembelian.retur-pembelian.terima-barang-pengganti', $returPembelian->id) }}"
-                            class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-purple-50 dark:bg-purple-900/30 text-sm font-semibold text-purple-700 dark:text-purple-400 shadow-sm ring-1 ring-inset ring-purple-600/20 dark:ring-purple-400/20 hover:bg-purple-100 dark:hover:bg-purple-900/40">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M20 7l-8 4m0 0l-8-4m8 4v10m-8-4l8 4 8-4" />
-                            </svg>
-                            <span>Terima Barang Pengganti</span>
-                        </a>
+                        @if (auth()->user()->hasPermission('retur_pembelian.edit'))
+                            <a href="{{ route('pembelian.retur-pembelian.terima-barang-pengganti', $returPembelian->id) }}"
+                                class="group inline-flex items-center gap-2 rounded-lg px-4 py-2.5 bg-purple-50 dark:bg-purple-900/30 text-sm font-semibold text-purple-700 dark:text-purple-400 shadow-sm ring-1 ring-inset ring-purple-600/20 dark:ring-purple-400/20 hover:bg-purple-100 dark:hover:bg-purple-900/40">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8 4m0 0l-8-4m8 4v10m-8-4l8 4 8-4" />
+                                </svg>
+                                <span>Terima Barang Pengganti</span>
+                            </a>
+                        @endif
                     @elseif(
                         $returPembelian->status === 'selesai' &&
                             isset($returPembelian->purchaseOrder) &&

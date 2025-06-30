@@ -21,6 +21,14 @@ use Carbon\Carbon;
 
 class PermintaanBarangController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:permintaan_barang.view')->only(['index', 'show']);
+        $this->middleware('permission:permintaan_barang.create')->only(['create', 'store', 'generateFromSalesOrder', 'autoProsesFromSalesOrder']);
+        $this->middleware('permission:permintaan_barang.edit')->only(['edit', 'update', 'updateStatus']);
+        $this->middleware('permission:permintaan_barang.delete')->only(['destroy']);
+        $this->middleware('permission:permintaan_barang.view')->only(['createDeliveryOrder']);
+    }
     /**
      * Helper untuk mencatat log aktivitas user
      */

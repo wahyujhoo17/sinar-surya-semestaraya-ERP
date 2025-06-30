@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class GudangController extends Controller
 {
+    public function __construct()
+    {
+        // Apply permission middleware to controller methods
+        $this->middleware('permission:gudang.view')->only(['index', 'show']);
+        $this->middleware('permission:gudang.create')->only(['create', 'store', 'ajaxStore']);
+        $this->middleware('permission:gudang.edit')->only(['edit', 'update', 'ajaxUpdate']);
+        $this->middleware('permission:gudang.delete')->only(['destroy', 'bulkDestroy']);
+    }
+
     /**
      * Display a listing of the resource.
      */
