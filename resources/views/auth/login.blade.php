@@ -1,4 +1,7 @@
 <x-guest-layout>
+
+
+
     <div
         class="flex min-h-screen bg-gradient-to-br from-primary-50 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <!-- Left side - Logo and company image -->
@@ -118,8 +121,9 @@
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button type="button" @click="showPassword = !showPassword"
                                         class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
-                                        <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg"
+                                            class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                            stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

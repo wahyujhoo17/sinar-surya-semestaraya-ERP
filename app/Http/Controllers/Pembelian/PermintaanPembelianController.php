@@ -17,9 +17,17 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\NotificationService;
+use App\Traits\HasPDFQRCode;
 
 class PermintaanPembelianController extends Controller
 {
+    use HasPDFQRCode;
+
+    public function __construct()
+    {
+        $this->middleware('permission:purchase_request.view')->only(['printPdf', 'exportPdf']);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -414,9 +422,121 @@ class PermintaanPembelianController extends Controller
     public function exportPdf($id)
     {
         $permintaanPembelian = PurchaseRequest::with(['details.produk', 'user', 'department'])->findOrFail($id);
-        $totalEstimasi = $permintaanPembelian->details->sum(fn($d) => $d->quantity * $d->harga_estimasi);
 
-        $pdf = Pdf::loadView('pembelian.permintaan_pembelian.pdf', compact('permintaanPembelian', 'totalEstimasi'));
+        // Calculate total estimasi
+        $totalEstimasi = 0;
+        foreach ($permintaanPembelian->details as $detail) {
+            $totalEstimasi += $detail->quantity * $detail->harga_estimasi;
+        }
+
+        // Get approval/processing information from LogAktivitas
+        $createdBy = $permintaanPembelian->user;
+        $processedBy = null;
+        $processedAt = null;
+        $isApproved = in_array($permintaanPembelian->status, ['disetujui', 'selesai']);
+
+        if ($isApproved) {
+            // Find the log entry for approving this purchase request
+            $processLog = LogAktivitas::with('user')
+                ->where('modul', 'permintaan_pembelian')
+                ->where('data_id', $permintaanPembelian->id)
+                ->where('aktivitas', 'change_status')
+                ->where('detail', 'like', '%ke disetujui%')
+                ->latest()
+                ->first();
+
+            if ($processLog) {
+                $processedBy = $processLog->user;
+                $processedAt = $processLog->created_at;
+            }
+        }
+
+        // Get QR codes for PDF
+        $qrCodes = $this->getPDFQRCodeData(
+            'permintaan_pembelian',
+            $permintaanPembelian->nomor,
+            $createdBy,
+            $processedBy,
+            [
+                'department' => $permintaanPembelian->department->nama ?? '',
+                'total_items' => $permintaanPembelian->details->count(),
+                'total_estimasi' => $totalEstimasi,
+                'status' => $permintaanPembelian->status
+            ]
+        );
+
+        $pdf = Pdf::loadView('pembelian.permintaan_pembelian.pdf', compact(
+            'permintaanPembelian',
+            'totalEstimasi',
+            'createdBy',
+            'processedBy',
+            'isApproved',
+            'processedAt',
+            'qrCodes'
+        ));
+
         return $pdf->download('Permintaan-Pembelian-' . $permintaanPembelian->nomor . '.pdf');
+    }
+
+    /**
+     * Print PDF for purchase request (stream in browser)
+     */
+    public function printPdf($id)
+    {
+        $permintaanPembelian = PurchaseRequest::with(['details.produk', 'user', 'department'])->findOrFail($id);
+
+        // Calculate total estimasi
+        $totalEstimasi = 0;
+        foreach ($permintaanPembelian->details as $detail) {
+            $totalEstimasi += $detail->quantity * $detail->harga_estimasi;
+        }
+
+        // Get approval/processing information from LogAktivitas
+        $createdBy = $permintaanPembelian->user;
+        $processedBy = null;
+        $processedAt = null;
+        $isApproved = in_array($permintaanPembelian->status, ['disetujui', 'selesai']);
+
+        if ($isApproved) {
+            // Find the log entry for approving this purchase request
+            $processLog = LogAktivitas::with('user')
+                ->where('modul', 'permintaan_pembelian')
+                ->where('data_id', $permintaanPembelian->id)
+                ->where('aktivitas', 'change_status')
+                ->where('detail', 'like', '%ke disetujui%')
+                ->latest()
+                ->first();
+
+            if ($processLog) {
+                $processedBy = $processLog->user;
+                $processedAt = $processLog->created_at;
+            }
+        }
+
+        // Get QR codes for PDF
+        $qrCodes = $this->getPDFQRCodeData(
+            'permintaan_pembelian',
+            $permintaanPembelian->nomor,
+            $createdBy,
+            $processedBy,
+            [
+                'department' => $permintaanPembelian->department->nama ?? '',
+                'total_items' => $permintaanPembelian->details->count(),
+                'total_estimasi' => $totalEstimasi,
+                'status' => $permintaanPembelian->status
+            ]
+        );
+
+        $pdf = Pdf::loadView('pembelian.permintaan_pembelian.pdf', compact(
+            'permintaanPembelian',
+            'totalEstimasi',
+            'createdBy',
+            'processedBy',
+            'isApproved',
+            'processedAt',
+            'qrCodes'
+        ));
+
+        return $pdf->stream('Permintaan-Pembelian-' . $permintaanPembelian->nomor . '.pdf');
     }
 }

@@ -16,9 +16,16 @@ use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\LogAktivitas;
 use App\Services\NotificationService;
+use App\Traits\HasPDFQRCode;
 
 class PurchasingOrderController extends Controller
 {
+    use HasPDFQRCode;
+
+    public function __construct()
+    {
+        $this->middleware('permission:purchase_order.view')->only(['printPdf', 'exportPdf']);
+    }
     /**
      * Helper untuk mencatat log aktivitas user
      */
@@ -733,13 +740,130 @@ class PurchasingOrderController extends Controller
         $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
             ->findOrFail($id);
 
-        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', ['purchaseOrder' => $purchaseOrder]);
+        // Calculate total
+        $total = 0;
+        foreach ($purchaseOrder->details as $detail) {
+            $total += $detail->quantity * $detail->harga;
+        }
+
+        // Get approval/processing information from LogAktivitas
+        $createdBy = $purchaseOrder->user;
+        $processedBy = null;
+        $processedAt = null;
+        $isProcessed = in_array($purchaseOrder->status, ['diproses', 'dikirim', 'selesai']);
+
+        if ($isProcessed) {
+            // Find the log entry for processing this purchase order
+            $processLog = LogAktivitas::with('user')
+                ->where('modul', 'purchase_order')
+                ->where('data_id', $purchaseOrder->id)
+                ->where('aktivitas', 'ubah_status')
+                ->where('detail', 'like', '%ke diproses%')
+                ->latest()
+                ->first();
+
+            if ($processLog) {
+                $processedBy = $processLog->user;
+                $processedAt = $processLog->created_at;
+            }
+        }
+
+        // Get QR codes for PDF
+        $qrCodes = $this->getPDFQRCodeData(
+            'purchase_order',
+            $purchaseOrder->nomor,
+            $createdBy,
+            $processedBy,
+            [
+                'supplier' => $purchaseOrder->supplier->nama ?? '',
+                'total_items' => $purchaseOrder->details->count(),
+                'total_amount' => $total,
+                'status' => $purchaseOrder->status,
+                'status_pembayaran' => $purchaseOrder->status_pembayaran ?? ''
+            ]
+        );
+
+        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', compact(
+            'purchaseOrder',
+            'total',
+            'createdBy',
+            'processedBy',
+            'isProcessed',
+            'processedAt',
+            'qrCodes'
+        ));
 
         // Set paper size and orientation
         $pdf->setPaper('a4', 'portrait');
 
-
         // Download the PDF with a specific filename
         return $pdf->download('PO-' . $purchaseOrder->nomor . '.pdf');
+    }
+
+    /**
+     * Print PDF for purchase order (stream in browser)
+     */
+    public function printPdf($id)
+    {
+        $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
+            ->findOrFail($id);
+
+        // Calculate total
+        $total = 0;
+        foreach ($purchaseOrder->details as $detail) {
+            $total += $detail->quantity * $detail->harga;
+        }
+
+        // Get approval/processing information from LogAktivitas
+        $createdBy = $purchaseOrder->user;
+        $processedBy = null;
+        $processedAt = null;
+        $isProcessed = in_array($purchaseOrder->status, ['diproses', 'dikirim', 'selesai']);
+
+        if ($isProcessed) {
+            // Find the log entry for processing this purchase order
+            $processLog = LogAktivitas::with('user')
+                ->where('modul', 'purchase_order')
+                ->where('data_id', $purchaseOrder->id)
+                ->where('aktivitas', 'ubah_status')
+                ->where('detail', 'like', '%ke diproses%')
+                ->latest()
+                ->first();
+
+            if ($processLog) {
+                $processedBy = $processLog->user;
+                $processedAt = $processLog->created_at;
+            }
+        }
+
+        // Get QR codes for PDF
+        $qrCodes = $this->getPDFQRCodeData(
+            'purchase_order',
+            $purchaseOrder->nomor,
+            $createdBy,
+            $processedBy,
+            [
+                'supplier' => $purchaseOrder->supplier->nama ?? '',
+                'total_items' => $purchaseOrder->details->count(),
+                'total_amount' => $total,
+                'status' => $purchaseOrder->status,
+                'status_pembayaran' => $purchaseOrder->status_pembayaran ?? ''
+            ]
+        );
+
+        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', compact(
+            'purchaseOrder',
+            'total',
+            'createdBy',
+            'processedBy',
+            'isProcessed',
+            'processedAt',
+            'qrCodes'
+        ));
+
+        // Set paper size and orientation
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf->stream('PO-' . $purchaseOrder->nomor . '.pdf');
     }
 }

@@ -3,20 +3,24 @@
 namespace App\Http\Controllers\hr_karyawan;
 
 use App\Http\Controllers\Controller;
+use App\Traits\HasPDFQRCode;
 use App\Models\Karyawan;
 use App\Models\KomponenGaji;
 use App\Models\Penggajian;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderDetail;
 use App\Models\Produk;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PenggajianController extends Controller
 {
+    use HasPDFQRCode;
     /**
      * Display a listing of the resource.
      */
@@ -1078,11 +1082,28 @@ class PenggajianController extends Controller
     }
 
     /**
-     * Helper to get month name in Indonesian
+     * Export PDF slip gaji
      */
-    private function getNamaBulan($bulan)
+    public function exportPdf(string $id)
     {
-        $bulanLabels = [
+        // Increase the execution time limit for PDF generation
+        ini_set('max_execution_time', 300);
+        ini_set('memory_limit', '512M');
+
+        $penggajian = Penggajian::with([
+            'karyawan',
+            'approver'
+        ])->findOrFail($id);
+
+        // Generate QR codes for signatures
+        $qrCodes = $this->generateQRCodes($penggajian);
+
+        // Get approval information
+        $approvedBy = $penggajian->approver;
+        $isApproved = $penggajian->status === 'disetujui' || $penggajian->status === 'dibayar';
+
+        // Get month name
+        $monthNames = [
             1 => 'Januari',
             2 => 'Februari',
             3 => 'Maret',
@@ -1094,9 +1115,87 @@ class PenggajianController extends Controller
             9 => 'September',
             10 => 'Oktober',
             11 => 'November',
-            12 => 'Desember',
+            12 => 'Desember'
+        ];
+        $monthName = $monthNames[$penggajian->bulan];
+
+        $pdf = Pdf::loadView('hr_karyawan.penggajian_dan_tunjangan.pdf', compact(
+            'penggajian',
+            'qrCodes',
+            'approvedBy',
+            'isApproved',
+            'monthName'
+        ));
+
+        $pdf->setPaper('a4');
+
+        $action = request()->query('action', 'download');
+        $filename = 'Slip-Gaji-' . $penggajian->karyawan->nama_lengkap . '-' . $monthName . '-' . $penggajian->tahun . '.pdf';
+
+        if ($action === 'stream') {
+            return $pdf->stream($filename);
+        } else {
+            return $pdf->download($filename);
+        }
+    }
+
+    /**
+     * Print PDF (stream to browser)
+     */
+    public function printPdf(string $id)
+    {
+        request()->merge(['action' => 'stream']);
+        return $this->exportPdf($id);
+    }
+
+    /**
+     * Generate QR codes for slip gaji PDF signatures
+     */
+    private function generateQRCodes($penggajian)
+    {
+        // Get log activities for approval
+        $approvalLog = LogAktivitas::where('modul', 'penggajian')
+            ->where('data_id', $penggajian->id)
+            ->where(function ($query) {
+                $query->where('aktivitas', 'LIKE', '%setuju%')
+                    ->orWhere('aktivitas', 'LIKE', '%approve%')
+                    ->orWhere('aktivitas', 'LIKE', '%bayar%');
+            })
+            ->first();
+
+        $processedBy = null;
+        $processedAt = null;
+
+        if ($approvalLog) {
+            $processedBy = $approvalLog->user;
+            $processedAt = Carbon::parse($approvalLog->created_at);
+        } elseif ($penggajian->approver) {
+            $processedBy = $penggajian->approver;
+            $processedAt = $penggajian->updated_at;
+        }
+
+        // Create a dummy HR user for creator QR code
+        $hrUser = (object) [
+            'name' => 'HR Department',
+            'email' => setting('company_email', 'hr@sinarsurya.com'),
+            'id' => 0,
+            'created_at' => $penggajian->created_at
         ];
 
-        return $bulanLabels[$bulan] ?? $bulan;
+        return $this->generatePDFQRCodes(
+            'slip_gaji',
+            $penggajian->id,
+            'SLIP-' . $penggajian->karyawan->nama_lengkap . '-' . $penggajian->bulan . '-' . $penggajian->tahun,
+            $hrUser, // HR Department as creator
+            $processedBy, // Approved by
+            $processedAt, // Approved at
+            [
+                'karyawan' => $penggajian->karyawan->nama_lengkap,
+                'periode' => $penggajian->bulan . '/' . $penggajian->tahun,
+                'total_gaji' => $penggajian->total_gaji,
+                'status' => $penggajian->status,
+                'metode_pembayaran' => $penggajian->metode_pembayaran
+            ]
+        );
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Pembelian;
 
 use App\Http\Controllers\Controller;
+use App\Traits\HasPDFQRCode;
 use App\Models\ReturPembelian;
 use App\Models\ReturPembelianDetail;
 use App\Models\PurchaseOrder;
@@ -22,6 +23,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReturPembelianController extends Controller
 {
+    use HasPDFQRCode;
     /**
      * Display a listing of the resource.
      */
@@ -942,6 +944,27 @@ class ReturPembelianController extends Controller
         // Fix the typo in the namespace, it should be Models not Modals
         $company = \App\Models\Company::first();
 
+        // Generate QR codes for signatures
+        $qrCodes = $this->generateQRCodes($returPembelian);
+
+        // Get log activity for approval/processing status
+        $approvedBy = null;
+        $approvedAt = null;
+        $isApproved = false;
+
+        // Check for approval in log activities
+        $approvalLog = LogAktivitas::where('modul', 'retur_pembelian')
+            ->where('data_id', $returPembelian->id)
+            ->where('aktivitas', 'LIKE', '%setuju%')
+            ->orWhere('aktivitas', 'LIKE', '%proses%')
+            ->first();
+
+        if ($approvalLog) {
+            $approvedBy = $approvalLog->user;
+            $approvedAt = Carbon::parse($approvalLog->created_at);
+            $isApproved = true;
+        }
+
         // Cache key based on retur pembelian ID and its updated timestamp to ensure fresh data
         $cacheKey = 'retur_pembelian_pdf_' . $id . '_' . $returPembelian->updated_at->timestamp;
         $cacheDuration = 60; // Cache for 1 hour (60 minutes)
@@ -951,7 +974,14 @@ class ReturPembelianController extends Controller
             $pdf = \Illuminate\Support\Facades\Cache::get($cacheKey);
         } else {
             // Generate PDF if not in cache
-            $pdf = Pdf::loadView('pembelian.retur_pembelian.pdf', compact('returPembelian', 'company'));
+            $pdf = Pdf::loadView('pembelian.retur_pembelian.pdf', compact(
+                'returPembelian',
+                'company',
+                'qrCodes',
+                'approvedBy',
+                'approvedAt',
+                'isApproved'
+            ));
             // Set paper size and optimize for the PDF
             $pdf->setPaper('a4');
 
@@ -973,6 +1003,15 @@ class ReturPembelianController extends Controller
     }
 
     /**
+     * Print PDF (stream to browser)
+     */
+    public function printPdf(string $id)
+    {
+        request()->merge(['action' => 'stream']);
+        return $this->exportPdf($id);
+    }
+
+    /**
      * Helper untuk mencatat log aktivitas user
      */
     private function logActivity($aktivitas, $data_id = null, $detail = null)
@@ -985,5 +1024,44 @@ class ReturPembelianController extends Controller
             'ip_address' => request()->ip(),
             'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
         ]);
+    }
+
+    /**
+     * Generate QR codes for retur pembelian PDF signatures
+     */
+    private function generateQRCodes($returPembelian)
+    {
+        // Get log activities for approval
+        $approvalLog = LogAktivitas::where('modul', 'retur_pembelian')
+            ->where('data_id', $returPembelian->id)
+            ->where(function ($query) {
+                $query->where('aktivitas', 'LIKE', '%setuju%')
+                    ->orWhere('aktivitas', 'LIKE', '%proses%')
+                    ->orWhere('aktivitas', 'LIKE', '%approved%');
+            })
+            ->first();
+
+        $processedBy = null;
+        $processedAt = null;
+
+        if ($approvalLog) {
+            $processedBy = $approvalLog->user;
+            $processedAt = Carbon::parse($approvalLog->created_at);
+        }
+
+        return $this->generatePDFQRCodes(
+            'retur_pembelian',
+            $returPembelian->id,
+            $returPembelian->nomor,
+            $returPembelian->user, // Created by
+            $processedBy, // Processed by
+            $processedAt, // Processed at
+            [
+                'supplier' => $returPembelian->supplier->nama,
+                'total_items' => $returPembelian->details->count(),
+                'status' => $returPembelian->status,
+                'purchase_order' => $returPembelian->purchaseOrder->nomor ?? null
+            ]
+        );
     }
 }

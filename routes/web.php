@@ -31,8 +31,8 @@ use App\Http\Controllers\Laporan\LaporanKeuanganController;
 use App\Http\Controllers\Keuangan\KasDanBankController;
 use App\Http\Controllers\Keuangan\HutangUsahaController;
 use App\Http\Controllers\Keuangan\PembayaranHutangController;
-use App\Http\Controllers\Keuangan\PiutangUsahaController; // Import PiutangUsahaController
-use App\Http\Controllers\Keuangan\PembayaranPiutangController; // Import PembayaranPiutangController
+use App\Http\Controllers\Keuangan\PiutangUsahaController;
+use App\Http\Controllers\Keuangan\PembayaranPiutangController;
 use App\Http\Controllers\Keuangan\ManagementPajakController;
 use App\Http\Controllers\Keuangan\RekonsiliasiBankController;
 use App\Http\Controllers\Keuangan\BukuBesarController;
@@ -74,6 +74,38 @@ Route::get('test-financial/income-statement', [LaporanKeuanganController::class,
 Route::get('test-financial/cash-flow', [LaporanKeuanganController::class, 'getCashFlow'])->name('test.financial.cash-flow');
 Route::get('test-financial/validate/operating-expenses', [LaporanKeuanganController::class, 'validateOperatingExpenses'])->name('test.financial.validate.operating-expenses');
 Route::get('test-financial/expense-category/{category}', [LaporanKeuanganController::class, 'getExpenseCategoryDetail'])->name('test.financial.expense-category.detail');
+
+// Test QR Code with Logo
+Route::get('/test-qr-logo', function () {
+    try {
+        $qrService = app(\App\Services\QRCodeService::class);
+
+        // Test 1: Simple QR Code without logo
+        $simpleQR = $qrService->generateSimpleQRCode('Test QR Code Without Logo', 200, false);
+
+        // Test 2: QR Code with logo
+        $qrWithLogo = $qrService->generateSimpleQRCode('Test QR Code With Logo', 200, true);
+
+        $user = \App\Models\User::first();
+        if (!$user) {
+            return "No users found in database";
+        }
+
+        // Test 3: Document QR Code with logo
+        $documentQR = $qrService->generateDocumentQRCode('test_document', 'TEST-001', $user->name, [
+            'status' => 'processed',
+            'test' => true
+        ]);
+
+        // Test 4: Signature QR Code with logo
+        $role = $user->roles->first()->name ?? 'User';
+        $signatureQR = $qrService->generateSignatureQRCode($user->name, $user->email, $role, 'tested');
+
+        return view('test-qr-with-logo', compact('simpleQR', 'qrWithLogo', 'documentQR', 'signatureQR'));
+    } catch (\Exception $e) {
+        return 'Error: ' . $e->getMessage() . '<br><br>Stack trace:<br>' . nl2br($e->getTraceAsString());
+    }
+})->name('test.qr.logo');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -213,12 +245,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('satuan/{satuan}/get', [SatuanController::class, 'getSSatuan'])->name('satuan.get');
         });
         Route::resource('satuan', SatuanController::class);
-    });
-
-    // --- INVENTARIS ----
+    });    // --- INVENTARIS ----
     Route::prefix('inventaris')->name('inventaris.')->group(function () {
         // Stok Barang - with permission middleware
         Route::resource('stok', StokBarangController::class);
+
+        // Additional stock management routes
+        Route::post('stok/initialize', [StokBarangController::class, 'initializeStock'])->name('stok.initialize');
+        Route::get('produk/count', [ProdukController::class, 'getProductCount'])->name('produk.count');
 
         // Transfer Barang - with permission middleware
         Route::middleware('permission:transfer_gudang.process')->group(function () {
@@ -274,9 +308,9 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:sales_order.change_status')->group(function () {
             Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
         });
-        Route::middleware('permission:sales_order.export_pdf')->group(function () {
-            Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
-        });
+
+        Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
+
         Route::middleware('permission:sales_order.view')->group(function () {
             Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
         });
@@ -310,6 +344,12 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:delivery_order.print')->group(function () {
             Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
+            Route::get('delivery-order/{id}/print-template', [DeliveryOrderController::class, 'printTemplate'])->name('delivery-order.print-template');
+            Route::get('delivery-order/{id}/download-template', [DeliveryOrderController::class, 'downloadTemplate'])->name('delivery-order.download-template');
+            Route::get('delivery-order/{id}/test-coordinates', [DeliveryOrderController::class, 'testTemplateCoordinates'])->name('delivery-order.test-coordinates');
+            Route::get('delivery-order/{id}/custom-coordinates', [DeliveryOrderController::class, 'generateWithCustomCoordinates'])->name('delivery-order.custom-coordinates');
+            Route::get('delivery-order/coordinates-helper', [DeliveryOrderController::class, 'getTemplateCoordinates'])->name('delivery-order.coordinates-helper');
+            Route::get('delivery-order/template-info', [DeliveryOrderController::class, 'getTemplateInfo'])->name('delivery-order.template-info');
         });
         Route::resource('delivery-order', DeliveryOrderController::class);
 
@@ -383,11 +423,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('permintaan-pembelian/{permintaan_pembelian}/approve', [PermintaanPembelianController::class, 'approve'])->name('permintaan-pembelian.approve');
         Route::put('permintaan-pembelian/{permintaan_pembelian}/reject', [PermintaanPembelianController::class, 'reject'])->name('permintaan-pembelian.reject');
         Route::get('permintaan-pembelian/{id}/pdf', [PermintaanPembelianController::class, 'exportPdf'])->name('permintaan-pembelian.pdf');
+        Route::get('permintaan-pembelian/{id}/print', [PermintaanPembelianController::class, 'printPdf'])->name('permintaan-pembelian.print');
         Route::resource('permintaan-pembelian', PermintaanPembelianController::class);
 
         // PURCHASING ORDER
         Route::put('purchasing-order/{purchasing_order}/change-status', [PurchasingOrderController::class, 'changeStatus'])->name('purchasing-order.change-status');
         Route::get('purchasing-order/{id}/pdf', [PurchasingOrderController::class, 'exportPdf'])->name('purchasing-order.pdf');
+        Route::get('purchasing-order/{id}/print', [PurchasingOrderController::class, 'printPdf'])->name('purchasing-order.print');
         Route::resource('purchasing-order', PurchasingOrderController::class);
         Route::get('purchase-order/supplier-produk', [PurchasingOrderController::class, 'getSupplierProduk'])->name('pembelian.purchasing-order.supplier-produk');
         Route::get('purchase-order/pr-items', [PurchasingOrderController::class, 'getPurchaseRequestItems'])->name('pembelian.purchasing-order.pr-items');
@@ -402,6 +444,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('retur-pembelian/{id}/terima-barang-pengganti', [ReturPembelianController::class, 'terimaBarangPengganti'])->name('retur-pembelian.proses-terima-barang-pengganti');
         Route::get('retur-pembelian/{id}/create-refund', [ReturPembelianController::class, 'createRefund'])->name('retur-pembelian.create-refund');
         Route::get('retur-pembelian/{id}/pdf', [ReturPembelianController::class, 'exportPdf'])->name('retur-pembelian.pdf');
+        Route::get('retur-pembelian/{id}/print', [ReturPembelianController::class, 'printPdf'])->name('retur-pembelian.print');
         Route::get('retur-pembelian/get-purchase-orders', [ReturPembelianController::class, 'getPurchaseOrders'])->name('retur-pembelian.get-purchase-orders');
         Route::get('retur-pembelian/get-purchase-order-items', [ReturPembelianController::class, 'getPurchaseOrderItems'])->name('retur-pembelian.get-purchase-order-items');
         Route::resource('retur-pembelian', ReturPembelianController::class);
@@ -460,6 +503,12 @@ Route::middleware(['auth'])->group(function () {
             Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
             Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
             Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
+        });
+
+        // AJAX Routes for Material Selection (put outside permission middleware for easier access)
+        Route::middleware('auth')->group(function () {
+            Route::get('work-order/{id}/get-available-materials', [WorkOrderController::class, 'getAvailableMaterials'])->name('work-order.get-available-materials');
+            Route::get('work-order/{id}/get-stok/{produk_id}', [WorkOrderController::class, 'getMaterialStock'])->name('work-order.get-material-stock');
         });
         Route::middleware('permission:work_order.view')->group(function () {
             Route::get('work-order/select-product/{perencanaan_id}', [WorkOrderController::class, 'create'])->name('work-order.select-product');
@@ -531,6 +580,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('penggajian/get-komisi', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'getKomisiKaryawan'])->name('penggajian.get-komisi');
         Route::post('penggajian/{id}/approve', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'approve'])->name('penggajian.approve');
         Route::post('penggajian/{id}/process-payment', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'processPayment'])->name('penggajian.process-payment');
+        Route::get('penggajian/{id}/pdf', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'exportPdf'])->name('penggajian.pdf');
+        Route::get('penggajian/{id}/print', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'printPdf'])->name('penggajian.print');
         Route::resource('penggajian', App\Http\Controllers\hr_karyawan\PenggajianController::class);
     });
 

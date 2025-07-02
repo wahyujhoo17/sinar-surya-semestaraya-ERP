@@ -37,18 +37,38 @@
     }">
         {{-- Enhanced Overview Header --}}
         <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary-600" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M20 7l-8-4-8 4m16 0v10l-8 4m0-10L4 7m8 4v10" />
-                </svg>
-                Stok Barang per Gudang
-            </h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400 max-w-3xl">
-                Lihat jumlah stok barang yang tersedia di setiap gudang. Pilih gudang menggunakan tab di bawah untuk
-                melihat detail stok yang tersedia.
-            </p>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-primary-600" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0v10l-8 4m0-10L4 7m8 4v10" />
+                        </svg>
+                        Stok Barang per Gudang
+                    </h1>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400 max-w-3xl">
+                        Lihat jumlah stok barang yang tersedia di setiap gudang. Pilih gudang menggunakan tab di bawah
+                        untuk
+                        melihat detail stok yang tersedia.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3">
+                    @if (auth()->user()->hasPermission('stok_barang.create'))
+                        {{-- Action Buttons --}}
+                        <button onclick="openInitializeModal()"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Inisialisasi Stok
+                        </button>
+                    @endif
+                </div>
+            </div>
         </div>
 
         @if ($gudangs->isEmpty())
@@ -689,14 +709,382 @@
                     @endforeach
                 </div>
             </div>
-        @endif
     </div>
 
-    {{-- Add script to pre-load Alpine.js components for smoother transitions --}}
+    {{-- Modal Konfirmasi Inisialisasi Stok --}}
+    <div id="initializeModal"
+        class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 hidden">
+        <div
+            class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 xl:w-2/5 shadow-lg rounded-lg bg-white dark:bg-gray-800">
+            {{-- Loading Overlay --}}
+            <div id="modalLoadingOverlay"
+                class="absolute inset-0 bg-white bg-opacity-75 dark:bg-gray-800 dark:bg-opacity-75 z-10 rounded-lg hidden">
+                <div class="flex items-center justify-center h-full">
+                    <div class="text-center">
+                        <svg class="inline-block animate-spin h-12 w-12 text-blue-600 mb-4"
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                            </path>
+                        </svg>
+                        <p class="text-gray-700 dark:text-gray-300 font-medium">Memproses inisialisasi stok...</p>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Mohon tunggu, proses ini mungkin
+                            membutuhkan waktu beberapa saat.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3" id="modalContent">
+                {{-- Header --}}
+                <div class="flex items-start justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                                Konfirmasi Inisialisasi Stok
+                            </h3>
+                        </div>
+                    </div>
+                    <button onclick="closeInitializeModal()"
+                        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Content --}}
+                <div class="mt-4">
+                    <div
+                        class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-4">
+                        <div class="flex items-start">
+                            <svg class="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-3 flex-shrink-0"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                            <div>
+                                <h4 class="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">
+                                    Perhatian!
+                                </h4>
+                                <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                                    Proses ini akan membuat record stok dengan nilai <strong>0 (nol)</strong> untuk
+                                    semua produk yang belum memiliki stok di semua gudang.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Info Cards --}}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400 mr-3" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8-4-8 4m16 0v10l-8 4m0-10L4 7m8 4v10" />
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-blue-800 dark:text-blue-200">Total Produk Aktif
+                                    </p>
+                                    <p class="text-lg font-bold text-blue-900 dark:text-blue-100" id="totalProducts">
+                                        <span class="inline-flex items-center">
+                                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                    stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                </path>
+                                            </svg>
+                                            Loading...
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-4">
+                            <div class="flex items-center">
+                                <svg class="h-6 w-6 text-green-600 dark:text-green-400 mr-3" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m-2 0H7m5 0v-9a1 1 0 00-1-1h-1a1 1 0 00-1 1v9m1 0h2m0 0h2m-2 0h-2" />
+                                </svg>
+                                <div>
+                                    <p class="text-sm font-medium text-green-800 dark:text-green-200">Total Gudang</p>
+                                    <p class="text-lg font-bold text-green-900 dark:text-green-100"
+                                        id="totalWarehouses">{{ $gudangs->count() }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Description --}}
+                    <div class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 mb-6">
+                        <h5 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Apa yang akan terjadi:</h5>
+                        <ul class="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                            <li class="flex items-start">
+                                <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Sistem akan memeriksa semua produk aktif
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Membuat record stok 0 untuk produk yang belum ada stoknya
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Semua produk akan muncul di halaman stok barang
+                            </li>
+                            <li class="flex items-start">
+                                <svg class="h-4 w-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Produk yang sudah ada stok tidak akan terpengaruh
+                            </li>
+                        </ul>
+                    </div>
+
+                    {{-- Buttons --}}
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeInitializeModal()"
+                            class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 rounded-md transition-colors duration-200 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            Batal
+                        </button>
+                        <button type="button" onclick="confirmInitialize()" id="confirmBtn"
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-md transition-colors duration-200 flex items-center min-w-[180px] justify-center">
+                            <span id="confirmText" class="flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Ya, Inisialisasi Stok
+                            </span>
+                            <span id="confirmLoading" class="hidden">
+                                <span class="flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                            stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg>
+                                    Memproses...
+                                </span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- JavaScript --}}
     <script>
-        document.addEventListener('alpine:init', () => {
-            // Pre-load all tab contents
-            Alpine.store('tabContentLoaded', {});
+        // Modal functions
+        function openInitializeModal() {
+            document.getElementById('initializeModal').classList.remove('hidden');
+            // Load total products count
+            loadProductCount();
+        }
+
+        function closeInitializeModal() {
+            document.getElementById('initializeModal').classList.add('hidden');
+        }
+
+        // Load product count for display in modal
+        function loadProductCount() {
+            fetch('{{ route('inventaris.produk.count') }}', {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('totalProducts').innerHTML = data.count;
+                    } else {
+                        document.getElementById('totalProducts').innerHTML = '<span class="text-red-500">Error</span>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading product count:', error);
+                    document.getElementById('totalProducts').innerHTML = '<span class="text-red-500">-</span>';
+                });
+        }
+
+        // Confirm and process initialization
+        function confirmInitialize() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            const confirmText = document.getElementById('confirmText');
+            const confirmLoading = document.getElementById('confirmLoading');
+            const modalOverlay = document.getElementById('modalLoadingOverlay');
+
+            // Show loading overlay
+            modalOverlay.classList.remove('hidden');
+
+            // Disable button and show loading state
+            confirmBtn.disabled = true;
+            confirmText.classList.add('hidden');
+            confirmLoading.classList.remove('hidden');
+
+            fetch('{{ route('inventaris.stok.initialize') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loading overlay
+                    modalOverlay.classList.add('hidden');
+
+                    if (data.success) {
+                        // Show success message
+                        showNotification('success',
+                            `Stok berhasil diinisialisasi untuk ${data.created} kombinasi produk-gudang.`);
+
+                        // Close modal and reload page after delay
+                        setTimeout(() => {
+                            closeInitializeModal();
+                            location.reload();
+                        }, 2000);
+                    } else {
+                        showNotification('error', 'Error: ' + data.message);
+                        resetConfirmButton();
+                    }
+                })
+                .catch(error => {
+                    // Hide loading overlay
+                    modalOverlay.classList.add('hidden');
+                    console.error('Error:', error);
+                    showNotification('error', 'Terjadi kesalahan saat menginisialisasi stok.');
+                    resetConfirmButton();
+                });
+        }
+
+        // Reset confirm button state
+        function resetConfirmButton() {
+            const confirmBtn = document.getElementById('confirmBtn');
+            const confirmText = document.getElementById('confirmText');
+            const confirmLoading = document.getElementById('confirmLoading');
+            const modalOverlay = document.getElementById('modalLoadingOverlay');
+
+            // Hide loading overlay
+            modalOverlay.classList.add('hidden');
+
+            // Reset button state
+            confirmBtn.disabled = false;
+            confirmText.classList.remove('hidden');
+            confirmLoading.classList.add('hidden');
+        }
+
+        // Show notification (toast-style notification)
+        function showNotification(type, message) {
+            // Create toast notification
+            const toast = document.createElement('div');
+            toast.className =
+                `fixed top-4 right-4 z-50 max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
+
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            const icon = type === 'success' ?
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />' :
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+
+            toast.innerHTML = `
+                <div class="p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <div class="${bgColor} rounded-full p-1">
+                                <svg class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    ${icon}
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="ml-3 w-0 flex-1">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                ${type === 'success' ? 'Berhasil!' : 'Error!'}
+                            </p>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-300">
+                                ${message}
+                            </p>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex">
+                            <button class="rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()">
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            }, 100);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('initializeModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeInitializeModal();
+            }
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeInitializeModal();
+            }
         });
     </script>
+    @endif
 </x-app-layout>

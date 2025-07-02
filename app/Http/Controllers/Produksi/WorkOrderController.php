@@ -37,6 +37,37 @@ class WorkOrderController extends Controller
     }
 
     /**
+     * Helper function to convert date format from d/m/Y to Y-m-d
+     */
+    private function convertDateFormat($date)
+    {
+        if (!$date) {
+            return null;
+        }
+
+        // If already in Y-m-d format (from date input), return as is
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return $date;
+        }
+
+        // If in d/m/Y format (from text input with datepicker), convert
+        if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $date)) {
+            try {
+                return \Carbon\Carbon::createFromFormat('d/m/Y', $date)->format('Y-m-d');
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // Try to parse as a general date
+        try {
+            return \Carbon\Carbon::parse($date)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
      * Menampilkan daftar work order
      */
     public function index(Request $request)
@@ -195,10 +226,15 @@ class WorkOrderController extends Controller
             // Get sales order ID from production plan
             $perencanaan = PerencanaanProduksi::findOrFail($request->perencanaan_produksi_id);
 
+            // Konversi format tanggal menggunakan helper function
+            $tanggal = $this->convertDateFormat($request->tanggal);
+            $tanggal_mulai = $this->convertDateFormat($request->tanggal_mulai);
+            $deadline = $this->convertDateFormat($request->deadline);
+
             // Create work order
             $workOrder = WorkOrder::create([
                 'nomor' => $nomor,
-                'tanggal' => $request->tanggal,
+                'tanggal' => $tanggal,
                 'bom_id' => $request->bom_id,
                 'sales_order_id' => $perencanaan->sales_order_id,
                 'perencanaan_produksi_id' => $request->perencanaan_produksi_id,
@@ -208,8 +244,8 @@ class WorkOrderController extends Controller
                 'user_id' => Auth::id(),
                 'quantity' => $request->quantity,
                 'satuan_id' => $request->satuan_id,
-                'tanggal_mulai' => $request->tanggal_mulai,
-                'deadline' => $request->deadline,
+                'tanggal_mulai' => $tanggal_mulai,
+                'deadline' => $deadline,
                 'status' => 'direncanakan', // Changed from 'draft' to 'direncanakan' to match enum values
                 'catatan' => $request->catatan,
             ]);
@@ -290,7 +326,7 @@ class WorkOrderController extends Controller
                 ->with('error', 'Work Order tidak dapat diedit karena status bukan direncanakan.');
         }
 
-        $gudang = Gudang::where('status', 'aktif')->get();
+        $gudang = Gudang::all();
         $boms = BillOfMaterial::where('produk_id', $workOrder->produk_id)->get();
 
         return view('produksi.work-order.edit', compact('workOrder', 'gudang', 'boms'));
@@ -315,11 +351,27 @@ class WorkOrderController extends Controller
             'gudang_hasil_id' => 'required|exists:gudang,id',
             'quantity' => 'required|numeric|min:0.01',
             'satuan_id' => 'required|exists:satuan,id',
-            'tanggal' => 'required|date',
-            'tanggal_mulai' => 'required|date',
-            'deadline' => 'required|date|after_or_equal:tanggal_mulai',
+            'tanggal' => 'required|date_format:d/m/Y',
+            'tanggal_mulai' => 'required|date_format:d/m/Y',
+            'deadline' => 'required|date_format:d/m/Y',
             'catatan' => 'nullable|string',
         ]);
+
+        // Custom validation untuk memastikan deadline setelah atau sama dengan tanggal_mulai
+        $validator->after(function ($validator) use ($request) {
+            if ($request->tanggal_mulai && $request->deadline) {
+                try {
+                    $tanggal_mulai = \Carbon\Carbon::createFromFormat('d/m/Y', $request->tanggal_mulai);
+                    $deadline = \Carbon\Carbon::createFromFormat('d/m/Y', $request->deadline);
+
+                    if ($deadline->lt($tanggal_mulai)) {
+                        $validator->errors()->add('deadline', 'Deadline harus setelah atau sama dengan tanggal mulai.');
+                    }
+                } catch (\Exception $e) {
+                    // Format tanggal tidak valid, sudah ditangani oleh rule date_format
+                }
+            }
+        });
 
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
@@ -328,16 +380,21 @@ class WorkOrderController extends Controller
         DB::beginTransaction();
 
         try {
+            // Konversi format tanggal menggunakan helper function
+            $tanggal = $this->convertDateFormat($request->tanggal);
+            $tanggal_mulai = $this->convertDateFormat($request->tanggal_mulai);
+            $deadline = $this->convertDateFormat($request->deadline);
+
             // Update work order
             $workOrder->update([
-                'tanggal' => $request->tanggal,
+                'tanggal' => $tanggal,
                 'bom_id' => $request->bom_id,
                 'gudang_produksi_id' => $request->gudang_produksi_id,
                 'gudang_hasil_id' => $request->gudang_hasil_id,
                 'quantity' => $request->quantity,
                 'satuan_id' => $request->satuan_id,
-                'tanggal_mulai' => $request->tanggal_mulai,
-                'deadline' => $request->deadline,
+                'tanggal_mulai' => $tanggal_mulai,
+                'deadline' => $deadline,
                 'catatan' => $request->catatan,
             ]);
 
@@ -530,6 +587,7 @@ class WorkOrderController extends Controller
             'detail.*.jumlah_diminta' => 'required|numeric|min:0.01',
             'detail.*.jumlah_diambil' => 'required|numeric|min:0.01',
             'detail.*.satuan_id' => 'required|exists:satuan,id',
+            'detail.*.tipe' => 'nullable|in:bom,manual',
         ]);
 
         if ($validator->fails()) {
@@ -807,5 +865,145 @@ class WorkOrderController extends Controller
         }
 
         return $prefix . $date . '-' . $newNumberSuffix;
+    }
+
+    /**
+     * Mengambil material yang tersedia di gudang untuk dropdown AJAX
+     */
+    public function getAvailableMaterials(Request $request, $workOrderId)
+    {
+        try {
+            Log::info("getAvailableMaterials called", [
+                'workOrderId' => $workOrderId,
+                'request' => $request->all()
+            ]);
+
+            $workOrder = WorkOrder::find($workOrderId);
+            if (!$workOrder) {
+                Log::error("Work Order not found", ['workOrderId' => $workOrderId]);
+                return response()->json([
+                    'items' => [],
+                    'has_more' => false,
+                    'total' => 0,
+                    'error' => 'Work Order tidak ditemukan'
+                ], 404);
+            }
+
+            $search = $request->get('q', '');
+            $page = $request->get('page', 1);
+            $perPage = 20;
+
+            Log::info("Query parameters", [
+                'search' => $search,
+                'page' => $page,
+                'perPage' => $perPage,
+                'gudang_produksi_id' => $workOrder->gudang_produksi_id
+            ]);
+
+            // Mengambil produk yang memiliki stok di gudang produksi dengan query yang lebih sederhana
+            $subQuery = DB::table('stok_produk')
+                ->select('produk_id')
+                ->where('gudang_id', $workOrder->gudang_produksi_id)
+                ->where('jumlah', '>', 0)
+                ->groupBy('produk_id');
+
+            $query = Produk::select('id', 'nama', 'kode', 'satuan_id')
+                ->with(['satuan:id,nama'])
+                ->whereIn('id', $subQuery);
+
+            // Filter pencarian
+            if (!empty($search)) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama', 'like', "%{$search}%")
+                        ->orWhere('kode', 'like', "%{$search}%");
+                });
+            }
+
+            $totalQuery = clone $query;
+            $total = $totalQuery->count();
+
+            $products = $query->skip(($page - 1) * $perPage)
+                ->take($perPage)
+                ->get();
+
+            Log::info("Products found", ['count' => $products->count(), 'total' => $total]);
+
+            $items = [];
+            foreach ($products as $product) {
+                // Ambil stok untuk produk ini
+                $stok = DB::table('stok_produk')
+                    ->where('produk_id', $product->id)
+                    ->where('gudang_id', $workOrder->gudang_produksi_id)
+                    ->sum('jumlah');
+
+                if ($stok > 0) {
+                    $items[] = [
+                        'id' => $product->id,
+                        'nama' => $product->nama,
+                        'kode' => $product->kode ?? '',
+                        'satuan_id' => $product->satuan_id,
+                        'satuan_nama' => $product->satuan ? $product->satuan->nama : '',
+                        'stok_tersedia' => floatval($stok),
+                        'text' => $product->nama . ' (' . ($product->kode ?? 'No Code') . ')'
+                    ];
+                }
+            }
+
+            $hasMore = ($page * $perPage) < $total;
+
+            Log::info("Response prepared", [
+                'items_count' => count($items),
+                'has_more' => $hasMore,
+                'total' => count($items)
+            ]);
+
+            return response()->json([
+                'items' => $items,
+                'has_more' => $hasMore,
+                'total' => count($items)
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Error in getAvailableMaterials", [
+                'workOrderId' => $workOrderId,
+                'request' => $request->all(),
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ]);
+
+            return response()->json([
+                'items' => [],
+                'has_more' => false,
+                'total' => 0,
+                'error' => 'Error: ' . $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengambil stok material tertentu di gudang
+     */
+    public function getMaterialStock(Request $request, $workOrderId, $produkId)
+    {
+        try {
+            $workOrder = WorkOrder::findOrFail($workOrderId);
+
+            $stok = StokProduk::where('produk_id', $produkId)
+                ->where('gudang_id', $workOrder->gudang_produksi_id)
+                ->sum('jumlah');
+
+            return response()->json([
+                'success' => true,
+                'stok' => floatval($stok)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'stok' => 0,
+                'error' => 'Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

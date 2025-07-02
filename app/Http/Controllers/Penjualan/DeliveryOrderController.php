@@ -763,22 +763,19 @@ class DeliveryOrderController extends Controller
                 try {
                     $permintaanBarang = \App\Models\PermintaanBarang::find($deliveryOrder->permintaan_barang_id);
                     if ($permintaanBarang) {
-                        // For cancelation, we need specific logic to revert the status to 'menunggu'
-                        // rather than using the automatic status detection
-                        if (in_array($permintaanBarang->status, ['selesai', 'diproses'])) {
-                            $oldStatus = $permintaanBarang->status;
-                            $permintaanBarang->status = 'menunggu';
-                            $permintaanBarang->updated_by = Auth::id();
-                            $permintaanBarang->save();
+                        // For cancelation, we need to set status to 'menunggu'
+                        $oldStatus = $permintaanBarang->status;
+                        $permintaanBarang->status = 'menunggu';
+                        $permintaanBarang->updated_by = Auth::id();
+                        $permintaanBarang->save();
 
-                            // Log the status change
-                            $this->logUserAktivitas(
-                                'mengubah status permintaan barang',
-                                'permintaan_barang',
-                                $permintaanBarang->id,
-                                "dari {$oldStatus} menjadi menunggu karena Delivery Order #{$deliveryOrder->nomor} dibatalkan"
-                            );
-                        }
+                        // Log the status change
+                        $this->logUserAktivitas(
+                            'mengubah status permintaan barang',
+                            'permintaan_barang',
+                            $permintaanBarang->id,
+                            "dari {$oldStatus} menjadi menunggu karena Delivery Order #{$deliveryOrder->nomor} dibatalkan"
+                        );
                     }
                 } catch (\Exception $e) {
                     // Just log the error but don't rollback
@@ -801,6 +798,200 @@ class DeliveryOrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Print the delivery order
+     */
+    public function print($id)
+    {
+        // Load delivery order with its relationships
+        $deliveryOrder = DeliveryOrder::with([
+            'salesOrder',
+            'customer',
+            'gudang',
+            'user',
+            'details.produk'
+        ])->findOrFail($id);
+
+        // Load the PDF view
+        $pdf = Pdf::loadView('penjualan.delivery-order.print', ['deliveryOrder' => $deliveryOrder]);
+
+        $pdf->setPaper('a4', 'portrait');
+
+        // return $pdf->download('SalesOrder-' . $deliveryOrder->nomor . '.pdf');
+        return view('penjualan.delivery-order.print', compact('deliveryOrder'));
+    }
+
+    /**
+     * Print delivery order using PDF template
+     */
+    public function printTemplate($id)
+    {
+        try {
+            // Load delivery order with its relationships
+            $deliveryOrder = DeliveryOrder::with([
+                'salesOrder',
+                'customer',
+                'gudang',
+                'user',
+                'details.produk.satuan',
+                'details.satuan'
+            ])->findOrFail($id);
+
+            // Use PDF template service
+            $pdfService = new \App\Services\PDFTemplateService();
+            $pdf = $pdfService->fillDeliveryOrderTemplate($deliveryOrder);
+
+            // Output PDF
+            $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '.pdf';
+            
+            // Log aktivitas
+            $this->logUserAktivitas(
+                'print template surat jalan',
+                'delivery_order',
+                $deliveryOrder->id,
+                'Print surat jalan menggunakan template PDF: ' . $deliveryOrder->nomor
+            );
+
+            return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
+            
+        } catch (\Exception $e) {
+            \Log::error('Error printing delivery order template: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download delivery order using PDF template
+     */
+    public function downloadTemplate($id)
+    {
+        try {
+            // Load delivery order with its relationships
+            $deliveryOrder = DeliveryOrder::with([
+                'salesOrder',
+                'customer',
+                'gudang',
+                'user',
+                'details.produk.satuan',
+                'details.satuan'
+            ])->findOrFail($id);
+
+            // Use PDF template service
+            $pdfService = new \App\Services\PDFTemplateService();
+            $pdf = $pdfService->fillDeliveryOrderTemplate($deliveryOrder);
+
+            // Output PDF for download
+            $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '.pdf';
+            
+            // Log aktivitas
+            $this->logUserAktivitas(
+                'download template surat jalan',
+                'delivery_order',
+                $deliveryOrder->id,
+                'Download surat jalan menggunakan template PDF: ' . $deliveryOrder->nomor
+            );
+
+            return $pdf->Output($filename, 'D'); // 'D' for download
+            
+        } catch (\Exception $e) {
+            \Log::error('Error downloading delivery order template: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengunduh surat jalan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Helper method to get coordinates for template positioning (development use)
+     */
+    public function getTemplateCoordinates()
+    {
+        $pdfService = new \App\Services\PDFTemplateService();
+        $pdf = $pdfService->getCoordinatesHelper();
+        
+        return $pdf->Output('coordinates-helper.pdf', 'I');
+    }
+
+    /**
+     * Test coordinates for template positioning (development use)
+     */
+    public function testTemplateCoordinates($id)
+    {
+        try {
+            // Load delivery order with its relationships
+            $deliveryOrder = DeliveryOrder::with([
+                'salesOrder',
+                'customer',
+                'gudang',
+                'user',
+                'details.produk.satuan',
+                'details.satuan'
+            ])->findOrFail($id);
+
+            // Use PDF template service to test coordinates
+            $pdfService = new \App\Services\PDFTemplateService();
+            $pdf = $pdfService->testCoordinatesWithTemplate($deliveryOrder);
+
+            // Output PDF for testing
+            $filename = 'Test-Coordinates-' . $deliveryOrder->nomor . '.pdf';
+            
+            return $pdf->Output($filename, 'I'); // 'I' for inline display
+            
+        } catch (\Exception $e) {
+            Log::error('Error testing template coordinates: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal testing koordinat: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get template information for debugging/development
+     */
+    public function getTemplateInfo()
+    {
+        try {
+            $pdfService = new \App\Services\PDFTemplateService();
+            $info = $pdfService->getTemplateInfo();
+            
+            return response()->json($info);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate delivery order template with custom coordinates
+     */
+    public function generateWithCustomCoordinates(Request $request, $id)
+    {
+        try {
+            // Load delivery order with its relationships
+            $deliveryOrder = DeliveryOrder::with([
+                'salesOrder',
+                'customer',
+                'gudang',
+                'user',
+                'details.produk.satuan',
+                'details.satuan'
+            ])->findOrFail($id);
+
+            // Get custom coordinates from request (if any)
+            $customCoordinates = $request->input('coordinates', []);
+
+            // Use PDF template service with custom coordinates
+            $pdfService = new \App\Services\PDFTemplateService();
+            $pdf = $pdfService->generateWithCustomCoordinates($deliveryOrder, $customCoordinates);
+
+            // Output PDF
+            $filename = 'Surat-Jalan-Custom-' . $deliveryOrder->nomor . '.pdf';
+            
+            return $pdf->Output($filename, 'I'); // 'I' for inline display
+            
+        } catch (\Exception $e) {
+            Log::error('Error generating custom coordinates PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat PDF dengan koordinat custom: ' . $e->getMessage());
         }
     }
 
@@ -1007,7 +1198,7 @@ class DeliveryOrderController extends Controller
                 "dari {$oldStatus} menjadi diproses karena Delivery Order #{$deliveryOrder->nomor} diproses"
             );
         }
-        // If all items have been fully shipped, set status to 'selesai'
+        // If all items have been shipped, set status to 'selesai'
         elseif ($allItemsDelivered && $totalItemsShipped > 0 && $permintaanBarang->status != 'selesai') {
             $oldStatus = $permintaanBarang->status;
             $permintaanBarang->status = 'selesai';
@@ -1227,28 +1418,5 @@ class DeliveryOrderController extends Controller
             'success' => true,
             'stocks' => $result
         ]);
-    }
-
-    /**
-     * Print the delivery order
-     */
-    public function print($id)
-    {
-        // Load delivery order with its relationships
-        $deliveryOrder = DeliveryOrder::with([
-            'salesOrder',
-            'customer',
-            'gudang',
-            'user',
-            'details.produk'
-        ])->findOrFail($id);
-
-        // Load the PDF view
-        $pdf = Pdf::loadView('penjualan.delivery-order.print', ['deliveryOrder' => $deliveryOrder]);
-
-        $pdf->setPaper('a4', 'portrait');
-
-        // return $pdf->download('SalesOrder-' . $deliveryOrder->nomor . '.pdf');
-        return view('penjualan.delivery-order.print', compact('deliveryOrder'));
     }
 }

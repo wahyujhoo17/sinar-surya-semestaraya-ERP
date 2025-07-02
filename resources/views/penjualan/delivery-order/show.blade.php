@@ -175,7 +175,7 @@
             </div>
 
             <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-                <a href="{{ route('penjualan.delivery-order.print', $deliveryOrder->id) }}" target="_blank"
+                {{-- <a href="{{ route('penjualan.delivery-order.print', $deliveryOrder->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -183,7 +183,19 @@
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     Cetak
+                </a> --}}
+
+                <!-- Print Template Button -->
+                <a href="{{ route('penjualan.delivery-order.print-template', $deliveryOrder->id) }}" target="_blank"
+                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Cetak
                 </a>
+
 
                 @if (auth()->user()->hasPermission('delivery_order.edit') && $deliveryOrder->status == 'draft')
                     <a href="{{ route('penjualan.delivery-order.edit', $deliveryOrder->id) }}"
@@ -1101,6 +1113,74 @@
                     });
                 });
             });
+
+            // Template Info Modal Function
+            function showTemplateInfo() {
+                fetch('{{ route('penjualan.delivery-order.template-info') }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        let infoHTML = '<div class="space-y-3">';
+
+                        if (data.error) {
+                            infoHTML += `<div class="text-red-600"><strong>Error:</strong> ${data.error}</div>`;
+                        } else {
+                            infoHTML += `
+                                <div><strong>File Path:</strong> ${data.file_path}</div>
+                                <div><strong>File Size:</strong> ${data.file_size_readable || data.file_size + ' bytes'}</div>
+                                <div><strong>Template Dimensions:</strong> ${data.template_width.toFixed(2)} x ${data.template_height.toFixed(2)} mm</div>
+                                <div><strong>Orientation:</strong> ${data.template_orientation}</div>
+                                <div><strong>Page Count:</strong> ${data.page_count}</div>
+                            `;
+
+                            if (data.calculated_positions) {
+                                infoHTML += '<div class="mt-4"><strong>Calculated Positions:</strong></div>';
+                                infoHTML += '<div class="bg-gray-100 p-3 rounded text-sm font-mono">';
+                                Object.entries(data.calculated_positions).forEach(([key, value]) => {
+                                    infoHTML += `<div>${key}: ${value.toFixed(2)}</div>`;
+                                });
+                                infoHTML += '</div>';
+                            }
+                        }
+
+                        infoHTML += '</div>';
+
+                        // Create and show modal
+                        const modal = document.createElement('div');
+                        modal.className = 'fixed inset-0 z-50 overflow-y-auto';
+                        modal.innerHTML = `
+                            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                                    <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+                                </div>
+                                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                        <div class="sm:flex sm:items-start">
+                                            <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
+                                                    Template Information
+                                                </h3>
+                                                ${infoHTML}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                        <button type="button" onclick="this.closest('.fixed').remove()" 
+                                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        document.body.appendChild(modal);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching template info:', error);
+                        alert('Error fetching template information');
+                    });
+            }
         </script>
     @endpush
 </x-app-layout>

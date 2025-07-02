@@ -94,10 +94,94 @@
 
         .signatures .sign-line {
             border-bottom: 1px solid #000;
-            margin-top: 50px;
+            margin-top: 20px;
             margin-bottom: 10px;
             width: 80%;
             display: inline-block;
+        }
+
+        .signatures div {
+            margin: 5px 0;
+        }
+
+        .signatures small {
+            font-size: 10px;
+            color: #666;
+        }
+
+        .qr-signature {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .qr-signature .qr-label {
+            font-size: 8px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .qr-signature img {
+            border: 1px solid #ddd;
+            padding: 2px;
+        }
+
+        .status-box {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            page-break-inside: avoid;
+        }
+
+        .status-processed {
+            background-color: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            color: #0369a1;
+        }
+
+        .status-draft {
+            background-color: #fffbeb;
+            border: 1px solid #f59e0b;
+            color: #d97706;
+        }
+
+        .status-box h4 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+
+        .status-box p {
+            margin: 0;
+            font-size: 11px;
+        }
+
+        .qr-signature {
+            display: inline-block;
+            text-align: center;
+            margin: 5px;
+        }
+
+        .qr-signature .qr-label {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .document-qr {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: center;
+        }
+
+        .document-qr img {
+            max-width: 100px;
+            max-height: 100px;
+        }
+
+        .document-qr .qr-label {
+            font-size: 10px;
+            color: #666;
+            margin-top: 5px;
         }
 
         .summary {
@@ -118,6 +202,46 @@
 
         .negative {
             color: red;
+        }
+
+        .qr-code {
+            width: 100px;
+            height: 100px;
+            margin: 5px auto;
+            display: block;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 5px;
+            background: white;
+        }
+
+        .qr-code-small {
+            width: 60px;
+            height: 60px;
+            margin: 5px auto;
+            display: block;
+            border: 1px solid #ddd;
+            padding: 2px;
+            background: white;
+        }
+
+        .header-with-qr {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .header-content {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .header-qr {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: right;
+            width: 120px;
         }
 
         .footer {
@@ -143,9 +267,23 @@
             {{ strpos($penyesuaian->nomor, 'DRAFT') !== false ? 'DRAFT PREVIEW' : 'DRAFT' }}
         </div>
     @endif
-    <div class="header">
-        <h1>FORM PENYESUAIAN STOK</h1>
-        <p>Sinar Surya Inventory System</p>
+
+    <div class="header-with-qr">
+        <div class="header-content">
+            <h1>FORM PENYESUAIAN STOK</h1>
+            <p>{{ setting('company_name', 'Sinar Surya') }} Inventory System</p>
+        </div>
+
+        {{-- Document QR Code in Header --}}
+        @if (isset($qrCodes['document_qr']) && $qrCodes['document_qr'])
+            <div class="header-qr">
+                <img src="{{ $qrCodes['document_qr'] }}" alt="Document QR Code" class="qr-code">
+                <div style="font-size: 8px; text-align: center; margin-top: 5px;">
+                    <strong>Scan untuk Verifikasi</strong><br>
+                    Dokumen Digital
+                </div>
+            </div>
+        @endif
     </div>
 
     <table class="info">
@@ -244,26 +382,81 @@
         <table>
             <tr>
                 <td>
-                    <div>Dibuat oleh,</div>
+                    <div><strong>Dibuat oleh:</strong></div>
+
+
+                    {{-- QR Code for Creator --}}
+                    @if (isset($qrCodes['created_qr']) && $qrCodes['created_qr'])
+                        <div class="qr-signature">
+                            <div class="qr-label">Tanda Tangan Digital</div>
+                            <img src="{{ $qrCodes['created_qr'] }}" alt="Creator QR Code" class="qr-code-small">
+                        </div>
+                    @endif
                     <div class="sign-line"></div>
-                    <div>{{ $penyesuaian->user->name }}</div>
+                    <div><strong>{{ $createdBy->name }}</strong></div>
                     <div><small>{{ $penyesuaian->created_at->format('d-m-Y H:i') }}</small></div>
+                    <div><small>{{ $createdBy->email }}</small></div>
                 </td>
-                <td>
-                    <div>Diperiksa oleh,</div>
-                    <div class="sign-line"></div>
-                    <div>_____________________</div>
-                    <div><small>Kepala Gudang</small></div>
-                </td>
-                <td>
-                    <div>Disetujui oleh,</div>
-                    <div class="sign-line"></div>
-                    <div>_____________________</div>
-                    <div><small>Manager</small></div>
-                </td>
+
+                @if ($isProcessed && $processedBy)
+                    <td>
+                        <div><strong>Diproses oleh:</strong></div>
+
+
+                        {{-- QR Code for Processor --}}
+                        @if (isset($qrCodes['processed_qr']) && $qrCodes['processed_qr'])
+                            <div class="qr-signature">
+                                <div class="qr-label">Tanda Tangan Digital</div>
+                                <img src="{{ $qrCodes['processed_qr'] }}" alt="Processor QR Code"
+                                    class="qr-code-small">
+                            </div>
+                        @endif
+                        <div class="sign-line"></div>
+                        <div><strong>{{ $processedBy->name }}</strong></div>
+                        <div><small>{{ $processedAt ? $processedAt->format('d-m-Y H:i') : '-' }}</small></div>
+                        <div><small>{{ $processedBy->email }}</small></div>
+                    </td>
+                @else
+                    <td>
+                        <div><strong>Disetujui oleh:</strong></div>
+                        <div class="sign-line"></div>
+
+                        <div class="qr-signature">
+                            <div class="qr-label">Menunggu Tanda Tangan</div>
+                            <div
+                                style="width: 60px; height: 60px; border: 1px dashed #ccc; display: inline-block; line-height: 60px; font-size: 10px; color: #999;">
+                                QR</div>
+                        </div>
+
+                        <div>_____________________</div>
+                        <div>
+                            <small>{{ $penyesuaian->status === 'draft' ? 'Menunggu Persetujuan' : 'Manager/Supervisor' }}</small>
+                        </div>
+                    </td>
+                @endif
+
+
             </tr>
         </table>
     </div>
+
+    @if ($isProcessed)
+        <div class="status-box status-processed">
+            <h4><strong>Status: TELAH DIPROSES</strong></h4>
+            <p>
+                Penyesuaian stok ini telah diproses dan stok sistem telah disesuaikan dengan stok fisik pada
+                {{ $processedAt ? $processedAt->format('d F Y \p\u\k\u\l H:i') : $penyesuaian->updated_at->format('d F Y \p\u\k\u\l H:i') }}
+                oleh {{ $processedBy ? $processedBy->name : 'Sistem' }}.
+            </p>
+        </div>
+    @elseif ($penyesuaian->status === 'draft')
+        <div class="status-box status-draft">
+            <h4><strong>Status: DRAFT</strong></h4>
+            <p>
+                Dokumen ini masih dalam status draft dan belum diproses. Penyesuaian stok belum diterapkan ke sistem.
+            </p>
+        </div>
+    @endif
 
     <div class="footer">
         Dicetak pada: {{ now()->format('d F Y H:i:s') }} | {{ setting('company_name', 'Sinar Surya') }} ERP System

@@ -578,4 +578,24 @@ class ProdukController extends Controller
             'is_active' => 'sometimes|boolean',
         ];
     }
+
+    /**
+     * Get total count of active products for stock initialization
+     */
+    public function getProductCount()
+    {
+        try {
+            $count = Produk::where('is_active', true)->count();
+
+            return response()->json([
+                'success' => true,
+                'count' => $count
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil jumlah produk'
+            ], 500);
+        }
+    }
 }

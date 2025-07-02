@@ -122,7 +122,7 @@
             <div class="flex flex-wrap items-center gap-2 mt-4 md:mt-0">
 
                 @if (auth()->user()->hasPermission('purchase_request.print'))
-                    <a href="{{ route('pembelian.permintaan-pembelian.pdf', $permintaanPembelian->id) }}"
+                    <a href="{{ route('pembelian.permintaan-pembelian.print', $permintaanPembelian->id) }}"
                         target="_blank"
                         class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"

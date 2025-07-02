@@ -12,6 +12,8 @@ use App\Models\PenyesuaianStokDetail;
 use App\Models\RiwayatStok;
 use App\Models\LogAktivitas;
 use App\Services\NotificationService;
+use App\Services\QRCodeService;
+use App\Traits\HasPDFQRCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class PenyesuaianStokController extends Controller
 {
+    use HasPDFQRCode;
+
     public function __construct()
     {
         $this->middleware('permission:penyesuaian_stok.view')->only(['index', 'show']);
@@ -360,10 +364,31 @@ class PenyesuaianStokController extends Controller
 
         $penyesuaian = PenyesuaianStok::with(['gudang', 'user', 'details.produk', 'details.satuan'])->findOrFail($id);
 
+        // Calculate statistics for the modal
+        $details = $penyesuaian->details;
+        $totalItems = $details->count();
+        $countIncrease = 0;
+        $countDecrease = 0;
+        $countNoChange = 0;
+
+        foreach ($details as $detail) {
+            if ($detail->stok_fisik > $detail->stok_tercatat) {
+                $countIncrease++;
+            } elseif ($detail->stok_fisik < $detail->stok_tercatat) {
+                $countDecrease++;
+            } else {
+                $countNoChange++;
+            }
+        }
+
         return view('inventaris.penyesuaian_stok.show', compact(
             'penyesuaian',
             'breadcrumbs',
-            'currentPage'
+            'currentPage',
+            'totalItems',
+            'countIncrease',
+            'countDecrease',
+            'countNoChange'
         ));
     }
 
@@ -774,6 +799,40 @@ class PenyesuaianStokController extends Controller
         $multipleUnits = count($uniqueSatuans) > 1;
         $unitDisplay = $multipleUnits ? 'unit' : (count($uniqueSatuans) === 1 ? reset($uniqueSatuans) : 'unit');
 
+        // Get approval/processing information from LogAktivitas
+        $createdBy = $penyesuaian->user;
+        $processedBy = null;
+        $processedAt = null;
+        $isProcessed = $penyesuaian->status === 'selesai';
+
+        if ($isProcessed) {
+            // Find the log entry for processing this adjustment
+            $processLog = LogAktivitas::with('user')
+                ->where('modul', 'Penyesuaian Stok')
+                ->where('data_id', $penyesuaian->id)
+                ->where('aktivitas', 'Memproses penyesuaian stok')
+                ->latest()
+                ->first();
+
+            if ($processLog) {
+                $processedBy = $processLog->user;
+                $processedAt = $processLog->created_at;
+            }
+        }
+
+        // Get QR codes for PDF
+        $qrCodes = $this->getPDFQRCodeData(
+            'penyesuaian_stok',
+            $penyesuaian->nomor,
+            $createdBy,
+            $processedBy,
+            [
+                'gudang' => $penyesuaian->gudang->nama,
+                'total_items' => $totalItems,
+                'status' => $penyesuaian->status
+            ]
+        );
+        // Generate PDF using the standard template
         $pdf = PDF::loadView('inventaris.penyesuaian_stok.pdf', compact(
             'penyesuaian',
             'countPositive',
@@ -782,7 +841,12 @@ class PenyesuaianStokController extends Controller
             'totalPositive',
             'totalNegative',
             'totalItems',
-            'unitDisplay'
+            'unitDisplay',
+            'createdBy',
+            'processedBy',
+            'isProcessed',
+            'processedAt',
+            'qrCodes'
         ));
 
         return $pdf->stream('penyesuaian-stok-' . $penyesuaian->nomor . '.pdf');
