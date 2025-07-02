@@ -101,7 +101,7 @@ class DeliveryOrderController extends Controller
         // Sorting
         $query->orderBy($filters['sort_by'], $filters['sort_direction']);
 
-        $deliveryOrders = $query->paginate(10);
+        $deliveryOrders = $query->paginate(5);
         $customers = Customer::orderBy('nama')->get();
         $gudangs = Gudang::where('is_active', true)->orderBy('nama')->get();
         // dd($customers);
@@ -846,7 +846,7 @@ class DeliveryOrderController extends Controller
 
             // Output PDF
             $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '.pdf';
-            
+
             // Log aktivitas
             $this->logUserAktivitas(
                 'print template surat jalan',
@@ -856,7 +856,7 @@ class DeliveryOrderController extends Controller
             );
 
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
-            
+
         } catch (\Exception $e) {
             \Log::error('Error printing delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
@@ -885,7 +885,7 @@ class DeliveryOrderController extends Controller
 
             // Output PDF for download
             $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '.pdf';
-            
+
             // Log aktivitas
             $this->logUserAktivitas(
                 'download template surat jalan',
@@ -895,7 +895,7 @@ class DeliveryOrderController extends Controller
             );
 
             return $pdf->Output($filename, 'D'); // 'D' for download
-            
+
         } catch (\Exception $e) {
             \Log::error('Error downloading delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengunduh surat jalan: ' . $e->getMessage());
@@ -909,7 +909,7 @@ class DeliveryOrderController extends Controller
     {
         $pdfService = new \App\Services\PDFTemplateService();
         $pdf = $pdfService->getCoordinatesHelper();
-        
+
         return $pdf->Output('coordinates-helper.pdf', 'I');
     }
 
@@ -935,9 +935,9 @@ class DeliveryOrderController extends Controller
 
             // Output PDF for testing
             $filename = 'Test-Coordinates-' . $deliveryOrder->nomor . '.pdf';
-            
+
             return $pdf->Output($filename, 'I'); // 'I' for inline display
-            
+
         } catch (\Exception $e) {
             Log::error('Error testing template coordinates: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal testing koordinat: ' . $e->getMessage());
@@ -952,7 +952,7 @@ class DeliveryOrderController extends Controller
         try {
             $pdfService = new \App\Services\PDFTemplateService();
             $info = $pdfService->getTemplateInfo();
-            
+
             return response()->json($info);
         } catch (\Exception $e) {
             return response()->json([
@@ -986,9 +986,9 @@ class DeliveryOrderController extends Controller
 
             // Output PDF
             $filename = 'Surat-Jalan-Custom-' . $deliveryOrder->nomor . '.pdf';
-            
+
             return $pdf->Output($filename, 'I'); // 'I' for inline display
-            
+
         } catch (\Exception $e) {
             Log::error('Error generating custom coordinates PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal membuat PDF dengan koordinat custom: ' . $e->getMessage());
@@ -1362,7 +1362,7 @@ class DeliveryOrderController extends Controller
 
             return response()->json([
                 'table_html' => view('penjualan.delivery-order._table', compact('deliveryOrders', 'sort_field', 'sort_direction'))->render(),
-                'pagination_html' => $deliveryOrders->links()->toHtml(),
+                'pagination_html' => view('penjualan.delivery-order._pagination', ['paginator' => $deliveryOrders])->render(),
                 'sort_field' => $sort_field,
                 'sort_direction' => $sort_direction
             ]);

@@ -587,7 +587,7 @@
                 attachPaginationListeners() {
                     // Add click event listeners to all pagination links
                     this.$nextTick(() => {
-                        document.querySelectorAll('.pagination a').forEach(link => {
+                        document.querySelectorAll('nav[aria-label="Pagination"] a, .pagination a').forEach(link => {
                             link.addEventListener('click', (e) => {
                                 e.preventDefault();
                                 this.fetchTable(link.href);
@@ -717,12 +717,13 @@
 
                             // Handle pagination links to use AJAX
                             this.$nextTick(() => {
-                                document.querySelectorAll('.pagination a').forEach(link => {
-                                    link.addEventListener('click', (e) => {
-                                        e.preventDefault();
-                                        this.fetchTable(link.href);
+                                document.querySelectorAll('nav[aria-label="Pagination"] a, .pagination a')
+                                    .forEach(link => {
+                                        link.addEventListener('click', (e) => {
+                                            e.preventDefault();
+                                            this.fetchTable(link.href);
+                                        });
                                     });
-                                });
 
                                 // Initialize modal functionality for dynamically loaded content
                                 this.initializeModals();

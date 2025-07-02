@@ -503,7 +503,7 @@
                     </tbody>
                 </table>
             </div>
-            <div class="px-5 py-3" x-html="paginationHtml">
+            <div id="pagination-container" class="px-5 py-3 flex justify-end" x-html="paginationHtml">
                 {{ $salesOrders->links() }}
             </div>
         </div>
@@ -526,7 +526,7 @@
                 init() {
                     // Set initial table content
                     this.tableHtml = document.querySelector('tbody').innerHTML;
-                    this.paginationHtml = document.querySelector('.px-5.py-3').innerHTML;
+                    this.paginationHtml = document.querySelector('#pagination-container').innerHTML;
 
                     // Listen for popstate (browser back/forward buttons)
                     window.addEventListener('popstate', () => {

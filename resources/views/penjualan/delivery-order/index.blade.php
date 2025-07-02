@@ -676,8 +676,7 @@
                 </div>
 
                 <!-- Pagination -->
-                <div x-html="paginationHtml"
-                    class="mt-4 px-4 py-3 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
+                <div x-html="paginationHtml" class="mt-4">
                 </div>
             </div>
         </div>
@@ -723,8 +722,12 @@
                         this.initCustomerSelect();
                     });
 
-                    // Fetch the table data
-                    this.fetchTable();
+                    // Fetch the table data and setup pagination listeners
+                    this.fetchTable().then(() => {
+                        this.$nextTick(() => {
+                            this.setupPaginationListeners();
+                        });
+                    });
                 },
 
                 waitForLibraries() {
@@ -899,7 +902,7 @@
 
                     let urlToFetch = finalUrl.toString();
 
-                    fetch(urlToFetch, {
+                    return fetch(urlToFetch, {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json',
@@ -947,6 +950,11 @@
                             // Ensure sorting state is correctly updated from the response
                             this.sort_field = data.sort_field || this.sort_field;
                             this.sort_direction = data.sort_direction || this.sort_direction;
+
+                            // Add event listeners to pagination links after DOM update
+                            this.$nextTick(() => {
+                                this.setupPaginationListeners();
+                            });
                         })
                         .catch(error => {
                             console.error('Error fetching table data:', error);
@@ -1045,7 +1053,86 @@
                     } else {
                         url.searchParams.delete(key);
                     }
-                }
+                },
+
+                setupPaginationListeners() {
+                    // Add event listeners to pagination links
+                    const paginationLinks = document.querySelectorAll('[x-html="paginationHtml"] a');
+                    paginationLinks.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const url = new URL(link.href);
+                            const page = url.searchParams.get('page');
+                            if (page) {
+                                this.handlePagination(page);
+                            }
+                        });
+                    });
+                },
+
+                handlePagination(page) {
+                    // Create URL with current filters and pagination
+                    const baseUrl = new URL('/penjualan/delivery-orders/ajax/table', window.location.origin);
+
+                    // Add all current parameters
+                    if (this.search) baseUrl.searchParams.append('search', this.search);
+                    if (this.status && this.status !== 'semua') baseUrl.searchParams.append('status', this.status);
+                    if (this.customer_id) baseUrl.searchParams.append('customer_id', this.customer_id);
+                    if (this.gudang_id) baseUrl.searchParams.append('gudang_id', this.gudang_id);
+                    if (this.date_start) baseUrl.searchParams.append('date_start', this.date_start);
+                    if (this.date_end) baseUrl.searchParams.append('date_end', this.date_end);
+                    if (this.periode && this.periode !== 'custom') baseUrl.searchParams.append('periode', this.periode);
+
+                    // Add sorting and pagination
+                    baseUrl.searchParams.append('sort_field', this.sort_field);
+                    baseUrl.searchParams.append('sort_direction', this.sort_direction);
+                    baseUrl.searchParams.append('page', page);
+
+                    // Add cache buster
+                    baseUrl.searchParams.append('_', Date.now());
+
+                    this.isLoading = true;
+
+                    fetch(baseUrl.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.isLoading = false;
+
+                            if (data.error) {
+                                this.tableHtml =
+                                    `<tr><td colspan="8" class="px-5 py-10 text-center text-red-500">${data.error}</td></tr>`;
+                                this.paginationHtml = '';
+                                return;
+                            }
+
+                            this.tableHtml = data.table_html;
+                            this.paginationHtml = data.pagination_html;
+                            this.sort_field = data.sort_field || this.sort_field;
+                            this.sort_direction = data.sort_direction || this.sort_direction;
+
+                            // Setup listeners again for new pagination links
+                            this.$nextTick(() => {
+                                this.setupPaginationListeners();
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error in pagination:', error);
+                            this.isLoading = false;
+                            this.tableHtml =
+                                `<tr><td colspan="8" class="px-5 py-10 text-center text-red-500">Error: ${error.message}</td></tr>`;
+                            this.paginationHtml = '';
+                        });
+                },
             };
         }
 
