@@ -236,7 +236,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('bill_of_material.create'))
-                <a href="{{ route('bom.create') }}"
+                <a href="{{ route('produksi.bom.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
