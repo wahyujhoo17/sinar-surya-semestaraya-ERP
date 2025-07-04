@@ -538,9 +538,8 @@
                         </div>
 
                         {{-- Pagination --}}
-                        <div
-                            class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6">
-                            {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
+                        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
+                            {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.kas-dan-bank') }}
                         </div>
                     @endif
                 </div>
@@ -922,11 +921,13 @@
 
         // Fungsi untuk attach event listeners pada pagination links
         function attachPaginationListeners() {
-            const paginationLinks = document.querySelectorAll('.pagination a');
+            // Gunakan selector yang lebih spesifik untuk pagination links
+            const paginationLinks = document.querySelectorAll('.pagination-link');
 
             paginationLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
+                    console.log('Pagination clicked:', this.href);
                     loadData(this.href);
                 });
             });

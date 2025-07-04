@@ -294,25 +294,70 @@ class RekonsiliasiBankController extends Controller
     public function getReconciliationHistory(Request $request)
     {
         try {
+            // Debug logging
+            Log::info('=== DEBUG getReconciliationHistory ===', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'Unknown',
+                'request_params' => $request->all(),
+                'rekening_id' => $request->rekening_id,
+                'periode' => $request->periode,
+                'status' => $request->status
+            ]);
+
             $query = RekonsiliasiBankHistory::with(['rekeningBank', 'user'])
                 ->orderBy('created_at', 'desc');
+
+            // Debug: count total records before filtering
+            $totalRecords = RekonsiliasiBankHistory::count();
+            Log::info('Total records in database:', ['count' => $totalRecords]);
 
             // Filter berdasarkan rekening
             if ($request->rekening_id) {
                 $query->where('rekening_bank_id', $request->rekening_id);
+                Log::info('Applied rekening filter:', ['rekening_id' => $request->rekening_id]);
             }
 
             // Filter berdasarkan periode
             if ($request->periode) {
-                $query->where('bulan', $request->periode);
+                // Format periode: YYYY-MM (dari frontend) -> extract bulan saja
+                if (strpos($request->periode, '-') !== false) {
+                    $periodeParts = explode('-', $request->periode);
+                    $tahun = $periodeParts[0];
+                    $bulan = $periodeParts[1]; // Format: MM (e.g., "06")
+
+                    $query->where('tahun', $tahun)
+                        ->where('bulan', $bulan);
+
+                    Log::info('Applied periode filter (YYYY-MM):', [
+                        'periode_input' => $request->periode,
+                        'tahun' => $tahun,
+                        'bulan' => $bulan
+                    ]);
+                } else {
+                    // Fallback: jika hanya bulan saja
+                    $query->where('bulan', $request->periode);
+                    Log::info('Applied periode filter (bulan only):', ['periode' => $request->periode]);
+                }
             }
 
             // Filter berdasarkan status
             if ($request->status) {
                 $query->where('status', $request->status);
+                Log::info('Applied status filter:', ['status' => $request->status]);
             }
 
+            // Debug: check query after filters
+            $queryCount = $query->count();
+            Log::info('Records after filters:', ['count' => $queryCount]);
+
             $reconciliations = $query->paginate($request->per_page ?? 15);
+
+            Log::info('Pagination result:', [
+                'total' => $reconciliations->total(),
+                'count' => $reconciliations->count(),
+                'current_page' => $reconciliations->currentPage(),
+                'per_page' => $reconciliations->perPage()
+            ]);
 
             // Transformasi data untuk frontend
             $reconciliations->getCollection()->transform(function ($item) {
@@ -677,11 +722,12 @@ class RekonsiliasiBankController extends Controller
             // Return CSV file
             $fileName = 'Rekonsiliasi_' . $rekening->nama_bank . '_' . $data['periode'] . '_' . date('YmdHis') . '.csv';
 
-            return response($csvData)
-                ->header('Content-Type', 'text/csv')
-                ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
-                ->header('Cache-Control', 'must-revalidate, post-check=0, pre-check=0')
-                ->header('Pragma', 'public');
+            return response($csvData, 200, [
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'public'
+            ]);
         } catch (\Exception $e) {
             Log::error('Error exporting reconciliation:', [
                 'error' => $e->getMessage(),
@@ -800,679 +846,11 @@ class RekonsiliasiBankController extends Controller
         // Convert array to CSV string
         $output = '';
         foreach ($csv as $row) {
-            $output .= '"' . implode('","', $row) . '"' . "\n";
+            $output .= implode(',', array_map(function ($field) {
+                return '"' . str_replace('"', '""', $field) . '"';
+            }, $row)) . "\n";
         }
 
         return $output;
-    }
-
-    /**
-     * Helper method untuk mendapatkan status badge
-     */
-    private function getStatusBadge($status)
-    {
-        $badges = [
-            'pending' => ['class' => 'bg-yellow-100 text-yellow-800', 'text' => 'Pending'],
-            'balanced' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Seimbang'],
-            'reviewed' => ['class' => 'bg-blue-100 text-blue-800', 'text' => 'Reviewed'],
-            'approved' => ['class' => 'bg-green-100 text-green-800', 'text' => 'Approved'],
-            'rejected' => ['class' => 'bg-red-100 text-red-800', 'text' => 'Rejected']
-        ];
-
-        return $badges[$status] ?? ['class' => 'bg-gray-100 text-gray-800', 'text' => 'Unknown'];
-    }
-
-    /**
-     * Upload and parse bank statement file
-     */
-    public function uploadBankStatement(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|file|mimes:pdf,xlsx,xls,csv|max:10240', // Max 10MB
-            'rekening_id' => 'required|exists:rekening_bank,id',
-            'periode' => 'required|string' // Format: YYYY-MM
-        ]);
-
-        try {
-            $file = $request->file('file');
-            $fileName = time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('bank_statements', $fileName, 'public');
-
-            Log::info('Bank statement file uploaded:', [
-                'file_name' => $fileName,
-                'file_path' => $filePath,
-                'rekening_id' => $request->rekening_id,
-                'periode' => $request->periode
-            ]);
-
-            // Parse the file based on its type
-            $transactions = $this->parseStatementFile($file);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Bank statement uploaded and parsed successfully',
-                'data' => [
-                    'file_path' => $filePath,
-                    'transactions' => $transactions,
-                    'total_transactions' => count($transactions),
-                    'total_debit' => collect($transactions)->where('type', 'debit')->sum('amount'),
-                    'total_credit' => collect($transactions)->where('type', 'credit')->sum('amount')
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error uploading bank statement:', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to upload bank statement: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Parse statement file based on file type
-     */
-    private function parseStatementFile($file)
-    {
-        $extension = strtolower($file->getClientOriginalExtension());
-
-        switch ($extension) {
-            case 'csv':
-                return $this->processCsvStatement($file);
-            case 'xlsx':
-            case 'xls':
-                return $this->processExcelStatement($file);
-            case 'pdf':
-                return $this->processPdfStatement($file);
-            default:
-                throw new \Exception('Unsupported file format: ' . $extension);
-        }
-    }
-
-    /**
-     * Add manual bank transaction
-     */
-    public function addManualBankTransaction(Request $request)
-    {
-        $request->validate([
-            'date' => 'required|date',
-            'description' => 'required|string|max:255',
-            'amount' => 'required|numeric|not_in:0',
-            'type' => 'required|string|in:credit,debit',
-            'reference' => 'nullable|string|max:100'
-        ]);
-
-        try {
-            // Generate unique ID for manual transaction
-            $transactionId = 'MANUAL_' . time() . '_' . rand(1000, 9999);
-
-            $transaction = [
-                'id' => $transactionId,
-                'date' => $request->date,
-                'description' => $request->description,
-                'amount' => abs($request->amount), // Always positive, type determines debit/credit
-                'type' => $request->type,
-                'reference' => $request->reference ?? $transactionId,
-                'matched' => false,
-                'isManual' => true
-            ];
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Manual bank transaction added successfully',
-                'transaction' => $transaction
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error adding manual bank transaction:', [
-                'error' => $e->getMessage(),
-                'request_data' => $request->all()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add manual transaction: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Enhanced auto-matching with better algorithms
-     */
-    public function enhancedAutoMatch(Request $request)
-    {
-        $erpTransactions = $request->erp_transactions ?? [];
-        $bankTransactions = $request->bank_transactions ?? [];
-
-        $matched = [];
-        $suggestions = [];
-
-        foreach ($erpTransactions as $erpIndex => $erpTx) {
-            if (isset($matched['erp'][$erpIndex])) {
-                continue;
-            }
-
-            $bestMatch = null;
-            $bestScore = 0;
-
-            foreach ($bankTransactions as $bankIndex => $bankTx) {
-                if (isset($matched['bank'][$bankIndex])) {
-                    continue;
-                }
-
-                $score = $this->calculateMatchScore($erpTx, $bankTx);
-
-                if ($score > $bestScore && $score >= 0.8) { // 80% threshold
-                    $bestScore = $score;
-                    $bestMatch = $bankIndex;
-                }
-            }
-
-            if ($bestMatch !== null) {
-                $matched['erp'][$erpIndex] = true;
-                $matched['bank'][$bestMatch] = true;
-
-                $suggestions[] = [
-                    'erp_index' => $erpIndex,
-                    'bank_index' => $bestMatch,
-                    'score' => $bestScore,
-                    'confidence' => $this->getConfidenceLevel($bestScore)
-                ];
-            }
-        }
-
-        return response()->json([
-            'success' => true,
-            'matched' => $matched,
-            'suggestions' => $suggestions,
-            'total_matched' => count($suggestions),
-            'message' => 'Enhanced auto-matching completed'
-        ]);
-    }
-
-    /**
-     * Calculate match score between ERP and bank transactions
-     */
-    private function calculateMatchScore($erpTx, $bankTx)
-    {
-        $score = 0;
-        $totalFactors = 0;
-
-        // Amount matching (most important factor - 40%)
-        if (abs($erpTx['amount']) == abs($bankTx['amount'])) {
-            $score += 0.4;
-        } elseif (abs(abs($erpTx['amount']) - abs($bankTx['amount'])) <= 1) {
-            $score += 0.3; // Close match (rounding differences)
-        }
-        $totalFactors += 0.4;
-
-        // Date matching (30%)
-        $erpDate = Carbon::parse($erpTx['date']);
-        $bankDate = Carbon::parse($bankTx['date']);
-        $daysDiff = abs($erpDate->diffInDays($bankDate));
-
-        if ($daysDiff == 0) {
-            $score += 0.3;
-        } elseif ($daysDiff <= 1) {
-            $score += 0.2; // 1 day difference
-        } elseif ($daysDiff <= 3) {
-            $score += 0.1; // 2-3 days difference
-        }
-        $totalFactors += 0.3;
-
-        // Type matching (20%)
-        if ($erpTx['type'] == $bankTx['type']) {
-            $score += 0.2;
-        }
-        $totalFactors += 0.2;
-
-        // Reference/description similarity (10%)
-        $erpRef = strtolower($erpTx['reference'] ?? $erpTx['description'] ?? '');
-        $bankRef = strtolower($bankTx['reference'] ?? $bankTx['description'] ?? '');
-
-        if ($erpRef && $bankRef) {
-            $similarity = 0;
-            similar_text($erpRef, $bankRef, $similarity);
-            $score += ($similarity / 100) * 0.1;
-        }
-        $totalFactors += 0.1;
-
-        return $totalFactors > 0 ? $score / $totalFactors : 0;
-    }
-
-    /**
-     * Get confidence level based on match score
-     */
-    private function getConfidenceLevel($score)
-    {
-        if ($score >= 0.95) {
-            return 'very_high';
-        } elseif ($score >= 0.85) {
-            return 'high';
-        } elseif ($score >= 0.7) {
-            return 'medium';
-        } elseif ($score >= 0.5) {
-            return 'low';
-        } else {
-            return 'very_low';
-        }
-    }
-
-    /**
-     * Bulk match transactions
-     */
-    public function bulkMatchTransactions(Request $request)
-    {
-        $request->validate([
-            'matches' => 'required|array',
-            'matches.*.erp_index' => 'required|integer',
-            'matches.*.bank_index' => 'required|integer'
-        ]);
-
-        try {
-            $matches = $request->matches;
-            $matched = [
-                'erp' => [],
-                'bank' => []
-            ];
-
-            foreach ($matches as $match) {
-                $matched['erp'][$match['erp_index']] = true;
-                $matched['bank'][$match['bank_index']] = true;
-            }
-
-            return response()->json([
-                'success' => true,
-                'matched' => $matched,
-                'total_matches' => count($matches),
-                'message' => 'Bulk matching completed successfully'
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error in bulk matching:', [
-                'error' => $e->getMessage(),
-                'matches' => $request->matches
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to complete bulk matching: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    // Helper methods
-
-    /**
-     * Get opening balance for the specified period
-     */
-    private function getSaldoAwal($rekeningId, $tahun, $bulan)
-    {
-        // Calculate opening balance for the period
-        // This gets all transactions before the specified period
-        $previousTransactions = TransaksiBank::where('rekening_bank_id', $rekeningId)
-            ->where(function ($query) use ($tahun, $bulan) {
-                $query->whereYear('tanggal_transaksi', '<', $tahun)
-                    ->orWhere(function ($q) use ($tahun, $bulan) {
-                        $q->whereYear('tanggal_transaksi', $tahun)
-                            ->whereMonth('tanggal_transaksi', '<', $bulan);
-                    });
-            })
-            ->get();
-
-        $totalDebet = $previousTransactions->where('jenis_transaksi', 'debet')->sum('jumlah');
-        $totalKredit = $previousTransactions->where('jenis_transaksi', 'kredit')->sum('jumlah');
-
-        return $totalDebet - $totalKredit;
-    }
-
-    /**
-     * Process CSV statement file
-     */
-    private function processCsvStatement($file)
-    {
-        $transactions = [];
-        $handle = fopen($file->getPathname(), 'r');
-
-        if ($handle !== false) {
-            // Try to detect CSV format by reading first few lines
-            $header = fgetcsv($handle); // Read header row
-            $sampleRow = fgetcsv($handle); // Read first data row
-
-            // Reset file pointer to beginning
-            fseek($handle, 0);
-            fgetcsv($handle); // Skip header again
-
-            // Detect bank format based on header structure
-            $format = $this->detectBankFormat($header, $sampleRow);
-
-            Log::info('CSV Bank Statement Processing:', [
-                'header' => $header,
-                'sample_row' => $sampleRow,
-                'detected_format' => $format
-            ]);
-
-            $rowNumber = 1;
-            while (($data = fgetcsv($handle)) !== false) {
-                $rowNumber++;
-
-                try {
-                    $transaction = $this->parseCsvRow($data, $format, $rowNumber);
-                    if ($transaction) {
-                        $transactions[] = $transaction;
-                    }
-                } catch (\Exception $e) {
-                    Log::warning("Error parsing CSV row {$rowNumber}: " . $e->getMessage(), [
-                        'row_data' => $data
-                    ]);
-                    // Continue processing other rows
-                }
-            }
-
-            fclose($handle);
-        }
-
-        return $transactions;
-    }
-
-    /**
-     * Process Excel statement file
-     */
-    private function processExcelStatement($file)
-    {
-        // For now, return empty array
-        // In production, you would use a library like PhpSpreadsheet
-        // to read Excel files and extract transaction data
-
-        // Example implementation would be:
-        // $reader = IOFactory::createReader('Xlsx');
-        // $spreadsheet = $reader->load($file->getPathname());
-        // $worksheet = $spreadsheet->getActiveSheet();
-        // ... process rows ...
-
-        return [];
-    }
-
-    /**
-     * Process PDF statement file
-     */
-    private function processPdfStatement($file)
-    {
-        // For now, return empty array
-        // In production, you would use a PDF parsing library
-        // to extract transaction data from PDF bank statements
-
-        // Example implementation would be:
-        // $parser = new PDFParser();
-        // $pdf = $parser->parseFile($file->getPathname());
-        // $text = $pdf->getText();
-        // ... parse transaction data from text ...
-
-        return [];
-    }
-
-    /**
-     * Detect bank format based on CSV header
-     */
-    private function detectBankFormat($header, $sampleRow)
-    {
-        // Convert to lowercase for comparison
-        $headerStr = strtolower(implode(',', $header ?? []));
-
-        // Common bank formats
-        if (strpos($headerStr, 'tanggal') !== false && strpos($headerStr, 'keterangan') !== false) {
-            return 'bca'; // BCA format
-        } elseif (strpos($headerStr, 'tgl') !== false && strpos($headerStr, 'uraian') !== false) {
-            return 'mandiri'; // Bank Mandiri format
-        } elseif (strpos($headerStr, 'date') !== false && strpos($headerStr, 'description') !== false) {
-            return 'bni'; // BNI format (English)
-        } elseif (strpos($headerStr, 'posting') !== false && strpos($headerStr, 'desc') !== false) {
-            return 'bri'; // BRI format
-        }
-
-        // Default generic format
-        return 'generic';
-    }
-
-    /**
-     * Parse CSV row based on detected format
-     */
-    private function parseCsvRow($data, $format, $rowNumber)
-    {
-        switch ($format) {
-            case 'bca':
-                return $this->parseBcaFormat($data, $rowNumber);
-            case 'mandiri':
-                return $this->parseMandiriFormat($data, $rowNumber);
-            case 'bni':
-                return $this->parseBniFormat($data, $rowNumber);
-            case 'bri':
-                return $this->parseBriFormat($data, $rowNumber);
-            default:
-                return $this->parseGenericFormat($data, $rowNumber);
-        }
-    }
-
-    /**
-     * Parse BCA format CSV
-     */
-    private function parseBcaFormat($data, $rowNumber)
-    {
-        // BCA format: Tanggal, Keterangan, CBG, Mutasi, Saldo
-        if (count($data) < 4) {
-            return null;
-        }
-
-        $date = $this->parseDate($data[0]);
-        $description = trim($data[1] ?? '');
-        $amount = $this->parseAmount($data[3] ?? '0');
-
-        if (!$date || !$description || $amount == 0) {
-            return null;
-        }
-
-        return [
-            'date' => $date,
-            'reference' => 'BCA-' . $rowNumber,
-            'description' => $description,
-            'amount' => $amount,
-            'type' => $amount > 0 ? 'credit' : 'debit'
-        ];
-    }
-
-    /**
-     * Parse Mandiri format CSV
-     */
-    private function parseMandiriFormat($data, $rowNumber)
-    {
-        // Mandiri format: Tgl, Uraian, Debet, Kredit, Saldo
-        if (count($data) < 5) {
-            return null;
-        }
-
-        $date = $this->parseDate($data[0]);
-        $description = trim($data[1] ?? '');
-        $debit = $this->parseAmount($data[2] ?? '0');
-        $credit = $this->parseAmount($data[3] ?? '0');
-
-        $amount = $credit > 0 ? $credit : -$debit;
-
-        if (!$date || !$description || $amount == 0) {
-            return null;
-        }
-
-        return [
-            'date' => $date,
-            'reference' => 'MDR-' . $rowNumber,
-            'description' => $description,
-            'amount' => $amount,
-            'type' => $amount > 0 ? 'credit' : 'debit'
-        ];
-    }
-
-    /**
-     * Parse BNI format CSV
-     */
-    private function parseBniFormat($data, $rowNumber)
-    {
-        // BNI format: Date, Description, Amount, Balance
-        if (count($data) < 3) {
-            return null;
-        }
-
-        $date = $this->parseDate($data[0]);
-        $description = trim($data[1] ?? '');
-        $amount = $this->parseAmount($data[2] ?? '0');
-
-        if (!$date || !$description || $amount == 0) {
-            return null;
-        }
-
-        return [
-            'date' => $date,
-            'reference' => 'BNI-' . $rowNumber,
-            'description' => $description,
-            'amount' => $amount,
-            'type' => $amount > 0 ? 'credit' : 'debit'
-        ];
-    }
-
-    /**
-     * Parse BRI format CSV
-     */
-    private function parseBriFormat($data, $rowNumber)
-    {
-        // BRI format: Posting Date, Desc, Debit, Credit, Balance
-        if (count($data) < 5) {
-            return null;
-        }
-
-        $date = $this->parseDate($data[0]);
-        $description = trim($data[1] ?? '');
-        $debit = $this->parseAmount($data[2] ?? '0');
-        $credit = $this->parseAmount($data[3] ?? '0');
-
-        $amount = $credit > 0 ? $credit : -$debit;
-
-        if (!$date || !$description || $amount == 0) {
-            return null;
-        }
-
-        return [
-            'date' => $date,
-            'reference' => 'BRI-' . $rowNumber,
-            'description' => $description,
-            'amount' => $amount,
-            'type' => $amount > 0 ? 'credit' : 'debit'
-        ];
-    }
-
-    /**
-     * Parse generic format CSV
-     */
-    private function parseGenericFormat($data, $rowNumber)
-    {
-        // Generic format: assume Date, Description, Amount structure
-        if (count($data) < 3) {
-            return null;
-        }
-
-        $date = $this->parseDate($data[0]);
-        $description = trim($data[1] ?? '');
-        $amount = $this->parseAmount($data[2] ?? '0');
-
-        if (!$date || !$description || $amount == 0) {
-            return null;
-        }
-
-        return [
-            'date' => $date,
-            'reference' => 'GEN-' . $rowNumber,
-            'description' => $description,
-            'amount' => $amount,
-            'type' => $amount > 0 ? 'credit' : 'debit'
-        ];
-    }
-
-    /**
-     * Parse date from various formats
-     */
-    private function parseDate($dateString)
-    {
-        try {
-            // Try various date formats
-            $formats = [
-                'd/m/Y',
-                'd-m-Y',
-                'Y-m-d',
-                'd/m/y',
-                'd-m-y',
-                'm/d/Y',
-                'm-d-Y'
-            ];
-
-            foreach ($formats as $format) {
-                $date = \DateTime::createFromFormat($format, trim($dateString));
-                if ($date !== false) {
-                    return $date->format('Y-m-d');
-                }
-            }
-
-            // Try Carbon parsing as fallback
-            return Carbon::parse($dateString)->format('Y-m-d');
-        } catch (\Exception $e) {
-            Log::warning("Unable to parse date: {$dateString}");
-            return null;
-        }
-    }
-
-    /**
-     * Parse amount from various formats
-     */
-    private function parseAmount($amountString)
-    {
-        try {
-            // Remove common currency symbols and formatting
-            $cleaned = preg_replace('/[^\d\-\.,]/', '', trim($amountString));
-
-            // Handle different decimal separators
-            if (substr_count($cleaned, '.') > 1) {
-                // Multiple dots, assume thousands separator
-                $cleaned = str_replace('.', '', $cleaned);
-            } elseif (substr_count($cleaned, ',') > 1) {
-                // Multiple commas, assume thousands separator
-                $parts = explode(',', $cleaned);
-                $cleaned = implode('', array_slice($parts, 0, -1)) . '.' . end($parts);
-            } elseif (strpos($cleaned, ',') !== false && strpos($cleaned, '.') !== false) {
-                // Both comma and dot, determine which is decimal
-                $lastComma = strrpos($cleaned, ',');
-                $lastDot = strrpos($cleaned, '.');
-
-                if ($lastDot > $lastComma) {
-                    // Dot is decimal separator
-                    $cleaned = str_replace(',', '', $cleaned);
-                } else {
-                    // Comma is decimal separator
-                    $cleaned = str_replace('.', '', $cleaned);
-                    $cleaned = str_replace(',', '.', $cleaned);
-                }
-            } elseif (strpos($cleaned, ',') !== false) {
-                // Only comma, could be thousands or decimal
-                $parts = explode(',', $cleaned);
-                if (count($parts) == 2 && strlen(end($parts)) <= 2) {
-                    // Likely decimal separator
-                    $cleaned = str_replace(',', '.', $cleaned);
-                } else {
-                    // Likely thousands separator
-                    $cleaned = str_replace(',', '', $cleaned);
-                }
-            }
-
-            return floatval($cleaned);
-        } catch (\Exception $e) {
-            Log::warning("Unable to parse amount: {$amountString}");
-            return 0;
-        }
     }
 }

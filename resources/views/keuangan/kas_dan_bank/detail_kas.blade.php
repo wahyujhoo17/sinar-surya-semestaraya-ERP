@@ -596,9 +596,9 @@
                         </div>
 
                         {{-- Pagination --}}
-                        <div class="bg-white dark:bg-gray-800 px-4 py-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700 sm:px-6 kas-pagination"
+                        <div class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 kas-pagination"
                             x-data="{ paginationLinks: true }">
-                            {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
+                            {{ $transaksi->appends(request()->except('page'))->links('vendor.pagination.kas-dan-bank') }}
                         </div>
                     @endif
                 </div>
@@ -992,8 +992,16 @@
 
         // Fungsi untuk attach event listeners pada pagination links
         function attachPaginationListeners() {
-            // We don't need to attach click events anymore since Alpine.js handles it
-            const paginationLinks = document.querySelectorAll('#tableContent .kas-pagination .pagination a');
+            const paginationLinks = document.querySelectorAll('#tableContent .kas-pagination .pagination-link');
+            console.log('Found pagination links:', paginationLinks.length);
+
+            paginationLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Pagination clicked:', this.href);
+                    loadData(this.href);
+                });
+            });
         }
 
         // Attach event listeners pada pagination links saat halaman pertama kali dimuat
