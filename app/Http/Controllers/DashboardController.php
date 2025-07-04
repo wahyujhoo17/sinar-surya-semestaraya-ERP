@@ -372,7 +372,7 @@ class DashboardController extends Controller
             ->get();
 
         // Stok di gudang produksi
-        $gudangProduksi = Gudang::where('tipe', 'produksi')->first();
+        $gudangProduksi = Gudang::where('jenis', 'produksi')->first();
         $stokProduksi = $gudangProduksi ? StokProduk::where('gudang_id', $gudangProduksi->id)
             ->with('produk')
             ->orderBy('jumlah', 'asc')
