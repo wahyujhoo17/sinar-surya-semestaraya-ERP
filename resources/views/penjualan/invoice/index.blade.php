@@ -590,7 +590,12 @@
                         document.querySelectorAll('nav[aria-label="Pagination"] a, .pagination a').forEach(link => {
                             link.addEventListener('click', (e) => {
                                 e.preventDefault();
-                                this.fetchTable(link.href);
+                                let href = link.href;
+                                // Ensure HTTPS protocol if current page is HTTPS
+                                if (window.location.protocol === 'https:') {
+                                    href = href.replace(/^http:/, 'https:');
+                                }
+                                this.fetchTable(href);
                             });
                         });
                     });
@@ -650,6 +655,11 @@
                     }
 
                     let baseUrl = pageUrl || `{{ route('penjualan.invoice.index') }}`;
+
+                    // Ensure HTTPS protocol if current page is HTTPS
+                    if (pageUrl && window.location.protocol === 'https:') {
+                        baseUrl = pageUrl.replace(/^http:/, 'https:');
+                    }
 
                     // Handle URLs that already have query parameters
                     let url = new URL(baseUrl, window.location.origin);
@@ -721,7 +731,12 @@
                                     .forEach(link => {
                                         link.addEventListener('click', (e) => {
                                             e.preventDefault();
-                                            this.fetchTable(link.href);
+                                            let href = link.href;
+                                            // Ensure HTTPS protocol if current page is HTTPS
+                                            if (window.location.protocol === 'https:') {
+                                                href = href.replace(/^http:/, 'https:');
+                                            }
+                                            this.fetchTable(href);
                                         });
                                     });
 

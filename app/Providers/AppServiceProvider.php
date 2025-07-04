@@ -22,10 +22,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-
-        if (env('APP_ENV') === 'production') {
+        // Force HTTPS in production or when running behind a proxy
+        if (
+            env('APP_ENV') === 'production' ||
+            request()->header('X-Forwarded-Proto') === 'https' ||
+            request()->isSecure()
+        ) {
             URL::forceScheme('https');
         }
+
         Blade::component('table-header', TableHeader::class);
     }
 }

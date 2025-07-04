@@ -23,11 +23,12 @@ class InvoiceController extends Controller
     {
         $prefix = 'INV-';
         $date = now()->format('Ymd');
+        $pattern = $prefix . $date . '-';
 
-        // PostgreSQL compatible query - convert substring to integer instead of UNSIGNED
+        // MySQL compatible query - use RIGHT function to extract last 3 digits
         $lastInvoice = DB::table('invoice')
-            ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->where('nomor', 'like', $pattern . '%')
+            ->selectRaw('MAX(CAST(RIGHT(nomor, 3) AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
