@@ -12,7 +12,7 @@
                 {{-- Quick Transaction Button --}}
                 <div class="mt-4 sm:mt-0">
                     <button type="button"
-                        onclick="console.log('Button clicked, dispatching event'); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {}}));"
+                        {{-- onclick="console.log('Button clicked, dispatching event'); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {}}));" --}}
                         class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5">
                         <svg class="mr-2 -ml-1 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -276,7 +276,7 @@
                                                 Transaksi
                                             </button>
                                             <button type="button"
-                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-kas-modal', {detail: {mode: 'edit', kas: {{ json_encode($kas) }}}}));"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-kas-modal', {detail: {mode: 'edit', kas: {{ Js::from($kas) }}}}));"
                                                 class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
                                                 <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -443,7 +443,7 @@
                                                 Transaksi
                                             </button>
                                             <button type="button"
-                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-rekening-modal', {detail: {mode: 'edit', rekening: {{ json_encode($rekening) }}}}));"
+                                                onclick="event.preventDefault(); event.stopPropagation(); window.dispatchEvent(new CustomEvent('open-rekening-modal', {detail: {mode: 'edit', rekening: {{ Js::from($rekening) }}}}));"
                                                 class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
                                                 <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -646,15 +646,15 @@
 
     {{-- Initialize Transaction Modal --}}
     <script>
-        console.log('Script section loaded');
+        // console.log('Script section loaded');
 
         // Listen for custom events and log them
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('DOM loaded, setting up event listeners');
+            // console.log('DOM loaded, setting up event listeners');
 
             // Listen for transaction modal events
             window.addEventListener('open-transaksi-modal', (event) => {
-                console.log('Global open-transaksi-modal event received:', event.detail);
+                // console.log('Global open-transaksi-modal event received:', event.detail);
             });
         });
     </script>
@@ -662,7 +662,7 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM loaded for kas dan bank page');
+                // console.log('DOM loaded for kas dan bank page');
             });
         </script>
     @endpush

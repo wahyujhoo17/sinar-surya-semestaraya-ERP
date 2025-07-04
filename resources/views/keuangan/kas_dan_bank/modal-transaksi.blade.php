@@ -1,8 +1,8 @@
 {{-- Define modalTransaksiManager function globally before Alpine initialization --}}
 <script>
-    console.log('modalTransaksiManager script loading...'); // Debug log
+    // console.log('modalTransaksiManager script loading...'); // Debug log
     window.modalTransaksiManager = function() {
-        console.log('modalTransaksiManager function called'); // Debug log
+        // console.log('modalTransaksiManager function called'); // Debug log
         return {
             isOpen: false,
             loading: false,
@@ -34,16 +34,16 @@
             journalPreview: [],
 
             init() {
-                console.log('Modal component initialized');
+                // console.log('Modal component initialized');
                 // Listen for global modal open events
                 window.addEventListener('open-transaksi-modal', (event) => {
-                    console.log('Received open-transaksi-modal event:', event.detail);
+                    // console.log('Received open-transaksi-modal event:', event.detail);
                     this.openModal(event.detail || {});
                 });
             },
 
             openModal(data = {}) {
-                console.log('openModal called with data:', data);
+                // console.log('openModal called with data:', data);
                 this.resetForm();
 
                 // Set account data if provided
@@ -116,25 +116,25 @@
 
             async loadAvailableAccounts() {
                 if (!this.formData.account_type) {
-                    console.log('No account type selected');
+                    // console.log('No account type selected');
                     return;
                 }
 
-                console.log('Loading accounts for type:', this.formData.account_type);
+                // console.log('Loading accounts for type:', this.formData.account_type);
 
                 try {
                     const endpoint = this.formData.account_type === 'kas' ? '/api/kas/active' :
                         '/api/rekening-bank/active';
 
-                    console.log('Fetching from endpoint:', endpoint);
+                    // console.log('Fetching from endpoint:', endpoint);
                     const response = await fetch(endpoint);
                     const data = await response.json();
 
-                    console.log('API Response:', data);
+                    // console.log('API Response:', data);
 
                     if (data.success) {
                         this.availableAccounts = data.data;
-                        console.log('Available accounts loaded:', this.availableAccounts);
+                        // console.log('Available accounts loaded:', this.availableAccounts);
                     } else {
                         console.error('API Error:', data.message);
                         this.showAlert('error', data.message || 'Gagal memuat data akun');
@@ -146,16 +146,16 @@
             },
 
             async loadContraAccounts() {
-                console.log('Loading contra accounts...');
+                // console.log('Loading contra accounts...');
                 try {
                     const response = await fetch('/api/accounts/chart-of-accounts');
                     const data = await response.json();
 
-                    console.log('Contra accounts API response:', data);
+                    // console.log('Contra accounts API response:', data);
 
                     if (data.success) {
                         this.contraAccounts = data.data;
-                        console.log('Contra accounts loaded:', this.contraAccounts);
+                        // console.log('Contra accounts loaded:', this.contraAccounts);
                     } else {
                         console.error('API Error:', data.message);
                         this.showAlert('error', data.message || 'Gagal memuat chart of accounts');
@@ -167,12 +167,12 @@
             },
 
             get filteredContraAccounts() {
-                console.log('filteredContraAccounts called');
-                console.log('formData.jenis:', this.formData.jenis);
-                console.log('contraAccounts:', this.contraAccounts);
+                // console.log('filteredContraAccounts called');
+                // console.log('formData.jenis:', this.formData.jenis);
+                // console.log('contraAccounts:', this.contraAccounts);
 
                 if (!this.formData.jenis) {
-                    console.log('No jenis selected, returning all contra accounts');
+                    // console.log('No jenis selected, returning all contra accounts');
                     return this.contraAccounts;
                 }
 
@@ -180,7 +180,7 @@
                     const accountKategori = account.kategori?.toLowerCase();
                     const accountNama = account.nama?.toLowerCase();
 
-                    console.log(`Checking account: ${account.nama} (kategori: ${account.kategori})`);
+                    // console.log(`Checking account: ${account.nama} (kategori: ${account.kategori})`);
 
                     if (this.formData.jenis === 'masuk') {
                         // For income: show income, liability, equity accounts
@@ -189,7 +189,7 @@
                         ].some(keyword =>
                             accountNama?.includes(keyword)
                         );
-                        console.log(`Income check for ${account.nama}: ${isValid}`);
+                        // console.log(`Income check for ${account.nama}: ${isValid}`);
                         return isValid;
                     } else if (this.formData.jenis === 'keluar') {
                         // For expense: show expense, asset accounts (excluding kas/bank)
@@ -198,14 +198,14 @@
                         ].some(keyword =>
                             accountNama?.includes(keyword)
                         );
-                        console.log(`Expense check for ${account.nama}: ${isValid}`);
+                        // console.log(`Expense check for ${account.nama}: ${isValid}`);
                         return isValid;
                     }
 
                     return true;
                 });
 
-                console.log('Filtered contra accounts:', filtered);
+                // console.log('Filtered contra accounts:', filtered);
                 return filtered;
             },
 

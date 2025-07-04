@@ -3,7 +3,7 @@
     <script>
         // Define the toggleChildren function directly in the page scope
         function toggleChildren(button) {
-            console.log('toggleChildren called');
+            // console.log('toggleChildren called');
 
             // Get parent row
             const row = button.closest('tr');
@@ -18,7 +18,7 @@
                 isExpanded = !childRows[0].classList.contains('hidden');
             }
 
-            console.log('Toggle children for parent ID:', parentId, 'Currently expanded:', isExpanded);
+            // console.log('Toggle children for parent ID:', parentId, 'Currently expanded:', isExpanded);
 
             // Toggle visibility of child rows
             childRows.forEach(childRow => {
@@ -44,8 +44,8 @@
                     childRow.classList.remove('hidden');
                 }
 
-                console.log('Toggling child with ID:', childRow.getAttribute('data-id'),
-                    'New state:', isExpanded ? 'hidden' : 'visible');
+                // console.log('Toggling child with ID:', childRow.getAttribute('data-id'),
+                //     'New state:', isExpanded ? 'hidden' : 'visible');
             });
 
             // Rotate the icon based on expanded state
@@ -595,23 +595,23 @@
         <script>
             // Debug code only
             document.addEventListener('DOMContentLoaded', function() {
-                console.log('DOM loaded - debug child rows');
+                // console.log('DOM loaded - debug child rows');
 
                 // Debug info for all table rows
                 var allParentRows = document.querySelectorAll('tr.parent-row');
                 var allChildRows = document.querySelectorAll('tr.child-row');
 
-                console.log('Parent rows:', allParentRows.length);
-                console.log('Child rows:', allChildRows.length);
+                // console.log('Parent rows:', allParentRows.length);
+                // console.log('Child rows:', allChildRows.length);
 
                 // Log details about each child row
                 allChildRows.forEach(function(row, index) {
-                    console.log('Child row ' + index + ':',
-                        'Parent ID:', row.getAttribute('data-parent'),
-                        'ID:', row.getAttribute('data-id'),
-                        'Level:', row.getAttribute('data-level'),
-                        'Hidden:', row.classList.contains('hidden')
-                    );
+                    // console.log('Child row ' + index + ':',
+                    //     'Parent ID:', row.getAttribute('data-parent'),
+                    //     'ID:', row.getAttribute('data-id'),
+                    //     'Level:', row.getAttribute('data-level'),
+                    //     'Hidden:', row.classList.contains('hidden')
+                    // );
                 });
 
                 // Add rotate-90 CSS
@@ -629,7 +629,7 @@
 
             // Define the toggleChildren function in the global scope
             function toggleChildren(button) {
-                console.log('toggleChildren called');
+                // console.log('toggleChildren called');
 
                 // Get parent row
                 const row = button.closest('tr');
@@ -644,7 +644,7 @@
                     isExpanded = !childRows[0].classList.contains('hidden');
                 }
 
-                console.log('Toggle children for parent ID:', parentId, 'Currently expanded:', isExpanded);
+                // console.log('Toggle children for parent ID:', parentId, 'Currently expanded:', isExpanded);
 
                 // Toggle visibility of child rows
                 childRows.forEach(childRow => {
@@ -670,8 +670,8 @@
                         childRow.classList.remove('hidden');
                     }
 
-                    console.log('Toggling child with ID:', childRow.getAttribute('data-id'),
-                        'New state:', isExpanded ? 'hidden' : 'visible');
+                    // console.log('Toggling child with ID:', childRow.getAttribute('data-id'),
+                    //     'New state:', isExpanded ? 'hidden' : 'visible');
                 });
 
                 // Rotate the icon based on expanded state
@@ -756,14 +756,14 @@
 
             // Debugging - Periksa apakah child accounts ada di DOM
             window.onload = function() {
-                console.log('=== DEBUG INFO ===');
-                console.log('Total rows in table:', document.querySelectorAll('#accountsTable tr').length);
-                console.log('Parent rows:', document.querySelectorAll('tr.parent-row').length);
-                console.log('Child rows:', document.querySelectorAll('tr.child-row').length);
+                // console.log('=== DEBUG INFO ===');
+                // console.log('Total rows in table:', document.querySelectorAll('#accountsTable tr').length);
+                // console.log('Parent rows:', document.querySelectorAll('tr.parent-row').length);
+                // console.log('Child rows:', document.querySelectorAll('tr.child-row').length);
 
                 // Jika tidak ada child rows, kita cek apakah data sudah dimuat
                 if (document.querySelectorAll('tr.child-row').length === 0) {
-                    console.log('Tidak ada child rows - cek HTML comments untuk debug info');
+                    // console.log('Tidak ada child rows - cek HTML comments untuk debug info');
 
                     // Cek comments dalam HTML
                     var html = document.body.innerHTML;
@@ -772,17 +772,17 @@
                     var total = 0;
 
                     while ((match = childCountPattern.exec(html)) !== null) {
-                        console.log('Found child count in HTML:', match[1]);
+                        // console.log('Found child count in HTML:', match[1]);
                         total += parseInt(match[1]);
                     }
 
-                    console.log('Total children based on HTML comments:', total);
+                    // console.log('Total children based on HTML comments:', total);
                 }
 
                 // Tampilkan parent row dan data-id mereka
                 document.querySelectorAll('tr.parent-row').forEach(function(row, index) {
-                    console.log('Parent ' + index + ' - ID:', row.getAttribute('data-id'),
-                        'Kode:', row.querySelector('td:nth-child(1)').textContent.trim());
+                    // console.log('Parent ' + index + ' - ID:', row.getAttribute('data-id'),
+                    //     'Kode:', row.querySelector('td:nth-child(1)').textContent.trim());
                 });
             };
         </script>

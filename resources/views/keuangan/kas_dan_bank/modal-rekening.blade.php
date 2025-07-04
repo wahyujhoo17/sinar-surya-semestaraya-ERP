@@ -156,7 +156,7 @@
             },
             errors: {},
             openModal(data = {}) {
-                console.log('Opening rekening modal', data);
+                // console.log('Opening rekening modal', data);
                 this.resetForm();
                 if (data.mode === 'edit' && data.rekening) {
                     this.isEdit = true;

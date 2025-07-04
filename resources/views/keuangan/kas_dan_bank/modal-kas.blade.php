@@ -126,7 +126,7 @@
             },
             errors: {},
             openModal(data = {}) {
-                console.log('Opening kas modal', data);
+                // console.log('Opening kas modal', data);
                 this.resetForm();
                 if (data.mode === 'edit' && data.kas) {
                     this.isEdit = true;

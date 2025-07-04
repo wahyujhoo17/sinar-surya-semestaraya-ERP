@@ -131,11 +131,11 @@
                                 class="{{ request()->is('inventaris/stok') || request()->is('inventaris/stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Stok
                                     Barang</span></a>
                         @endif
-                        @if (auth()->user()->hasPermission('stok_barang.view'))
+                        {{-- @if (auth()->user()->hasPermission('stok_barang.view'))
                             <a href="#"
                                 class="{{ request()->is('inventaris/tracking') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Tracking
                                     Serial Number</span></a>
-                        @endif
+                        @endif --}}
                         @if (auth()->user()->hasPermission('penyesuaian_stok.view'))
                             <a href="/inventaris/penyesuaian-stok"
                                 class="{{ request()->is('inventaris/penyesuaian-stok') || request()->is('inventaris/penyesuaian-stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penyesuaian
@@ -331,7 +331,7 @@
                                     Transaksi</span></a>
                         @endif
                     </div>
-                </div> 
+                </div>
             @endif
 
             <!-- HR & Karyawan -->
@@ -380,11 +380,11 @@
                                 class="{{ request()->is('hr/penggajian') || request()->is('hr/penggajian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penggajian
                                     & Tunjangan</span></a>
                         @endif
-                        @if (auth()->user()->hasPermission('cuti.view'))
+                        {{-- @if (auth()->user()->hasPermission('cuti.view'))
                             <a href="#"
                                 class="{{ request()->is('hr/cuti') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Cuti
                                     & Izin</span></a>
-                        @endif
+                        @endif --}}
                         @if (auth()->user()->hasPermission('struktur_organisasi.view'))
                             <a href="/hr/struktur-organisasi"
                                 class="{{ request()->is('hr/struktur-organisasi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Struktur

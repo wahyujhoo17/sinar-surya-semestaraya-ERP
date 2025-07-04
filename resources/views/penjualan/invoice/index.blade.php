@@ -538,7 +538,7 @@
                 // Initialize modal functionality
                 initializeModals() {
                     this.$nextTick(() => {
-                        console.log('Initializing modals for dynamic content');
+                        
                         // Handle opening modals
                         const modalToggles = document.querySelectorAll('[data-modal-toggle]');
                         modalToggles.forEach(toggle => {
@@ -548,7 +548,7 @@
 
                             newToggle.addEventListener('click', function() {
                                 const targetId = this.getAttribute('data-modal-toggle');
-                                console.log('Opening modal:', targetId);
+                                
                                 const modal = document.getElementById(targetId);
                                 if (modal) {
                                     modal.classList.remove('hidden');
@@ -569,7 +569,7 @@
 
                             newHide.addEventListener('click', function() {
                                 const targetId = this.getAttribute('data-modal-hide');
-                                console.log('Closing modal:', targetId);
+                                
                                 const modal = document.getElementById(targetId);
                                 if (modal) {
                                     modal.classList.add('hidden');
@@ -669,7 +669,6 @@
                         if (!url.searchParams.has('nota_kredit_id')) {
                             url.searchParams.append('nota_kredit_id', '{{ request()->nota_kredit_id }}');
                         }
-                        console.log('Credit application mode - nota_kredit_id:', '{{ request()->nota_kredit_id }}');
                     @endif
 
                     // Merge existing query parameters with our new ones
