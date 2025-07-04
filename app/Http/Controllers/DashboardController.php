@@ -291,7 +291,7 @@ class DashboardController extends Controller
 
         // Quotation conversion rate
         $totalQuotation = Quotation::count();
-        $convertedQuotation = Quotation::whereHas('salesOrder')->count();
+        $convertedQuotation = Quotation::whereHas('salesOrders')->count();
         $conversionRate = $totalQuotation > 0 ? ($convertedQuotation / $totalQuotation) * 100 : 0;
 
         // Recent activities
@@ -1143,7 +1143,7 @@ class DashboardController extends Controller
 
         // Quotation conversion stats
         $totalQuotation = Quotation::count();
-        $convertedQuotation = Quotation::whereHas('salesOrder')->count();
+        $convertedQuotation = Quotation::whereHas('salesOrders')->count();
         $conversionRate = $totalQuotation > 0 ? ($convertedQuotation / $totalQuotation) * 100 : 0;
 
         // Delivery orders by status

@@ -252,7 +252,7 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('quotation.create'))
-                <a href="{{ route('quotation.create') }}"
+                <a href="{{ route('penjualan.quotation.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -264,7 +264,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('sales_order.create'))
-                <a href="{{ route('sales-order.create') }}"
+                <a href="{{ route('penjualan.sales-order.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -276,7 +276,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('pelanggan.create'))
-                <a href="{{ route('pelanggan.create') }}"
+                <a href="{{ route('master-data.pelanggan.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -288,8 +288,8 @@
                 </a>
             @endif
 
-            @if (auth()->user()->hasPermission('laporan.view'))
-                <a href="{{ route('laporan.penjualan') }}"
+            @if (auth()->user()->hasPermission('laporan_penjualan.view'))
+                <a href="{{ route('laporan.penjualan.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
