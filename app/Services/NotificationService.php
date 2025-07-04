@@ -367,12 +367,18 @@ class NotificationService
     private function createNotification(int $userId, string $type, string $title, string $message, array $data = [])
     {
         try {
+            // Fix URL to use current domain instead of localhost
+            $url = $data['url'] ?? null;
+            if ($url) {
+                $url = $this->fixNotificationUrl($url);
+            }
+
             Notification::create([
                 'user_id' => $userId,
                 'type' => $type,
                 'title' => $title,
                 'message' => $message,
-                'link' => $data['url'] ?? null,
+                'link' => $url,
                 'data' => json_encode($data),
                 'read_at' => null
             ]);
@@ -383,6 +389,46 @@ class NotificationService
                 'error' => $e->getMessage()
             ]);
         }
+    }
+
+    /**
+     * Fix notification URL to use current domain instead of localhost
+     */
+    private function fixNotificationUrl($url)
+    {
+        if (!$url) {
+            return $url;
+        }
+
+        $originalUrl = $url;
+
+        // If URL is absolute and contains localhost, replace with current domain
+        if (is_string($url) && (strpos($url, 'http://localhost') === 0 || strpos($url, 'https://localhost') === 0)) {
+            $currentUrl = request()->getSchemeAndHttpHost();
+            $url = str_replace(['http://localhost', 'https://localhost'], $currentUrl, $url);
+
+            Log::info('Fixed notification URL from localhost', [
+                'original' => $originalUrl,
+                'fixed' => $url,
+                'current_domain' => $currentUrl
+            ]);
+        }
+
+        // Also handle cases where APP_URL is localhost but request is from different domain
+        $appUrl = config('app.url');
+        if ($appUrl && strpos($appUrl, 'localhost') !== false && is_string($url) && strpos($url, $appUrl) === 0) {
+            $currentUrl = request()->getSchemeAndHttpHost();
+            $url = str_replace($appUrl, $currentUrl, $url);
+
+            Log::info('Fixed notification URL from APP_URL localhost', [
+                'original' => $originalUrl,
+                'fixed' => $url,
+                'app_url' => $appUrl,
+                'current_domain' => $currentUrl
+            ]);
+        }
+
+        return $url;
     }
 
     /**

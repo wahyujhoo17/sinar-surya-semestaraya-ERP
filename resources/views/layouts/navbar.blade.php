@@ -376,7 +376,35 @@
                 getNotificationUrl(notification) {
                     // If notification has a specific link, use it
                     if (notification.link && notification.link !== '#') {
-                        return notification.link;
+                        let url = notification.link;
+
+                        // Fix localhost URLs to use current domain
+                        if (url.includes('localhost') || url.includes('127.0.0.1')) {
+                            // Extract the path from the URL
+                            const urlObj = new URL(url);
+                            const path = urlObj.pathname + urlObj.search + urlObj.hash;
+
+                            // Use current domain with the extracted path
+                            url = window.location.origin + path;
+                        }
+
+                        // Convert absolute URLs to use current domain if they're using the app's base URL
+                        const appUrl = '{{ url('/') }}';
+                        if (url.startsWith('http') && !url.startsWith(window.location.origin)) {
+                            try {
+                                const urlObj = new URL(url);
+                                const currentOrigin = new URL(window.location.href);
+
+                                // If it's the same host but different protocol/port, update it
+                                if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+                                    url = window.location.origin + urlObj.pathname + urlObj.search + urlObj.hash;
+                                }
+                            } catch (e) {
+                                console.warn('Error parsing notification URL:', url, e);
+                            }
+                        }
+
+                        return url;
                     }
 
                     // Otherwise, default to notifications index
