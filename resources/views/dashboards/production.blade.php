@@ -124,9 +124,9 @@
                                     class="font-medium text-gray-900 dark:text-white">{{ $workOrder->quantity }}</span>
                             </div>
                             <div>
-                                <span class="text-gray-500 dark:text-gray-400">Target:</span>
+                                <span class="text-gray-500 dark:text-gray-400">Tanggal:</span>
                                 <span
-                                    class="font-medium text-gray-900 dark:text-white">{{ $workOrder->tanggal_target ? \Carbon\Carbon::parse($workOrder->tanggal_target)->format('d/m/Y') : 'N/A' }}</span>
+                                    class="font-medium text-gray-900 dark:text-white">{{ $workOrder->tanggal ? \Carbon\Carbon::parse($workOrder->tanggal_target)->format('d/m/Y') : 'N/A' }}</span>
                             </div>
                         </div>
                     </div>
@@ -224,14 +224,14 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('work_order.create'))
-                <a href="{{ route('work-order.create') }}"
+                <a href="{{ route('produksi.work-order.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Buat Work Order</span>
+                    <span class="text-sm font-medium text-gray-900 dark:text-white">Kelola Work Order</span>
                 </a>
             @endif
 
@@ -249,7 +249,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('work_order.view'))
-                <a href="{{ route('work-order.index') }}"
+                <a href="{{ route('produksi.work-order.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -261,8 +261,8 @@
                 </a>
             @endif
 
-            @if (auth()->user()->hasPermission('laporan.view'))
-                <a href="{{ route('laporan.produksi') }}"
+            @if (auth()->user()->hasPermission('laporan_produksi.view'))
+                <a href="{{ route('laporan.produksi.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
