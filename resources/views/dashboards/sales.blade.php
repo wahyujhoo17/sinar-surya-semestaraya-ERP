@@ -249,7 +249,13 @@
 
     <!-- Quick Actions -->
     <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
+        @if (auth()->user()->hasPermission('quotation.create') ||
+                auth()->user()->hasPermission('sales_order.create') ||
+                auth()->user()->hasPermission('pelanggan.create') ||
+                auth()->user()->hasPermission('laporan_penjualan.view'))
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
+        @endif
+
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('quotation.create'))
                 <a href="{{ route('penjualan.quotation.create') }}"

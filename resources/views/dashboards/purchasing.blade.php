@@ -296,7 +296,7 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('purchase_request.create'))
-                <a href="{{ route('purchase-request.create') }}"
+                <a href="{{ route('pembelian.permintaan-pembelian.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -308,7 +308,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('purchase_order.create'))
-                <a href="{{ route('purchase-order.create') }}"
+                <a href="{{ route('prmbrlian.purchasing-order.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -320,7 +320,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('supplier.create'))
-                <a href="{{ route('supplier.create') }}"
+                <a href="{{ route('master-data.supplier.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -332,8 +332,8 @@
                 </a>
             @endif
 
-            @if (auth()->user()->hasPermission('laporan.view'))
-                <a href="{{ route('laporan.pembelian') }}"
+            @if (auth()->user()->hasPermission('laporan_pembelian.view'))
+                <a href="{{ route('laporan.pembelian.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">

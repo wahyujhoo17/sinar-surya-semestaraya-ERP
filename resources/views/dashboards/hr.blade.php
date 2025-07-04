@@ -293,7 +293,7 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('karyawan.create'))
-                <a href="{{ route('karyawan.create') }}"
+                <a href="{{ route('hr.karyawan.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -306,7 +306,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('absensi.create'))
-                <a href="{{ route('absensi.create') }}"
+                <a href="{{ route('hr.absensi.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -318,7 +318,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('cuti.view'))
-                <a href="{{ route('cuti.index') }}"
+                <a href="{{ route('hr.cuti.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
@@ -327,19 +327,6 @@
                         </path>
                     </svg>
                     <span class="text-sm font-medium text-gray-900 dark:text-white">Kelola Cuti</span>
-                </a>
-            @endif
-
-            @if (auth()->user()->hasPermission('laporan.view'))
-                <a href="{{ route('laporan.hr') }}"
-                    class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-400 mb-2" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                        </path>
-                    </svg>
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Laporan HR</span>
                 </a>
             @endif
         </div>
