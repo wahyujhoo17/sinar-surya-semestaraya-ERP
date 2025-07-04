@@ -94,24 +94,6 @@
                     </svg>
                 </button>
 
-                <!-- Status Toggle Button -->
-                <button @click="toggleUserStatus({{ $user->id }})"
-                    class="{{ $user->is_active ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300' : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300' }} transition-colors duration-150"
-                    title="{{ $user->is_active ? 'Nonaktifkan' : 'Aktifkan' }}">
-                    @if ($user->is_active)
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728">
-                            </path>
-                        </svg>
-                    @else
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    @endif
-                </button>
-
                 <!-- Reset Password Button -->
                 <button @click="resetUserPassword({{ $user->id }})"
                     class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-150"

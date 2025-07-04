@@ -17,6 +17,7 @@ use App\Http\Controllers\Pembelian\PermintaanPembelianController;
 use App\Http\Controllers\Pembelian\PurchasingOrderController;
 use App\Http\Controllers\hr_karyawan\DataKaryawanController;
 use App\Http\Controllers\hr_karyawan\StrukturOrganisasiController;
+use App\Http\Controllers\hr_karyawan\CutiController;
 use App\Http\Controllers\AbsensiController;
 use App\Http\Controllers\Inventaris\StokBarangController;
 use App\Http\Controllers\Inventaris\PermintaanBarangController;
@@ -583,6 +584,14 @@ Route::middleware(['auth'])->group(function () {
         Route::get('penggajian/{id}/pdf', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'exportPdf'])->name('penggajian.pdf');
         Route::get('penggajian/{id}/print', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'printPdf'])->name('penggajian.print');
         Route::resource('penggajian', App\Http\Controllers\hr_karyawan\PenggajianController::class);
+
+        // Cuti & Izin routes
+        Route::get('cuti/export-excel', [App\Http\Controllers\hr_karyawan\CutiController::class, 'exportExcel'])->name('cuti.export-excel');
+        Route::get('cuti/export-pdf', [App\Http\Controllers\hr_karyawan\CutiController::class, 'exportPdf'])->name('cuti.export-pdf');
+        Route::get('cuti/departments', [App\Http\Controllers\hr_karyawan\CutiController::class, 'getDepartments'])->name('cuti.departments');
+        Route::get('cuti/departments/{id}/employees', [App\Http\Controllers\hr_karyawan\CutiController::class, 'getEmployeesByDepartment'])->name('cuti.departments.employees');
+        Route::put('cuti/{id}/status', [App\Http\Controllers\hr_karyawan\CutiController::class, 'updateStatus'])->name('cuti.status');
+        Route::resource('cuti', App\Http\Controllers\hr_karyawan\CutiController::class);
     });
 
 

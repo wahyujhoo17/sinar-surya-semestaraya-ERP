@@ -214,10 +214,12 @@
                                 class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 Profil Anda
                             </a>
-                            <a href="#"
-                                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                Pengaturan
-                            </a>
+                            @if (auth()->user()->hasPermission('pengaturan_umum.view'))
+                                <a href="/pengaturan/umum"
+                                    class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">
+                                    Pengaturan
+                                </a>
+                            @endif
                         </div>
                         <div class="py-1">
                             <form method="POST" action="{{ route('logout') }}">

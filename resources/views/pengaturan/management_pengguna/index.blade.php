@@ -464,15 +464,7 @@
                                     class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
                             </div>
 
-                            <div>
-                                <label for="username"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username
-                                    <span class="text-red-500">*</span></label>
-                                <input type="text" id="username" x-model="formData.username" required
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
-                            </div>
-
-                            <div>
+                            <div class="md:col-span-2">
                                 <label for="email"
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email <span
                                         class="text-red-500">*</span></label>
@@ -1060,7 +1052,6 @@
                 formData: {
                     id: null,
                     name: '',
-                    username: '',
                     email: '',
                     password: '',
                     password_confirmation: '',
@@ -1167,6 +1158,22 @@
                         this.errorMessage = '{{ session('error') }}';
                         setTimeout(() => this.errorMessage = '', 5000);
                     @endif
+
+                    // Attach event listeners for table buttons after DOM is ready
+                    this.$nextTick(() => {
+                        this.attachTableEventListeners();
+                    });
+                },
+
+                // Attach event listeners to dynamically loaded table content
+                attachTableEventListeners() {
+                    // This will be called after table content is updated
+                    setTimeout(() => {
+                        // Update checkboxes state
+                        document.querySelectorAll('input[name="selected_users[]"]').forEach(checkbox => {
+                            checkbox.checked = this.selectedUsers.includes(parseInt(checkbox.value));
+                        });
+                    }, 100);
                 },
 
                 // Load users with filters and pagination
@@ -1196,10 +1203,14 @@
                             // Update table body
                             document.getElementById('users-table-body').innerHTML = data.table_body;
                             this.selectedUsers = [];
+
+                            // Reattach event listeners to new table content
+                            this.attachTableEventListeners();
                         }
                     } catch (error) {
                         console.error('Error loading users:', error);
                         this.errorMessage = 'Gagal memuat data pengguna';
+                        setTimeout(() => this.errorMessage = '', 5000);
                     } finally {
                         this.loading = false;
                     }
@@ -1226,50 +1237,105 @@
                     } else {
                         this.selectedUsers.push(userId);
                     }
+
+                    // Update select all checkbox
+                    const selectAllCheckbox = document.querySelector('input[type="checkbox"][onchange*="toggleSelectAll"]');
+                    if (selectAllCheckbox) {
+                        selectAllCheckbox.checked = this.selectedUsers.length === this.users.length;
+                        selectAllCheckbox.indeterminate = this.selectedUsers.length > 0 && this.selectedUsers.length < this
+                            .users.length;
+                    }
                 },
 
                 // Submit form
                 async submitForm() {
+                    // Validate form data
+                    if (!this.formData.name || !this.formData.email || !this.formData.roles
+                        .length) {
+                        this.errorMessage = 'Mohon lengkapi semua field yang wajib diisi';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                        return;
+                    }
+
+                    if (!this.editMode && (!this.formData.password || this.formData.password !== this.formData
+                            .password_confirmation)) {
+                        this.errorMessage = 'Password dan konfirmasi password harus sama';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                        return;
+                    }
+
                     this.loading = true;
                     try {
                         const url = this.editMode ?
-                            `{{ route('pengaturan.management-pengguna.index') }}/${this.formData.id}` :
+                            `{{ route('pengaturan.management-pengguna.update', ':id') }}`
+                            .replace(':id', this.formData.id) :
                             '{{ route('pengaturan.management-pengguna.store') }}';
 
                         const formData = new FormData();
-                        Object.keys(this.formData).forEach(key => {
-                            if (key === 'roles') {
-                                this.formData.roles.forEach(roleId => {
-                                    formData.append('roles[]', roleId);
-                                });
-                            } else if (this.formData[key] !== null && this.formData[key] !== '') {
-                                formData.append(key, this.formData[key]);
-                            }
+
+                        // Add basic fields
+                        formData.append('name', this.formData.name);
+                        formData.append('email', this.formData.email);
+                        formData.append('is_active', this.formData.is_active ? '1' : '0');
+
+                        // Add password fields only for create or if provided in edit
+                        if (!this.editMode) {
+                            formData.append('password', this.formData.password);
+                            formData.append('password_confirmation', this.formData.password_confirmation);
+                        }
+
+                        // Add roles array (backend expects role_ids[])
+                        this.formData.roles.forEach(roleId => {
+                            formData.append('role_ids[]', roleId);
                         });
 
+                        // Add method and token
                         if (this.editMode) {
                             formData.append('_method', 'PUT');
                         }
                         formData.append('_token', '{{ csrf_token() }}');
 
+
                         const response = await fetch(url, {
                             method: 'POST',
                             body: formData,
                             headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
                             }
                         });
 
                         const data = await response.json();
 
                         if (response.ok) {
-                            this.successMessage = data.message;
+                            this.successMessage = data.message || (this.editMode ? 'Pengguna berhasil diupdate' :
+                                'Pengguna berhasil ditambahkan');
                             this.closeModal();
                             this.loadUsers(this.pagination.current_page);
                             setTimeout(() => this.successMessage = '', 5000);
                         } else {
-                            this.errorMessage = data.message || 'Terjadi kesalahan';
-                            setTimeout(() => this.errorMessage = '', 5000);
+                            // Log the full response for debugging
+                            console.error('Validation failed:', {
+                                status: response.status,
+                                statusText: response.statusText,
+                                data: data
+                            });
+
+                            if (data.errors) {
+                                // Handle validation errors with detailed formatting
+                                let errorMessages = [];
+                                Object.keys(data.errors).forEach(field => {
+                                    const fieldErrors = data.errors[field];
+                                    fieldErrors.forEach(error => {
+                                        errorMessages.push(`${field}: ${error}`);
+                                    });
+                                });
+                                this.errorMessage = errorMessages.join('; ');
+                            } else {
+                                this.errorMessage = data.message ||
+                                    `Terjadi kesalahan saat menyimpan data (${response.status})`;
+                            }
+                            setTimeout(() => this.errorMessage = '', 8000); // Longer timeout for validation errors
                         }
                     } catch (error) {
                         console.error('Error submitting form:', error);
@@ -1286,18 +1352,24 @@
                     this.modalTitle = 'Tambah Pengguna';
                     this.resetForm();
                     this.showModal = true;
+
+                    // Focus on first input after modal opens
+                    this.$nextTick(() => {
+                        document.getElementById('name')?.focus();
+                    });
                 },
 
                 closeModal() {
                     this.showModal = false;
                     this.resetForm();
+                    // Clear any error messages
+                    this.errorMessage = '';
                 },
 
                 resetForm() {
                     this.formData = {
                         id: null,
                         name: '',
-                        username: '',
                         email: '',
                         password: '',
                         password_confirmation: '',
@@ -1307,18 +1379,55 @@
                 },
 
                 // Basic operations
-                bulkDeleteSelected() {
+                async bulkDeleteSelected() {
                     if (this.selectedUsers.length === 0) {
-                        alert('Pilih pengguna yang ingin dihapus');
+                        this.errorMessage = 'Pilih pengguna yang ingin dihapus';
+                        setTimeout(() => this.errorMessage = '', 5000);
                         return;
                     }
 
-                    if (!confirm(`Apakah Anda yakin ingin menghapus ${this.selectedUsers.length} pengguna yang dipilih?`)) {
+                    if (!confirm(
+                            `Apakah Anda yakin ingin menghapus ${this.selectedUsers.length} pengguna yang dipilih?`)) {
                         return;
                     }
 
-                    // Implementation will be added later
-                    alert('Bulk delete functionality will be implemented');
+                    this.loading = true;
+
+                    try {
+                        const formData = new FormData();
+                        formData.append('_method', 'DELETE');
+                        formData.append('_token', '{{ csrf_token() }}');
+                        formData.append('ids', JSON.stringify(this.selectedUsers));
+
+                        const response = await fetch('{{ route('pengaturan.management-pengguna.bulk-destroy') }}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.successMessage = data.message ||
+                                `Berhasil menghapus ${this.selectedUsers.length} pengguna`;
+                            this.selectedUsers = [];
+                            this.loadUsers(this.pagination.current_page);
+                            setTimeout(() => this.successMessage = '', 5000);
+                        } else {
+                            this.errorMessage = data.message || 'Terjadi kesalahan saat menghapus pengguna';
+                            setTimeout(() => this.errorMessage = '', 5000);
+                        }
+
+                    } catch (error) {
+                        console.error('Error bulk deleting users:', error);
+                        this.errorMessage = 'Terjadi kesalahan saat menghapus pengguna';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                    } finally {
+                        this.loading = false;
+                    }
                 },
 
                 sortBy(field) {
@@ -1347,12 +1456,44 @@
                     this.showDeleteModal = true;
                 },
 
-                confirmDelete() {
+                async confirmDelete() {
                     if (!this.userToDelete) return;
 
-                    // Implementation will be added later
-                    alert(`Delete user: ${this.userToDelete.name}`);
-                    this.closeDeleteModal();
+                    this.loading = true;
+                    try {
+                        const formData = new FormData();
+                        formData.append('_method', 'DELETE');
+                        formData.append('_token', '{{ csrf_token() }}');
+
+                        const response = await fetch(
+                            `{{ route('pengaturan.management-pengguna.destroy', ':id') }}`
+                            .replace(':id', this.userToDelete.id), {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            this.successMessage = data.message || 'Pengguna berhasil dihapus';
+                            this.closeDeleteModal();
+                            this.loadUsers(this.pagination.current_page);
+                            setTimeout(() => this.successMessage = '', 5000);
+                        } else {
+                            this.errorMessage = data.message || 'Gagal menghapus pengguna';
+                            setTimeout(() => this.errorMessage = '', 5000);
+                        }
+                    } catch (error) {
+                        console.error('Error deleting user:', error);
+                        this.errorMessage = 'Terjadi kesalahan saat menghapus pengguna';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                    } finally {
+                        this.loading = false;
+                    }
                 },
 
                 closeDeleteModal() {
@@ -1399,7 +1540,6 @@
                     this.formData = {
                         id: this.viewUser.id,
                         name: this.viewUser.name,
-                        username: this.viewUser.username,
                         email: this.viewUser.email,
                         password: '',
                         password_confirmation: '',
@@ -1419,7 +1559,6 @@
                         this.formData = {
                             id: user.id,
                             name: user.name,
-                            username: user.username,
                             email: user.email,
                             password: '',
                             password_confirmation: '',
@@ -1430,22 +1569,59 @@
                     }
                 },
 
+                // Reset password modal
+                resetUserPassword(userId) {
+
+
+                    // Convert to number for comparison
+                    const numericUserId = parseInt(userId);
+                    const user = this.users.find(u => parseInt(u.id) === numericUserId);
+
+
+                    if (user) {
+                        this.resetPasswordUser = user;
+                        this.resetPasswordForm = {
+                            new_password: '',
+                            password_confirmation: '',
+                            force_change: true
+                        };
+                        this.showResetPasswordModal = true;
+
+                    } else {
+                        console.error('User not found for ID:', userId);
+                        this.errorMessage = 'User tidak ditemukan untuk reset password';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                    }
+                },
+
+                closeResetPasswordModal() {
+                    this.showResetPasswordModal = false;
+                    this.resetPasswordUser = {};
+                    this.resetPasswordForm = {
+                        new_password: '',
+                        password_confirmation: '',
+                        force_change: true
+                    };
+                },
+
                 // Toggle user status
                 async toggleUserStatus(userId) {
                     try {
                         const response = await fetch(
-                            `{{ route('pengaturan.management-pengguna.index') }}/${userId}/toggle-status`, {
+                            `{{ route('pengaturan.management-pengguna.toggle-status', ':id') }}`
+                            .replace(':id', userId), {
                                 method: 'PATCH',
                                 headers: {
                                     'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Accept': 'application/json'
                                 }
                             });
 
                         const data = await response.json();
 
                         if (response.ok) {
-                            this.successMessage = data.message;
+                            this.successMessage = data.message || 'Status pengguna berhasil diubah';
                             this.loadUsers(this.pagination.current_page);
                             setTimeout(() => this.successMessage = '', 5000);
                         } else {
@@ -1497,19 +1673,30 @@
                         return;
                     }
 
+                    if (!this.resetPasswordUser || !this.resetPasswordUser.id) {
+                        this.errorMessage = 'Data user tidak valid untuk reset password';
+                        setTimeout(() => this.errorMessage = '', 5000);
+                        return;
+                    }
+
                     this.loading = true;
                     try {
                         const formData = new FormData();
+                        formData.append('_method', 'PATCH'); // Laravel method spoofing
+                        formData.append('_token', '{{ csrf_token() }}'); // Laravel CSRF token
                         formData.append('new_password', this.resetPasswordForm.new_password);
                         formData.append('password_confirmation', this.resetPasswordForm.password_confirmation);
                         formData.append('force_change', this.resetPasswordForm.force_change ? '1' : '0');
 
+                        // Debug: Log the reset password data being sent
+
                         const response = await fetch(
-                            `{{ route('pengaturan.management-pengguna.index') }}/${this.resetPasswordUser.id}/reset-password`, {
-                                method: 'PATCH',
+                            `{{ route('pengaturan.management-pengguna.reset-password', ':id') }}`
+                            .replace(':id', this.resetPasswordUser.id), {
+                                method: 'POST', // Use POST with _method spoofing
                                 headers: {
                                     'X-Requested-With': 'XMLHttpRequest',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    'Accept': 'application/json'
                                 },
                                 body: formData
                             });
@@ -1517,12 +1704,36 @@
                         const data = await response.json();
 
                         if (response.ok) {
-                            this.successMessage = data.message;
+
+                            this.successMessage = data.message || 'Password berhasil direset';
                             this.closeResetPasswordModal();
+
+                            // Reload users data to verify the change
+                            this.loadUsers(this.pagination.current_page);
+
                             setTimeout(() => this.successMessage = '', 5000);
                         } else {
-                            this.errorMessage = data.message || 'Gagal mereset password';
-                            setTimeout(() => this.errorMessage = '', 5000);
+                            // Log the full response for debugging
+                            console.error('Reset password validation failed:', {
+                                status: response.status,
+                                statusText: response.statusText,
+                                data: data
+                            });
+
+                            if (data.errors) {
+                                // Handle validation errors with detailed formatting
+                                let errorMessages = [];
+                                Object.keys(data.errors).forEach(field => {
+                                    const fieldErrors = data.errors[field];
+                                    fieldErrors.forEach(error => {
+                                        errorMessages.push(`${field}: ${error}`);
+                                    });
+                                });
+                                this.errorMessage = errorMessages.join('; ');
+                            } else {
+                                this.errorMessage = data.message || `Gagal mereset password (${response.status})`;
+                            }
+                            setTimeout(() => this.errorMessage = '', 8000);
                         }
                     } catch (error) {
                         console.error('Error resetting password:', error);

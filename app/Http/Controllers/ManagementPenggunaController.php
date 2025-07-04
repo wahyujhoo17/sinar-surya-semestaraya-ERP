@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class ManagementPenggunaController extends Controller
@@ -377,9 +378,29 @@ class ManagementPenggunaController extends Controller
     /**
      * Reset user password
      */
-    public function resetPassword(Request $request, User $management_pengguna)
+    public function resetPassword(Request $request, $management_pengguna)
     {
-        $user = $management_pengguna;
+        // Find user by ID since route model binding might be failing
+        $user = User::find($management_pengguna);
+
+        // Check if user exists
+        if (!$user) {
+            Log::error('Reset password: User not found', [
+                'requested_user_id' => $management_pengguna,
+                'request_data' => $request->all()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Pengguna tidak ditemukan dengan ID: ' . $management_pengguna
+            ]);
+        }
+
+        Log::info('Reset password attempt', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'requested_by' => Auth::id(),
+            'request_user_id' => $management_pengguna
+        ]);
 
         // Prevent resetting own password through this method
         if ($user->id === Auth::id()) {
@@ -411,11 +432,69 @@ class ManagementPenggunaController extends Controller
             $newPassword = $request->new_password;
             $forceChange = $request->boolean('force_change', true);
 
-            $user->update([
-                'password' => Hash::make($newPassword),
-                'email_verified_at' => $forceChange ? null : now(), // Force change password on next login if enabled
-                'password_changed_at' => now() // Add this field if you have it
+            // Debug: Log the old password hash for comparison
+            $oldPasswordHash = $user->password;
+            Log::info('Reset password debug', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'old_password_hash' => $oldPasswordHash,
+                'new_password_length' => strlen($newPassword),
+                'force_change' => $forceChange
             ]);
+            $newPasswordHash = Hash::make($newPassword);
+
+            // Debug: Log the new hash before update
+            Log::info('Before password update', [
+                'user_id' => $user->id,
+                'old_password' => $oldPasswordHash,
+                'new_password_hash' => $newPasswordHash,
+                'new_password_plain' => $newPassword // Only for debugging, remove in production
+            ]);
+
+            // Try direct database update first
+            $updateResult = DB::table('users')
+                ->where('id', $user->id)
+                ->update([
+                    'password' => $newPasswordHash,
+                    'email_verified_at' => $forceChange ? null : now(),
+                    'updated_at' => now()
+                ]);
+
+            Log::info('Database update result', [
+                'user_id' => $user->id,
+                'rows_affected' => $updateResult,
+                'update_successful' => $updateResult > 0
+            ]);
+
+            // Verify the update by fetching fresh data
+            $updatedUser = DB::table('users')->where('id', $user->id)->first();
+            Log::info('Password verification after update', [
+                'user_id' => $user->id,
+                'old_hash' => $oldPasswordHash,
+                'new_hash_from_db' => $updatedUser->password,
+                'hash_actually_changed' => $oldPasswordHash !== $updatedUser->password,
+                'password_verify_check' => Hash::check($newPassword, $updatedUser->password)
+            ]);
+
+            // If the password didn't change, try alternative update method
+            if ($oldPasswordHash === $updatedUser->password) {
+                Log::warning('Password not updated, trying alternative method');
+
+                // Try using raw SQL
+                $rawUpdateResult = DB::statement(
+                    'UPDATE users SET password = ?, email_verified_at = ?, updated_at = ? WHERE id = ?',
+                    [$newPasswordHash, $forceChange ? null : now(), now(), $user->id]
+                );
+
+                Log::info('Raw SQL update result', ['result' => $rawUpdateResult]);
+
+                // Verify again
+                $finalUser = DB::table('users')->where('id', $user->id)->first();
+                Log::info('Final verification', [
+                    'password_updated' => $oldPasswordHash !== $finalUser->password,
+                    'final_hash' => $finalUser->password
+                ]);
+            }
 
             // Log activity
             LogAktivitas::create([
@@ -429,9 +508,31 @@ class ManagementPenggunaController extends Controller
 
             DB::commit();
 
+            // Final verification after commit
+            $finalVerification = DB::table('users')->where('id', $user->id)->first();
+            $isPasswordUpdated = $oldPasswordHash !== $finalVerification->password;
+
+            Log::info('Final password reset verification', [
+                'user_id' => $user->id,
+                'password_updated' => $isPasswordUpdated,
+                'can_login_with_new_password' => Hash::check($newPassword, $finalVerification->password)
+            ]);
+
+            if (!$isPasswordUpdated) {
+                Log::error('Password reset failed - password not updated in database');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal reset password: Password tidak berubah di database'
+                ]);
+            }
+
             return response()->json([
                 'success' => true,
-                'message' => "Password pengguna {$user->name} berhasil direset." . ($forceChange ? ' Pengguna akan diminta mengganti password saat login berikutnya.' : '')
+                'message' => "Password pengguna {$user->name} berhasil direset." . ($forceChange ? ' Pengguna akan diminta mengganti password saat login berikutnya.' : ''),
+                'debug' => [
+                    'password_changed' => $isPasswordUpdated,
+                    'new_password_works' => Hash::check($newPassword, $finalVerification->password)
+                ]
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

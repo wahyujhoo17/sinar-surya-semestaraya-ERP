@@ -380,11 +380,11 @@
                                 class="{{ request()->is('hr/penggajian') || request()->is('hr/penggajian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Penggajian
                                     & Tunjangan</span></a>
                         @endif
-                        {{-- @if (auth()->user()->hasPermission('cuti.view'))
-                            <a href="#"
-                                class="{{ request()->is('hr/cuti') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Cuti
+                        @if (auth()->user()->hasPermission('cuti.view'))
+                            <a href="/hr/cuti"
+                                class="{{ request()->is('hr/cuti') || request()->is('hr/cuti/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Cuti
                                     & Izin</span></a>
-                        @endif --}}
+                        @endif
                         @if (auth()->user()->hasPermission('struktur_organisasi.view'))
                             <a href="/hr/struktur-organisasi"
                                 class="{{ request()->is('hr/struktur-organisasi') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Struktur
