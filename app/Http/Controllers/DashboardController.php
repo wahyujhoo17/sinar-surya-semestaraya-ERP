@@ -45,6 +45,7 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+        // dd($user->roles);
 
         // Determine role group based on permissions
         $roleGroup = $this->determineRoleGroup($user);
@@ -59,7 +60,7 @@ class DashboardController extends Controller
                 return $this->salesRoleDashboard();
             case 'production':
                 return $this->productionRoleDashboard();
-            case 'hr':
+            case 'hrd':
                 return $this->hrRoleDashboard();
             case 'inventory':
                 return $this->inventoryRoleDashboard();
@@ -85,8 +86,8 @@ class DashboardController extends Controller
 
         // Check for finance role
         if (
-            $user->hasPermission('jurnal_umum.view') || $user->hasPermission('kas.view') ||
-            $user->hasPermission('invoice.view') || $user->hasPermission('laporan_pajak.view')
+            $user->hasPermission('jurnal_umum.view') || $user->hasPermission('kas_dan_bank.view') ||
+            $user->hasPermission('invoice.view') || $user->hasPermission('management_pajak.view')
         ) {
             return 'finance';
         }
@@ -102,7 +103,7 @@ class DashboardController extends Controller
         // Check for production role
         if (
             $user->hasPermission('work_order.view') || $user->hasPermission('bill_of_material.view') ||
-            $user->hasPermission('bahan_baku.view')
+            $user->hasPermission('perencanaan_produksi.view')
         ) {
             return 'production';
         }

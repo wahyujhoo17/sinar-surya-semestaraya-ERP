@@ -369,7 +369,6 @@ class QuotationController extends Controller
 
     public function update(Request $request, $id)
     {
-        dd($request->all());
         $quotation = Quotation::findOrFail($id);
 
         // Check status, only draft can be updated
@@ -383,11 +382,13 @@ class QuotationController extends Controller
             'tanggal' => 'required|date',
             'customer_id' => 'required|exists:customer,id',
             'tanggal_berlaku' => 'required|date',
-            'items' => 'required|array',
+            'items' => 'required|array|min:1',
             'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.quantity' => 'required|numeric|min:0',
+            'items.*.kuantitas' => 'required|numeric|min:0.01',
             'items.*.satuan_id' => 'required|exists:satuan,id',
             'items.*.harga' => 'required|numeric|min:0',
+            'items.*.deskripsi' => 'nullable|string',
+            'items.*.diskon_persen_item' => 'nullable|numeric|min:0|max:100',
             'catatan' => 'nullable|string',
             'syarat_ketentuan' => 'nullable|string',
             'diskon_persen' => 'nullable|numeric|min:0|max:100',
@@ -411,7 +412,7 @@ class QuotationController extends Controller
 
             // Calculate subtotal
             foreach ($items as $item) {
-                $productTotal = $item['harga'] * $item['quantity'];
+                $productTotal = $item['harga'] * $item['kuantitas'];
                 $discountValue = 0;
 
                 if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
@@ -455,9 +456,9 @@ class QuotationController extends Controller
 
             // Create Quotation Details
             foreach ($items as $item) {
-                $productTotal = $item['harga'] * $item['quantity'];
+                $productTotal = $item['harga'] * $item['kuantitas'];
                 $diskonPersenItem = $item['diskon_persen_item'] ?? 0;
-                $diskonNominalItem = $item['diskon_nominal_item'] ?? 0;
+                $diskonNominalItem = 0;
 
                 if ($diskonPersenItem > 0) {
                     $diskonNominalItem = ($diskonPersenItem / 100) * $productTotal;
@@ -469,7 +470,7 @@ class QuotationController extends Controller
                 $quotationDetail->quotation_id = $quotation->id;
                 $quotationDetail->produk_id = $item['produk_id'];
                 $quotationDetail->deskripsi = $item['deskripsi'] ?? null;
-                $quotationDetail->quantity = $item['quantity'];
+                $quotationDetail->quantity = $item['kuantitas'];
                 $quotationDetail->satuan_id = $item['satuan_id'];
                 $quotationDetail->harga = $item['harga'];
                 $quotationDetail->diskon_persen = $diskonPersenItem;

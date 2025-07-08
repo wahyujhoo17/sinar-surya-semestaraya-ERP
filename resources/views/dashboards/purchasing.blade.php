@@ -308,7 +308,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('purchase_order.create'))
-                <a href="{{ route('prmbrlian.purchasing-order.create') }}"
+                <a href="{{ route('pembelian.purchasing-order.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -320,7 +320,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('supplier.create'))
-                <a href="{{ route('master-data.supplier.create') }}"
+                <a href="master-data/supplier"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">

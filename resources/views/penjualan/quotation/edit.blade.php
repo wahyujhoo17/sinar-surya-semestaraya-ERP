@@ -628,15 +628,12 @@
     @push('scripts')
         <script>
             function quotationForm(quotationData, quotationItemsData) {
-                // Ensure we have valid objects to work with
                 quotationData = quotationData || {};
-                // Initialize with empty array to prevent undefined errors
                 quotationItemsData = Array.isArray(quotationItemsData) ? quotationItemsData : [];
-
                 return {
                     items: [],
-                    products: {{ Illuminate\Support\Js::from($produks ?? []) }},
-                    satuans: {{ Illuminate\Support\Js::from($satuans ?? []) }},
+                    products: @json($products ?? []),
+                    satuans: @json($satuans ?? []),
                     diskon_global_persen: parseFloat(quotationData.diskon_persen || 0) || 0,
                     diskon_global_nominal: parseFloat(quotationData.diskon_nominal || 0) || 0,
                     includePPN: quotationData && quotationData.ppn > 0,
@@ -647,91 +644,38 @@
                         grand_total: 0
                     },
                     formErrors: [],
-                    nextItemId: 1, // Used for new items client-side key
-
+                    nextItemId: 1,
                     init() {
-                        // Initialize items as empty array before any processing
                         this.items = [];
-
-                        // Initialize Select2 dropdowns after Alpine has processed the items
-                        this.$nextTick(() => {
-                            setTimeout(() => {
-                                // Re-initialize all Select2 dropdowns after items are rendered
-                                $('.select2-dropdown-dynamic').each(function() {
-                                    if ($(this).data('select2')) {
-                                        $(this).select2('destroy');
-                                    }
-
-                                    if ($(this).attr('name').includes('produk_id')) {
-                                        $(this).select2({
-                                            placeholder: "Pilih Produk",
-                                            width: '100%',
-                                            dropdownCssClass: 'select2-dropdown-modern'
-                                        });
-                                    } else if ($(this).attr('name').includes('satuan_id')) {
-                                        $(this).select2({
-                                            placeholder: "Pilih Satuan",
-                                            width: '100%',
-                                            dropdownCssClass: 'select2-dropdown-modern'
-                                        });
-                                    }
-                                });
-                            }, 200);
-                        });
-
                         if (Array.isArray(quotationItemsData) && quotationItemsData.length > 0) {
                             this.items = quotationItemsData.map(item => {
-                                try {
-                                    // Make sure we extract produk and satuan information correctly
-                                    const produkObj = item.produk || {};
-                                    const satuanObj = item.satuan || {};
-
-                                    // Calculate discount values properly
-                                    const harga = parseFloat(item.harga) || 0;
-                                    const qty = parseFloat(item.quantity) || 1;
-                                    const diskonPersen = parseFloat(item.diskon_persen) || 0;
-                                    const subtotalBeforeDiscount = harga * qty;
-                                    const diskonNominal = (subtotalBeforeDiscount * diskonPersen) / 100;
-                                    const subtotalAfterDiscount = subtotalBeforeDiscount - diskonNominal;
-
-
-
-                                    return {
-                                        id: this.nextItemId++, // Client-side unique ID for x-for key
-                                        item_id_db: item.id, // Actual DB ID of the item
-                                        produk_id: item.produk_id || '',
-                                        produk_nama: produkObj.nama || '',
-                                        quantity: qty,
-                                        satuan_id: item.satuan_id || '',
-                                        satuan_nama: satuanObj.nama || '',
-                                        harga: harga,
-                                        diskon_persen: diskonPersen,
-                                        diskon_nominal: diskonNominal,
-                                        deskripsi: item.deskripsi || '',
-                                        subtotal: subtotalAfterDiscount
-                                    };
-                                } catch (error) {
-                                    // Return a default item structure to prevent breaking the UI
-                                    return {
-                                        id: this.nextItemId++,
-                                        item_id_db: item.id || null,
-                                        produk_id: item.produk_id || '',
-                                        quantity: 1,
-                                        satuan_id: item.satuan_id || '',
-                                        harga: 0,
-                                        diskon_persen: 0,
-                                        diskon_nominal: 0,
-                                        deskripsi: '',
-                                        subtotal: 0
-                                    };
-                                }
+                                const harga = parseFloat(item.harga) || 0;
+                                const qty = parseFloat(item.quantity) || 1;
+                                const diskonPersen = parseFloat(item.diskon_persen) || 0;
+                                const subtotalBeforeDiscount = harga * qty;
+                                const diskonNominal = (subtotalBeforeDiscount * diskonPersen) / 100;
+                                const subtotalAfterDiscount = subtotalBeforeDiscount - diskonNominal;
+                                return {
+                                    id: this.nextItemId++,
+                                    item_id_db: item.id,
+                                    produk_id: item.produk_id || '',
+                                    produk_nama: item.produk?.nama || '',
+                                    quantity: qty,
+                                    satuan_id: item.satuan_id || '',
+                                    satuan_nama: item.satuan?.nama || '',
+                                    harga: harga,
+                                    diskon_persen: diskonPersen,
+                                    diskon_nominal: diskonNominal,
+                                    deskripsi: item.deskripsi || '',
+                                    subtotal: subtotalAfterDiscount
+                                };
                             });
                         } else {
                             let oldItems = {!! json_encode(old('items', [])) !!};
                             if (oldItems.length > 0) {
                                 this.items = oldItems.map(item => ({
                                     id: this.nextItemId++,
-                                    item_id_db: item.id || null, // if old item has id from previous attempt
+                                    item_id_db: item.id || null,
                                     produk_id: item.produk_id || '',
                                     quantity: parseFloat(item.kuantitas || item.quantity) || 1,
                                     satuan_id: item.satuan_id || '',
@@ -743,791 +687,238 @@
                                 }));
                             }
                         }
-                        if (!{!! json_encode(old('diskon_global_persen', null)) !!}) {
-                            this.diskon_global_persen = parseFloat(quotationData.diskon_persen) || 0;
-                        }
-                        if (!{!! json_encode(old('diskon_global_nominal', null)) !!}) {
-                            this.diskon_global_nominal = parseFloat(quotationData.diskon_nominal) || 0;
-                        }
-
                         this.items.forEach((item, index) => this.calculateSubtotal(index));
                         this.calculateTotals();
-
-                        // Initialization complete
+                        this.$nextTick(() => {
+                            this.initSelect2();
+                        });
                     },
-
-                    addItem() {
-                        try {
-                            // Make sure items is an array
-                            if (!Array.isArray(this.items)) {
-                                this.items = [];
-                            }
-
-                            // Make sure nextItemId is a number
-                            if (typeof this.nextItemId !== 'number') {
-                                this.nextItemId = 1;
-                            }
-
-                            // Create a new item with safe defaults
-                            const newItem = {
-                                id: this.nextItemId++,
-                                item_id_db: null, // New items don't have a DB id yet
-                                produk_id: '',
-                                produk_nama: '',
-                                quantity: 1,
-                                satuan_id: '',
-                                satuan_nama: '',
-                                harga: 0,
-                                diskon_persen: 0,
-                                diskon_nominal: 0,
-                                subtotal: 0,
-                                deskripsi: ''
-                            };
-
-                            // Add item to the array
-                            this.items.push(newItem);
-
-                            // Recalculate totals to update display
-                            this.calculateTotals();
-
-                            // Initialize Select2 for the new item after it's rendered
-                            this.$nextTick(() => {
-                                setTimeout(() => {
-                                    const newIndex = this.items.length - 1;
-                                    const produkSelector = `select[name="items[${newIndex}][produk_id]"]`;
-                                    const satuanSelector = `select[name="items[${newIndex}][satuan_id]"]`;
-
-                                    // Initialize produk Select2
-                                    $(produkSelector).select2({
-                                        placeholder: "Pilih Produk",
-                                        width: '100%',
-                                        dropdownCssClass: 'select2-dropdown-modern'
-                                    }).on('select2:select', (e) => {
-                                        $(produkSelector).trigger('change');
-                                        setTimeout(() => {
-                                            this.updateItemDetails(newIndex, e);
-                                        }, 50);
-                                    });
-
-                                    // Initialize satuan Select2
-                                    $(satuanSelector).select2({
-                                        placeholder: "Pilih Satuan",
-                                        width: '100%',
-                                        dropdownCssClass: 'select2-dropdown-modern'
-                                    }).on('select2:select', (e) => {
-                                        $(satuanSelector).trigger('change');
-                                    });
-                                }, 100);
-                            });
-                        } catch (error) {
-                            // Silent error handling
-                        }
-                    },
-
-                    removeItem(index) {
-                        try {
-                            // Make sure items is an array and index is valid
-                            if (Array.isArray(this.items) && index >= 0 && index < this.items.length) {
-                                // Remove the item at the specified index
-                                this.items.splice(index, 1);
-
-                                // Update totals after item removal
-                                this.calculateTotals();
-                            } else {
-                                // Invalid index - no action taken
-                            }
-                        } catch (error) {
-                            // Silent error handling
-                        }
-                    },
-
-                    updateItemDetails(index, event) {
-                        try {
-                            // Safely access the items array
-                            const items = this.$data && this.$data.items ? this.$data.items : this.items;
-                            if (!Array.isArray(items) || !items[index]) {
-                                return;
-                            }
-
-                            const item = items[index];
-
-                            // Get the product element regardless of how the function was called
-                            let productElement;
-                            if (event && event.target) {
-                                // If called from an event handler
-                                productElement = event.target;
-                            } else {
-                                // If called programmatically (e.g., from addItem or elsewhere)
-                                productElement = document.querySelector(`select[name="items[${index}][produk_id]"]`);
-                                if (!productElement) {
-                                    return;
-                                }
-                            }
-
-                            // Check if the select element has options
-                            if (!productElement.options || typeof productElement.selectedIndex !== 'number') {
-                                return;
-                            }
-
-                            const selectedOption = productElement.options[productElement.selectedIndex];
-                            if (!selectedOption || !selectedOption.value) {
-                                // Reset values when no product is selected
-                                item.harga = 0;
-                                item.satuan_id = '';
-                                item.produk_nama = '';
-                                this.calculateSubtotal(index);
-                                return;
-                            }
-
-                            // Update item with selected product details
-                            item.produk_nama = selectedOption.text ? selectedOption.text.trim() : '';
-                            item.harga = parseFloat(selectedOption.dataset && selectedOption.dataset.harga ? selectedOption
-                                .dataset.harga : 0) || 0;
-                            const defaultSatuanId = selectedOption.dataset && selectedOption.dataset.satuan_id ? selectedOption
-                                .dataset.satuan_id : '';
-
-                            if (defaultSatuanId) {
-                                // Update the Alpine.js model
-                                item.satuan_id = defaultSatuanId;
-
-                                // Use a timeout to ensure the Select2 initialization has completed
-                                setTimeout(() => {
-                                    try {
-                                        const satuanSelect = $(`select[name="items[${index}][satuan_id]"]`);
-
-                                        if (satuanSelect.length) {
-                                            // First ensure we have the actual DOM element selected
-                                            const satuanElement = document.querySelector(
-                                                `select[name="items[${index}][satuan_id]"]`);
-                                            if (!satuanElement) {
-                                                return;
-                                            }
-
-                                            // Check if option with the value exists
-                                            let optionExists = false;
-                                            for (let i = 0; i < satuanElement.options.length; i++) {
-                                                if (satuanElement.options[i].value === defaultSatuanId) {
-                                                    optionExists = true;
-                                                    break;
+                    initSelect2() {
+                        // Static Select2
+                        $('#customer_id').select2({
+                            placeholder: 'Pilih Customer',
+                            allowClear: true,
+                            width: '100%',
+                            dropdownCssClass: 'select2-dropdown-modern'
+                        });
+                        $('#status').select2({
+                            minimumResultsForSearch: -1,
+                            width: '100%',
+                            dropdownCssClass: 'select2-dropdown-modern'
+                        });
+                        // Dynamic Select2
+                        const itemsContainer = document.getElementById('items-container');
+                        if (itemsContainer) {
+                            const observer = new MutationObserver(mutations => {
+                                mutations.forEach(mutation => {
+                                    mutation.addedNodes.forEach(node => {
+                                        if (node.nodeType === 1) {
+                                            const selects = node.querySelectorAll(
+                                                '.select2-dropdown-dynamic');
+                                            selects.forEach(select => {
+                                                if (!$(select).data('select2')) {
+                                                    if (select.name.includes('produk_id')) {
+                                                        $(select).select2({
+                                                            placeholder: 'Pilih Produk',
+                                                            width: '100%',
+                                                            dropdownCssClass: 'select2-dropdown-modern'
+                                                        }).on('select2:select', e => {
+                                                            const nameAttr = $(select)
+                                                                .attr('name');
+                                                            const match = nameAttr
+                                                                .match(
+                                                                /items\[(\d+)\]/);
+                                                            if (match && match[1]) {
+                                                                const idx = parseInt(
+                                                                    match[1]);
+                                                                this.items[idx]
+                                                                    .produk_id = e
+                                                                    .target.value;
+                                                                setTimeout(() => this
+                                                                    .updateItemDetails(
+                                                                        idx), 100);
+                                                            }
+                                                        });
+                                                    } else if (select.name.includes(
+                                                        'satuan_id')) {
+                                                        $(select).select2({
+                                                            placeholder: 'Pilih Satuan',
+                                                            width: '100%',
+                                                            dropdownCssClass: 'select2-dropdown-modern'
+                                                        }).on('select2:select', e => {
+                                                            const nameAttr = $(select)
+                                                                .attr('name');
+                                                            const match = nameAttr
+                                                                .match(
+                                                                /items\[(\d+)\]/);
+                                                            if (match && match[1]) {
+                                                                const idx = parseInt(
+                                                                    match[1]);
+                                                                this.items[idx]
+                                                                    .satuan_id = e
+                                                                    .target.value;
+                                                            }
+                                                        });
+                                                    }
                                                 }
-                                            }
-
-                                            // First destroy if it's a Select2 instance
-                                            if (satuanSelect.hasClass('select2-hidden-accessible')) {
-                                                try {
-                                                    satuanSelect.select2('destroy');
-                                                } catch (e) {
-                                                    // Silent error handling
-                                                }
-                                            }
-
-                                            // Set the value directly on the DOM element first
-                                            satuanElement.value = defaultSatuanId;
-
-                                            // Then initialize Select2
-                                            satuanSelect.select2({
-                                                placeholder: "Pilih Satuan",
-                                                width: '100%',
-                                                dropdownCssClass: 'select2-dropdown-modern'
                                             });
-
-                                            // Now set the value and trigger change on the jQuery element
-                                            satuanSelect.val(defaultSatuanId).trigger('change');
-
-                                            // Set satuan_nama for display if needed
-                                            try {
-                                                const satuanOption = document.querySelector(
-                                                    `[name="items[${index}][satuan_id]"] option[value="${defaultSatuanId}"]`
-                                                );
-                                                if (satuanOption) {
-                                                    item.satuan_nama = satuanOption.textContent ? satuanOption
-                                                        .textContent.trim() : '';
-                                                }
-                                            } catch (err) {
-                                                // Silent error handling
-                                            }
                                         }
-                                    } catch (e) {
-                                        // Silent error handling
-                                    }
-                                }, 200);
-                            }
-                        } catch (error) {
-                            // Silent error handling
+                                    });
+                                });
+                            });
+                            observer.observe(itemsContainer, {
+                                childList: true,
+                                subtree: true
+                            });
                         }
-
+                    },
+                    addItem() {
+                        this.items.push({
+                            id: this.nextItemId++,
+                            item_id_db: null,
+                            produk_id: '',
+                            produk_nama: '',
+                            quantity: 1,
+                            satuan_id: '',
+                            satuan_nama: '',
+                            harga: 0,
+                            diskon_persen: 0,
+                            diskon_nominal: 0,
+                            subtotal: 0,
+                            deskripsi: ''
+                        });
+                        this.$nextTick(() => {
+                            this.initSelect2();
+                        });
+                    },
+                    removeItem(index) {
+                        this.items.splice(index, 1);
+                        this.calculateTotals();
+                    },
+                    updateItemDetails(index) {
+                        const item = this.items[index];
+                        const produk = this.products.find(p => p.id == item.produk_id);
+                        if (produk) {
+                            item.harga = parseFloat(produk.harga_jual) || 0;
+                            item.satuan_id = produk.satuan_id || '';
+                            item.produk_nama = produk.nama || '';
+                        } else {
+                            item.harga = 0;
+                            item.satuan_id = '';
+                            item.produk_nama = '';
+                        }
                         this.calculateSubtotal(index);
                     },
-
-                    calculateSubtotal(index, changedDiscountType = null) {
-                        try {
-                            // Safely access item using $data if available, otherwise fallback to this.items
-                            const items = this.$data ? this.$data.items : this.items;
-                            if (!Array.isArray(items) || !items[index]) {
-                                return;
-                            }
-
-                            const item = items[index];
-
-                            // Convert values to numbers, defaulting to 0 if invalid
-                            let harga = parseFloat(item.harga) || 0;
-                            let quantity = parseFloat(item.quantity) || 0;
-                            let diskonPersen = parseFloat(item.diskon_persen) || 0;
-
-                            // Ensure valid discount percentage (between 0 and 100)
-                            diskonPersen = Math.max(0, Math.min(100, diskonPersen));
-                            item.diskon_persen = diskonPersen;
-
-                            // Calculate subtotal and discounts
-                            let subtotalSebelumDiskon = harga * quantity;
-                            let diskonNominalItem = (subtotalSebelumDiskon * diskonPersen) / 100;
-
-                            // Update item properties
-                            item.diskon_nominal = diskonNominalItem;
-                            item.subtotal = subtotalSebelumDiskon - diskonNominalItem;
-
-                            // Calculate totals across all items
-                            this.calculateTotals();
-                        } catch (error) {
-                            // Silent error handling
-                        }
+                    calculateSubtotal(index) {
+                        const item = this.items[index];
+                        const qty = parseFloat(item.quantity) || 0;
+                        const harga = parseFloat(item.harga) || 0;
+                        const diskonPersen = parseFloat(item.diskon_persen) || 0;
+                        const subtotalBefore = qty * harga;
+                        const diskonNominal = (subtotalBefore * diskonPersen) / 100;
+                        item.diskon_nominal = diskonNominal;
+                        item.subtotal = subtotalBefore - diskonNominal;
+                        this.calculateTotals();
                     },
-
-                    calculateGlobalDiscount(type) {
-                        try {
-                            // Ensure summary object exists
-                            if (!this.summary) {
-                                this.summary = {
-                                    total_sebelum_diskon_global: 0,
-                                    total_setelah_diskon_global: 0,
-                                    ppn_nominal: 0,
-                                    grand_total: 0
-                                };
-                            }
-
-                            // Get the current subtotal before global discount
-                            let totalSebelumDiskonGlobal = parseFloat(this.summary.total_sebelum_diskon_global) || 0;
-
-                            if (type === 'persen') {
-                                // Handle percentage-based discount calculation
-                                let persen = parseFloat(this.diskon_global_persen) || 0;
-
-                                // Clamp percentage between 0 and 100
-                                persen = Math.max(0, Math.min(100, persen));
-                                this.diskon_global_persen = persen;
-
-                                // Calculate the nominal discount amount based on percentage
-                                this.diskon_global_nominal = (totalSebelumDiskonGlobal * persen) / 100;
-
-                            } else if (type === 'nominal') {
-                                // Handle nominal-based discount calculation
-                                let nominal = parseFloat(this.diskon_global_nominal) || 0;
-
-                                // Ensure nominal is between 0 and total
-                                nominal = Math.max(0, Math.min(totalSebelumDiskonGlobal, nominal));
-                                this.diskon_global_nominal = nominal;
-
-                                // Calculate the percentage equivalent of this nominal discount
-                                if (totalSebelumDiskonGlobal > 0) {
-                                    this.diskon_global_persen = (nominal / totalSebelumDiskonGlobal) * 100;
-                                } else {
-                                    this.diskon_global_persen = 0;
-                                }
-                            }
-
-                            // Update totals to reflect the new discount
-                            this.calculateTotals();
-                        } catch (error) {
-                            // Silent error handling
-                        }
-                    },
-
                     calculateTotals() {
-                        try {
-                            // Ensure items is an array before proceeding
-                            if (!Array.isArray(this.items)) {
-                                this.items = [];
-                            }
-
-                            let currentSubtotalOverall = 0;
-
-                            // Safely iterate through items
-                            this.items.forEach((item, idx) => {
-                                if (item) {
-                                    const itemSubtotal = parseFloat(item.subtotal) || 0;
-                                    currentSubtotalOverall += itemSubtotal;
-                                }
-                            });
-
-                            // Ensure summary object exists
-                            if (!this.summary) {
-                                this.summary = {
-                                    total_sebelum_diskon_global: 0,
-                                    total_setelah_diskon_global: 0,
-                                    ppn_nominal: 0,
-                                    grand_total: 0
-                                };
-                            }
-
-                            // Update summary with the calculated overall subtotal
-                            this.summary.total_sebelum_diskon_global = currentSubtotalOverall;
-
-                            // Calculate global discount nominal if percentage is provided
-                            const diskonGlobalPersen = parseFloat(this.diskon_global_persen) || 0;
-                            if (diskonGlobalPersen > 0 && (!this.diskon_global_nominal || this.diskon_global_nominal === 0)) {
-                                this.diskon_global_nominal = (this.summary.total_sebelum_diskon_global * diskonGlobalPersen) /
-                                    100;
-                            }
-
-                            // Calculate total after global discount
-                            const diskonGlobalNominal = parseFloat(this.diskon_global_nominal) || 0;
-                            let totalSetelahDiskonGlobal = this.summary.total_sebelum_diskon_global - diskonGlobalNominal;
-
-                            // Ensure value is not negative
-                            this.summary.total_setelah_diskon_global = totalSetelahDiskonGlobal < 0 ? 0 :
-                                totalSetelahDiskonGlobal;
-
-                            // Calculate PPN if included ({{ setting('tax_percentage', 11) }}%)
-                            const ppnRate = {{ setting('tax_percentage', 11) }};
-                            const includePPN = !!this.includePPN;
-                            this.summary.ppn_nominal = includePPN ?
-                                (this.summary.total_setelah_diskon_global * ppnRate / 100) : 0;
-
-                            // Calculate grand total with PPN if applicable
-                            this.summary.grand_total = this.summary.total_setelah_diskon_global + this.summary.ppn_nominal;
-                        } catch (error) {
-                            // Ensure we have a default summary even if calculation fails
-                            this.summary = this.summary || {
-                                total_sebelum_diskon_global: 0,
-                                total_setelah_diskon_global: 0,
-                                ppn_nominal: 0,
-                                grand_total: 0
-                            };
+                        let subtotal = 0;
+                        this.items.forEach(item => {
+                            subtotal += parseFloat(item.subtotal) || 0;
+                        });
+                        this.summary.total_sebelum_diskon_global = subtotal;
+                        let diskonNominal = this.diskon_global_nominal;
+                        if (this.diskon_global_persen > 0) {
+                            diskonNominal = (this.diskon_global_persen / 100) * subtotal;
+                            this.diskon_global_nominal = diskonNominal;
                         }
-                    },
-
-                    formatCurrency(value) {
-                        try {
-                            // Ensure we have a valid number
-                            if (value === null || value === undefined || value === '') {
-                                return '0,00';
-                            }
-
-                            // Convert to number if it's not already
-                            if (typeof value !== 'number') {
-                                value = parseFloat(value) || 0;
-                            }
-
-                            // Format the number with Indonesian locale
-                            return value.toLocaleString('id-ID', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                        } catch (error) {
-                            return '0,00'; // Return default value in case of error
+                        this.summary.total_setelah_diskon_global = subtotal - diskonNominal;
+                        let ppnNominal = 0;
+                        if (this.includePPN) {
+                            ppnNominal = ({{ setting('tax_percentage', 11) }} / 100) * this.summary
+                            .total_setelah_diskon_global;
                         }
+                        this.summary.ppn_nominal = ppnNominal;
+                        this.summary.grand_total = this.summary.total_setelah_diskon_global + ppnNominal;
                     },
-
-                    validateAndSubmitForm(event) {
-                        try {
-                            // Initialize or reset form errors array
-                            this.formErrors = [];
-
-                            // Define required fields for validation
-                            const requiredFields = [{
-                                    name: 'nomor_quotation',
-                                    label: 'Nomor Quotation'
-                                },
-                                {
-                                    name: 'tanggal',
-                                    label: 'Tanggal'
-                                },
-                                {
-                                    name: 'customer_id',
-                                    label: 'Customer'
-                                },
-                                {
-                                    name: 'tanggal_valid_hingga',
-                                    label: 'Valid Hingga'
-                                }
-                            ];
-
-                            // Check each required field
-                            requiredFields.forEach(field => {
-                                try {
-                                    const inputElement = document.getElementById(field.name);
-                                    if (!inputElement || !inputElement.value) {
-                                        this.formErrors.push(`${field.label} wajib diisi.`);
-                                    }
-                                } catch (err) {
-                                    // Add error anyway to prevent submission if field validation fails
-                                    this.formErrors.push(`Terjadi kesalahan saat memeriksa ${field.label}.`);
-                                }
-                            });
-
-                            // Ensure items array exists and is an array
-                            const items = Array.isArray(this.items) ? this.items : [];
-
-                            // Check that there's at least one item
-                            if (items.length === 0) {
-                                this.formErrors.push('Minimal harus ada 1 item dalam quotation.');
-                            }
-
-                            // Validate each item
-                            items.forEach((item, index) => {
-                                if (!item) {
-                                    this.formErrors.push(`Item ${index + 1}: Data tidak valid.`);
-                                    return;
-                                }
-
-                                if (!item.produk_id) {
-                                    this.formErrors.push(`Item ${index + 1}: Produk wajib dipilih.`);
-                                }
-
-                                const quantity = parseFloat(item.quantity) || 0;
-                                if (quantity <= 0) {
-                                    this.formErrors.push(`Item ${index + 1}: Kuantitas harus lebih dari 0.`);
-                                }
-
-                                if (!item.satuan_id) {
-                                    this.formErrors.push(`Item ${index + 1}: Satuan wajib dipilih.`);
-                                }
-
-                                const harga = parseFloat(item.harga) || 0;
-                                if (harga < 0) {
-                                    this.formErrors.push(`Item ${index + 1}: Harga tidak boleh negatif.`);
-                                }
-                            });
-
-                            // If there are validation errors, prevent form submission and show errors
-                            if (this.formErrors.length > 0) {
-                                event.preventDefault();
-
-                                // Scroll to error display if exists
-                                try {
-                                    const errorDisplay = document.querySelector(
-                                        '[x-show="$data.formErrors && $data.formErrors.length > 0"]');
-                                    if (errorDisplay) {
-                                        errorDisplay.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'center'
-                                        });
-                                    }
-                                } catch (err) {
-                                    // Silent error handling
-                                }
-
-                                return false;
-                            }
-
-                            // Debug message to confirm we're submitting the form
-                            // Set flag to prevent duplicate submission
-                            window.alpineFormSubmitted = true;
-
-                            // Prepare form data for submission - create a proper FormData object
-                            const form = document.getElementById('quotationEditForm');
-                            const formData = new FormData(form);
-
-                            // Make sure all items are properly structured for backend processing
-                            this.items.forEach((item, i) => {
-                                // Direct setting of form data values
-                                formData.append(`items[${i}][produk_id]`, item.produk_id || '');
-                                formData.append(`items[${i}][quantity]`, item.quantity || '');
-                                formData.append(`items[${i}][satuan_id]`, item.satuan_id || '');
-                                formData.append(`items[${i}][harga]`, item.harga || '');
-                                formData.append(`items[${i}][diskon_persen_item]`, item.diskon_persen || '0');
-                                formData.append(`items[${i}][diskon_nominal_item]`, item.diskon_nominal || '0');
-                                formData.append(`items[${i}][deskripsi]`, item.deskripsi || '');
-
-                                // Also create backup hidden input fields for redundancy
-                                const createOrUpdateHiddenInput = (name, value) => {
-                                    let input = document.querySelector(`input[name="items[${i}][${name}]"]`);
-                                    if (!input) {
-                                        input = document.createElement('input');
-                                        input.type = 'hidden';
-                                        input.name = `items[${i}][${name}]`;
-                                        form.appendChild(input);
-                                    }
-                                    input.value = value ?? '';
-                                };
-
-                                // Create all necessary hidden fields
-                                createOrUpdateHiddenInput('produk_id', item.produk_id);
-                                createOrUpdateHiddenInput('quantity', item.quantity);
-                                createOrUpdateHiddenInput('satuan_id', item.satuan_id);
-                                createOrUpdateHiddenInput('harga', item.harga);
-                                createOrUpdateHiddenInput('diskon_persen_item', item.diskon_persen);
-                                createOrUpdateHiddenInput('diskon_nominal_item', item.diskon_nominal);
-                                createOrUpdateHiddenInput('deskripsi', item.deskripsi);
-                            });
-
-                            // Handle global discount values
-                            formData.set('diskon_persen', this.diskon_global_persen || '0');
-                            formData.set('diskon_nominal', this.diskon_global_nominal || '0');
-                            formData.set('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
-
-                            // Also add these as hidden fields as backup
-                            const createGlobalHiddenInput = (name, value) => {
-                                let input = document.querySelector(`input[name="${name}"]`);
-                                if (!input) {
-                                    input = document.createElement('input');
-                                    input.type = 'hidden';
-                                    input.name = name;
-                                    form.appendChild(input);
-                                }
-                                input.value = value ?? '0';
-                            };
-
-                            createGlobalHiddenInput('diskon_persen', this.diskon_global_persen || '0');
-                            createGlobalHiddenInput('diskon_nominal', this.diskon_global_nominal || '0');
-                            createGlobalHiddenInput('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
-
-                            // Use fetch API for the submission
-                            const url = form.getAttribute('action');
-                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
-                            // Start with the usual form submission first
-                            try {
-                                form.submit();
-                                return true;
-                            } catch (standardError) {
-                                // Try fetch as backup method
-
-                                // Try fetch as a fallback
-                                fetch(url, {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: {
-                                            'X-CSRF-TOKEN': csrfToken,
-                                            'Accept': 'application/json'
-                                        },
-                                        credentials: 'same-origin'
-                                    })
-                                    .then(response => {
-                                        if (response.ok) {
-                                            window.location.href = "{{ route('penjualan.quotation.index') }}";
-                                        } else {
-                                            throw new Error('Form submission failed: ' + response.statusText);
-                                        }
-                                    })
-                                    .catch(error => {
-                                        // Last fallback - try jQuery if available
-                                        if (typeof jQuery !== 'undefined') {
-                                            jQuery.ajax({
-                                                url: url,
-                                                type: 'POST',
-                                                data: new FormData(form),
-                                                processData: false,
-                                                contentType: false,
-                                                success: function() {
-                                                    window.location.href =
-                                                        "{{ route('penjualan.quotation.index') }}";
-                                                }
-                                            });
-                                        }
-                                    });
-                            }
-                        } catch (error) {
-                            // Prevent submission if there was an error in validation logic
-                            event.preventDefault();
-                            this.formErrors.push('Terjadi kesalahan saat validasi: ' + error.message);
+                    calculateGlobalDiscount(type) {
+                        if (type === 'persen') {
+                            this.diskon_global_nominal = (this.diskon_global_persen / 100) * this.summary
+                                .total_sebelum_diskon_global;
+                        } else if (type === 'nominal') {
+                            this.diskon_global_persen = (this.diskon_global_nominal / this.summary
+                                .total_sebelum_diskon_global) * 100;
+                        }
+                        this.calculateTotals();
+                    },
+                    formatCurrency(val) {
+                        val = parseFloat(val) || 0;
+                        return val.toLocaleString('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                            minimumFractionDigits: 2
+                        });
+                    },
+                    validateAndSubmitForm(e) {
+                        this.formErrors = [];
+                        if (!this.items.length) {
+                            this.formErrors.push('Minimal 1 item produk harus diisi.');
+                        }
+                        this.items.forEach((item, idx) => {
+                            if (!item.produk_id) this.formErrors.push('Produk pada item #' + (idx + 1) +
+                                ' wajib diisi.');
+                            if (!item.satuan_id) this.formErrors.push('Satuan pada item #' + (idx + 1) +
+                                ' wajib diisi.');
+                            if (!item.quantity || item.quantity <= 0) this.formErrors.push('Kuantitas pada item #' + (
+                                idx + 1) + ' wajib diisi dan > 0.');
+                            if (!item.harga || item.harga < 0) this.formErrors.push('Harga pada item #' + (idx + 1) +
+                                ' wajib diisi dan >= 0.');
+                        });
+                        if (this.formErrors.length) {
+                            e.preventDefault();
                             return false;
                         }
+                        // Set hidden input for global diskon, ppn, total
+                        const form = document.getElementById('quotationEditForm');
+                        const createGlobalHiddenInput = (name, value) => {
+                            let input = document.querySelector(`input[name="${name}"]`);
+                            if (!input) {
+                                input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = name;
+                                form.appendChild(input);
+                            }
+                            input.value = value ?? '0';
+                        };
+                        createGlobalHiddenInput('diskon_persen', this.diskon_global_persen || '0');
+                        createGlobalHiddenInput('diskon_nominal', this.diskon_global_nominal || '0');
+                        createGlobalHiddenInput('ppn', this.includePPN ? '{{ setting('tax_percentage', 11) }}' : '0');
+                        createGlobalHiddenInput('total', this.summary.grand_total || '0');
+                        form.submit();
                     }
-                };
+                }
             }
-
-            // Improved event handling for form submission
+            // Inisialisasi Select2 untuk static element saat dokumen siap
             document.addEventListener('DOMContentLoaded', function() {
-                // Reset the form submission flag on page load
-                window.alpineFormSubmitted = false;
-                window.formSubmissionAttempted = 0;
-
-                // Get form and submit button elements
-                const form = document.getElementById('quotationEditForm');
-                const submitBtn = document.getElementById('btnSubmitQuotation');
-
-                // Check for presence of Alpine.js
-                const hasAlpine = typeof Alpine !== 'undefined';
-
-                if (submitBtn && form) {
-                    // Handle button click event
-                    submitBtn.addEventListener('click', function(e) {
-                        // Prevent multiple submission attempts
-                        if (window.alpineFormSubmitted && window.formSubmissionAttempted > 2) {
-                            return;
-                        }
-
-                        window.formSubmissionAttempted++;
-
-                        // Ensure form is fully validated before submission
-                        try {
-                            // Try Alpine approach first if available
-                            if (hasAlpine) {
-                                const alpineInstance = Alpine.$data(form);
-                                if (alpineInstance && typeof alpineInstance.validateAndSubmitForm ===
-                                    'function') {
-                                    e.preventDefault();
-                                    alpineInstance.validateAndSubmitForm(e);
-                                    return;
-                                }
-                            }
-
-                            // Fallback to direct form submission with minimal validation
-                            e.preventDefault();
-
-                            // Perform basic validation
-                            let hasError = false;
-                            const requiredInputs = form.querySelectorAll('[required]');
-                            requiredInputs.forEach(input => {
-                                if (!input.value) {
-                                    hasError = true;
-                                    input.classList.add('border-red-500');
-                                }
-                            });
-
-                            if (!hasError) {
-                                // Get all item inputs and ensure they're included in the submission
-                                const itemRows = document.querySelectorAll(
-                                    '[x-show="$data.items && $data.items.length > 0"] [x-for="(item, index) in $data.items"]'
-                                );
-                                if (itemRows.length === 0) {
-                                    alert('Minimal harus ada 1 item dalam quotation.');
-                                    return;
-                                }
-
-                                // Mark form as submitted
-                                window.alpineFormSubmitted = true;
-
-                                // Ensure form has proper method attribute
-                                const method = form.getAttribute('method') || 'POST';
-                                if (!form.querySelector('input[name="_method"][value="PUT"]')) {
-                                    const methodInput = document.createElement('input');
-                                    methodInput.type = 'hidden';
-                                    methodInput.name = '_method';
-                                    methodInput.value = 'PUT';
-                                    form.appendChild(methodInput);
-                                }
-
-                                // Submit the form
-                                form.submit();
-                            }
-                        } catch (err) {
-                            // Last-resort submission - just try to submit the form directly
-                            try {
-                                window.alpineFormSubmitted = true;
-                                form.submit();
-                            } catch (finalError) {
-                                alert('Terjadi kesalahan saat mengirim form. Silakan coba lagi.');
-                            }
-                        }
-                    });
+                if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+                    script.onload = initializeSelect2;
+                    document.head.appendChild(script);
+                } else {
+                    initializeSelect2();
                 }
 
-                // Handle native form submission event
-                if (form) {
-                    form.addEventListener('submit', function(e) {
-                        // If no items were successfully processed, prevent submission
-                        const items = document.querySelectorAll('input[name^="items["][name$="][produk_id]"]');
-                        if (items.length === 0) {
-                            // Don't prevent submission here, as we might have hidden inputs that aren't visible in the DOM tree
-                        }
+                function initializeSelect2() {
+                    $('#customer_id').select2({
+                        placeholder: 'Pilih Customer',
+                        allowClear: true,
+                        width: '100%',
+                        dropdownCssClass: 'select2-dropdown-modern'
                     });
-                }
-            });
-        </script>
-
-        <!-- Select2 JS -->
-        <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-        <script>
-            // Initialize Select2 dropdowns after the page loads
-            $(document).ready(function() {
-                // Initialize static dropdowns
-                $('#customer_id').select2({
-                    placeholder: "Pilih Customer",
-                    allowClear: true,
-                    width: '100%',
-                    dropdownCssClass: 'select2-dropdown-modern'
-                });
-
-                $('#status').select2({
-                    minimumResultsForSearch: -1,
-                    width: '100%',
-                    dropdownCssClass: 'select2-dropdown-modern'
-                });
-
-                // Function to initialize dynamic Select2 elements
-                function initDynamicSelect2() {
-                    $('.select2-dropdown-dynamic').each(function() {
-                        // Check if Select2 is already initialized
-                        if (!$(this).data('select2')) {
-                            if ($(this).attr('name').includes('produk_id')) {
-                                $(this).select2({
-                                    placeholder: "Pilih Produk",
-                                    width: '100%',
-                                    dropdownCssClass: 'select2-dropdown-modern'
-                                }).on('select2:select', function(e) {
-                                    // Trigger change event for Alpine.js to detect
-                                    $(this).trigger('change');
-
-                                    // Get the index from the name attribute
-                                    const nameAttr = $(this).attr('name');
-                                    const match = nameAttr.match(/items\[(\d+)\]/);
-                                    if (match && match[1]) {
-                                        const index = parseInt(match[1]);
-                                        // Get Alpine component and call updateItemDetails
-                                        const component = Alpine.$data(document.querySelector(
-                                            '[x-data]'));
-                                        if (component && typeof component.updateItemDetails ===
-                                            'function') {
-                                            setTimeout(() => {
-                                                component.updateItemDetails(index);
-                                            }, 50);
-                                        }
-                                    }
-                                });
-                            } else if ($(this).attr('name').includes('satuan_id')) {
-                                $(this).select2({
-                                    placeholder: "Pilih Satuan",
-                                    width: '100%',
-                                    dropdownCssClass: 'select2-dropdown-modern'
-                                }).on('select2:select', function(e) {
-                                    $(this).trigger('change');
-                                });
-                            }
-                        }
-                    });
-                }
-
-                // Initialize Select2 for initial elements
-                initDynamicSelect2();
-
-                // Observe DOM changes to initialize dynamic Select2 elements
-                const observer = new MutationObserver(function(mutations) {
-                    mutations.forEach(function(mutation) {
-                        if (mutation.addedNodes.length) {
-                            // Check if any of the added nodes contain our select elements
-                            mutation.addedNodes.forEach(function(node) {
-                                if (node.nodeType === 1) { // Element node
-                                    const dynamicSelects = node.querySelectorAll(
-                                        '.select2-dropdown-dynamic');
-                                    if (dynamicSelects.length) {
-                                        initDynamicSelect2();
-                                    }
-                                }
-                            });
-                        }
-                    });
-                });
-
-                // Start observing the items container for changes
-                const itemsContainer = document.getElementById('items-container');
-                if (itemsContainer) {
-                    observer.observe(itemsContainer, {
-                        childList: true,
-                        subtree: true
+                    $('#status').select2({
+                        minimumResultsForSearch: -1,
+                        width: '100%',
+                        dropdownCssClass: 'select2-dropdown-modern'
                     });
                 }
             });

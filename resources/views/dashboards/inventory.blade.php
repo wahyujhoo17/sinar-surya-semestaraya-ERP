@@ -281,7 +281,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('stok_barang.view'))
-                <a href="{{ route('stok.index') }}"
+                <a href="{{ route('inventaris.stok.index') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">

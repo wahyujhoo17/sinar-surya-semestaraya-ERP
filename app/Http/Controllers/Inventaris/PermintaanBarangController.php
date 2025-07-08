@@ -123,6 +123,7 @@ class PermintaanBarangController extends Controller
         if (!$request->filled('hide_pending')) {
             $pendingSalesOrders = $this->getPendingSalesOrders();
         }
+        // dd($pendingSalesOrders);
 
         if ($request->ajax()) {
             return response()->json([
@@ -145,15 +146,29 @@ class PermintaanBarangController extends Controller
     private function getPendingSalesOrders()
     {
         // Ambil sales order yang sudah disetujui, belum selesai pengirimannya, dan belum memiliki permintaan barang
+
+        // Ambil hanya sales_order_id yang tidak null
         $processedSalesOrderIds = PermintaanBarang::whereIn('status', ['menunggu', 'diproses', 'selesai'])
+            ->whereNotNull('sales_order_id')
             ->pluck('sales_order_id')
             ->toArray();
 
+
+
         $salesOrders = SalesOrder::with(['details.produk', 'customer'])
-            ->whereIn('status_pengiriman', ['belum_dikirim', 'sebagian']) // Include both unshipped and partially shipped orders
+            ->whereIn('status_pengiriman', ['belum_dikirim', 'sebagian'])
             ->whereNotIn('id', $processedSalesOrderIds)
             ->orderBy('tanggal', 'desc')
             ->get();
+
+        // Debug log jika sales order baru tidak ditemukan
+        if ($salesOrders->isEmpty()) {
+            \Log::info('getPendingSalesOrders: Tidak ada sales order yang memenuhi filter', [
+                'processedSalesOrderIds' => $processedSalesOrderIds,
+                'all_sales_orders' => SalesOrder::pluck('id', 'nomor')->toArray(),
+            ]);
+        }
+
 
         return $salesOrders->map(function ($salesOrder) {
             // Filter to only include items that need processing (physical products with remaining quantity)
