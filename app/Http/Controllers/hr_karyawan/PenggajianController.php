@@ -525,6 +525,8 @@ class PenggajianController extends Controller
             })
             ->get();
 
+        Log::info('sales order milik customer', ['ids' => $salesOrders]);
+
         $totalKomisi = 0;
         $processedSalesOrderIds = [];
 
@@ -580,6 +582,8 @@ class PenggajianController extends Controller
                 ->filter()
                 ->toArray();
         }
+        Log::info('alreadyProcessedSalesOrderIds', ['ids' => $alreadyProcessedSalesOrderIds]);
+
 
         foreach ($salesOrders as $order) {
             // Skip if this sales order has already been processed in previous months
@@ -590,6 +594,8 @@ class PenggajianController extends Controller
             $details = SalesOrderDetail::where('sales_order_id', $order->id)->get();
             $orderKomisi = 0;
 
+
+
             foreach ($details as $detail) {
                 // Ambil data produk
                 $produk = Produk::find($detail->produk_id);
@@ -598,6 +604,8 @@ class PenggajianController extends Controller
                     // Hitung Netto Penjualan dan Netto Beli
                     $nettoPenjualan = $detail->harga * $detail->quantity; // Harga jual × quantity
                     $nettoBeli = $produk->harga_beli * $detail->quantity; // Harga beli × quantity
+
+
 
                     if ($nettoBeli > 0) {
                         // 1. Hitung Margin % = (Netto Penjualan - Netto Beli) / Netto Beli × 100
@@ -610,6 +618,8 @@ class PenggajianController extends Controller
                         $komisi = $nettoPenjualan * ($komisiRate / 100);
 
                         $orderKomisi += $komisi;
+
+                        Log::info('details', ['salesOrderID' => $detail->sales_order_id, 'produk_id' => $produk->id, 'Margin Persen' => $komisiRate, 'orderKomisi' => $komisi]);
                     }
                 }
             }
@@ -620,6 +630,8 @@ class PenggajianController extends Controller
                 $processedSalesOrderIds[] = $order->id;
             }
         }
+
+        Log::info('Processed Sales Order IDs', ['ids' => $processedSalesOrderIds]);
 
         return [
             'komisi' => $totalKomisi,

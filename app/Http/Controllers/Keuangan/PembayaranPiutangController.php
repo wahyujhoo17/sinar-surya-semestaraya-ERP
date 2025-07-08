@@ -16,6 +16,7 @@ use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
 use App\Services\NotificationService;
+use App\Models\LogAktivitas;
 // use App\\Models\\AkunAkuntansi; // User commented out
 
 class PembayaranPiutangController extends Controller
@@ -182,12 +183,27 @@ class PembayaranPiutangController extends Controller
                         $salesOrder->status_pembayaran = 'lunas';
                         $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
                     }
+
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'Ubah Status Pembayaran Menjadi Lunas Karena karena Pembayaran Nomor : ' . $pembayaran->nomor,
+                        'modul' => 'sales_order',
+                        'data_id' => $salesOrder->id,
+                    ]);
+                    DB::commit();
                 } else {
                     $invoice->status = 'sebagian'; // Changed from status_pembayaran to status
                     if ($salesOrder) {
                         $salesOrder->status_pembayaran = 'sebagian';
                         $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
                     }
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'Ubah Status Pembayaran Menjadi Sebagian Karena karena Pembayaran Nomor : ' . $pembayaran->nomor,
+                        'modul' => 'sales_order',
+                        'data_id' => $salesOrder->id,
+                    ]);
+                    DB::commit();
                 }
 
                 $invoice->save();
@@ -312,7 +328,7 @@ class PembayaranPiutangController extends Controller
                 // Don't manually update sisa_piutang as it's an accessor
                 // Just refresh the model to get updated status based on payments and credits
                 $originalInvoice->refresh();
-                
+
                 // Check status based on current sisa_piutang (after this payment is removed)
                 $sisaPiutangAfterRevert = $originalInvoice->sisa_piutang + $originalJumlahPembayaran;
                 if ($sisaPiutangAfterRevert >= $originalInvoice->total - 0.001) {

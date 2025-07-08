@@ -342,6 +342,13 @@ class InvoiceController extends Controller
                 'data_id' => $invoice->id,
             ]);
 
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => 'Membuat invoice baru: ' . $request->nomor,
+                'modul' => 'sales_order',
+                'data_id' => $request->sales_order_id,
+            ]);
+
             DB::commit();
 
             return redirect()
