@@ -13,11 +13,14 @@ class PDFTemplateService
      */
     public function fillDeliveryOrderTemplate($deliveryOrder)
     {
+
+        // Tambahkan parameter opsional untuk menonaktifkan template background
+        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
-        if (!file_exists($templatePath)) {
-            throw new \Exception('Template PDF tidak ditemukan: ' . $templatePath);
-        }
+        // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
+        $customWidth = 165;
+        $customHeight = 212;
 
         try {
             // Create FPDI instance
@@ -29,17 +32,17 @@ class PDFTemplateService
             $pdf->SetAutoPageBreak(false);
             $pdf->SetMargins(0, 0, 0);
 
-            // Import existing PDF template first to get dimensions
-            $pageCount = $pdf->setSourceFile($templatePath);
-            $tplId = $pdf->importPage(1);
-            $templateSize = $pdf->getTemplateSize($tplId);
+            // Add a page with the custom dimensions
+            $orientation = $customHeight > $customWidth ? 'P' : 'L';
+            $pdf->AddPage($orientation, [$customWidth, $customHeight]);
 
-            // Add a page with exactly the same dimensions as template
-            $orientation = $templateSize['height'] > $templateSize['width'] ? 'P' : 'L';
-            $pdf->AddPage($orientation, [$templateSize['width'], $templateSize['height']]);
+            // Jika ingin pakai template background
+            if ($useTemplate && file_exists($templatePath)) {
+                $pageCount = $pdf->setSourceFile($templatePath);
+                $tplId = $pdf->importPage(1);
+                $pdf->useTemplate($tplId, 0, 0, $customWidth, $customHeight);
+            }
 
-            // Use the template at full size - no scaling, positioning at origin
-            $pdf->useTemplate($tplId, 0, 0, $templateSize['width'], $templateSize['height']);
 
             // Set document information
             $pdf->SetCreator('ERP Sinar Surya');
@@ -51,100 +54,86 @@ class PDFTemplateService
             $pdf->SetTextColor(0, 0, 0);
 
             // Log template size for debugging
-            Log::info('Template dimensions: ' . $templateSize['width'] . 'x' . $templateSize['height'] . ' mm');
+            Log::info('Template dimensions: ' . $customWidth . 'x' . $customHeight . ' mm (custom), useTemplate=' . ($useTemplate ? 'yes' : 'no'));
 
-            // KOORDINAT DISESUAIKAN UNTUK TEMPLATE SURAT JALAN STANDAR
-            // Berdasarkan template A5 (148 x 210 mm) atau sesuai ukuran aktual template
 
-            // Nomor surat jalan - posisi 50x30 (50mm dari kiri, 30mm dari atas)
-            $nomorX = 30; // 50mm dari kiri
-            $nomorY = 42.5; // 30mm dari atas
+            // --- Penempatan absolut sesuai layout PDF asli ---
+            // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
+            // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
+            $nomorX = 30;
+            $nomorY = 42.5;
             $pdf->SetXY($nomorX, $nomorY);
-            $pdf->Cell(0, 0, $deliveryOrder->nomor, 0, 0, 'L');
+            $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
-            // Tanggal - di bawah nomor surat jalan
-
-            $pdf->SetXY(129, 205);
-            $pdf->Cell(0, 0, $deliveryOrder->tanggal_kirim ?
+            // Tanggal (di bawah nomor)
+            $tanggalX = 31;
+            $tanggalY = 197;
+            $pdf->SetXY($tanggalX, $tanggalY);
+            $pdf->Cell(40, 0, $deliveryOrder->tanggal_kirim ?
                 \Carbon\Carbon::parse($deliveryOrder->tanggal_kirim)->format('d/m/Y') :
                 \Carbon\Carbon::parse($deliveryOrder->created_at)->format('d/m/Y'), 0, 0, 'L');
 
-            // Customer information - biasanya di kiri, setelah "Kepada:"
-            $customerX = 110; // 12% dari lebar
-            $customerY = 35; // 35% dari tinggi
+            // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
+            $customerX = 111;
+            $customerY = 35;
+            $maxCustomerWidth = 50;
 
-            // Nama customer
+            // Nama customer bold
+            $pdf->SetFont('helvetica', 'B', 9);
             $pdf->SetXY($customerX, $customerY);
-            $pdf->Cell(0, 0, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 0, 'L');
+            $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
 
-            // Alamat customer (multiline jika panjang)
-            if (!empty($deliveryOrder->customer->alamat)) {
-                $alamatY = $customerY + 6;
-                $pdf->SetXY($customerX, $alamatY);
-                $maxWidth = $templateSize['width'] * 0.3; // maksimal 30% lebar template
+            // Alamat customer (font lebih kecil, regular)
+            $alamatY = $customerY + 6;
+            $pdf->SetFont('helvetica', '', 8);
+            $pdf->SetXY($customerX, $alamatY);
+            $maxWidth = 50;
+            $alamatText = $deliveryOrder->customer->alamat_pengiriman;
+            $pdf->MultiCell($maxWidth, 4, $alamatText, 0, 'L');
+            $teleponY = $alamatY + $pdf->getStringHeight($maxWidth, $alamatText) + 2;
 
-                // Hitung tinggi alamat (jumlah baris)
-                $alamatText = $deliveryOrder->customer->alamat_pengiriman;
-                $alamatLines = $pdf->MultiCell($maxWidth, 4, $alamatText, 0, 'L', false, 1, '', '', true, 0, false, true, 0, 'T', false);
-                // $alamatLines akan berisi jumlah baris yang dicetak
-
-                // Hitung Y untuk telepon setelah alamat
-                $teleponY = $alamatY + ($pdf->getStringHeight($maxWidth, $alamatText));
-            } else {
-                $alamatY = $customerY + 6;
-                $teleponY = $alamatY;
-            }
-
-            // Telepon customer
+            // Telepon customer (font lebih kecil, regular)
             if (!empty($deliveryOrder->customer->telepon)) {
-                $pdf->SetXY($customerX, $teleponY); // +2 agar ada sedikit jarak
-                $pdf->Cell(0, 0, 'Telp: ' . $deliveryOrder->customer->telepon, 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetXY($customerX, $teleponY);
+                $pdf->Cell(60, 0, 'Telp: ' . $deliveryOrder->customer->telepon, 0, 0, 'L');
             }
 
-            // Items table - area untuk daftar barang
-            $itemsStartY = 76; // 55% dari tinggi
-            $lineHeight = 5.5; // spacing antar baris item
+            // Items table (misal mulai X=15mm, Y=55mm)
+            $itemsStartY = 75;
+            $lineHeight = 6;
             $currentY = $itemsStartY;
-            $maxItemsY = $templateSize['height'] * 0.85; // maksimal sampai 85% tinggi
+            $maxItemsY = 170;
 
-            // Column positions untuk tabel items
-            $noCol = 7;
-            $namaCol = 20;    // 18% - Nama Barang  
+            // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
+            $noCol = 9;
+            $namaCol = 20;
+            $kodeCol = 100;
+            $qtyCol = 130;
+            $satuanCol = 140;
 
-            // Hitung posisi qty dan satuan secara dinamis berdasarkan lebar teks qty
             foreach ($deliveryOrder->details as $index => $detail) {
-                if ($currentY > $maxItemsY) break; // Stop jika melebihi area yang tersedia
-
+                if ($currentY > $maxItemsY) break;
                 // No urut
                 $pdf->SetXY($noCol, $currentY);
-                $pdf->Cell(12, $lineHeight, ($index + 1), 0, 0, 'C');
-
-                // Nama produk - potong jika terlalu panjang
+                $pdf->Cell(8, $lineHeight, ($index + 1), 0, 0, 'C');
+                // Nama produk
                 $namaProduk = strlen($detail->produk->nama) > 35 ?
                     substr($detail->produk->nama, 0, 32) . '...' :
                     $detail->produk->nama;
                 $pdf->SetXY($namaCol, $currentY);
-                $pdf->Cell(0, $lineHeight, $namaProduk, 0, 0, 'L');
-
-                // Nomor detail (misal: kode barang atau nomor urut detail)
-                $detailNomor = $detail->produk->kode ?? 'kosong'; // pastikan field 'nomor' ada di detail
-                $nomorCol = 97; // posisi sebelum qty
-                $pdf->SetXY($nomorCol, $currentY);
-                $pdf->Cell(15, $lineHeight, $detailNomor, 0, 0, 'L');
-
-                // Quantity
+                $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $namaProduk, 0, 0, 'L');
+                // Kode barang
+                $detailNomor = $detail->produk->kode ?? '-';
+                $pdf->SetXY($kodeCol, $currentY);
+                $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, $detailNomor, 0, 0, 'L');
+                // Qty
                 $qtyValue = number_format($detail->quantity, 0);
-                $qtyCol = 130; // default posisi awal qty
                 $pdf->SetXY($qtyCol, $currentY);
-                // Hitung lebar teks qty
-                $qtyWidth = $pdf->GetStringWidth($qtyValue) + 2; // +2mm padding
-                $pdf->Cell($qtyWidth, $lineHeight, $qtyValue, 0, 0, 'R');
-
-                // Satuan - posisikan tepat setelah qty
-                $satuanCol = $qtyCol + $qtyWidth + 1; // +2mm jarak antar kolom
+                $pdf->Cell($satuanCol - $qtyCol - 2, $lineHeight, $qtyValue, 0, 0, 'R');
+                // Satuan
                 $pdf->SetXY($satuanCol, $currentY);
-                $pdf->Cell(20, $lineHeight, $detail->satuan->nama ?? 'PCS', 0, 0, 'L');
-
+                $pdf->Cell(15, $lineHeight, $detail->satuan->nama ?? 'PCS', 0, 0, 'L');
                 $currentY += $lineHeight;
             }
 

@@ -312,9 +312,7 @@
                                             Syarat & Ketentuan
                                         </label>
                                         <textarea name="syarat_ketentuan" id="syarat_ketentuan" rows="4"
-                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">1. Pembayaran dilakukan dengan transfer ke rekening perusahaan
-2. Barang yang sudah dibeli tidak dapat dikembalikan
-3. Harap melampirkan bukti transfer setelah melakukan pembayaran</textarea>
+                                            class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">{{ setting('invoice_terms', '-') }}</textarea>
                                     </div>
                                 </div>
                             </div>

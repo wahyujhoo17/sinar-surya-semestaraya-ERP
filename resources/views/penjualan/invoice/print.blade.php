@@ -174,6 +174,16 @@
             box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
         }
 
+        .footer {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            margin: 0;
+            box-shadow: none;
+            background: #f9fafb;
+        }
+
         .footer-text {
             font-size: 9.5px;
             color: #6b7280;
@@ -200,9 +210,9 @@
                     onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">INVOICE</h2>
+                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">INVOICE #{{ $invoice->nomor }}</h2>
                 <div>
-                    <strong>Nomor:</strong> {{ $invoice->nomor }}<br>
+                    {{-- <strong>Nomor:</strong> {{ $invoice->nomor }}<br> --}}
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}<br>
                     <strong>Jatuh Tempo:</strong>
                     {{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}<br>
@@ -236,10 +246,7 @@
             <td>
                 <div class="section-title">Customer</div>
                 <div style="padding: 5px;">
-                    <strong>{{ $invoice->customer->nama ?? '-' }}</strong><br>
-                    @if ($invoice->customer->company)
-                        {{ $invoice->customer->company }}<br>
-                    @endif
+                    <strong>{{ $invoice->customer->company ?? $invoice->customer->nama }}</strong><br>
                     {{ $invoice->customer->alamat ?? '-' }}<br>
                     @if ($invoice->customer->telepon)
                         Telp: {{ $invoice->customer->telepon }}<br>
@@ -293,38 +300,9 @@
     </table>
 
     <div style="display: flex; justify-content: space-between;">
-        <div style="width: 60%;">
-            @if ($invoice->catatan)
-                <div
-                    style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-                    <strong style="color: #2c3e50;">Catatan:</strong>
-                    <p>{{ $invoice->catatan }}</p>
-                </div>
-            @endif
-
-            @if ($invoice->syarat_ketentuan)
-                <div
-                    style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-                    <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
-                    <div style="margin-top: 5px; white-space: pre-line;">{{ $invoice->syarat_ketentuan }}</div>
-                </div>
-            @endif
-
-            <div
-                style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-                <strong style="color: #2c3e50;">Informasi Pembayaran:</strong>
-                <div style="margin-top: 5px;">
-                    Bank: {{ setting('company_bank_name', 'Bank Central Asia (BCA)') }}<br>
-                    No. Rekening: {{ setting('company_bank_account', '123-456-7890') }}<br>
-                    Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
-                </div>
-            </div>
-
-            <div class="text-amount">
-                <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $invoice->total)) }} Rupiah
-            </div>
+        <div class="text-amount">
+            <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $invoice->total)) }} Rupiah
         </div>
-
         <!-- Summary Table -->
         <table class="summary-table">
             <tr>
@@ -348,6 +326,39 @@
                 <td class="text-right"><strong>Rp {{ number_format($invoice->total, 0, ',', '.') }}</strong></td>
             </tr>
         </table>
+
+        <div style="width: 60%;">
+            @if ($invoice->catatan)
+                <div
+                    style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+                    <strong style="color: #2c3e50;">Catatan:</strong>
+                    <p>{{ $invoice->catatan }}</p>
+                </div>
+            @endif
+
+            @if ($invoice->syarat_ketentuan)
+                <div
+                    style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+                    <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
+                    <div style="margin-top: 5px; white-space: pre-line;">{{ $invoice->syarat_ketentuan }}</div>
+                </div>
+            @endif
+
+            <div
+                style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+                <strong style="color: #2c3e50;">Informasi Pembayaran:</strong>
+                <div style="margin-top: 5px;">
+                    Pembayaran Giro, Cek atau Transfer <br>
+                    Bank: {{ setting('company_bank_name', 'Mandiri') }}<br>
+                    No. Rekening: {{ setting('company_bank_account', '006.000.301.9563') }}<br>
+                    Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
+                </div>
+            </div>
+
+
+        </div>
+
+
     </div>
 
     <!-- Signatures -->
