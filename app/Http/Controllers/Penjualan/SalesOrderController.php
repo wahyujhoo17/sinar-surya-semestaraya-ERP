@@ -52,7 +52,9 @@ class SalesOrderController extends Controller
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
             $query = SalesOrder::query();
         } else {
-            $query = SalesOrder::where('user_id', Auth::id());
+            $query = SalesOrder::whereHas('customer', function ($q) {
+                $q->where('sales_id', Auth::id());
+            });
         }
 
         $sort = $request->get('sort', 'tanggal');

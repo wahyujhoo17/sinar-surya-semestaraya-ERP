@@ -627,6 +627,7 @@
                                     total_commission: data.komisi || 0,
                                     orders: data.salesOrderDetails || []
                                 };
+                                // console.log(data);
                             } else {
                                 this.commissionData = {
                                     total_commission: 0,

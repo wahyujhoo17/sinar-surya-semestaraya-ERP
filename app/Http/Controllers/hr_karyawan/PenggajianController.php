@@ -514,12 +514,12 @@ class PenggajianController extends Controller
 
         $userId = $karyawan->user_id;
 
-        // Ambil semua sales order oleh karyawan ini yang sudah LUNAS dan dibayar pada bulan/tahun tertentu
-        // Komisi dihitung berdasarkan kapan sales order menjadi lunas, bukan kapan SO dibuat
-        $salesOrders = SalesOrder::where('user_id', $userId)
-            ->where('status_pembayaran', 'lunas') // Hanya sales order yang sudah lunas
+        // Ambil semua sales order milik customer yang sales_id-nya sama dengan user ini, sudah LUNAS dan dibayar pada bulan/tahun tertentu
+        $salesOrders = SalesOrder::where('status_pembayaran', 'lunas')
+            ->whereHas('customer', function ($query) use ($userId) {
+                $query->where('sales_id', $userId);
+            })
             ->whereHas('invoices.pembayaranPiutang', function ($query) use ($bulan, $tahun) {
-                // Filter berdasarkan tanggal pembayaran yang membuat SO menjadi lunas
                 $query->whereMonth('tanggal', $bulan)
                     ->whereYear('tanggal', $tahun);
             })
@@ -759,6 +759,7 @@ class PenggajianController extends Controller
         $komisiData = $this->hitungKomisiKaryawan($request->karyawan_id, $request->bulan, $request->tahun);
         $komisi = $komisiData['komisi'];
         $salesOrderIds = $komisiData['salesOrderIds'];
+
 
         // Log sales order IDs found
         Log::info('Sales orders found for commission', [
