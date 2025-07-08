@@ -208,7 +208,14 @@ class SalesOrderController extends Controller
 
     public function create(Request $request)
     {
-        $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+            // Allow access to all customers
+            $customers = Customer::orderBy('nama', 'asc')->get();
+        } else {
+            // Only show customers assigned to the sales user
+            $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
+        }
+        // $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $gudangs = \App\Models\Gudang::orderBy('nama', 'asc')->get();
