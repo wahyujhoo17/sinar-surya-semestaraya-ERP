@@ -211,34 +211,165 @@
     </div>
 
     <!-- Recent Activities -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aktivitas Terbaru</h3>
-        <div class="space-y-3">
-            @forelse($aktivitasTerbaru as $aktivitas)
-                <div class="flex items-start space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <div class="flex-shrink-0">
-                        <div
-                            class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
+    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center">
+                <svg class="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Aktivitas Terbaru
+            </h3>
+            <span
+                class="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-0.5 rounded-full">Real-time</span>
+        </div>
+        <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+            @forelse($aktivitasTerbaru->take(5) as $aktivitas)
+                <li class="flex items-center py-2">
+                    <div class="flex-shrink-0 mr-3">
+                        @php
+                            $iconColors = [
+                                'create' => 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400',
+                                'update' => 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400',
+                                'delete' => 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400',
+                                'login' => 'bg-purple-100 dark:bg-purple-900 text-purple-600 dark:text-purple-400',
+                                'export' => 'bg-yellow-100 dark:bg-yellow-900 text-yellow-600 dark:text-yellow-400',
+                                'default' => 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+                            ];
+                            $colorClass = $iconColors[$aktivitas->aktivitas] ?? $iconColors['default'];
+                        @endphp
+                        <div class="w-8 h-8 {{ $colorClass }} rounded-full flex items-center justify-center">
+                            @if ($aktivitas->aktivitas === 'create')
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                            @elseif($aktivitas->aktivitas === 'update')
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                    </path>
+                                </svg>
+                            @elseif($aktivitas->aktivitas === 'delete')
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            @elseif($aktivitas->aktivitas === 'login')
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
+                                    </path>
+                                </svg>
+                            @elseif($aktivitas->aktivitas === 'export')
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            @else
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            @endif
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                            {{ $aktivitas->user ? $aktivitas->user->name : 'System' }}
-                        </p>
-                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $aktivitas->deskripsi }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-500">
-                            {{ $aktivitas->created_at->diffForHumans() }}</p>
-                    </div>
-                </div>
+                        <div class="flex items-center justify-between">
+                            <span
+                                class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $aktivitas->user ? $aktivitas->user->name : 'System' }}</span>
+                            <span
+                                class="ml-2 text-xs px-2 py-0.5 rounded bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300">{{ $aktivitas->created_at->diffForHumans() }}</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 mt-1">
+                            @if ($aktivitas->modul)
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                                    {{ ucfirst(str_replace('_', ' ', $aktivitas->modul)) }}
+                                </span>
+                            @endif
+                            <span
+                                class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                @if ($aktivitas->aktivitas === 'create') bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300
+                                @elseif($aktivitas->aktivitas === 'update') bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300
+                                @elseif($aktivitas->aktivitas === 'delete') bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300
+                                @elseif($aktivitas->aktivitas === 'login') bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300
+                                @elseif($aktivitas->aktivitas === 'export') bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300
+                                @else bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 @endif">
+                                {{ ucfirst($aktivitas->aktivitas) }}
+                            </span>
+                            @if ($aktivitas->ip_address)
+                                <span
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9m0 9a9 9 0 01-9-9m9 9c0-5 4-9 9-9s9 4 9 9">
+                                        </path>
+                                    </svg>
+                                    {{ $aktivitas->ip_address }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            @php
+                                $detail = $aktivitas->detail;
+                                $isJson = false;
+                                if (
+                                    is_string($detail) &&
+                                    (str_starts_with($detail, '{') || str_starts_with($detail, '['))
+                                ) {
+                                    $json = json_decode($detail, true);
+                                    $isJson = json_last_error() === JSON_ERROR_NONE && is_array($json);
+                                } else {
+                                    $json = null;
+                                }
+                            @endphp
+                            @if ($isJson && $json)
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach (['nomor', 'customer', 'total', 'user'] as $key)
+                                        @if (isset($json[$key]))
+                                            <span
+                                                class="inline-block bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-2 py-0.5 rounded">
+                                                <strong>{{ ucfirst($key) }}:</strong> {{ $json[$key] }}
+                                            </span>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            @elseif($detail)
+                                {{ is_string($detail) ? Str::limit(strip_tags($detail), 80) : '' }}
+                            @else
+                                {{ ucfirst($aktivitas->aktivitas) }}
+                                {{ $aktivitas->modul ? 'pada modul ' . str_replace('_', ' ', $aktivitas->modul) : '' }}
+                            @endif
+                        </div>
+                </li>
             @empty
-                <p class="text-gray-500 dark:text-gray-400 text-center py-4">Tidak ada aktivitas terbaru</p>
+                <li class="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+                    <svg class="w-8 h-8 mx-auto mb-2 text-gray-400 dark:text-gray-500" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Tidak ada aktivitas
+                </li>
             @endforelse
-        </div>
+        </ul>
+        @if ($aktivitasTerbaru->count() > 5)
+            <div class="mt-3 text-center">
+                <a href="pengaturan/log-aktivitas"
+                    class="inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+                    Lihat semua aktivitas
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                        </path>
+                    </svg>
+                </a>
+            </div>
+        @endif
     </div>
 
     @push('scripts')
