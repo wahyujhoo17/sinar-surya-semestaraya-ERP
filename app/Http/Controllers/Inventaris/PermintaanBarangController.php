@@ -54,7 +54,7 @@ class PermintaanBarangController extends Controller
 
         $lastNumber = DB::table('permintaan_barang')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
