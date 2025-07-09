@@ -216,6 +216,9 @@
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}<br>
                     <strong>Jatuh Tempo:</strong>
                     {{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}<br>
+                    @if ($invoice->salesOrder->nomor_po)
+                        <strong>No. PO:</strong> {{ $invoice->salesOrder->nomor_po }}
+                    @endif
                     @if ($invoice->salesOrder)
                         <strong>No. Sales Order:</strong> {{ $invoice->salesOrder->nomor }}
                     @endif
@@ -321,6 +324,12 @@
                     <td class="text-right">Rp {{ number_format($invoice->ppn, 0, ',', '.') }}</td>
                 </tr>
             @endif
+            @if ($invoice->ongkos_kirim > 0)
+                <tr>
+                    <td>Ongkos Kirim</td>
+                    <td class="text-right">Rp {{ number_format($invoice->ongkos_kirim, 0, ',', '.') }}</td>
+                </tr>
+            @endif
             <tr class="total-row">
                 <td><strong>Total</strong></td>
                 <td class="text-right"><strong>Rp {{ number_format($invoice->total, 0, ',', '.') }}</strong></td>
@@ -362,22 +371,17 @@
     </div>
 
     <!-- Signatures -->
-    <table class="signature-table">
-        <tr>
-            <td>
-                <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">{{ $invoice->user->name ?? 'Admin' }}</strong></div>
-                <div style="color: #7f8c8d;">{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</div>
-            </td>
-            <td>
-                <div class="signature-line"></div>
-                <div><strong
-                        style="color: #2c3e50;">{{ $invoice->customer->nama ?? $invoice->customer->company }}</strong>
-                </div>
-                <div style="color: #7f8c8d;">Customer</div>
-            </td>
-        </tr>
-    </table>
+    <div style="width: 100%; margin-top: 30px;">
+        <div style="width: 40%; float: right; text-align: center;">
+            <div style="margin-bottom: 35px; font-weight: bold; color: #2c3e50;">Hormat Kami,</div>
+            <div class="signature-line" style="margin: 50px auto 10px auto; width: 80%;"></div>
+            <div><strong
+                    style="color: #2c3e50;">{{ $namaDirektur = trim($namaDirektur) !== '' ? $namaDirektur : 'Ir. Arief Rahman Hamid' }}</strong>
+            </div>
+            {{-- <div style="color: #7f8c8d;">{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</div> --}}
+        </div>
+        <div style="clear: both;"></div>
+    </div>
 
     <!-- Footer -->
     <div class="footer">

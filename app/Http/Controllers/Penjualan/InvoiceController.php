@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\InvoiceDetail;
 use App\Models\SalesOrder;
+use App\Models\Karyawan;
 use App\Models\SalesOrderDetail;
 use App\Models\PembayaranPiutang;
 use App\Models\Customer;
@@ -448,9 +449,13 @@ class InvoiceController extends Controller
                 'details.satuan',
                 'pembayaranPiutang' // Changed 'pembayaran' to 'pembayaranPiutang'
             ]);
+            $direktur = Karyawan::whereHas('jabatan', function ($q) {
+                $q->where('nama', 'Direktur Utama');
+            })->first();
+            $namaDirektur = $direktur ? $direktur->nama_lengkap : '';
 
             // Set paper size and orientation
-            $pdf = PDF::loadView('penjualan.invoice.print', compact('invoice'))
+            $pdf = PDF::loadView('penjualan.invoice.print', compact('invoice', 'namaDirektur'))
                 ->setPaper('a4', 'portrait');
 
             // Stream the PDF with a sensible filename
@@ -563,5 +568,39 @@ class InvoiceController extends Controller
         $salesOrder->save();
 
         return $salesOrder;
+    }
+    public function printTemplate($id)
+    {
+        try {
+            // Load delivery order with its relationships
+            $invoice = Invoice::with([
+                'salesOrder',
+                'customer',
+                'user',
+                'details.produk.satuan',
+                'details.satuan',
+            ])->findOrFail($id);
+
+            // Ambil nama karyawan yang menjabat sebagai Direktur
+            $direktur = Karyawan::whereHas('jabatan', function ($q) {
+                $q->where('nama', 'Direktur Utama');
+            })->first();
+            $namaDirektur = $direktur ? $direktur->nama_lengkap : '';
+
+
+            // Use PDF template service
+            $pdfService = new \App\Services\PDFInvoiceTamplate();
+            // $pdf = $pdfService->fillInvoiceTemplate($invoice);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
+
+            // Output PDF
+            $filename = 'Invoice-' . $invoice->nomor . '.pdf';
+
+            return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
+
+        } catch (\Exception $e) {
+            \Log::error('Error printing delivery order template: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
+        }
     }
 }

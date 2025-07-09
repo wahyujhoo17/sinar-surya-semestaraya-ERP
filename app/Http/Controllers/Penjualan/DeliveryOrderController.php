@@ -847,14 +847,6 @@ class DeliveryOrderController extends Controller
             // Output PDF
             $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '.pdf';
 
-            // Log aktivitas
-            $this->logUserAktivitas(
-                'print template surat jalan',
-                'delivery_order',
-                $deliveryOrder->id,
-                'Print surat jalan menggunakan template PDF: ' . $deliveryOrder->nomor
-            );
-
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
 
         } catch (\Exception $e) {

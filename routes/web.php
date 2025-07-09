@@ -327,6 +327,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:sales_order.generate_invoice')->group(function () {
             Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
         });
+        Route::get('invoice/{id}/print-template', [InvoiceController::class, 'printTemplate'])->name('invoice.print-template');
         Route::resource('invoice', InvoiceController::class);
 
         // Delivery Order routes
