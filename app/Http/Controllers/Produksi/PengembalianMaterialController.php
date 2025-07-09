@@ -15,7 +15,7 @@ class PengembalianMaterialController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:pengembalian_material.create')->only(['create', 'store']);
+        $this->middleware('permission:work_order.create')->only(['create', 'store']);
     }
 
     /**

@@ -500,12 +500,12 @@ Route::middleware(['auth'])->group(function () {
             Route::post('work-order/{id}/store-pengambilan', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan');
             Route::get('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'createPengambilanBahanBaku'])->name('work-order.pengambilan-bahan-baku');
             Route::post('work-order/{id}/pengambilan-bahan-baku', [WorkOrderController::class, 'storePengambilanBahanBaku'])->name('work-order.store-pengambilan-bahan-baku');
-            // Routes for Quality Control
-            Route::get('work-order/{id}/create-qc', [WorkOrderController::class, 'createQualityControl'])->name('work-order.create-qc');
-            Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
-            Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
-            Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
         });
+        // Routes for Quality Control
+        Route::get('work-order/{id}/create-qc', [WorkOrderController::class, 'createQualityControl'])->name('work-order.create-qc');
+        Route::post('work-order/{id}/store-qc', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-qc');
+        Route::get('work-order/{id}/quality-control', [WorkOrderController::class, 'createQualityControl'])->name('work-order.quality-control');
+        Route::post('work-order/{id}/quality-control', [WorkOrderController::class, 'storeQualityControl'])->name('work-order.store-quality-control');
 
         // AJAX Routes for Material Selection (put outside permission middleware for easier access)
         Route::middleware('auth')->group(function () {
@@ -515,6 +515,11 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:work_order.view')->group(function () {
             Route::get('work-order/select-product/{perencanaan_id}', [WorkOrderController::class, 'create'])->name('work-order.select-product');
         });
+        Route::middleware('permission:work_order.create')->group(function () {
+            Route::get('work-order/{id}/create-pengembalian', [PengembalianMaterialController::class, 'create'])->name('work-order.create-pengembalian');
+            Route::post('work-order/{id}/store-pengembalian', [PengembalianMaterialController::class, 'store'])->name('work-order.store-pengembalian');
+        });
+
         Route::resource('work-order', WorkOrderController::class);
 
         // Pengambilan Bahan Baku Routes - with permission middleware (using existing permissions)
@@ -526,11 +531,6 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::resource('pengambilan-bahan-baku', PengambilanBahanBakuController::class)->only(['index', 'show']);
 
-        // Pengembalian Material Routes - with permission middleware (using existing permissions)
-        Route::middleware('permission:work_order.edit')->group(function () {
-            Route::get('work-order/{id}/create-pengembalian', [PengembalianMaterialController::class, 'create'])->name('work-order.create-pengembalian');
-            Route::post('work-order/{id}/store-pengembalian', [PengembalianMaterialController::class, 'store'])->name('work-order.store-pengembalian');
-        });
 
         // Quality Control Routes - with permission middleware  
         Route::middleware('permission:quality_control.print')->group(function () {

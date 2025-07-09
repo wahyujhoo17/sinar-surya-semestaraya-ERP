@@ -27,158 +27,175 @@
                     </a>
 
                     @if ($workOrder->status === 'direncanakan')
-                        <a href="{{ route('produksi.work-order.edit', $workOrder->id) }}"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Edit
-                        </a>
+                        @if (auth()->user()->hasPermission('work_order.edit'))
+                            <a href="{{ route('produksi.work-order.edit', $workOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit
+                            </a>
+                        @endif
                     @endif
                 </div>
             </div>
         </div>
 
         {{-- Action buttons based on status --}}
-        <div
-            class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Tindakan</h2>
-            <div class="flex flex-wrap gap-3">
-                @if ($workOrder->status === 'direncanakan')
-                    <a href="{{ route('produksi.work-order.create-pengambilan', $workOrder->id) }}"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                        </svg>
-                        Buat Pengambilan Bahan Baku
-                    </a>
+        @if ($workOrder->status != 'selesai')
 
-                    @if ($workOrder->pengambilanBahanBaku()->exists())
+            <div
+                class="mb-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Tindakan</h2>
+                <div class="flex flex-wrap gap-3">
+                    @if ($workOrder->status === 'direncanakan')
+                        @if (auth()->user()->hasPermission('work_order.change_status'))
+                            <a href="{{ route('produksi.work-order.create-pengambilan', $workOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                </svg>
+                                Buat Pengambilan Bahan Baku
+                            </a>
+                        @endif
+
+                        @if ($workOrder->pengambilanBahanBaku()->exists())
+                            @if (auth()->user()->hasPermission('work_order.change_status'))
+                                <button type="button"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                                    onclick="showConfirmModal('Mulai Produksi', 'Apakah Anda yakin ingin memulai proses produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Mulai Produksi
+                                </button>
+                            @endif
+                        @endif
+                    @endif
+
+                    @if ($workOrder->status === 'berjalan')
+                        @if (auth()->user()->hasPermission('work_order.change_status'))
+                            <a href="{{ route('produksi.work-order.create-pengambilan', $workOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                                </svg>
+                                Tambah Pengambilan Bahan Baku
+                            </a>
+
+                            <button type="button"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                onclick="showConfirmModal('Selesai Produksi', 'Apakah produksi sudah selesai dan siap untuk Quality Control?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'selesai_produksi']) }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Selesai Produksi
+                            </button>
+                        @endif
+                    @endif
+
+                    @if ($workOrder->status === 'selesai_produksi')
+                        @if (auth()->user()->hasPermission('quality_control.create'))
+                            {{-- Button untuk membuat Quality Control --}}
+                            <a href="{{ route('produksi.work-order.create-qc', $workOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                                </svg>
+                                Buat Quality Control
+                            </a>
+
+                            <button type="button"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                                onclick="showConfirmModal('Kembali ke Produksi', 'Apakah Anda ingin kembali ke tahap produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Kembali ke Produksi
+                            </button>
+
+                            <button type="button"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                                onclick="showConfirmModal('QC Passed', 'Apakah Quality Control telah dilakukan dan produk lulus QC?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'qc_passed']) }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                QC Passed
+                            </button>
+                        @endif
+                    @endif
+
+                    @if ($workOrder->status === 'qc_passed')
+                        @if (auth()->user()->hasPermission('work_order.create'))
+                            <a href="{{ route('produksi.work-order.create-pengembalian', $workOrder->id) }}"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                                </svg>
+                                Buat Pengembalian Material
+                            </a>
+
+                            <button type="button"
+                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                                onclick="showConfirmModal('Pengembalian Material', 'Apakah pengembalian material sisa produksi telah dilakukan?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'pengembalian_material']) }}')">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                Konfirmasi Pengembalian Material
+                            </button>
+                        @endif
+                    @endif
+
+                    @if ($workOrder->status === 'pengembalian_material')
                         <button type="button"
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                            onclick="showConfirmModal('Mulai Produksi', 'Apakah Anda yakin ingin memulai proses produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            onclick="showConfirmModal('Selesai Work Order', 'Apakah work order ini telah selesai dan produk siap disimpan di gudang hasil?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'selesai']) }}')">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
                                 viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    d="M5 13l4 4L19 7" />
                             </svg>
-                            Mulai Produksi
+                            Selesai Work Order
                         </button>
                     @endif
-                @endif
 
-                @if ($workOrder->status === 'berjalan')
-                    <a href="{{ route('produksi.work-order.create-pengambilan', $workOrder->id) }}"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                        </svg>
-                        Tambah Pengambilan Bahan Baku
-                    </a>
-
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        onclick="showConfirmModal('Selesai Produksi', 'Apakah produksi sudah selesai dan siap untuk Quality Control?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'selesai_produksi']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Selesai Produksi
-                    </button>
-                @endif
-
-                @if ($workOrder->status === 'selesai_produksi')
-                    <a href="{{ route('produksi.work-order.create-qc', $workOrder->id) }}"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                        </svg>
-                        Buat Quality Control
-                    </a>
-
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                        onclick="showConfirmModal('Kembali ke Produksi', 'Apakah Anda ingin kembali ke tahap produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Kembali ke Produksi
-                    </button>
-
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        onclick="showConfirmModal('QC Passed', 'Apakah Quality Control telah dilakukan dan produk lulus QC?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'qc_passed']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 13l4 4L19 7" />
-                        </svg>
-                        QC Passed
-                    </button>
-                @endif
-
-                @if ($workOrder->status === 'qc_passed')
-                    <a href="{{ route('produksi.work-order.create-pengembalian', $workOrder->id) }}"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
-                        </svg>
-                        Buat Pengembalian Material
-                    </a>
-
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-                        onclick="showConfirmModal('Pengembalian Material', 'Apakah pengembalian material sisa produksi telah dilakukan?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'pengembalian_material']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                        Konfirmasi Pengembalian Material
-                    </button>
-                @endif
-
-                @if ($workOrder->status === 'pengembalian_material')
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                        onclick="showConfirmModal('Selesai Work Order', 'Apakah work order ini telah selesai dan produk siap disimpan di gudang hasil?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'selesai']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 13l4 4L19 7" />
-                        </svg>
-                        Selesai Work Order
-                    </button>
-                @endif
-
-                @if ($workOrder->status === 'qc_reject')
-                    <button type="button"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                        onclick="showConfirmModal('Kembali ke Produksi', 'Apakah Anda yakin akan mengembalikan work order ini ke tahap produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Kembali ke Produksi
-                    </button>
-                @endif
+                    @if ($workOrder->status === 'qc_reject')
+                        <button type="button"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            onclick="showConfirmModal('Kembali ke Produksi', 'Apakah Anda yakin akan mengembalikan work order ini ke tahap produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Kembali ke Produksi
+                        </button>
+                    @endif
+                </div>
             </div>
-        </div>
+        @endif
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             {{-- Informasi Utama --}}
