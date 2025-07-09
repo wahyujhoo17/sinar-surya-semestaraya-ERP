@@ -87,7 +87,7 @@ class DashboardController extends Controller
         // Check for finance role
         if (
             $user->hasPermission('jurnal_umum.view') || $user->hasPermission('kas_dan_bank.view') ||
-            $user->hasPermission('invoice.view') || $user->hasPermission('management_pajak.view')
+            $user->hasPermission('chart_of_accounts.view') || $user->hasPermission('management_pajak.view')
         ) {
             return 'finance';
         }
@@ -307,12 +307,12 @@ class DashboardController extends Controller
             ->get();
 
         // Top customers this month
-        $topCustomers = Customer::select('customer.id', 'customer.nama', DB::raw('SUM(invoice.total) as total_pembelian'))
+        $topCustomers = Customer::select('customer.id', 'customer.company', 'customer.nama', DB::raw('SUM(invoice.total) as total_pembelian'))
             ->leftJoin('sales_order', 'customer.id', '=', 'sales_order.customer_id')
             ->leftJoin('invoice', 'sales_order.id', '=', 'invoice.sales_order_id')
             ->whereMonth('invoice.tanggal', now()->month)
             ->whereYear('invoice.tanggal', now()->year)
-            ->groupBy('customer.id', 'customer.nama')
+            ->groupBy('customer.id', 'customer.company', 'customer.nama')
             ->orderBy('total_pembelian', 'desc')
             ->limit(5)
             ->get();

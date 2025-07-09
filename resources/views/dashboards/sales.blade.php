@@ -167,7 +167,9 @@
                                     class="text-sm font-bold text-blue-600 dark:text-blue-400">{{ $index + 1 }}</span>
                             </div>
                             <div>
-                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $customer->nama }}</p>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ $customer->company ?? $customer->nama }}</p>
+                                </p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">Total: Rp
                                     {{ number_format($customer->total_pembelian ?? 0, 0, ',', '.') }}</p>
                             </div>
@@ -192,7 +194,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $quotation->nomor }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ $quotation->customer->nama ?? 'N/A' }}</p>
+                                {{ $quotation->customer->company ?? ($quotation->customer->nama ?? 'N/A') }}</p>
                             <p class="text-xs text-gray-400 dark:text-gray-500">
                                 {{ $quotation->created_at->format('d/m/Y') }}</p>
                         </div>
@@ -223,7 +225,7 @@
                         <div>
                             <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $salesOrder->nomor }}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">
-                                {{ $salesOrder->customer->nama ?? 'N/A' }}</p>
+                                {{ $salesOrder->customer->company ?? ($salesOrder->customer->nama ?? 'N/A') }}</p>
                             <p class="text-xs text-gray-400 dark:text-gray-500">
                                 {{ $salesOrder->created_at->format('d/m/Y') }}</p>
                         </div>
@@ -232,11 +234,11 @@
                                 {{ number_format($salesOrder->total ?? 0, 0, ',', '.') }}</p>
                             <span
                                 class="px-2 py-1 text-xs font-medium rounded-full 
-                                @if ($salesOrder->status == 'draft') bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
-                                @elseif($salesOrder->status == 'confirmed') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                @elseif($salesOrder->status == 'delivered') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                @if ($salesOrder->status_pembayaran == 'belum_bayar') bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200
+                                @elseif($salesOrder->status_pembayaran == 'sebagian') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                @elseif($salesOrder->status_pembayaran == 'lunas') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
                                 @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 @endif">
-                                {{ ucfirst($salesOrder->status) }}
+                                {{ ucfirst($salesOrder->status_pembayaran) }}
                             </span>
                         </div>
                     </div>
@@ -282,7 +284,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('pelanggan.create'))
-                <a href="{{ route('master-data.pelanggan.create') }}"
+                <a href="{{ route('master.pelanggan.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-purple-600 dark:text-purple-400 mb-2" fill="none"
                         stroke="currentColor" viewBox="0 0 24 24">
