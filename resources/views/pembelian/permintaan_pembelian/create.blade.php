@@ -1,7 +1,86 @@
 <x-app-layout>
     <div x-data="purchaseRequestForm()" class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         @push('styles')
-            <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <style>
+                /* Custom Select2 styling */
+                .select2-container {
+                    width: 100% !important;
+                }
+
+                .select2-container--default .select2-selection--single {
+                    height: 38px;
+                    padding: 4px 2px;
+                    border-color: #D1D5DB;
+                    border-radius: 0.375rem;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .select2-container--default .select2-selection--single:focus,
+                .select2-container--default.select2-container--focus .select2-selection--single {
+                    border-color: #6366f1;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                }
+
+                .select2-container--default .select2-selection--single .select2-selection__arrow {
+                    height: 38px;
+                    display: flex;
+                    align-items: center;
+                }
+
+                .select2-dropdown {
+                    border-color: #D1D5DB;
+                    border-radius: 0.375rem;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    overflow: hidden;
+                }
+
+                .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                    background-color: #6366f1;
+                }
+
+                .select2-container--default .select2-search--dropdown .select2-search__field {
+                    border-color: #D1D5DB;
+                    border-radius: 0.25rem;
+                    padding: 0.4rem 0.75rem;
+                }
+
+                .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                    border-color: #6366f1;
+                    outline: none;
+                    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                }
+
+                /* Dark mode styling */
+                .dark .select2-container--default .select2-selection--single {
+                    background-color: #374151;
+                    border-color: #4B5563;
+                }
+
+                .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                    color: #F9FAFB;
+                }
+
+                .dark .select2-dropdown {
+                    background-color: #1F2937;
+                    border-color: #4B5563;
+                }
+
+                .dark .select2-container--default .select2-results__option {
+                    color: #F9FAFB;
+                }
+
+                .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                    background-color: #374151;
+                    border-color: #4B5563;
+                    color: #F9FAFB;
+                }
+
+                .dark .select2-container--default .select2-results__option[aria-selected=true] {
+                    background-color: #374151;
+                }
+            </style>
         @endpush
 
         <form action="{{ route('pembelian.permintaan-pembelian.store') }}" method="POST" @submit="validateForm">
@@ -51,7 +130,7 @@
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd"
-                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2-2zm8-2v2H7V7a3 3 0 016 0z"
+                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2 2zm8-2v2H7V7a3 3 0 016 0z"
                                         clip-rule="evenodd" />
                                 </svg>
                             </div>
@@ -193,10 +272,9 @@
                                                 class="block text-xs font-medium text-gray-700 dark:text-gray-300 md:hidden">Produk/Ukuran</label>
                                             <div class="space-y-2">
                                                 <div>
-                                                    <select :id="`produk_select_${index}`"
-                                                        :name="`items[${index}][produk_id]`"
-                                                        class="produk-select mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
-                                                        x-model="item.produk_id" @change="updateProdukDetail(index)">
+                                                    <select :name="`items[${index}][produk_id]`"
+                                                        class="select2-dropdown-dynamic mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md"
+                                                        x-model="item.produk_id" required>
                                                         <option value="">Pilih Produk</option>
                                                         @foreach ($produks as $produk)
                                                             <option value="{{ $produk->id }}"
@@ -204,7 +282,7 @@
                                                                 data-ukuran="{{ $produk->ukuran }}"
                                                                 data-satuan="{{ $produk->satuan_id }}"
                                                                 data-harga="{{ $produk->harga_beli }}">
-                                                                {{ $produk->kode }} - {{ $produk->nama }}
+                                                                {{ $produk->nama }}
                                                             </option>
                                                         @endforeach
                                                     </select>
@@ -330,23 +408,28 @@
             </div>
         </form>
     </div>
+    @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @endpush
 
-    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
 
     <script>
         function purchaseRequestForm() {
             return {
                 items: [],
                 errors: [],
-                selects: [],
-                isSubmitting: false, // Add flag to prevent double submission
+                isSubmitting: false,
 
                 init() {
                     this.addItem();
+                    this.$nextTick(() => {
+                        this.initSelect2All();
+                    });
                 },
 
                 addItem() {
-                    const index = this.items.length;
                     this.items.push({
                         produk_id: '',
                         ukuran: '',
@@ -355,85 +438,63 @@
                         satuan_id: '',
                         harga_estimasi: 0
                     });
-
-                    // Initialize TomSelect after the DOM updates
                     this.$nextTick(() => {
-                        this.initTomSelect(index);
+                        this.initSelect2All();
                     });
                 },
 
-                initTomSelect(index) {
-                    const selectElement = document.getElementById(`produk_select_${index}`);
-                    if (selectElement) {
-                        // Destroy existing instance if exists
-                        if (this.selects[index]) {
-                            this.selects[index].destroy();
-                        }
+                removeItem(index) {
+                    this.items.splice(index, 1);
+                    this.$nextTick(() => {
+                        this.initSelect2All();
+                    });
+                },
 
-                        // Create new TomSelect instance
-                        this.selects[index] = new TomSelect(selectElement, {
-                            plugins: ['dropdown_input', 'clear_button'],
-                            placeholder: 'Cari dan pilih produk...',
-                            allowEmptyOption: true,
-                            searchField: ['text'],
-                            render: {
-                                option: function(data, escape) {
-                                    return `<div class="py-2 px-3">
-                                        <div class="font-medium">${escape(data.text)}</div>
-                                    </div>`;
-                                },
-                                item: function(data, escape) {
-                                    return `<div>${escape(data.text)}</div>`;
-                                }
-                            },
-                            onChange: (value) => {
-                                this.items[index].produk_id = value;
+                initSelect2All() {
+                    // Inisialisasi Select2 pada semua select produk
+                    const selects = document.querySelectorAll('.select2-dropdown-dynamic');
+                    selects.forEach((select, idx) => {
+                        if ($(select).data('select2')) {
+                            $(select).select2('destroy');
+                        }
+                        $(select).select2({
+                            placeholder: 'Pilih Produk',
+                            width: '100%',
+                            dropdownCssClass: 'select2-dropdown-modern',
+                        });
+                        $(select).off('select2:select').on('select2:select', (e) => {
+                            const nameAttr = $(select).attr('name');
+                            const match = nameAttr.match(/items\[(\d+)\]/);
+                            if (match && match[1]) {
+                                const index = parseInt(match[1]);
+                                this.items[index].produk_id = e.target.value;
                                 this.updateProdukDetail(index);
                             }
                         });
-                    }
+                    });
                 },
 
                 updateProdukDetail(index) {
                     const produkId = this.items[index].produk_id;
                     if (produkId) {
-                        const option = document.querySelector(`option[value="${produkId}"]`);
-                        if (option) {
-                            // Update ukuran from product data
-                            this.items[index].ukuran = option.dataset.ukuran || '';
-
-                            // Auto-select the corresponding satuan if available
-                            if (option.dataset.satuan) {
-                                this.items[index].satuan_id = option.dataset.satuan;
-                            }
-
-                            // Set harga_estimasi from the product's harga_beli if available
-                            if (option.dataset.harga) {
-                                this.items[index].harga_estimasi = parseFloat(option.dataset.harga) || 0;
+                        // Cari option pada select yang sesuai index
+                        const selects = document.querySelectorAll('.select2-dropdown-dynamic');
+                        const select = selects[index];
+                        if (select) {
+                            const option = select.querySelector(`option[value="${produkId}"]`);
+                            if (option) {
+                                this.items[index].ukuran = option.dataset.ukuran || '';
+                                if (option.dataset.satuan) {
+                                    this.items[index].satuan_id = option.dataset.satuan;
+                                }
+                                if (option.dataset.harga) {
+                                    this.items[index].harga_estimasi = parseFloat(option.dataset.harga) || 0;
+                                }
                             }
                         }
                     } else {
                         this.items[index].ukuran = '';
-                        // Don't reset the price if the user manually entered a value
                     }
-                },
-
-                removeItem(index) {
-                    // Destroy TomSelect instance
-                    if (this.selects[index]) {
-                        this.selects[index].destroy();
-                    }
-
-                    // Remove items and reorder selects array
-                    this.items.splice(index, 1);
-                    this.selects.splice(index, 1);
-
-                    // Reinitialize remaining selects with proper indices
-                    this.$nextTick(() => {
-                        for (let i = index; i < this.items.length; i++) {
-                            this.initTomSelect(i);
-                        }
-                    });
                 },
 
                 calculateTotal() {
@@ -449,92 +510,8 @@
                         minimumFractionDigits: 0
                     }).format(angka);
                 },
-
-                validateForm(e) {
-                    if (this.isSubmitting) {
-                        e.preventDefault(); // Prevent if already submitting
-                        return false;
-                    }
-
-                    this.errors = [];
-                    let valid = true; // Assume valid initially
-
-                    // Check required header fields
-                    const departmentId = document.getElementById('department_id').value;
-                    const tanggal = document.getElementById('tanggal').value;
-
-                    if (!departmentId) {
-                        this.errors.push('Departemen wajib diisi.');
-                        valid = false;
-                    }
-                    if (!tanggal) {
-                        this.errors.push('Tanggal wajib diisi.');
-                        valid = false;
-                    }
-
-                    // Check if items exist
-                    if (this.items.length === 0) {
-                        this.errors.push('Minimal harus ada 1 item');
-                        valid = false;
-                    } else {
-                        // Check if all required fields in items are filled
-                        this.items.forEach((item, index) => {
-                            if (!item.produk_id || !item.quantity || item.quantity <= 0 || !item.satuan_id) {
-                                this.errors.push(
-                                    `Item #${index + 1} memiliki field (Produk, Jumlah > 0, Satuan) yang belum diisi atau tidak valid.`
-                                );
-                                valid = false;
-                            }
-                            // Add more specific checks if needed
-                        });
-                    }
-
-                    if (!valid) {
-                        alert("Terdapat kesalahan:\n- " + this.errors.join('\n- '));
-                        e.preventDefault(); // Prevent submission ONLY if invalid
-                        this.isSubmitting = false; // Reset flag if validation fails
-                        return false; // Indicate validation failed
-                    }
-
-                    // If validation passes, disable button and set flag
-                    this.isSubmitting = true;
-                    const submitButton = e.target.querySelector('button[type="submit"]');
-                    if (submitButton) {
-                        submitButton.disabled = true;
-                        submitButton.innerText = 'Menyimpan...'; // Provide feedback
-                    }
-                    console.log('Validation passed, allowing default submission.');
-                    // Allow default submission to proceed
-                    return true;
-                },
-
-                saveDraft() {
-                    if (this.isSubmitting) return; // Prevent if already submitting
-
-                    // Add a hidden field to indicate this is a draft
-                    const draftInput = document.createElement('input');
-                    draftInput.type = 'hidden';
-                    draftInput.name = 'is_draft';
-                    draftInput.value = '1';
-                    const form = document.querySelector('form');
-                    form.appendChild(draftInput);
-
-                    // Disable buttons and set flag
-                    this.isSubmitting = true;
-                    const draftButton = form.querySelector('button[x-on\\:click="saveDraft"]');
-                    const submitButton = form.querySelector('button[type="submit"]');
-                    if (draftButton) {
-                        draftButton.disabled = true;
-                        draftButton.innerText = 'Menyimpan Draft...';
-                    }
-                    if (submitButton) {
-                        submitButton.disabled = true; // Also disable the main submit button
-                    }
-
-                    // Submit the form without validation
-                    form.submit();
-                }
             }
         }
     </script>
+
 </x-app-layout>
