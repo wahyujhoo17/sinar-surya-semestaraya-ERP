@@ -843,15 +843,9 @@ class DashboardController extends Controller
             $startDate = $month->startOfMonth()->format('Y-m-d');
             $endDate = $month->endOfMonth()->format('Y-m-d');
 
-            // Sesuaikan dengan model Invoice yang benar
+            // Ambil data asli dari Invoice
             $total = Invoice::whereBetween('tanggal', [$startDate, $endDate])
                 ->sum('total');
-
-            // Jika database belum ada data, buat dummy data untuk preview
-            // Remove this in production
-            if ($total == 0) {
-                $total = rand(5000000, 50000000);
-            }
 
             $result[] = [
                 'bulan' => $month->format('M Y'),

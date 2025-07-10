@@ -375,38 +375,46 @@
 
                 getNotificationUrl(notification) {
                     // If notification has a specific link, use it
-                    if (notification.link && notification.link !== '#') {
+                    if (
+                        notification.link &&
+                        typeof notification.link === 'string' &&
+                        notification.link.trim() !== '' &&
+                        notification.link !== '#'
+                    ) {
                         let url = notification.link;
-
+                        try {
+                            // Validasi URL, jika gagal akan dilempar ke catch
+                            new URL(url, window.location.origin);
+                        } catch (e) {
+                            // Jika gagal, fallback ke halaman notifikasi
+                            return '{{ route('notifications.index') }}';
+                        }
                         // Fix localhost URLs to use current domain
                         if (url.includes('localhost') || url.includes('127.0.0.1')) {
-                            // Extract the path from the URL
-                            const urlObj = new URL(url);
-                            const path = urlObj.pathname + urlObj.search + urlObj.hash;
-
-                            // Use current domain with the extracted path
-                            url = window.location.origin + path;
+                            try {
+                                const urlObj = new URL(url, window.location.origin);
+                                const path = urlObj.pathname + urlObj.search + urlObj.hash;
+                                url = window.location.origin + path;
+                            } catch (e) {
+                                // fallback jika parsing gagal
+                                return '{{ route('notifications.index') }}';
+                            }
                         }
-
                         // Convert absolute URLs to use current domain if they're using the app's base URL
                         const appUrl = '{{ url('/') }}';
                         if (url.startsWith('http') && !url.startsWith(window.location.origin)) {
                             try {
                                 const urlObj = new URL(url);
-                                const currentOrigin = new URL(window.location.href);
-
-                                // If it's the same host but different protocol/port, update it
                                 if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
                                     url = window.location.origin + urlObj.pathname + urlObj.search + urlObj.hash;
                                 }
                             } catch (e) {
-                                console.warn('Error parsing notification URL:', url, e);
+                                // fallback jika parsing gagal
+                                return '{{ route('notifications.index') }}';
                             }
                         }
-
                         return url;
                     }
-
                     // Otherwise, default to notifications index
                     return '{{ route('notifications.index') }}';
                 },

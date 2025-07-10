@@ -19,6 +19,60 @@
             .growth-negative {
                 color: #ef4444;
             }
+
+            /* Chart container for better responsiveness */
+            .chart-responsive {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 2/1;
+                min-height: 180px;
+                max-height: 400px;
+                margin-bottom: 1.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            @media (max-width: 1024px) {
+                .chart-responsive {
+                    aspect-ratio: 1.5/1;
+                    min-height: 140px;
+                }
+            }
+
+            @media (max-width: 640px) {
+                .chart-responsive {
+                    aspect-ratio: 1/1;
+                    min-height: 100px;
+                }
+            }
+
+            .chart-responsive canvas {
+                width: 100% !important;
+                height: 100% !important;
+                max-width: 100% !important;
+                max-height: 100% !important;
+                display: block;
+            }
+
+            /* Chart.js custom tooltip styling */
+            .chartjs-tooltip {
+                opacity: 1;
+                position: absolute;
+                background: rgba(30, 41, 59, 0.95);
+                color: #fff;
+                border-radius: 8px;
+                padding: 8px 14px;
+                pointer-events: none;
+                font-size: 0.95rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                z-index: 10;
+                transition: all 0.15s;
+            }
+
+            .chartjs-tooltip strong {
+                color: #38bdf8;
+            }
         </style>
     @endpush
 
@@ -196,7 +250,7 @@
         <!-- Sales Chart -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Trend Penjualan (6 Bulan Terakhir)</h3>
-            <div class="h-64">
+            <div class="chart-responsive">
                 <canvas id="salesChart"></canvas>
             </div>
         </div>
@@ -204,7 +258,7 @@
         <!-- Product Category Chart -->
         <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Distribusi Produk per Kategori</h3>
-            <div class="h-64">
+            <div class="chart-responsive">
                 <canvas id="categoryChart"></canvas>
             </div>
         </div>
@@ -376,69 +430,136 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
             // Sales Chart
-            const salesCtx = document.getElementById('salesChart').getContext('2d');
-            new Chart(salesCtx, {
-                type: 'line',
-                data: {
-                    labels: {!! json_encode(collect($penjualanPerBulan)->pluck('bulan')) !!},
-                    datasets: [{
-                        label: 'Penjualan',
-                        data: {!! json_encode(collect($penjualanPerBulan)->pluck('total')) !!},
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
+            (function() {
+                const salesCtx = document.getElementById('salesChart').getContext('2d');
+                new Chart(salesCtx, {
+                    type: 'line',
+                    data: {
+                        labels: {!! json_encode(collect($penjualanPerBulan)->pluck('bulan')) !!},
+                        datasets: [{
+                            label: 'Penjualan',
+                            data: {!! json_encode(collect($penjualanPerBulan)->pluck('total')) !!},
+                            borderColor: 'rgb(59, 130, 246)',
+                            backgroundColor: getGradient(salesCtx),
+                            pointBackgroundColor: 'rgb(59, 130, 246)',
+                            pointRadius: 5,
+                            pointHoverRadius: 8,
+                            tension: 0.4,
+                            fill: true,
+                            borderWidth: 3
+                        }]
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return 'Rp ' + value.toLocaleString('id-ID');
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(30,41,59,0.95)',
+                                titleColor: '#38bdf8',
+                                bodyColor: '#fff',
+                                borderColor: '#38bdf8',
+                                borderWidth: 1,
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return 'Rp ' + context.parsed.y.toLocaleString('id-ID');
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(59,130,246,0.08)'
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return 'Rp ' + value.toLocaleString('id-ID');
+                                    }
                                 }
                             }
                         }
                     }
+                });
+
+                // Gradient background for line chart
+                function getGradient(ctx) {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 350);
+                    gradient.addColorStop(0, 'rgba(59,130,246,0.25)');
+                    gradient.addColorStop(1, 'rgba(59,130,246,0.02)');
+                    return gradient;
                 }
-            });
+            })();
 
             // Category Chart
-            const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-            new Chart(categoryCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: {!! json_encode(collect($produkPerKategori)->pluck('nama')) !!},
-                    datasets: [{
-                        data: {!! json_encode(collect($produkPerKategori)->pluck('total')) !!},
-                        backgroundColor: [
-                            'rgb(59, 130, 246)',
-                            'rgb(16, 185, 129)',
-                            'rgb(245, 158, 11)',
-                            'rgb(239, 68, 68)',
-                            'rgb(139, 92, 246)',
-                            'rgb(236, 72, 153)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
+            (function() {
+                const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+                new Chart(categoryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: {!! json_encode(collect($produkPerKategori)->pluck('nama')) !!},
+                        datasets: [{
+                            data: {!! json_encode(collect($produkPerKategori)->pluck('total')) !!},
+                            backgroundColor: [
+                                'rgb(59, 130, 246)',
+                                'rgb(16, 185, 129)',
+                                'rgb(245, 158, 11)',
+                                'rgb(239, 68, 68)',
+                                'rgb(139, 92, 246)',
+                                'rgb(236, 72, 153)'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff',
+                            hoverOffset: 12
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '65%',
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#334155',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    padding: 18,
+                                    boxWidth: 18
+                                }
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(30,41,59,0.95)',
+                                titleColor: '#38bdf8',
+                                bodyColor: '#fff',
+                                borderColor: '#38bdf8',
+                                borderWidth: 1,
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.label + ': ' + context.parsed + ' produk';
+                                    }
+                                }
+                            }
                         }
                     }
-                }
-            });
+                });
+            })();
         </script>
     @endpush
 
