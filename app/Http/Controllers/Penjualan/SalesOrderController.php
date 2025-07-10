@@ -210,7 +210,7 @@ class SalesOrderController extends Controller
 
     public function create(Request $request)
     {
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
             // Allow access to all customers
             $customers = Customer::orderBy('nama', 'asc')->get();
         } else {
@@ -574,7 +574,13 @@ class SalesOrderController extends Controller
     public function edit($id)
     {
         $salesOrder = SalesOrder::with(['customer', 'quotation', 'details.produk', 'details.satuan'])->findOrFail($id);
-        $customers = Customer::orderBy('nama', 'asc')->get();
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
+            // Allow access to all customers
+            $customers = Customer::orderBy('nama', 'asc')->get();
+        } else {
+            // Only show customers assigned to the sales user
+            $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
+        }
         $products = Produk::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
 
