@@ -37,144 +37,153 @@
                 </button>
 
                 <!-- Notifications dropdown -->
-                <div x-data="notificationSystem()" class="relative">
-                    <button @click="toggleNotifications"
-                        class="p-2 relative rounded-lg text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
-                        :class="{ 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20': isOpen }">
-                        <span class="sr-only">View notifications</span>
-                        <svg class="h-5 w-5 transition-transform duration-200" :class="{ 'scale-110': isOpen }"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                        <!-- Enhanced notification badge with pulse animation -->
-                        <div x-show="unreadCount > 0" x-cloak
-                            class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg flex items-center justify-center ring-2 ring-white dark:ring-gray-800 animate-pulse notification-badge">
-                            <span x-text="unreadCount" class="text-xs text-white font-bold"></span>
-                        </div>
-                    </button>
+                @if (auth()->user()->hasPermission('notifikasi.view'))
+                    <div x-data="notificationSystem()" class="relative">
+                        <button @click="toggleNotifications"
+                            class="p-2 relative rounded-lg text-gray-500 hover:text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200"
+                            :class="{ 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20': isOpen }">
+                            <span class="sr-only">View notifications</span>
+                            <svg class="h-5 w-5 transition-transform duration-200" :class="{ 'scale-110': isOpen }"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <!-- Enhanced notification badge with pulse animation -->
+                            <div x-show="unreadCount > 0" x-cloak
+                                class="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-red-600 shadow-lg flex items-center justify-center ring-2 ring-white dark:ring-gray-800 animate-pulse notification-badge">
+                                <span x-text="unreadCount" class="text-xs text-white font-bold"></span>
+                            </div>
+                        </button>
 
-                    <!-- Enhanced Notifications Panel -->
-                    <div x-show="isOpen" x-cloak x-transition:enter="transition ease-out duration-300"
-                        x-transition:enter-start="transform opacity-0 scale-95 translate-y-2"
-                        x-transition:enter-end="transform opacity-100 scale-100 translate-y-0"
-                        x-transition:leave="transition ease-in duration-150"
-                        x-transition:leave-start="transform opacity-100 scale-100 translate-y-0"
-                        x-transition:leave-end="transform opacity-0 scale-95 translate-y-2" @click.away="isOpen = false"
-                        class="absolute right-0 mt-3 w-96 rounded-xl shadow-2xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-gray-700 overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
+                        <!-- Enhanced Notifications Panel -->
+                        <div x-show="isOpen" x-cloak x-transition:enter="transition ease-out duration-300"
+                            x-transition:enter-start="transform opacity-0 scale-95 translate-y-2"
+                            x-transition:enter-end="transform opacity-100 scale-100 translate-y-0"
+                            x-transition:leave="transition ease-in duration-150"
+                            x-transition:leave-start="transform opacity-100 scale-100 translate-y-0"
+                            x-transition:leave-end="transform opacity-0 scale-95 translate-y-2"
+                            @click.away="isOpen = false"
+                            class="absolute right-0 mt-3 w-96 rounded-xl shadow-2xl bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 dark:ring-gray-700 overflow-hidden z-50 border border-gray-200 dark:border-gray-700">
 
-                        <!-- Header with gradient -->
-                        <div
-                            class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-                                        <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none"
-                                            stroke="currentColor" viewBox="0 0 24 24">
+                            <!-- Header with gradient -->
+                            <div
+                                class="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-gray-800 dark:to-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
+                                            <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                Notifikasi
+                                            </h3>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400" x-show="unreadCount > 0"
+                                                x-text="`${unreadCount} belum dibaca`"></p>
+                                            <p class="text-xs text-gray-500 dark:text-gray-400"
+                                                x-show="unreadCount === 0">
+                                                Semua sudah dibaca</p>
+                                        </div>
+                                    </div>
+                                    <template x-if="unreadCount > 0">
+                                        <button @click="markAllAsRead"
+                                            class="text-xs px-3 py-1 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors duration-200 font-medium">
+                                            Baca semua
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <!-- Notifications list with enhanced styling -->
+                            <div class="max-h-96 overflow-y-auto notification-scroll">
+                                <!-- Empty state with illustration -->
+                                <div x-show="notifications.length === 0" class="px-6 py-12 text-center">
+                                    <div
+                                        class="mx-auto h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                                        <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                                d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
                                             </path>
                                         </svg>
                                     </div>
-                                    <div>
-                                        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifikasi
-                                        </h3>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-show="unreadCount > 0"
-                                            x-text="`${unreadCount} belum dibaca`"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400" x-show="unreadCount === 0">
-                                            Semua sudah dibaca</p>
-                                    </div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Belum ada notifikasi
+                                    </p>
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notifikasi baru akan muncul
+                                        di
+                                        sini</p>
                                 </div>
-                                <template x-if="unreadCount > 0">
-                                    <button @click="markAllAsRead"
-                                        class="text-xs px-3 py-1 bg-primary-600 text-white rounded-full hover:bg-primary-700 transition-colors duration-200 font-medium">
-                                        Baca semua
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
 
-                        <!-- Notifications list with enhanced styling -->
-                        <div class="max-h-96 overflow-y-auto notification-scroll">
-                            <!-- Empty state with illustration -->
-                            <div x-show="notifications.length === 0" class="px-6 py-12 text-center">
-                                <div
-                                    class="mx-auto h-16 w-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                                    <svg class="h-8 w-8 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4">
-                                        </path>
-                                    </svg>
-                                </div>
-                                <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Belum ada notifikasi</p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notifikasi baru akan muncul di
-                                    sini</p>
-                            </div>
-
-                            <!-- Notification items with enhanced design -->
-                            <template x-for="notification in notifications" :key="notification.id">
-                                <a :href="getNotificationUrl(notification)"
-                                    @click="handleNotificationClick($event, notification)"
-                                    class="group block px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0 notification-item"
-                                    :class="{
-                                        'bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-l-blue-500 pl-5': notification
-                                            .read_at === null,
-                                        'opacity-75': notification.read_at !== null
-                                    }">
-                                    <div class="flex items-start gap-3">
-                                        <!-- Notification type icon -->
-                                        <div class="flex-shrink-0 mt-0.5">
-                                            <div class="h-8 w-8 rounded-full flex items-center justify-center"
-                                                :class="getNotificationIconClass(notification.type)">
-                                                <span x-html="getNotificationIcon(notification.type)"></span>
+                                <!-- Notification items with enhanced design -->
+                                <template x-for="notification in notifications" :key="notification.id">
+                                    <a :href="getNotificationUrl(notification)"
+                                        @click="handleNotificationClick($event, notification)"
+                                        class="group block px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 border-b border-gray-100 dark:border-gray-700 last:border-b-0 notification-item"
+                                        :class="{
+                                            'bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-l-blue-500 pl-5': notification
+                                                .read_at === null,
+                                            'opacity-75': notification.read_at !== null
+                                        }">
+                                        <div class="flex items-start gap-3">
+                                            <!-- Notification type icon -->
+                                            <div class="flex-shrink-0 mt-0.5">
+                                                <div class="h-8 w-8 rounded-full flex items-center justify-center"
+                                                    :class="getNotificationIconClass(notification.type)">
+                                                    <span x-html="getNotificationIcon(notification.type)"></span>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <!-- Notification content -->
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center justify-between mb-1">
-                                                <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200"
-                                                    x-text="notification.title"></p>
-                                                <template x-if="notification.read_at === null">
-                                                    <div class="flex-shrink-0 h-2 w-2 bg-blue-500 rounded-full"></div>
-                                                </template>
-                                            </div>
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed"
-                                                x-text="notification.message"></p>
-                                            <div class="flex items-center justify-between mt-2">
-                                                <p class="text-xs text-gray-400 dark:text-gray-500"
-                                                    x-text="formatRelativeTime(notification.created_at)"></p>
-                                                <div
-                                                    class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                                    <svg class="h-3 w-3 text-gray-400" fill="none"
-                                                        stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                                    </svg>
+                                            <!-- Notification content -->
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center justify-between mb-1">
+                                                    <p class="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200"
+                                                        x-text="notification.title"></p>
+                                                    <template x-if="notification.read_at === null">
+                                                        <div class="flex-shrink-0 h-2 w-2 bg-blue-500 rounded-full">
+                                                        </div>
+                                                    </template>
+                                                </div>
+                                                <p class="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 leading-relaxed"
+                                                    x-text="notification.message"></p>
+                                                <div class="flex items-center justify-between mt-2">
+                                                    <p class="text-xs text-gray-400 dark:text-gray-500"
+                                                        x-text="formatRelativeTime(notification.created_at)"></p>
+                                                    <div
+                                                        class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                        <svg class="h-3 w-3 text-gray-400" fill="none"
+                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                        </svg>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </a>
-                            </template>
-                        </div>
+                                    </a>
+                                </template>
+                            </div>
 
-                        <!-- Footer with enhanced styling -->
-                        <div
-                            class="bg-gray-50 dark:bg-gray-750 px-6 py-3 border-t border-gray-200 dark:border-gray-600">
-                            <a href="{{ route('notifications.index') }}"
-                                class="flex items-center justify-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors duration-200 group">
-                                <span>Lihat semua notifikasi</span>
-                                <svg class="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200"
-                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
-                                </svg>
-                            </a>
+                            <!-- Footer with enhanced styling -->
+                            <div
+                                class="bg-gray-50 dark:bg-gray-750 px-6 py-3 border-t border-gray-200 dark:border-gray-600">
+                                <a href="{{ route('notifications.index') }}"
+                                    class="flex items-center justify-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors duration-200 group">
+                                    <span>Lihat semua notifikasi</span>
+                                    <svg class="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
+                @endif
 
                 <!-- Divider -->
                 <div class="hidden md:block h-6 w-px bg-gray-200 dark:bg-gray-700"></div>
