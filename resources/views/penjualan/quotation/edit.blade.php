@@ -626,6 +626,8 @@
     </div>
 
     @push('scripts')
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
             function quotationForm(quotationData, quotationItemsData) {
                 quotationData = quotationData || {};
@@ -727,7 +729,7 @@
                                                                 .attr('name');
                                                             const match = nameAttr
                                                                 .match(
-                                                                /items\[(\d+)\]/);
+                                                                    /items\[(\d+)\]/);
                                                             if (match && match[1]) {
                                                                 const idx = parseInt(
                                                                     match[1]);
@@ -740,7 +742,7 @@
                                                             }
                                                         });
                                                     } else if (select.name.includes(
-                                                        'satuan_id')) {
+                                                            'satuan_id')) {
                                                         $(select).select2({
                                                             placeholder: 'Pilih Satuan',
                                                             width: '100%',
@@ -750,7 +752,7 @@
                                                                 .attr('name');
                                                             const match = nameAttr
                                                                 .match(
-                                                                /items\[(\d+)\]/);
+                                                                    /items\[(\d+)\]/);
                                                             if (match && match[1]) {
                                                                 const idx = parseInt(
                                                                     match[1]);
@@ -835,7 +837,7 @@
                         let ppnNominal = 0;
                         if (this.includePPN) {
                             ppnNominal = ({{ setting('tax_percentage', 11) }} / 100) * this.summary
-                            .total_setelah_diskon_global;
+                                .total_setelah_diskon_global;
                         }
                         this.summary.ppn_nominal = ppnNominal;
                         this.summary.grand_total = this.summary.total_setelah_diskon_global + ppnNominal;
