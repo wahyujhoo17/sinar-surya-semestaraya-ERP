@@ -145,7 +145,7 @@ class NotificationService
             "Purchase Order #{$purchaseOrder->nomor} telah dibuat untuk supplier {$supplierName} dengan total " .
                 "Rp " . number_format($purchaseOrder->total, 0, ',', '.') . " oleh {$createdBy->name}",
             [
-                'url' => route('pembelian.purchase-order.show', $purchaseOrder->id),
+                'url' => route('pembelian.purchasing-order.show', $purchaseOrder->id),
                 'purchase_order_id' => $purchaseOrder->id,
                 'supplier_id' => $purchaseOrder->supplier_id
             ]
@@ -167,7 +167,7 @@ class NotificationService
                 break;
             case 'purchase_order':
                 $message = "Purchase Order #{$item->nomor} memerlukan persetujuan";
-                $url = route('pembelian.purchase-order.show', $item->id);
+                $url = route('pembelian.purchasing-order.show', $item->id);
                 break;
             case 'retur_penjualan':
                 $message = "Retur Penjualan #{$item->nomor} memerlukan persetujuan";

@@ -108,25 +108,30 @@
             <div class="space-y-4">
                 @php
                     $statusColors = [
-                        'pending' => [
+                        'draft' => [
+                            'bg' => 'bg-gray-100 dark:bg-gray-700',
+                            'text' => 'text-gray-800 dark:text-gray-200',
+                            'label' => 'Draft',
+                        ],
+                        'diajukan' => [
                             'bg' => 'bg-yellow-100 dark:bg-yellow-900',
                             'text' => 'text-yellow-600 dark:text-yellow-400',
-                            'label' => 'Pending',
+                            'label' => 'Diajukan',
                         ],
-                        'approved' => [
+                        'disetujui' => [
                             'bg' => 'bg-green-100 dark:bg-green-900',
                             'text' => 'text-green-600 dark:text-green-400',
-                            'label' => 'Approved',
+                            'label' => 'Disetujui',
                         ],
-                        'rejected' => [
+                        'ditolak' => [
                             'bg' => 'bg-red-100 dark:bg-red-900',
                             'text' => 'text-red-600 dark:text-red-400',
-                            'label' => 'Rejected',
+                            'label' => 'Ditolak',
                         ],
-                        'ordered' => [
+                        'selesai' => [
                             'bg' => 'bg-blue-100 dark:bg-blue-900',
                             'text' => 'text-blue-600 dark:text-blue-400',
-                            'label' => 'Ordered',
+                            'label' => 'Selesai',
                         ],
                     ];
                 @endphp

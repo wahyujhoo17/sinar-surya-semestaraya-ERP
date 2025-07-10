@@ -655,9 +655,23 @@
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ number_format($detail->harga, 0, ',', '.') }}
                                         </td>
-                                        <td
-                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $detail->diskon > 0 ? number_format($detail->diskon, 0, ',', '.') : '-' }}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                            @if ($detail->diskon_persen > 0 || $detail->diskon_nominal > 0)
+                                                <div class="flex flex-wrap gap-1 items-center">
+                                                    @if ($detail->diskon_persen > 0)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-200">
+                                                            {{ rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') }}%
+                                                        </span>
+                                                    @endif
+                                                    @if ($detail->diskon_nominal > 0)
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                                                            {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">-</span>
+                                            @endif
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">

@@ -367,4 +367,29 @@
             }
         }
     </script>
+    <script>
+        // Make handlePaginationClick globally available for AJAX-injected HTML
+        window.handlePaginationClick = function(url) {
+            // Find the Alpine component instance for purchaseOrderTableManager
+            let el = document.querySelector('[x-data^="purchaseOrderTableManager"]');
+            if (el && el.__x) {
+                el.__x.$data.loading = true;
+                fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        el.__x.$data.tableHtml = data.table_html;
+                        el.__x.$data.paginationHtml = data.pagination_html;
+                        el.__x.$data.loading = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching page:', error);
+                        el.__x.$data.loading = false;
+                    });
+            }
+        }
+    </script>
 </x-app-layout>

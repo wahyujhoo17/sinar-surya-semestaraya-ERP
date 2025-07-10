@@ -71,7 +71,7 @@
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 20 20" fill="currentColor">
                                     <path fill-rule="evenodd"
-                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2-2zm8-2v2H7V7a3 3 0 016 0z"
+                                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
                                         clip-rule="evenodd" />
                                 </svg>
                             </div>
@@ -108,8 +108,117 @@
                                 class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                 <option value="">Pilih Supplier</option>
                                 @foreach ($suppliers ?? [] as $supplier)
-                                    <option value="{{ $supplier->id }}">{{ $supplier->nama }}</option>
+                                    <option value="{{ $supplier->id }}"
+                                        {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->nama }}</option>
                                 @endforeach
+                                @push('styles')
+                                    <!-- Select2 CSS -->
+                                    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+                                        rel="stylesheet" />
+                                    <style>
+                                        .select2-container {
+                                            width: 100% !important;
+                                        }
+
+                                        .select2-container--default .select2-selection--single {
+                                            height: 38px;
+                                            padding: 4px 2px;
+                                            border-color: #D1D5DB;
+                                            border-radius: 0.375rem;
+                                            display: flex;
+                                            align-items: center;
+                                        }
+
+                                        .select2-container--default .select2-selection--single:focus,
+                                        .select2-container--default.select2-container--focus .select2-selection--single {
+                                            border-color: #6366f1;
+                                            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                                        }
+
+                                        .select2-container--default .select2-selection--single .select2-selection__arrow {
+                                            height: 38px;
+                                            display: flex;
+                                            align-items: center;
+                                        }
+
+                                        .select2-dropdown {
+                                            border-color: #D1D5DB;
+                                            border-radius: 0.375rem;
+                                            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                                            overflow: hidden;
+                                        }
+
+                                        .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                                            background-color: #6366f1;
+                                        }
+
+                                        .select2-container--default .select2-search--dropdown .select2-search__field {
+                                            border-color: #D1D5DB;
+                                            border-radius: 0.25rem;
+                                            padding: 0.4rem 0.75rem;
+                                        }
+
+                                        .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                                            border-color: #6366f1;
+                                            outline: none;
+                                            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                                        }
+
+                                        .dark .select2-container--default .select2-selection--single {
+                                            background-color: #374151;
+                                            border-color: #4B5563;
+                                            color: #F9FAFB;
+                                        }
+
+                                        .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                                            color: #F9FAFB;
+                                        }
+
+                                        .dark .select2-dropdown {
+                                            background-color: #1F2937;
+                                            border-color: #4B5563;
+                                        }
+
+                                        .dark .select2-container--default .select2-results__option {
+                                            color: #F9FAFB;
+                                        }
+
+                                        .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                                            background-color: #374151;
+                                            border-color: #4B5563;
+                                            color: #F9FAFB;
+                                        }
+
+                                        .dark .select2-container--default .select2-results__option[aria-selected=true] {
+                                            background-color: #374151;
+                                        }
+
+                                        .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                                            color: #9CA3AF;
+                                        }
+                                    </style>
+                                @endpush
+
+                                @push('scripts')
+                                    <!-- jQuery -->
+                                    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+                                    <!-- Select2 JS -->
+                                    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+                                    <script>
+                                        $(document).ready(function() {
+                                            $('#supplier_id').select2({
+                                                theme: 'default',
+                                                placeholder: 'Pilih Supplier',
+                                                allowClear: true
+                                            });
+                                            // Optional: focus select2 on open
+                                            $('#supplier_id').on('select2:open', function() {
+                                                $('.select2-search__field').focus();
+                                            });
+                                        });
+                                    </script>
+                                @endpush
                             </select>
                             <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
@@ -448,7 +557,8 @@
                                                 <div class="relative rounded-md shadow-sm flex-1">
                                                     <input type="number" :name="`items[${index}][diskon_persen]`"
                                                         x-model="item.diskon_persen" min="0" max="100"
-                                                        placeholder="0" @input="updateDiskonNominal(index)"
+                                                        step="0.01" placeholder="0"
+                                                        @input="updateDiskonNominal(index)"
                                                         class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-8 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                                     <div
                                                         class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -463,8 +573,8 @@
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                 </div>
                                                 <input type="number" :name="`items[${index}][diskon_nominal]`"
-                                                    x-model="item.diskon_nominal" min="0" placeholder="0"
-                                                    @input="updateDiskonPersen(index)"
+                                                    x-model="item.diskon_nominal" min="0" step="0.01"
+                                                    placeholder="0" @input="updateDiskonPersen(index)"
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                             </div>
                                         </div>
@@ -550,7 +660,7 @@
                                             <div class="flex items-center gap-2">
                                                 <div class="relative rounded-md shadow-sm">
                                                     <input type="number" name="diskon_persen" x-model="diskonPersen"
-                                                        min="0" max="100" placeholder="0"
+                                                        min="0" max="100" step="0.01" placeholder="0"
                                                         @input="updateOrderDiskonNominal"
                                                         class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-8 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                                     <div
@@ -566,8 +676,8 @@
                                                             class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                     </div>
                                                     <input type="number" name="diskon_nominal"
-                                                        x-model="diskonNominal" min="0" placeholder="0"
-                                                        @input="updateOrderDiskonPersen"
+                                                        x-model="diskonNominal" min="0" step="0.01"
+                                                        placeholder="0" @input="updateOrderDiskonPersen"
                                                         class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                                 </div>
                                             </div>
@@ -850,12 +960,14 @@
 
                     const supplierSelect = document.getElementById('supplier_id');
                     if (supplierSelect) {
-                        supplierSelect.addEventListener('change', (e) => {
-                            this.fetchSupplierProduk(e.target.value);
+                        // Use Select2 event for compatibility
+                        $(supplierSelect).on('select2:select', (e) => {
+                            this.fetchSupplierProduk(e.params.data.id);
                         });
+                        // Initial fetch if value exists
                         if (supplierSelect.value) {
                             this.fetchSupplierProduk(supplierSelect.value);
-                        } else {}
+                        }
                     }
 
                     // Check if PR ID is pre-filled or in URL
