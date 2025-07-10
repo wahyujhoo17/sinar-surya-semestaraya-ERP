@@ -102,7 +102,7 @@ class DashboardController extends Controller
 
         // Check for production role
         if (
-            $user->hasPermission('work_order.view') || $user->hasPermission('bill_of_material.view') ||
+            $user->hasPermission('work_order.view') && $user->hasPermission('bill_of_material.view') &&
             $user->hasPermission('perencanaan_produksi.view')
         ) {
             return 'production';
@@ -118,8 +118,8 @@ class DashboardController extends Controller
 
         // Check for inventory role
         if (
-            $user->hasPermission('stok_barang.view') || $user->hasPermission('transfer_gudang.view') ||
-            $user->hasPermission('gudang.view') || $user->hasPermission('penyesuaian_stok.view')
+            $user->hasPermission('stok_barang.view') && $user->hasPermission('transfer_gudang.view') ||
+            $user->hasPermission('gudang.view') && $user->hasPermission('penyesuaian_stok.view')
         ) {
             return 'inventory';
         }
