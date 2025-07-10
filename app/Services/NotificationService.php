@@ -83,7 +83,7 @@ class NotificationService
 
         // Notify manager_penjualan about new sales order
         $this->sendToRoles(
-            ['manager_penjualan'],
+            ['manager_penjualan', 'admin_penjualan'],
             'order',
             'Sales Order Baru',
             "Sales Order #{$salesOrder->nomor} telah dibuat untuk customer {$customerName} dengan total " .
@@ -98,7 +98,7 @@ class NotificationService
 
         // Notify admin
         $this->sendToRoles(
-            ['admin'],
+            ['admin', 'purchasing', 'warehouse'],
             'order',
             'Sales Order Baru',
             "Sales Order #{$salesOrder->nomor} dibuat oleh {$createdBy->name} untuk {$customerName}",
@@ -522,7 +522,7 @@ class NotificationService
             } elseif ($totalStock <= 0) {
                 // Product is out of stock completely
                 $this->sendToRoles(
-                    ['warehouse', 'purchasing', 'manager', 'admin'],
+                    ['warehouse', 'purchasing', 'manager', 'admin', 'admin_penjualan', 'manager_penjualan'],
                     'warning',
                     'Stok Habis',
                     "Produk {$produk->nama} telah habis di semua gudang",

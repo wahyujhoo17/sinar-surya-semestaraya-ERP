@@ -261,6 +261,62 @@ class SalesOrderController extends Controller
     public function store(Request $request)
     {
 
+        // Cek stok produk jika check_stock aktif dan gudang_id ada
+        if ($request->check_stock && $request->gudang_id) {
+            $items = $request->items;
+            $gudangId = $request->gudang_id;
+            $stokKurang = [];
+            foreach ($items as $idx => $item) {
+                $produkId = $item['produk_id'];
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                $produk = Produk::find($produkId);
+                $stokTersedia = StokProduk::where('produk_id', $produkId)
+                    ->where('gudang_id', $gudangId)
+                    ->sum('jumlah');
+
+                // Hitung jumlah produk yang sudah dipesan di SO lain (belum_dikirim/sebagian)
+                // Hitung booked untuk status pengiriman 'belum_dikirim'
+                $qtyBookedBelum = SalesOrderDetail::where('produk_id', $produkId)
+                    ->whereHas('salesOrder', function ($q) {
+                        $q->where('status_pengiriman', 'belum_dikirim');
+                    })
+                    ->sum(DB::raw('quantity - quantity_terkirim'));
+
+                // Hitung booked untuk status pengiriman 'sebagian' (hanya sisa yang belum terkirim)
+                $qtyBookedSebagian = SalesOrderDetail::where('produk_id', $produkId)
+                    ->whereHas('salesOrder', function ($q) {
+                        $q->where('status_pengiriman', 'sebagian');
+                    })
+                    ->sum(DB::raw('quantity - quantity_terkirim'));
+
+                $qtyBooked = $qtyBookedBelum + $qtyBookedSebagian;
+
+                // Stok tersedia dikurangi yang sudah dipesan di SO lain
+                $stokTersediaNet = $stokTersedia - $qtyBooked;
+
+                if ($stokTersediaNet < $quantity) {
+                    $stokKurang[] = [
+                        'produk' => $produk ? ($produk->nama ?? 'Produk ID ' . $produkId) : 'Produk ID ' . $produkId,
+                        'diminta' => $quantity,
+                        'tersedia' => $stokTersediaNet,
+                        'produk_id' => $produkId
+                    ];
+                }
+            }
+            if (!empty($stokKurang)) {
+                // Kirim notifikasi stok kurang khusus sales order (detail per item)
+                $soNomor = null;
+                $soId = null;
+                if ($request->nomor) {
+                    $soNomor = $request->nomor;
+                }
+                $userId = Auth::id();
+                $salesOrderStockNotif = app(\App\Services\SalesOrderStockNotificationService::class);
+                $salesOrderStockNotif->notifyStockInsufficientForSalesOrder($stokKurang, $gudangId, $soNomor, $soId, $userId);
+            }
+        }
+        // dd($request->all());
+
         $request->validate([
             'nomor' => 'required|string|unique:sales_order,nomor',
             'nomor_po' => 'nullable|string',

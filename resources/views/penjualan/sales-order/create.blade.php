@@ -722,7 +722,7 @@
 
             <div class="flex items-center justify-end space-x-3">
                 <div class="flex items-center mr-4">
-                    <input type="checkbox" id="check_stock" name="check_stock" value="1"
+                    <input type="checkbox" id="check_stock" name="check_stock" value="1" checked
                         class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
                     <label for="check_stock" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
                         Cek Ketersediaan Stok
@@ -750,7 +750,9 @@
                         class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
                         <option value="">Pilih Gudang</option>
                         @foreach ($gudangs as $gudang)
-                            <option value="{{ $gudang->id }}">{{ $gudang->nama }}</option>
+                            <option value="{{ $gudang->id }}" {{ old('gudang_id', 1) == $gudang->id ? 'selected' : '' }}>
+                                {{ $gudang->nama }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -780,13 +782,24 @@
         <script>
             // Show gudang selection when checkbox is checked
             $(document).ready(function() {
+                // Set check_stock checked and show gudang selection by default
+                $('#check_stock').prop('checked', true);
+                $('#gudang_selection').removeClass('hidden');
+                $('#gudang_id').prop('required', true);
+
                 $('#buat_permintaan_barang').change(function() {
                     if (this.checked) {
                         $('#gudang_selection').removeClass('hidden');
                         $('#gudang_id').prop('required', true);
                     } else {
-                        $('#gudang_selection').addClass('hidden');
-                        $('#gudang_id').prop('required', false);
+                        // Only hide if all related checkboxes are unchecked
+                        const anyChecked = $('#check_stock').is(':checked') ||
+                            $('#create_production_plan').is(':checked') ||
+                            $('#buat_permintaan_barang').is(':checked');
+                        if (!anyChecked) {
+                            $('#gudang_selection').addClass('hidden');
+                            $('#gudang_id').prop('required', false);
+                        }
                     }
                 });
 
