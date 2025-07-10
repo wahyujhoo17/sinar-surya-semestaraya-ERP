@@ -426,6 +426,7 @@
 
                     const data = await response.json();
 
+                    console.log('Notification marked as read:', url);
                     if (data.success) {
                         // Navigate to the URL
                         window.location.href = url;

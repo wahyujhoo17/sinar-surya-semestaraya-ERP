@@ -203,7 +203,7 @@ class NotificationService
     {
         // Notify production manager and admin
         $this->sendToRoles(
-            ['production', 'admin'],
+            ['manager_produksi', 'admin', 'production'],
             'order',
             'Perencanaan Produksi Baru',
             "Perencanaan Produksi #{$productionPlan->nomor} telah dibuat oleh {$createdBy->name}",
@@ -265,7 +265,7 @@ class NotificationService
 
         // Notify purchasing and managers when PR is submitted for approval
         $this->sendToRoles(
-            ['purchasing', 'manager', 'admin'],
+            ['purchasing', 'manager_pembelian', 'admin'],
             'order',
             'Permintaan Pembelian Diajukan',
             "Permintaan Pembelian #{$purchaseRequest->nomor} telah diajukan oleh {$submittedBy->name} dari {$departmentName}",
@@ -343,7 +343,7 @@ class NotificationService
 
         // Also notify managers
         $this->sendToRoles(
-            ['manager', 'admin'],
+            ['manager_pembelian', 'admin'],
             'success',
             'Permintaan Pembelian Selesai',
             "Permintaan Pembelian #{$purchaseRequest->nomor} dari {$departmentName} telah selesai diproses",
@@ -402,16 +402,27 @@ class NotificationService
 
         $originalUrl = $url;
 
-        // If URL is absolute and contains localhost, replace with current domain
-        if (is_string($url) && (strpos($url, 'http://localhost') === 0 || strpos($url, 'https://localhost') === 0)) {
-            $currentUrl = request()->getSchemeAndHttpHost();
-            $url = str_replace(['http://localhost', 'https://localhost'], $currentUrl, $url);
+        // Normalize multiple :8000 in the URL (fixes http://localhost:8000:8000:8000/...)
+        $url = preg_replace('/(:\d+)(:\d+)+/', '$1', $url);
 
-            Log::info('Fixed notification URL from localhost', [
-                'original' => $originalUrl,
-                'fixed' => $url,
-                'current_domain' => $currentUrl
-            ]);
+        // If URL is absolute and contains localhost, replace with current domain
+        // Remove duplicate ports in localhost URLs (e.g., :8000:8000:8000)
+        if (is_string($url)) {
+            // Replace any sequence of :port repeated with just one
+            $url = preg_replace('/(:\d+)(:\d+)+/', '$1', $url);
+
+            // If still starts with localhost, replace with current domain
+            if (preg_match('#^https?://localhost(:\d+)?#', $url)) {
+                $currentUrl = request()->getSchemeAndHttpHost();
+                // Remove everything up to and including the last port in localhost
+                $url = preg_replace('#^https?://localhost(:\d+)?#', $currentUrl, $url);
+
+                Log::info('Fixed notification URL from localhost', [
+                    'original' => $originalUrl,
+                    'fixed' => $url,
+                    'current_domain' => $currentUrl
+                ]);
+            }
         }
 
         // Also handle cases where APP_URL is localhost but request is from different domain
