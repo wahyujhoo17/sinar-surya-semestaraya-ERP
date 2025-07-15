@@ -101,7 +101,7 @@ class DeliveryOrderController extends Controller
         // Sorting
         $query->orderBy($filters['sort_by'], $filters['sort_direction']);
 
-        $deliveryOrders = $query->paginate(5);
+        $deliveryOrders = $query->paginate(10);
         $customers = Customer::orderBy('nama')->get();
         $gudangs = Gudang::where('is_active', true)->orderBy('nama')->get();
         // dd($customers);
@@ -1354,7 +1354,7 @@ class DeliveryOrderController extends Controller
 
             return response()->json([
                 'table_html' => view('penjualan.delivery-order._table', compact('deliveryOrders', 'sort_field', 'sort_direction'))->render(),
-                'pagination_html' => view('penjualan.delivery-order._pagination', ['paginator' => $deliveryOrders])->render(),
+                'pagination_html' => view('vendor.pagination.tailwind-custom', ['paginator' => $deliveryOrders])->render(),
                 'sort_field' => $sort_field,
                 'sort_direction' => $sort_direction
             ]);

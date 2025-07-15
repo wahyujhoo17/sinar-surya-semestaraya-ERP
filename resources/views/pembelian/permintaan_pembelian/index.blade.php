@@ -216,7 +216,6 @@
                     </div>
                 </div>
                 <div id="pr-table-container" x-html="tableHtml"></div>
-                <div id="pr-pagination-container" x-html="paginationHtml" class="mt-6 px-5"></div>
             </div>
         </div>
     </div>
@@ -266,6 +265,43 @@
                     this.dateStart = '';
                     this.dateEnd = '';
                     this.fetchTable();
+                },
+                handlePaginationClick(url) {
+                    this.loading = true;
+                    const urlObj = new URL(url);
+                    const page = urlObj.searchParams.get('page');
+                    if (page) {
+                        const params = this.buildQueryString() + `&page=${page}`;
+                        fetch(`{{ route('pembelian.permintaan-pembelian.index') }}?${params}`, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            })
+                            .then(r => r.json())
+                            .then(data => {
+                                this.tableHtml = data.table_html;
+                                this.paginationHtml = data.pagination_html;
+                                this.loading = false;
+                                this.attachPaginationListener();
+                            })
+                            .catch(error => {
+                                console.error('Error fetching page:', error);
+                                this.loading = false;
+                            });
+                    }
+                },
+                handlePaginationEvent(event) {
+                    // Check if the clicked element is a pagination link
+                    const link = event.target.closest('a[href]');
+                    if (link && link.getAttribute('href')) {
+                        event.preventDefault();
+                        const url = link.getAttribute('href');
+
+                        // Only handle pagination URLs, not other links
+                        if (url.includes('page=') || url.includes('{{ route('pembelian.permintaan-pembelian.index') }}')) {
+                            this.handlePaginationClick(url);
+                        }
+                    }
                 },
                 buildQueryString() {
                     const params = new URLSearchParams();

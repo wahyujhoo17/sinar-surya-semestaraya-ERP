@@ -505,7 +505,7 @@
                     <div x-html="tableHtml" x-show="tableHtml"></div>
                 </div>
 
-                <div id="retur-pagination-container" class="mt-6 px-5">
+                <div id="retur-pagination-container" class="p-4 border-t border-gray-100 dark:border-gray-700">
                     <div x-show="!paginationHtml">
                         @if (!request()->ajax())
                             {{ $returPenjualan->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
@@ -604,6 +604,74 @@
                         this.dateEnd = '';
                         this.customerId = '';
                         this.applyFilters();
+                    },
+                    handlePaginationClick(url) {
+                        // Prevent default link behavior and handle pagination with current filters
+                        this.loading = true;
+                        
+                        // Extract page number from URL
+                        const urlObj = new URL(url);
+                        const page = urlObj.searchParams.get('page') || '1';
+                        
+                        // Build params object with current filters and page
+                        const paramsObj = {
+                            status: this.tab,
+                            page: page,
+                            ajax: '1',
+                            sort_by: this.currentSort.field,
+                            sort_dir: this.currentSort.direction
+                        };
+
+                        if (this.search) paramsObj.search = this.search;
+                        if (this.dateFilter) paramsObj.date_filter = this.dateFilter;
+                        if (this.dateStart) paramsObj.date_start = this.dateStart;
+                        if (this.dateEnd) paramsObj.date_end = this.dateEnd;
+                        if (this.customerId) paramsObj.customer_id = this.customerId;
+
+                        const params = new URLSearchParams(paramsObj);
+
+                        // Update URL with page number
+                        const newUrl = `{{ route('penjualan.retur.index') }}?${params.toString().replace('ajax=1&', '')}`;
+                        window.history.pushState({ filters: paramsObj }, '', newUrl);
+
+                        fetch(`{{ route('penjualan.retur.index') }}?${params}`, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                }
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`Network response was not ok: ${response.status} ${response.statusText}`);
+                                }
+
+                                const contentType = response.headers.get('content-type');
+                                if (!contentType || !contentType.includes('application/json')) {
+                                    return response.text().then(text => {
+                                        console.error('Unexpected response format:', text.substring(0, 500) + '...');
+                                        throw new Error(`Expected JSON response but got ${contentType || 'unknown content type'}`);
+                                    });
+                                }
+
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (!data || !data.html) {
+                                    throw new Error('Received invalid data format from server');
+                                }
+                                this.tableHtml = data.html;
+                                this.paginationHtml = data.pagination;
+                                this.attachPaginationListener();
+                                this.attachSortableListeners();
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                alert(`Terjadi kesalahan saat memuat data: ${error.message}`);
+                                this.loading = false;
+                            })
+                            .finally(() => {
+                                this.loading = false;
+                            });
                     },
                     attachSortableListeners() {
                         this.$nextTick(() => {

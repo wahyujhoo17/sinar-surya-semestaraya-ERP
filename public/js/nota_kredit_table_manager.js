@@ -68,6 +68,19 @@ function notaKreditTableManager() {
             this.fetchTable();
         },
 
+        handlePaginationClick(event) {
+            // Check if the clicked element is a pagination link
+            const link = event.target.closest('a[href]');
+            if (link && link.getAttribute('href')) {
+                event.preventDefault();
+                const url = new URL(link.href);
+                const page = url.searchParams.get('page');
+                if (page) {
+                    this.fetchTable(page);
+                }
+            }
+        },
+
         fetchTable(page = null) {
             this.isLoading = true;
 
@@ -138,7 +151,7 @@ function notaKreditTableManager() {
 
         attachPaginationListeners() {
             this.$nextTick(() => {
-                const paginationLinks = document.querySelectorAll('.pagination-link');
+                const paginationLinks = document.querySelectorAll('#paginationContainer a[href]');
                 paginationLinks.forEach(link => {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();

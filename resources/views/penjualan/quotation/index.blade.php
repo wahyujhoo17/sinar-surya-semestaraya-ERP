@@ -403,7 +403,8 @@
                         {{-- Tabel diisi via AJAX --}}
                     </tbody>
                 </table>
-                <div class="p-4 border-t border-gray-100 dark:border-gray-700" x-html="paginationHtml">
+                <div class="p-4 border-t border-gray-100 dark:border-gray-700 min-w-full align-middle overflow-hidden"
+                    x-html="paginationHtml" @click="handlePaginationClick($event)">
                     {{-- Pagination diisi via AJAX --}}
                 </div>
             </div>
@@ -504,6 +505,19 @@
                     this.sortDirection = 'desc';
                     this.fetchTable();
                 },
+                handlePaginationClick(event) {
+                    // Check if the clicked element is a pagination link
+                    const link = event.target.closest('a[href]');
+                    if (link && link.getAttribute('href')) {
+                        event.preventDefault();
+                        const url = link.getAttribute('href');
+
+                        // Only handle pagination URLs, not other links
+                        if (url.includes('page=') || url.includes('{{ route('penjualan.quotation.index') }}')) {
+                            this.fetchTable(url);
+                        }
+                    }
+                },
                 sortBy(field) {
                     if (this.sortField === field) {
                         this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
@@ -529,17 +543,34 @@
                         if (this.sortDirection) params.append('direction', this.sortDirection);
                     }
 
-                    let baseUrl = pageUrl || `{{ route('penjualan.quotation.index') }}`;
-                    let finalUrl = new URL(baseUrl, window.location.origin);
+                    let finalUrl;
 
-                    params.forEach((value, key) => {
-                        finalUrl.searchParams.append(key, value);
-                    });
+                    if (pageUrl) {
+                        // If pageUrl is provided (from pagination), use it as base and add our filters
+                        finalUrl = new URL(pageUrl, window.location.origin);
+
+                        // Remove existing filter params and add current ones
+                        const filterParams = ['search', 'periode', 'tanggal_awal', 'tanggal_akhir', 'status', 'sort',
+                            'direction'
+                        ];
+                        filterParams.forEach(param => finalUrl.searchParams.delete(param));
+
+                        params.forEach((value, key) => {
+                            finalUrl.searchParams.set(key, value);
+                        });
+                    } else {
+                        // Normal case - build URL from scratch
+                        finalUrl = new URL(`{{ route('penjualan.quotation.index') }}`, window.location.origin);
+                        params.forEach((value, key) => {
+                            finalUrl.searchParams.append(key, value);
+                        });
+                    }
 
                     // Add cache-busting parameter
-                    finalUrl.searchParams.append('_', new Date().getTime());
+                    finalUrl.searchParams.set('_', new Date().getTime());
 
                     let urlToFetch = finalUrl.toString();
+                    // console.log('Fetching URL:', urlToFetch); // Debug log
 
                     fetch(urlToFetch, {
                             headers: {
@@ -559,7 +590,7 @@
 
                             if (data.error) {
                                 this.tableHtml =
-                                    `<tr><td colspan="7" class="px-5 py-10 text-center">
+                                    `<tr><td colspan="8" class="px-5 py-10 text-center">
                                         <div class="flex flex-col items-center justify-center space-y-4">
                                             <div class="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-red-50 dark:bg-red-900/20">
                                                 <svg class="h-12 w-12 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -592,12 +623,21 @@
 
                             // Update URL without reload, preserving the base path and only changing search params
                             const historyUrl = new URL(window.location.pathname, window.location.origin);
-                            params.forEach((value, key) => historyUrl.searchParams.append(key, value));
+                            params.forEach((value, key) => historyUrl.searchParams.set(key, value));
                             if (!(this.sortField === 'tanggal' && this.sortDirection === 'desc')) {
-                                if (this.sortField) historyUrl.searchParams.append('sort', this.sortField);
-                                if (this.sortDirection) historyUrl.searchParams.append('direction', this.sortDirection);
+                                if (this.sortField) historyUrl.searchParams.set('sort', this.sortField);
+                                if (this.sortDirection) historyUrl.searchParams.set('direction', this.sortDirection);
                             }
+
+                            // Add current page parameter from the fetched URL if it exists
+                            const currentPage = finalUrl.searchParams.get('page');
+                            if (currentPage && currentPage !== '1') {
+                                historyUrl.searchParams.set('page', currentPage);
+                            }
+
                             window.history.replaceState({}, '', historyUrl.toString());
+
+                            // console.log('Table updated successfully'); // Debug log
                         })
                         .catch(error => {
                             // Also set loading state to false on error
@@ -605,7 +645,7 @@
 
                             console.error('Error fetching table data:', error);
                             this.tableHtml =
-                                `<tr><td colspan="7" class="px-5 py-10 text-center">
+                                `<tr><td colspan="8" class="px-5 py-10 text-center">
                                     <div class="flex flex-col items-center justify-center space-y-4">
                                         <div class="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-red-50 dark:bg-red-900/20">
                                             <svg class="h-12 w-12 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -94,8 +94,8 @@ class DashboardController extends Controller
 
         // Check for sales role
         if (
-            $user->hasPermission('quotation.view') || $user->hasPermission('sales_order.view') ||
-            $user->hasPermission('delivery_order.view') || $user->hasPermission('pelanggan.view')
+            $user->hasPermission('quotation.view') && $user->hasPermission('sales_order.view') &&
+            $user->hasPermission('delivery_order.view') && $user->hasPermission('pelanggan.view')
         ) {
             return 'sales';
         }
@@ -118,7 +118,7 @@ class DashboardController extends Controller
 
         // Check for inventory role
         if (
-            $user->hasPermission('stok_barang.view') && $user->hasPermission('transfer_gudang.view') ||
+            $user->hasPermission('stok_barang.view') && $user->hasPermission('transfer_gudang.view') &&
             $user->hasPermission('gudang.view') && $user->hasPermission('penyesuaian_stok.view')
         ) {
             return 'inventory';

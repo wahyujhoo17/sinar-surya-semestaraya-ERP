@@ -168,7 +168,7 @@ class SalesOrderController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'table_html' => view('penjualan.sales-order._table', compact('salesOrders', 'sort', 'direction'))->render(),
-                    'pagination_html' => $salesOrders->links()->toHtml(),
+                    'pagination_html' => $salesOrders->links('vendor.pagination.tailwind-custom')->toHtml(),
                     'sort_field' => $sort,
                     'sort_direction' => $direction,
                 ]);

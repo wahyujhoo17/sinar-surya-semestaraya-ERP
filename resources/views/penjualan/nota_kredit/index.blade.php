@@ -341,7 +341,9 @@
                 </table>
             </div>
 
-            <div id="paginationContainer" x-show="!isLoading">
+            <div id="paginationContainer" x-show="!isLoading"
+                class="p-4 border-t border-gray-100 dark:border-gray-700 min-w-full align-middle overflow-hidden"
+                @click="handlePaginationClick($event)">
                 @include('penjualan.nota_kredit.partials.pagination')
             </div>
         </div>

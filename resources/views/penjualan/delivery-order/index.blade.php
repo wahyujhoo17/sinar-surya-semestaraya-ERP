@@ -734,10 +734,10 @@
                     return new Promise((resolve) => {
                         const checkLibraries = () => {
                             if (typeof $ !== 'undefined' && $.fn.select2) {
-                                console.log('jQuery and Select2 are ready');
+                                // console.log('jQuery and Select2 are ready');
                                 resolve();
                             } else {
-                                console.log('Waiting for jQuery and Select2...');
+                                // console.log('Waiting for jQuery and Select2...');
                                 setTimeout(checkLibraries, 100);
                             }
                         };
@@ -748,12 +748,12 @@
                 initCustomerSelect() {
                     try {
                         if (typeof $ === 'undefined') {
-                            console.error('jQuery is not available');
+                            // console.error('jQuery is not available');
                             return;
                         }
 
                         if (!$.fn.select2) {
-                            console.error('Select2 is not available');
+                            // console.error('Select2 is not available');
                             return;
                         }
 
@@ -761,7 +761,7 @@
                         const $select = $('#customer-select');
 
                         if ($select.length === 0) {
-                            console.error('Customer select element not found');
+                            // console.error('Customer select element not found');
                             return;
                         }
 
@@ -815,9 +815,9 @@
                             $select.val(this.customer_id).trigger('change.select2');
                         }
 
-                        console.log('Select2 initialized successfully');
+                        // console.log('Select2 initialized successfully');
                     } catch (error) {
-                        console.error('Error initializing Select2:', error);
+                        // console.error('Error initializing Select2:', error);
                     }
                 },
 
@@ -957,7 +957,7 @@
                             });
                         })
                         .catch(error => {
-                            console.error('Error fetching table data:', error);
+                            // console.error('Error fetching table data:', error);
                             this.isLoading = false;
                             this.tableHtml =
                                 `<tr><td colspan="8" class="px-5 py-10 text-center">
@@ -1020,7 +1020,7 @@
                             }
                         }
                     } catch (error) {
-                        console.error('Error resetting Select2:', error);
+                        // console.error('Error resetting Select2:', error);
                     }
 
                     // Fetch with reset values
@@ -1126,7 +1126,7 @@
                             });
                         })
                         .catch(error => {
-                            console.error('Error in pagination:', error);
+                            // console.error('Error in pagination:', error);
                             this.isLoading = false;
                             this.tableHtml =
                                 `<tr><td colspan="8" class="px-5 py-10 text-center text-red-500">Error: ${error.message}</td></tr>`;
@@ -1146,13 +1146,13 @@
         }
 
         function checkLibrariesAndLog() {
-            console.log('DOM ready, checking libraries...');
+            // console.log('DOM ready, checking libraries...');
 
             // Check jQuery
             if (typeof $ !== 'undefined') {
-                console.log('✓ jQuery is available:', $.fn.jquery);
+                // console.log('✓ jQuery is available:', $.fn.jquery);
             } else {
-                console.warn('✗ jQuery is not available');
+                // console.warn('✗ jQuery is not available');
                 // Try to load jQuery if not available
                 loadJQuery();
                 return;
@@ -1160,9 +1160,9 @@
 
             // Check Select2
             if ($.fn.select2) {
-                console.log('✓ Select2 is available');
+                // console.log('✓ Select2 is available');
             } else {
-                console.warn('✗ Select2 is not available');
+                // console.warn('✗ Select2 is not available');
                 // Try to load Select2 if not available
                 loadSelect2();
                 return;
@@ -1174,11 +1174,11 @@
                 const script = document.createElement('script');
                 script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
                 script.onload = function() {
-                    console.log('jQuery loaded dynamically');
+                    // console.log('jQuery loaded dynamically');
                     loadSelect2();
                 };
                 script.onerror = function() {
-                    console.error('Failed to load jQuery');
+                    // console.error('Failed to load jQuery');
                 };
                 document.head.appendChild(script);
             }
@@ -1189,10 +1189,10 @@
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
                 script.onload = function() {
-                    console.log('Select2 loaded dynamically');
+                    // console.log('Select2 loaded dynamically');
                 };
                 script.onerror = function() {
-                    console.error('Failed to load Select2');
+                    // console.error('Failed to load Select2');
                 };
                 document.head.appendChild(script);
             }

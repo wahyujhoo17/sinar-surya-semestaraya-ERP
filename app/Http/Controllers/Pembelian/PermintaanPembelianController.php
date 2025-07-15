@@ -71,7 +71,7 @@ class PermintaanPembelianController extends Controller
             $query->whereBetween('tanggal', [$dateStart, $dateEnd]);
         }
 
-        $permintaanPembelian = $query->paginate(15)->withQueryString();
+        $permintaanPembelian = $query->paginate(10)->withQueryString();
         $currentStatus = $status;
 
         // Jika AJAX (fetch dari Alpine), return partial table

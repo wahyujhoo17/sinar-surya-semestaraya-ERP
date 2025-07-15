@@ -503,8 +503,9 @@
                     </tbody>
                 </table>
             </div>
-            <div id="pagination-container" class="px-5 py-3 flex justify-end" x-html="paginationHtml">
-                {{ $salesOrders->links() }}
+            <div id="pagination-container" class="px-5 py-3 min-w-full align-middle overflow-hidden"
+                x-html="paginationHtml" @click="handlePaginationClick($event)">
+                {{ $salesOrders->links('vendor.pagination.tailwind-custom') }}
             </div>
         </div>
     </div>
@@ -576,6 +577,19 @@
                     }
                     this.fetchTable();
                 },
+                handlePaginationClick(event) {
+                    // Check if the clicked element is a pagination link
+                    const link = event.target.closest('a[href]');
+                    if (link && link.getAttribute('href')) {
+                        event.preventDefault();
+                        const url = link.getAttribute('href');
+
+                        // Only handle pagination URLs, not other links
+                        if (url.includes('page=') || url.includes('{{ route('penjualan.sales-order.index') }}')) {
+                            this.fetchTable(url);
+                        }
+                    }
+                },
                 fetchTable(pageUrl = null) {
                     // Set loading state to true
                     this.isLoading = true;
@@ -593,15 +607,31 @@
                         if (this.sortDirection) params.append('direction', this.sortDirection);
                     }
 
-                    let baseUrl = pageUrl || `{{ route('penjualan.sales-order.index') }}`;
-                    let finalUrl = new URL(baseUrl, window.location.origin);
+                    let finalUrl;
 
-                    params.forEach((value, key) => {
-                        finalUrl.searchParams.append(key, value);
-                    });
+                    if (pageUrl) {
+                        // If pageUrl is provided (from pagination), use it as base and add our filters
+                        finalUrl = new URL(pageUrl, window.location.origin);
+
+                        // Remove existing filter params and add current ones
+                        const filterParams = ['search', 'periode', 'tanggal_awal', 'tanggal_akhir', 'status_pembayaran',
+                            'status_pengiriman', 'sort', 'direction'
+                        ];
+                        filterParams.forEach(param => finalUrl.searchParams.delete(param));
+
+                        params.forEach((value, key) => {
+                            finalUrl.searchParams.set(key, value);
+                        });
+                    } else {
+                        // Normal case - build URL from scratch
+                        finalUrl = new URL(`{{ route('penjualan.sales-order.index') }}`, window.location.origin);
+                        params.forEach((value, key) => {
+                            finalUrl.searchParams.append(key, value);
+                        });
+                    }
 
                     // Add cache-busting parameter
-                    finalUrl.searchParams.append('_', new Date().getTime());
+                    finalUrl.searchParams.set('_', new Date().getTime());
 
                     let urlToFetch = finalUrl.toString();
 
@@ -656,11 +686,18 @@
 
                             // Update URL without reload, preserving the base path and only changing search params
                             const historyUrl = new URL(window.location.pathname, window.location.origin);
-                            params.forEach((value, key) => historyUrl.searchParams.append(key, value));
+                            params.forEach((value, key) => historyUrl.searchParams.set(key, value));
                             if (!(this.sortField === 'tanggal' && this.sortDirection === 'desc')) {
-                                if (this.sortField) historyUrl.searchParams.append('sort', this.sortField);
-                                if (this.sortDirection) historyUrl.searchParams.append('direction', this.sortDirection);
+                                if (this.sortField) historyUrl.searchParams.set('sort', this.sortField);
+                                if (this.sortDirection) historyUrl.searchParams.set('direction', this.sortDirection);
                             }
+
+                            // Add current page parameter from the fetched URL if it exists
+                            const currentPage = finalUrl.searchParams.get('page');
+                            if (currentPage && currentPage !== '1') {
+                                historyUrl.searchParams.set('page', currentPage);
+                            }
+
                             window.history.replaceState({}, '', historyUrl.toString());
                         })
                         .catch(error => {

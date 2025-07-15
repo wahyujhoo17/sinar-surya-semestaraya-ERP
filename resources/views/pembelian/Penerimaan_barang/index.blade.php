@@ -271,10 +271,11 @@
                     @endif
                 </div>
 
-                <div id="gr-pagination-container" x-html="paginationHtml" class="mt-6 px-5">
-                    {{-- @if (!request()->ajax())
-                        {{ $goodsReceipts->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
-                    @endif --}}
+                <div id="gr-pagination-container" x-html="paginationHtml" @click="handlePaginationEvent($event)"
+                    class="mt-6 px-5">
+                    @if (!request()->ajax())
+                        {{ $penerimaanBarangs->links('vendor.pagination.tailwind-custom') }}
+                    @endif
                 </div>
             </div>
         </div>
@@ -305,7 +306,6 @@
                             <path fill-rule="evenodd"
                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
                                 clip-rule="evenodd" />
-                        </svg>
                     </div>
                     <div x-show="toast.type === 'success'"
                         class="flex items-center justify-center h-8 w-8 rounded-full bg-green-100 dark:bg-green-800">
@@ -433,6 +433,18 @@
                 init() {
                     // Force tab to be 'semua' on initialization
                     this.tab = 'semua';
+
+                    // Initialize pagination HTML for non-AJAX requests
+                    @if (!request()->ajax())
+                        this.$nextTick(() => {
+                            const existingPagination = document.querySelector(
+                                '#gr-pagination-container .pagination');
+                            if (existingPagination) {
+                                this.paginationHtml = existingPagination.outerHTML;
+                            }
+                        });
+                    @endif
+
                     this.fetchTable();
                     // console.log("Alpine component initialized with:", JSON.parse(JSON.stringify(this)));
 
@@ -645,6 +657,130 @@
                             });
                         });
                     });
+                },
+                handlePaginationEvent(event) {
+                    // Handle pagination clicks using event delegation
+                    const link = event.target.closest('a');
+                    if (!link || !link.href) return;
+
+                    event.preventDefault();
+                    const fetchUrl = link.href;
+
+                    this.loading = true;
+
+                    fetch(fetchUrl, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.text().then(text => {
+                                    throw new Error(
+                                        `HTTP error ${response.status}: ${text || response.statusText}`);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.table_html !== undefined) {
+                                this.tableHtml = data.table_html;
+                            } else {
+                                this.tableHtml =
+                                    '<div class="p-4 text-center text-red-500">Format data tabel tidak sesuai.</div>';
+                            }
+
+                            if (data && data.pagination_html !== undefined) {
+                                this.paginationHtml = data.pagination_html;
+                            } else {
+                                this.paginationHtml = '';
+                            }
+
+                            this.loading = false;
+
+                            // Update browser URL without reload
+                            if (window.history && window.history.pushState) {
+                                window.history.pushState({}, '', fetchUrl);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching paginated data:', error);
+                            this.loading = false;
+                            this.tableHtml =
+                                `<div class="p-4 text-center text-red-500">Gagal memuat halaman: ${error.message}</div>`;
+                            this.paginationHtml = '';
+
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Error',
+                                    message: `Gagal memuat halaman: ${error.message}`,
+                                    timeout: 5000
+                                }
+                            }));
+                        });
+                },
+                handlePaginationClick(url) {
+                    // Method for pagination template compatibility
+                    if (!url) return;
+
+                    this.loading = true;
+
+                    fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.text().then(text => {
+                                    throw new Error(
+                                        `HTTP error ${response.status}: ${text || response.statusText}`);
+                                });
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.table_html !== undefined) {
+                                this.tableHtml = data.table_html;
+                            } else {
+                                this.tableHtml =
+                                    '<div class="p-4 text-center text-red-500">Format data tabel tidak sesuai.</div>';
+                            }
+
+                            if (data && data.pagination_html !== undefined) {
+                                this.paginationHtml = data.pagination_html;
+                            } else {
+                                this.paginationHtml = '';
+                            }
+
+                            this.loading = false;
+
+                            // Update browser URL without reload
+                            if (window.history && window.history.pushState) {
+                                window.history.pushState({}, '', url);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching paginated data:', error);
+                            this.loading = false;
+                            this.tableHtml =
+                                `<div class="p-4 text-center text-red-500">Gagal memuat halaman: ${error.message}</div>`;
+                            this.paginationHtml = '';
+
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Error',
+                                    message: `Gagal memuat halaman: ${error.message}`,
+                                    timeout: 5000
+                                }
+                            }));
+                        });
                 }
             }
         }

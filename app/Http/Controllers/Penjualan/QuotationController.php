@@ -151,7 +151,7 @@ class QuotationController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'table_html' => view('penjualan.quotation._table', compact('quotations', 'sort', 'direction'))->render(),
-                    'pagination_html' => $quotations->links()->toHtml(),
+                    'pagination_html' => $quotations->links('vendor.pagination.tailwind-custom')->toHtml(),
                     'sort_field' => $sort,
                     'sort_direction' => $direction,
                 ]);

@@ -167,9 +167,8 @@ class PenerimaanBarangController extends Controller
                 // Try to render pagination, but provide fallback if it fails
                 $paginationHtml = '';
                 try {
-                    $paginationHtml = view('pembelian.Penerimaan_barang._pagination', [
-                        'penerimaanBarangs' => $penerimaanBarangs
-                    ])->render();
+                    // Use the custom pagination template directly
+                    $paginationHtml = $penerimaanBarangs->links('vendor.pagination.tailwind-custom')->toHtml();
                 } catch (\Exception $paginationException) {
                     // If pagination view fails, create a simple fallback pagination
                     try {

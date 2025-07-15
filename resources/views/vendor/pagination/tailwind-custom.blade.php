@@ -1,7 +1,6 @@
 @if ($paginator->hasPages())
-    <div
-        class="mt-6 px-4 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm sm:flex sm:items-center sm:justify-between">
-        <div class="flex justify-center sm:justify-start text-sm text-gray-700 dark:text-gray-300">
+    <div class="flex items-center justify-between bg-white dark:bg-gray-800">
+        <div class="text-sm text-gray-700 dark:text-gray-300">
             <p>
                 Menampilkan
                 <span class="font-medium">{{ $paginator->firstItem() ?? 0 }}</span>
@@ -13,8 +12,8 @@
             </p>
         </div>
 
-        <div class="flex justify-center mt-3 sm:mt-0">
-            <nav class="inline-flex rounded-md shadow-sm" aria-label="Pagination">
+        <div class="flex items-center">
+            <nav class="inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                 {{-- Tombol Previous --}}
                 @if ($paginator->onFirstPage())
                     <span
@@ -65,7 +64,7 @@
                     </a>
                 @else
                     <span
-                        class="relative inline-flex items-center px-3 py-2 text-sm font-medium text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-r-md">
+                        class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 cursor-not-allowed rounded-r-md">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414z"

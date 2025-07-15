@@ -183,7 +183,7 @@ class InvoiceController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'table_html' => view('penjualan.invoice._table', compact('invoices', 'sort', 'direction', 'notaKreditId'))->render(),
-                    'pagination_html' => view('penjualan.invoice._pagination', ['paginator' => $invoices])->render(),
+                    'pagination_html' => view('vendor.pagination.tailwind-custom', ['paginator' => $invoices])->render(),
                     'sort_field' => $sort,
                     'sort_direction' => $direction,
                 ]);
