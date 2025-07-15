@@ -256,7 +256,7 @@
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Aksi Cepat</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             @if (auth()->user()->hasPermission('transfer_gudang.create'))
-                <a href="{{ route('transfer-gudang.create') }}"
+                <a href="{{ route('inventaris.transfer-gudang.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-blue-600 dark:text-blue-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
@@ -268,7 +268,7 @@
             @endif
 
             @if (auth()->user()->hasPermission('penyesuaian_stok.create'))
-                <a href="{{ route('penyesuaian-stok.create') }}"
+                <a href="{{ route('inventaris.penyesuaian-stok.create') }}"
                     class="flex flex-col items-center p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                     <svg class="w-8 h-8 text-green-600 dark:text-green-400 mb-2" fill="none" stroke="currentColor"
                         viewBox="0 0 24 24">
