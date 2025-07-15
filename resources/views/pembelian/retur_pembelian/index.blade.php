@@ -272,7 +272,7 @@
                         <div x-html="tableHtml" x-show="tableHtml"></div>
                     </div>
 
-                    <div id="retur-pagination-container" class="mt-6 px-5">
+                    <div id="retur-pagination-container" @click="handlePaginationEvent($event)" class="mt-6 px-5">
                         <div x-show="!paginationHtml">
                             @if (!request()->ajax())
                                 {{ $returPembelian->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
@@ -298,8 +298,18 @@
                         tableHtml: '',
                         paginationHtml: '',
                         init() {
+                            // Initialize pagination HTML for non-AJAX requests
+                            @if (!request()->ajax())
+                                this.$nextTick(() => {
+                                    const existingPagination = document.querySelector(
+                                        '#retur-pagination-container .pagination');
+                                    if (existingPagination) {
+                                        this.paginationHtml = existingPagination.outerHTML;
+                                    }
+                                });
+                            @endif
                             // Initial table HTML already rendered server-side
-                            this.attachPaginationListener();
+                            // No need for attachPaginationListener since we use event delegation
                         },
                         changeTab(status) {
                             this.tab = status;
@@ -365,46 +375,58 @@
                                     this.tableHtml = data.table_html;
                                     this.paginationHtml = data.pagination_html;
                                     this.loading = false;
-                                    this.attachPaginationListener();
+                                    // No need to re-attach listeners with event delegation
                                 })
                                 .catch(error => {
                                     console.error('Error fetching data:', error);
                                     this.loading = false;
                                 });
                         },
-                        attachPaginationListener() {
-                            this.$nextTick(() => {
-                                document.querySelectorAll('#retur-pagination-container a').forEach(link => {
-                                    link.addEventListener('click', e => {
-                                        e.preventDefault();
-                                        const url = new URL(link.href);
-                                        const page = url.searchParams.get('page');
-                                        if (page) {
-                                            const params = this.buildQueryString() + `&page=${page}`;
-                                            this.loading = true;
-                                            // Clear existing content first to avoid duplication
-                                            this.tableHtml = '';
-                                            this.paginationHtml = '';
+                        handlePaginationClick(url) {
+                            // Method for pagination template compatibility
+                            if (!url) return;
 
-                                            fetch(`{{ route('pembelian.retur-pembelian.index') }}?${params}`, {
-                                                    headers: {
-                                                        'X-Requested-With': 'XMLHttpRequest'
-                                                    }
-                                                }).then(r => r.json())
-                                                .then(data => {
-                                                    this.tableHtml = data.table_html;
-                                                    this.paginationHtml = data.pagination_html;
-                                                    this.loading = false;
-                                                    this.attachPaginationListener();
-                                                })
-                                                .catch(error => {
-                                                    console.error('Error fetching page:', error);
-                                                    this.loading = false;
-                                                });
-                                        }
-                                    });
+                            this.loading = true;
+                            // Clear existing content first to avoid duplication
+                            this.tableHtml = '';
+                            this.paginationHtml = '';
+
+                            fetch(url, {
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    this.tableHtml = data.table_html;
+                                    this.paginationHtml = data.pagination_html;
+                                    this.loading = false;
+
+                                    // Update browser URL without reload
+                                    if (window.history && window.history.pushState) {
+                                        window.history.pushState({}, '', url);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching paginated data:', error);
+                                    this.loading = false;
+
+                                    // Show error message
+                                    alert(`Gagal memuat halaman: ${error.message}`);
                                 });
-                            });
+                        },
+                        handlePaginationEvent(event) {
+                            // Handle pagination clicks using event delegation
+                            const link = event.target.closest('a');
+                            if (!link || !link.href) return;
+
+                            event.preventDefault();
+                            this.handlePaginationClick(link.href);
                         }
                     };
                 }

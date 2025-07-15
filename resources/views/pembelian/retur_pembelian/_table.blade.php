@@ -260,7 +260,4 @@
 </table>
 
 <!-- Pagination -->
-<div class="bg-white dark:bg-gray-900 px-4 py-3 border-t border-gray-200 dark:border-gray-800 sm:px-6"
-    id="pagination-container">
-    {{ $returPembelian->links('vendor.pagination.tailwind-custom') }}
-</div>
+

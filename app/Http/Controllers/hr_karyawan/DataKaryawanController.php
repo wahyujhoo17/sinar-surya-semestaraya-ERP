@@ -73,6 +73,7 @@ class DataKaryawanController extends Controller
 
         // Pagination
         $perPage = $request->input('per_page', 10);
+        // $perPage = 1;
         $karyawan = $query->paginate($perPage);
 
         // Handle AJAX request

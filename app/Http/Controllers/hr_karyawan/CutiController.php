@@ -84,11 +84,12 @@ class CutiController extends Controller
 
             // Pagination
             $perPage = $request->input('per_page', 15);
-            $cuti = $query->paginate($perPage);
+            $cuti = $query->paginate($perPage)->withQueryString();
 
             return response()->json([
                 'success' => true,
                 'data' => $cuti->items(),
+                'pagination_html' => $cuti->links('vendor.pagination.tailwind-custom')->toHtml(),
                 'pagination' => [
                     'current_page' => $cuti->currentPage(),
                     'last_page' => $cuti->lastPage(),

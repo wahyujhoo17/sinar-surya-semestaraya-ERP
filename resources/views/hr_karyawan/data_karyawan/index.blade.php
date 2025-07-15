@@ -441,9 +441,10 @@
                         </div>
 
                         {{-- Pagination --}}
-                        <div id="pagination-container" x-html="paginationHtml"
+                        <div id="pagination-container" @click="handlePaginationEvent($event)" x-html="paginationHtml"
                             x-transition:enter="transition-opacity duration-300" x-transition:enter-start="opacity-0"
-                            x-transition:enter-end="opacity-100">
+                            x-transition:enter-end="opacity-100"
+                            class="px-5 py-3 min-w-full align-middle overflow-hidden">
                             {{ $karyawan->links('vendor.pagination.tailwind-custom') }}
                         </div>
 
@@ -528,6 +529,15 @@
 
                 init() {
                     this.tableHtml = document.getElementById('karyawan-table-body').innerHTML;
+
+                    // Initialize pagination HTML for non-AJAX requests
+                    this.$nextTick(() => {
+                        const existingPagination = document.querySelector('#pagination-container .pagination');
+                        if (existingPagination) {
+                            this.paginationHtml = existingPagination.outerHTML;
+                        }
+                    });
+
                     this.fetchData();
                     this.$watch('visibleColumns', (newValue) => {
                         localStorage.setItem('karyawan_visible_columns', JSON.stringify(newValue));
@@ -591,6 +601,57 @@
                         const form = event.target.closest('form');
                         form.submit();
                     }
+                },
+
+                handlePaginationClick(url) {
+                    // Method for pagination template compatibility
+                    if (!url) return;
+
+                    this.loading = true;
+                    const urlObj = new URL(url);
+                    this.currentPage = urlObj.searchParams.get('page') || 1;
+
+                    fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error ${response.status}: ${response.statusText}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            this.tableHtml = data.html;
+                            this.paginationHtml = data.pagination;
+                            this.totalResults = data.total;
+                            this.firstItem = data.first_item || 0;
+                            this.lastItem = data.last_item || 0;
+                            this.loading = false;
+                            this.selectedKaryawan = [];
+                            this.allSelected = false;
+
+                            // Update browser URL without reload
+                            if (window.history && window.history.pushState) {
+                                window.history.pushState({}, '', url);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching paginated data:', error);
+                            this.loading = false;
+                            alert('Terjadi kesalahan saat memuat data. Silakan coba lagi.');
+                        });
+                },
+
+                handlePaginationEvent(event) {
+                    // Handle pagination clicks using event delegation
+                    const link = event.target.closest('a');
+                    if (!link || !link.href) return;
+
+                    event.preventDefault();
+                    this.handlePaginationClick(link.href);
                 },
 
                 attachPaginationListener() {

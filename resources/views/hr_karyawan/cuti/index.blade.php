@@ -718,42 +718,10 @@
                     </div>
 
                     {{-- Pagination --}}
-                    <div x-show="data.length > 0"
-                        class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
-                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                            <div class="text-sm text-gray-700 dark:text-gray-300 mb-4 sm:mb-0">
-                                Menampilkan <span class="font-medium" x-text="pagination.from"></span> sampai <span
-                                    class="font-medium" x-text="pagination.to"></span> dari <span class="font-medium"
-                                    x-text="pagination.total"></span> data
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <button @click="prevPage()" :disabled="pagination.current_page <= 1"
-                                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-
-                                <span
-                                    class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-300">
-                                    <span x-text="pagination.current_page"></span> dari <span
-                                        x-text="pagination.last_page"></span>
-                                </span>
-
-                                <button @click="nextPage()" :disabled="pagination.current_page >= pagination.last_page"
-                                    class="relative inline-flex items-center px-2 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed">
-                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                        fill="currentColor">
-                                        <path fill-rule="evenodd"
-                                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                    <div x-show="data.length > 0" id="cuti-pagination-container"
+                        @click="handlePaginationEvent($event)"
+                        class="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6 px-5 py-3 min-w-full align-middle overflow-hidden">
+                        <div x-html="paginationHtml" x-show="paginationHtml"></div>
                     </div>
                 </div>
             </div>
@@ -916,6 +884,7 @@
             Alpine.data('cutiTable', () => ({
                 data: [],
                 loading: false,
+                paginationHtml: '',
                 pagination: {
                     current_page: 1,
                     last_page: 1,
@@ -965,6 +934,7 @@
                         if (result.success) {
                             this.data = result.data || [];
                             this.pagination = result.pagination || {};
+                            this.paginationHtml = result.pagination_html || '';
                         }
                     } catch (error) {
                         console.error('Error loading data:', error);
@@ -985,6 +955,37 @@
                     if (this.pagination.current_page < this.pagination.last_page) {
                         this.pagination.current_page++;
                         this.loadData();
+                    }
+                },
+
+                handlePaginationClick(event) {
+                    event.preventDefault();
+
+                    const link = event.target.closest('a');
+                    if (!link || !link.href) return;
+
+                    const url = new URL(link.href);
+                    const page = url.searchParams.get('page');
+
+                    if (page && page !== this.pagination.current_page.toString()) {
+                        this.pagination.current_page = parseInt(page);
+                        this.loadData();
+
+                        // Update URL without page reload
+                        const currentUrl = new URL(window.location);
+                        if (page === '1') {
+                            currentUrl.searchParams.delete('page');
+                        } else {
+                            currentUrl.searchParams.set('page', page);
+                        }
+                        window.history.pushState({}, '', currentUrl);
+                    }
+                },
+
+                handlePaginationEvent(event) {
+                    const link = event.target.closest('a');
+                    if (link && link.href && !link.href.includes('#')) {
+                        this.handlePaginationClick(event);
                     }
                 },
 
