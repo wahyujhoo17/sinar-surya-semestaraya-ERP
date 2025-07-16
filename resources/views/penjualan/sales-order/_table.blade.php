@@ -51,8 +51,50 @@
                 return 'Sebagian';
             case 'dikirim':
                 return 'Dikirim';
+            case 'dalam_proses_pengiriman':
+                return 'Dalam Proses Pengiriman';
             default:
                 return $status;
+        }
+    }
+
+    function getDisplayStatusPengiriman($salesOrder)
+    {
+        // Cek apakah sales order sudah memiliki delivery order
+        if ($salesOrder->deliveryOrders && $salesOrder->deliveryOrders->count() > 0) {
+            // Cek status delivery order yang ada
+            $hasDeliveryOrderInProgress = false;
+            foreach ($salesOrder->deliveryOrders as $deliveryOrder) {
+                // Jika ada delivery order dengan status draft atau dikirim (belum selesai)
+                if (in_array($deliveryOrder->status, ['draft', 'dikirim'])) {
+                    $hasDeliveryOrderInProgress = true;
+                    break;
+                }
+            }
+
+            // Jika ada delivery order yang sedang dalam proses
+            if ($hasDeliveryOrderInProgress) {
+                return 'dalam_proses_pengiriman';
+            }
+        }
+
+        // Kembalikan status asli dari database
+        return $salesOrder->status_pengiriman;
+    }
+
+    function getDisplayStatusColor($status)
+    {
+        switch ($status) {
+            case 'belum_dikirim':
+                return 'red';
+            case 'sebagian':
+                return 'amber';
+            case 'dikirim':
+                return 'emerald';
+            case 'dalam_proses_pengiriman':
+                return 'blue';
+            default:
+                return 'gray';
         }
     }
 @endphp
@@ -194,15 +236,18 @@
                     {{ formatStatusPembayaran($salesOrder->status_pembayaran) }}
                 </span>
 
+                @php
+                    $displayStatus = getDisplayStatusPengiriman($salesOrder);
+                    $statusColor = getDisplayStatusColor($displayStatus);
+                @endphp
                 <span
                     class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium 
-                    bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-100 
-                    dark:bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-900/20 
-                    text-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-700 
-                    dark:text-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-300">
-                    <span
-                        class="h-1.5 w-1.5 rounded-full bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-500"></span>
-                    {{ formatStatusPengiriman($salesOrder->status_pengiriman) }}
+                    bg-{{ $statusColor }}-100 
+                    dark:bg-{{ $statusColor }}-900/20 
+                    text-{{ $statusColor }}-700 
+                    dark:text-{{ $statusColor }}-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-{{ $statusColor }}-500"></span>
+                    {{ formatStatusPengiriman($displayStatus) }}
                 </span>
             </div>
         </td>

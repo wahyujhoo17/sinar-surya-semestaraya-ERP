@@ -120,10 +120,10 @@
                             <label for="supplier_id"
                                 class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier</label>
                             <select name="supplier_id" id="supplier_id"
-                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full">
+                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full select2-basic">
                                 <option value="">-- Semua Supplier --</option>
                                 @foreach ($suppliers as $supplier)
-                                    <option value="{{ $supplier->id }}"
+                                    <option value="{{ $supplier->id }}" data-name="{{ $supplier->nama }}"
                                         {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
                                         {{ $supplier->nama }}</option>
                                 @endforeach
@@ -454,7 +454,130 @@
         </div>
     </div>
 
+    @push('styles')
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            /* Select2 Dark Mode & Tailwind Integration */
+            .select2-container--default .select2-selection--single,
+            .select2-container--default .select2-results__option {
+                font-size: 0.95rem !important;
+            }
+
+            .select2-container--default .select2-selection--single {
+                height: 42px !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.5rem !important;
+                background-color: white !important;
+                padding: 0 12px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .dark .select2-container--default .select2-selection--single {
+                background-color: rgb(55 65 81) !important;
+                border-color: rgb(75 85 99) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 42px !important;
+                padding-left: 0 !important;
+                color: rgb(17 24 39) !important;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 40px !important;
+                right: 12px !important;
+            }
+
+            .select2-dropdown {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.5rem !important;
+                background-color: white !important;
+            }
+
+            .dark .select2-dropdown {
+                background-color: rgb(55 65 81) !important;
+                border-color: rgb(75 85 99) !important;
+            }
+
+            .select2-container--default .select2-results__option {
+                color: rgb(17 24 39) !important;
+                padding: 8px 12px !important;
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: white !important;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: rgb(59 130 246) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.375rem !important;
+                padding: 8px 12px !important;
+                background-color: white !important;
+                color: rgb(17 24 39) !important;
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: rgb(75 85 99) !important;
+                border-color: rgb(107 114 128) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single:focus {
+                border-color: rgb(59 130 246) !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            }
+        </style>
+    @endpush
     @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                function formatSupplierOption(supplier) {
+                    if (!supplier.id) {
+                        return supplier.text;
+                    }
+                    var $supplier = $(supplier.element);
+                    var name = $supplier.data('name') || '';
+                    return $(
+                        '<div class="flex flex-col py-1">' +
+                        '<div class="font-medium text-gray-900 dark:text-white">' + name + '</div>' +
+                        '</div>'
+                    );
+                }
+
+                function formatSupplierSelection(supplier) {
+                    if (!supplier.id) {
+                        return '-- Semua Supplier --';
+                    }
+                    var $supplier = $(supplier.element);
+                    var name = $supplier.data('name') || '';
+                    return name;
+                }
+                $('#supplier_id').select2({
+                    placeholder: '-- Semua Supplier --',
+                    allowClear: true,
+                    width: '100%',
+                    templateResult: formatSupplierOption,
+                    templateSelection: formatSupplierSelection,
+                    escapeMarkup: function(markup) {
+                        return markup;
+                    }
+                });
+            });
+        </script>
         <script>
             function hutangTableManager() {
                 return {

@@ -746,12 +746,10 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    @if (auth()->user()->hasPermission('riwayat_transaksi.view'))
-                                        <a href="{{ route('pembelian.riwayat-transaksi.show', $transaction->id) }}"
-                                            class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 dark:bg-primary-900/20 px-3 py-1 rounded-md">
-                                            Detail
-                                        </a>
-                                    @endif
+                                    <a href="{{ route('pembelian.riwayat-transaksi.show', $transaction->id) }}"
+                                        class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 bg-primary-50 dark:bg-primary-900/20 px-3 py-1 rounded-md">
+                                        Detail
+                                    </a>
                                 </td>
                             </tr>
                         @empty

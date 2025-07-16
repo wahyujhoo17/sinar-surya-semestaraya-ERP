@@ -26,6 +26,8 @@ class Invoice extends Model
         'ppn',
         'ongkos_kirim',
         'total',
+        'uang_muka_terapkan',
+        'sisa_tagihan',
         'jatuh_tempo', // Renamed from tanggal_jatuh_tempo for consistency if it was different
         'status', // 'belum_bayar', 'sebagian', 'lunas'
         'catatan',
@@ -75,12 +77,21 @@ class Invoice extends Model
         return $this->hasMany(PembayaranPiutang::class, 'invoice_id');
     }
 
+    /**
+     * Relasi ke UangMukaAplikasi
+     */
+    public function uangMukaAplikasi()
+    {
+        return $this->hasMany(UangMukaAplikasi::class, 'invoice_id');
+    }
+
     // Accessor for Sisa Piutang
     public function getSisaPiutangAttribute()
     {
         $totalPembayaran = $this->pembayaranPiutang()->sum('jumlah');
         $totalKredit = $this->kredit_terapkan ?? 0;
-        return $this->total - $totalPembayaran - $totalKredit;
+        $uangMukaTerapkan = $this->uang_muka_terapkan ?? 0;
+        return $this->total - $totalPembayaran - $totalKredit - $uangMukaTerapkan;
     }
 
     // Accessor for Status Display

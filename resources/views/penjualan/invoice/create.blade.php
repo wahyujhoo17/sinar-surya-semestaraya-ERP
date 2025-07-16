@@ -258,6 +258,40 @@
                                         <input type="hidden" name="customer_id" x-model="customerId">
                                     </div>
 
+                                    <!-- Uang Muka Tersedia -->
+                                    <div x-show="customerAdvancePayments.length > 0" x-cloak>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Uang Muka Tersedia
+                                        </label>
+                                        <div
+                                            class="space-y-2 max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                                            <template x-for="advance in customerAdvancePayments" :key="advance.id">
+                                                <div
+                                                    class="flex justify-between items-center text-xs bg-white dark:bg-gray-700 p-2 rounded border">
+                                                    <div>
+                                                        <span class="font-medium" x-text="advance.nomor"></span>
+                                                        <span class="text-gray-500 dark:text-gray-400"
+                                                            x-text="advance.tanggal"></span>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <div class="text-green-600 dark:text-green-400 font-medium"
+                                                            x-text="advance.jumlah_tersedia_formatted"></div>
+                                                        <div class="text-gray-500 dark:text-gray-400 text-xs">dari <span
+                                                                x-text="advance.jumlah_formatted"></span></div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                            <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                            Uang muka akan otomatis diaplikasikan ke invoice ini
+                                        </p>
+                                    </div>
+
                                     <!-- Tanggal Jatuh Tempo -->
                                     <div>
                                         <label for="jatuh_tempo"
@@ -609,6 +643,7 @@
                 return {
                     customerId: '',
                     customerName: '',
+                    customerAdvancePayments: [], // Add this for advance payments
                     items: [],
                     subtotal: 0,
                     diskonPersen: 0,
@@ -700,6 +735,9 @@
                                     // Calculate totals
                                     this.calculateSubtotal();
                                     this.calculateTotal();
+
+                                    // Fetch customer advance payments
+                                    this.fetchCustomerAdvancePayments();
                                 } else {
                                     alert('Gagal mengambil data Sales Order');
                                 }
@@ -710,9 +748,33 @@
                             });
                     },
 
+                    fetchCustomerAdvancePayments() {
+                        if (!this.customerId) {
+                            this.customerAdvancePayments = [];
+                            return;
+                        }
+
+                        fetch(`/penjualan/invoice/get-customer-advance/${this.customerId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    this.customerAdvancePayments = data.data;
+                                    console.log('Customer advance payments:', this.customerAdvancePayments);
+                                } else {
+                                    console.error('Failed to fetch advance payments:', data.message);
+                                    this.customerAdvancePayments = [];
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching advance payments:', error);
+                                this.customerAdvancePayments = [];
+                            });
+                    },
+
                     resetForm() {
                         this.customerId = '';
                         this.customerName = '';
+                        this.customerAdvancePayments = []; // Reset advance payments
                         this.items = [];
                         this.subtotal = 0;
                         this.diskonPersen = 0;

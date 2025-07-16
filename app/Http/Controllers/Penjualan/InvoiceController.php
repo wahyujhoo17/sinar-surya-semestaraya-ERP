@@ -11,6 +11,8 @@ use App\Models\SalesOrderDetail;
 use App\Models\PembayaranPiutang;
 use App\Models\Customer;
 use App\Models\LogAktivitas;
+use App\Models\UangMukaPenjualan;
+use App\Models\UangMukaAplikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -226,7 +228,10 @@ class InvoiceController extends Controller
 
         $nomor = $this->generateNewInvoiceNumber();
 
-        return view('penjualan.invoice.create', compact('salesOrders', 'nomor'));
+        // Get customers for uang muka lookup
+        $customers = Customer::orderBy('nama')->get();
+
+        return view('penjualan.invoice.create', compact('salesOrders', 'nomor', 'customers'));
     }
 
     public function getSalesOrderData($id)
@@ -311,6 +316,8 @@ class InvoiceController extends Controller
                 'ppn' => $request->ppn ?? 0,
                 'ongkos_kirim' => $request->ongkos_kirim ?? 0,
                 'total' => $request->total,
+                'uang_muka_terapkan' => 0, // Initialize
+                'sisa_tagihan' => $request->total, // Initialize with total
                 'jatuh_tempo' => $request->jatuh_tempo,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
@@ -331,6 +338,9 @@ class InvoiceController extends Controller
                     'subtotal' => $item['subtotal'],
                 ]);
             }
+
+            // Otomatis aplikasikan uang muka jika ada
+            $this->autoApplyAdvancePayment($invoice);
 
             // Update sales order status if needed
             $this->updateSalesOrderStatus($request->sales_order_id);
@@ -362,14 +372,20 @@ class InvoiceController extends Controller
             return redirect()
                 ->back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat membuat invoice. ' . ($request->app()->environment('local') ? $e->getMessage() : ''));
+                ->with('error', 'Terjadi kesalahan saat membuat invoice. ' . (app()->environment('local') ? $e->getMessage() : ''));
         }
     }
 
     public function show(Invoice $invoice)
     {
-        $invoice->load(['customer', 'salesOrder', 'details', 'pembayaranPiutang']); // Changed 'pembayaran' to 'pembayaranPiutang'
-        return view('penjualan.invoice.show', compact('invoice'));
+        $invoice->load(['customer', 'salesOrder', 'details', 'pembayaranPiutang']);
+
+        // Load applied advance payments
+        $appliedAdvances = UangMukaAplikasi::where('invoice_id', $invoice->id)
+            ->with('uangMukaPenjualan')
+            ->get();
+
+        return view('penjualan.invoice.show', compact('invoice', 'appliedAdvances'));
     }
 
     public function edit(Invoice $invoice)
@@ -601,6 +617,148 @@ class InvoiceController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error printing delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Otomatis aplikasikan uang muka yang tersedia untuk customer
+     */
+    private function autoApplyAdvancePayment($invoice)
+    {
+        // Cari uang muka yang tersedia untuk customer ini
+        $availableAdvances = UangMukaPenjualan::byCustomer($invoice->customer_id)
+            ->available()
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        if ($availableAdvances->isEmpty()) {
+            return; // Tidak ada uang muka tersedia
+        }
+
+        $remainingInvoiceAmount = $invoice->total;
+        $totalAdvanceApplied = 0;
+
+        foreach ($availableAdvances as $advance) {
+            if ($remainingInvoiceAmount <= 0) {
+                break; // Invoice sudah fully covered
+            }
+
+            $amountToApply = min($advance->jumlah_tersedia, $remainingInvoiceAmount);
+
+            if ($amountToApply > 0) {
+                $aplikasi = UangMukaAplikasi::create([
+                    'uang_muka_penjualan_id' => $advance->id,
+                    'invoice_id' => $invoice->id,
+                    'jumlah_aplikasi' => $amountToApply,
+                    'tanggal_aplikasi' => today(),
+                    'keterangan' => 'Auto aplikasi uang muka ke invoice ' . $invoice->nomor
+                ]);
+
+                // Update uang muka
+                $advance->updateStatus();
+
+                $totalAdvanceApplied += $amountToApply;
+                $remainingInvoiceAmount -= $amountToApply;
+
+                // Buat jurnal entry untuk aplikasi
+                $this->createApplicationJournalEntry($aplikasi);
+            }
+        }
+
+        // Update invoice
+        if ($totalAdvanceApplied > 0) {
+            $invoice->uang_muka_terapkan = $totalAdvanceApplied;
+            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
+
+            // Update status invoice jika fully covered
+            if ($invoice->sisa_tagihan <= 0) {
+                $invoice->status = 'lunas';
+            } elseif ($totalAdvanceApplied > 0) {
+                $invoice->status = 'sebagian';
+            }
+
+            $invoice->save();
+        }
+    }
+
+    /**
+     * Buat jurnal entry untuk aplikasi uang muka ke invoice
+     */
+    private function createApplicationJournalEntry($aplikasi)
+    {
+        $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('kode', '2201')->first();
+        $akunPiutang = \App\Models\AkunAkuntansi::where('kode', '1110')->first(); // Update kode dari 1101 ke 1110
+
+        if (!$akunUangMukaPenjualan) {
+            throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
+        }
+
+        if (!$akunPiutang) {
+            throw new \Exception('Akun Piutang Usaha (1110) tidak ditemukan. Silakan hubungi administrator.');
+        }
+
+        // Buat jurnal debit hutang uang muka
+        \App\Models\JurnalUmum::create([
+            'tanggal' => $aplikasi->tanggal_aplikasi,
+            'no_referensi' => 'APP-' . $aplikasi->uangMukaPenjualan->nomor . '-' . $aplikasi->invoice->nomor,
+            'akun_id' => $akunUangMukaPenjualan->id,
+            'debit' => $aplikasi->jumlah_aplikasi,
+            'kredit' => 0,
+            'keterangan' => 'Aplikasi uang muka ke invoice: ' . $aplikasi->invoice->nomor,
+            'sumber' => 'uang_muka_aplikasi',
+            'ref_type' => 'App\\Models\\UangMukaAplikasi',
+            'ref_id' => $aplikasi->id,
+            'user_id' => Auth::id()
+        ]);
+
+        // Buat jurnal kredit piutang usaha
+        \App\Models\JurnalUmum::create([
+            'tanggal' => $aplikasi->tanggal_aplikasi,
+            'no_referensi' => 'APP-' . $aplikasi->uangMukaPenjualan->nomor . '-' . $aplikasi->invoice->nomor,
+            'akun_id' => $akunPiutang->id,
+            'debit' => 0,
+            'kredit' => $aplikasi->jumlah_aplikasi,
+            'keterangan' => 'Pengurangan piutang karena aplikasi uang muka',
+            'sumber' => 'uang_muka_aplikasi',
+            'ref_type' => 'App\\Models\\UangMukaAplikasi',
+            'ref_id' => $aplikasi->id,
+            'user_id' => Auth::id()
+        ]);
+    }
+
+    /**
+     * Get available advance payments for a customer
+     */
+    public function getCustomerAdvancePayments($customerId)
+    {
+        try {
+            $uangMuka = UangMukaPenjualan::byCustomer($customerId)
+                ->available()
+                ->with('customer')
+                ->orderBy('tanggal', 'asc')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'nomor' => $item->nomor,
+                        'tanggal' => $item->tanggal->format('d/m/Y'),
+                        'jumlah' => (float) $item->jumlah,
+                        'jumlah_tersedia' => (float) $item->jumlah_tersedia,
+                        'jumlah_formatted' => 'Rp ' . number_format((float) $item->jumlah, 0, ',', '.'),
+                        'jumlah_tersedia_formatted' => 'Rp ' . number_format((float) $item->jumlah_tersedia, 0, ',', '.'),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $uangMuka
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil data uang muka customer',
+                'error' => app()->environment('local') ? $e->getMessage() : null
+            ], 500);
         }
     }
 }

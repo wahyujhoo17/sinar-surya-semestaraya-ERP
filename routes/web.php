@@ -320,6 +320,7 @@ Route::middleware(['auth'])->group(function () {
         // Invoice routes
         Route::middleware('permission:invoice.view')->group(function () {
             Route::get('invoice/get-sales-order/{id}', [InvoiceController::class, 'getSalesOrderData'])->name('invoice.get-sales-order');
+            Route::get('invoice/get-customer-advance/{customerId}', [InvoiceController::class, 'getCustomerAdvancePayments'])->name('invoice.get-customer-advance');
         });
         Route::middleware('permission:invoice.print')->group(function () {
             Route::get('invoice/{invoice}/print', [InvoiceController::class, 'print'])->name('invoice.print');
@@ -333,7 +334,7 @@ Route::middleware(['auth'])->group(function () {
         // Delivery Order routes
         Route::middleware('permission:delivery_order.process')->group(function () {
             Route::post('delivery-order/{id}/proses', [DeliveryOrderController::class, 'prosesDelivery'])->name('delivery-order.proses');
-            Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesaikan');
+            Route::post('delivery-order/{id}/selesaikan', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesikan');
             Route::post('delivery-order/{id}/selesai', [DeliveryOrderController::class, 'selesaikanDelivery'])->name('delivery-order.selesai');
         });
         Route::middleware('permission:delivery_order.cancel')->group(function () {
@@ -690,6 +691,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('rekonsiliasi/{id}/reject', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'rejectReconciliation'])->name('rekonsiliasi.reject');
         Route::get('rekonsiliasi/{id}/export', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export');
         Route::post('rekonsiliasi/export', [\App\Http\Controllers\Keuangan\RekonsiliasiBankController::class, 'exportReconciliation'])->name('rekonsiliasi.export-data');
+
+        // Uang Muka Penjualan Routes
+        Route::get('uang-muka-penjualan/{id}/export-pdf', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'exportPdf'])->name('uang-muka-penjualan.exportPdf');
+        Route::get('uang-muka-penjualan/{id}/print', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'print'])->name('uang-muka-penjualan.print');
+        Route::get('uang-muka-penjualan/customer/{id}', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'getByCustomer'])->name('uang-muka-penjualan.by-customer');
+        Route::post('uang-muka-penjualan/{id}/apply', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'applyToInvoice'])->name('uang-muka-penjualan.apply');
+        Route::resource('uang-muka-penjualan', \App\Http\Controllers\Keuangan\UangMukaPenjualanController::class);
     });
 
     // -- Laporan --
@@ -760,6 +768,20 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('pipeline/{prospek}/status', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'updateStatus'])->name('pipeline.update-status');
         Route::get('pipeline/export/excel', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'exportExcel'])->name('pipeline.export.excel');
         Route::get('pipeline/export/csv', [App\Http\Controllers\CRM\PipelinePenjualanController::class, 'exportCsv'])->name('pipeline.export.csv');
+    });
+
+    // -- Daily Aktivitas --
+    Route::prefix('daily-aktivitas')->name('daily-aktivitas.')->group(function () {
+        Route::get('/', [App\Http\Controllers\DailyAktivitasController::class, 'index'])->name('index');
+        Route::get('/data', [App\Http\Controllers\DailyAktivitasController::class, 'data'])->name('data');
+        Route::get('/create', [App\Http\Controllers\DailyAktivitasController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\DailyAktivitasController::class, 'store'])->name('store');
+        Route::get('/{dailyAktivitas}', [App\Http\Controllers\DailyAktivitasController::class, 'show'])->name('show');
+        Route::get('/{dailyAktivitas}/edit', [App\Http\Controllers\DailyAktivitasController::class, 'edit'])->name('edit');
+        Route::put('/{dailyAktivitas}', [App\Http\Controllers\DailyAktivitasController::class, 'update'])->name('update');
+        Route::delete('/{dailyAktivitas}', [App\Http\Controllers\DailyAktivitasController::class, 'destroy'])->name('destroy');
+        Route::patch('/{dailyAktivitas}/status', [App\Http\Controllers\DailyAktivitasController::class, 'updateStatus'])->name('update-status');
+        Route::get('/calendar/events', [App\Http\Controllers\DailyAktivitasController::class, 'calendar'])->name('calendar');
     });
 });
 

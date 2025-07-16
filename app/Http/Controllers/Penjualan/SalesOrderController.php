@@ -50,9 +50,9 @@ class SalesOrderController extends Controller
         $query = null;
 
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = SalesOrder::query();
+            $query = SalesOrder::with(['customer', 'deliveryOrders']);
         } else {
-            $query = SalesOrder::whereHas('customer', function ($q) {
+            $query = SalesOrder::with(['customer', 'deliveryOrders'])->whereHas('customer', function ($q) {
                 $q->where('sales_id', Auth::id());
             });
         }

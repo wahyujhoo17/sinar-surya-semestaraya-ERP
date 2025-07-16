@@ -62,13 +62,19 @@
         <form action="{{ route('keuangan.pembayaran-piutang.store') }}" method="POST" id="payment-form"
             x-data="{
                 metode: '{{ old('metode_pembayaran', '') }}',
-                currentSisaPiutang: {{ old('jumlah_pembayaran', $sisaPiutang ?? 0) }},
+                currentSisaPiutang: {{ $sisaPiutang ?? 0 }},
                 totalPiutang: {{ $invoice->total ?? ($sisaPiutang ?? 0) }},
-                sisaSetelahPembayaran: {{ ($invoice->total ?? ($sisaPiutang ?? 0)) - old('jumlah_pembayaran', $sisaPiutang ?? 0) }},
+                sisaSetelahPembayaran: {{ $sisaPiutang ?? 0 }} - {{ old('jumlah_pembayaran', 0) }},
                 showValidationError: false,
                 errorMessage: '',
                 isSubmitting: false,
                 init() {
+                    // Initialize sisaSetelahPembayaran properly
+                    this.$nextTick(() => {
+                        let currentAmount = parseFloat(document.getElementById('jumlah_pembayaran').value || 0);
+                        this.sisaSetelahPembayaran = this.currentSisaPiutang - currentAmount;
+                    });
+            
                     this.$watch('metode', (value) => {
                         if (value === 'Kas') {
                             this.showKasFields();
@@ -108,10 +114,15 @@
                     document.getElementById('rekening_bank_id').required = false;
                 },
                 validatePayment() {
-                    let amount = parseFloat(document.getElementById('jumlah_pembayaran').value);
+                    let amount = parseFloat(document.getElementById('jumlah_pembayaran').value || 0);
                     if ({{ $invoice ? 'true' : 'false' }} && amount > this.currentSisaPiutang) {
                         this.showValidationError = true;
                         this.errorMessage = `Jumlah pembayaran tidak boleh melebihi sisa piutang (Rp ${new Intl.NumberFormat('id-ID').format(this.currentSisaPiutang)})`;
+                        return false;
+                    }
+                    if (amount <= 0) {
+                        this.showValidationError = true;
+                        this.errorMessage = 'Jumlah pembayaran harus lebih dari 0';
                         return false;
                     }
                     this.showValidationError = false;
@@ -127,7 +138,8 @@
                 },
                 updateJumlah() {
                     let amount = parseFloat(document.getElementById('jumlah_pembayaran').value || 0);
-                    this.sisaSetelahPembayaran = this.totalPiutang - amount;
+                    if (isNaN(amount)) amount = 0;
+            
                     if ({{ $invoice ? 'true' : 'false' }}) {
                         this.sisaSetelahPembayaran = this.currentSisaPiutang - amount; // If invoice, calculate from current sisa piutang
                     } else {
@@ -193,6 +205,50 @@
                                 </svg>
                                 Informasi Piutang
                             </h3>
+
+                            {{-- Breakdown pembayaran dan potongan --}}
+                            @if ($invoice->uang_muka_terapkan > 0 || $invoice->kredit_terapkan > 0 || $invoice->pembayaranPiutang->count() > 0)
+                                <div
+                                    class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                                    <h4
+                                        class="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-3 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" viewBox="0 0 20 20"
+                                            fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        Rincian Pembayaran & Potongan
+                                    </h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                                        @if ($invoice->uang_muka_terapkan > 0)
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-blue-700 dark:text-blue-300">Uang Muka
+                                                    Diterapkan:</span>
+                                                <span
+                                                    class="font-semibold text-blue-800 dark:text-blue-200">{{ number_format($invoice->uang_muka_terapkan, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($invoice->kredit_terapkan > 0)
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-blue-700 dark:text-blue-300">Nota Kredit
+                                                    Diterapkan:</span>
+                                                <span
+                                                    class="font-semibold text-blue-800 dark:text-blue-200">{{ number_format($invoice->kredit_terapkan, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($invoice->pembayaranPiutang->count() > 0)
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-blue-700 dark:text-blue-300">Pembayaran
+                                                    Sebelumnya:</span>
+                                                <span
+                                                    class="font-semibold text-blue-800 dark:text-blue-200">{{ number_format($invoice->pembayaranPiutang->sum('jumlah'), 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div
                                     class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-green-100 dark:border-green-900/50 flex flex-col">
@@ -360,10 +416,11 @@
                                         <span class="text-gray-500 dark:text-gray-400">Rp</span>
                                     </div>
                                     <input type="number" id="jumlah_pembayaran" name="jumlah_pembayaran"
-                                        value="{{ old('jumlah_pembayaran', $sisaPiutang > 0 ? $sisaPiutang : '') }}"
-                                        required min="0.01" step="0.01"
+                                        value="{{ old('jumlah_pembayaran') }}" required min="0.01"
+                                        step="0.01"
                                         class="pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-green-500 focus:border-green-500 block w-full rounded-md shadow-sm"
-                                        @input="updateJumlah()" {{ $invoice ? 'max="' . $sisaPiutang . '"' : '' }}>
+                                        @input="updateJumlah()" {{ $invoice ? 'max="' . $sisaPiutang . '"' : '' }}
+                                        placeholder="{{ $sisaPiutang > 0 ? number_format($sisaPiutang, 0, ',', '.') : 'Masukkan jumlah pembayaran' }}">
                                 </div>
                                 <div x-show="showValidationError && {{ $invoice ? 'true' : 'false' }}" x-cloak
                                     class="mt-2">

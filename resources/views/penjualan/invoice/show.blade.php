@@ -475,14 +475,136 @@
                                 {{ number_format($invoice->total, 0, ',', '.') }}</span>
                         </div>
                     </div>
+
+                    {{-- Potongan dan sisa tagihan --}}
+                    @if ($invoice->uang_muka_terapkan > 0 || $invoice->kredit_terapkan > 0 || $invoice->pembayaranPiutang->count() > 0)
+                        <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                            <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Potongan &
+                                Pembayaran</h4>
+
+                            @if ($invoice->uang_muka_terapkan > 0)
+                                <div class="flex justify-between">
+                                    <span class="text-blue-600 dark:text-blue-400">Uang Muka Diterapkan</span>
+                                    <span class="font-medium text-blue-600 dark:text-blue-400">- Rp
+                                        {{ number_format($invoice->uang_muka_terapkan, 0, ',', '.') }}</span>
+                                </div>
+                            @endif
+
+                            @if ($invoice->kredit_terapkan > 0)
+                                <div class="flex justify-between">
+                                    <span class="text-green-600 dark:text-green-400">Nota Kredit Diterapkan</span>
+                                    <span class="font-medium text-green-600 dark:text-green-400">- Rp
+                                        {{ number_format($invoice->kredit_terapkan, 0, ',', '.') }}</span>
+                                </div>
+                            @endif
+
+                            @if ($invoice->pembayaranPiutang->count() > 0)
+                                <div class="flex justify-between">
+                                    <span class="text-purple-600 dark:text-purple-400">Total Pembayaran</span>
+                                    <span class="font-medium text-purple-600 dark:text-purple-400">- Rp
+                                        {{ number_format($invoice->pembayaranPiutang->sum('jumlah'), 0, ',', '.') }}</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        <div class="border-t border-gray-200 dark:border-gray-600 pt-3 mt-3">
+                            <div class="flex justify-between">
+                                <span class="text-lg font-bold text-gray-900 dark:text-white">Sisa Tagihan</span>
+                                @if ($invoice->sisa_piutang > 0)
+                                    <span class="text-lg font-bold text-red-600 dark:text-red-400">Rp
+                                        {{ number_format($invoice->sisa_piutang, 0, ',', '.') }}</span>
+                                @else
+                                    <span class="text-lg font-bold text-green-600 dark:text-green-400">Lunas</span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
-        <!-- Payment History -->
-        @if (count($invoice->pembayaranPiutang) > 0)
+        <!-- Uang Muka Terapkan -->
+        @if ($appliedAdvances->count() > 0)
             <div
-                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card">
+                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card mb-6">
+                <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Uang Muka Terapkan</h3>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                <tr>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Tanggal Aplikasi</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        No. Uang Muka</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Tanggal Uang Muka</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Keterangan</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach ($appliedAdvances as $advance)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            {{ \Carbon\Carbon::parse($advance->tanggal_aplikasi)->format('d/m/Y') }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            {{ $advance->uangMukaPenjualan->nomor ?? '-' }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                            {{ $advance->uangMukaPenjualan->tanggal ? \Carbon\Carbon::parse($advance->uangMukaPenjualan->tanggal)->format('d/m/Y') : '-' }}
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                            {{ $advance->keterangan ?? '-' }}</td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600 dark:text-blue-400">
+                                            Rp {{ number_format($advance->jumlah_aplikasi, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+
+                                <!-- Summary Row -->
+                                <tr
+                                    class="bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700">
+                                    <td colspan="4"
+                                        class="px-6 py-4 text-right text-sm font-medium text-blue-800 dark:text-blue-200">
+                                        Total Uang Muka Terapkan:</td>
+                                    <td
+                                        class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600 dark:text-blue-400">
+                                        Rp {{ number_format($appliedAdvances->sum('jumlah_aplikasi'), 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Payment History -->
+        @if ($invoice->pembayaranPiutang->count() > 0)
+            <div
+                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card mt-6">
                 <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                     <div class="flex items-center gap-3">
                         <div
@@ -572,14 +694,27 @@
                                     </tr>
                                 @endif
 
+                                @if ($invoice->uang_muka_terapkan > 0)
+                                    <tr
+                                        class="bg-blue-50 dark:bg-blue-900/20 border-t border-blue-200 dark:border-blue-700">
+                                        <td colspan="5"
+                                            class="px-6 py-4 text-right text-sm font-medium text-blue-800 dark:text-blue-200">
+                                            Uang Muka Terapkan:</td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-blue-600 dark:text-blue-400">
+                                            Rp {{ number_format($invoice->uang_muka_terapkan, 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endif
+
                                 <tr
                                     class="bg-green-50 dark:bg-green-900/20 border-t-2 border-green-200 dark:border-green-700">
                                     <td colspan="5"
                                         class="px-6 py-4 text-right text-sm font-medium text-green-800 dark:text-green-200">
-                                        Total Pembayaran + Kredit:</td>
+                                        Total Pembayaran + Kredit + Uang Muka:</td>
                                     <td
                                         class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600 dark:text-green-400">
-                                        @php $totalSeluruhPembayaran = $totalPembayaran + ($invoice->kredit_terapkan ?? 0); @endphp
+                                        @php $totalSeluruhPembayaran = $totalPembayaran + ($invoice->kredit_terapkan ?? 0) + ($invoice->uang_muka_terapkan ?? 0); @endphp
                                         Rp {{ number_format($totalSeluruhPembayaran, 0, ',', '.') }}
                                     </td>
                                 </tr>

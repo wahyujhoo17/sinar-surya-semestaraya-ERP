@@ -1,4 +1,90 @@
 <x-app-layout>
+    @push('styles')
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            /* Select2 Dark Mode & Tailwind Integration */
+            .select2-container--default .select2-selection--single,
+            .select2-container--default .select2-results__option {
+                font-size: 0.95rem !important;
+            }
+
+            .select2-container--default .select2-selection--single {
+                height: 42px !important;
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.5rem !important;
+                background-color: white !important;
+                padding: 0 12px !important;
+                display: flex !important;
+                align-items: center !important;
+            }
+
+            .dark .select2-container--default .select2-selection--single {
+                background-color: rgb(55 65 81) !important;
+                border-color: rgb(75 85 99) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                line-height: 42px !important;
+                padding-left: 0 !important;
+                color: rgb(17 24 39) !important;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 40px !important;
+                right: 12px !important;
+            }
+
+            .select2-dropdown {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.5rem !important;
+                background-color: white !important;
+            }
+
+            .dark .select2-dropdown {
+                background-color: rgb(55 65 81) !important;
+                border-color: rgb(75 85 99) !important;
+            }
+
+            .select2-container--default .select2-results__option {
+                color: rgb(17 24 39) !important;
+                padding: 8px 12px !important;
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: white !important;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: rgb(59 130 246) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border: 1px solid #d1d5db !important;
+                border-radius: 0.375rem !important;
+                padding: 8px 12px !important;
+                background-color: white !important;
+                color: rgb(17 24 39) !important;
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: rgb(75 85 99) !important;
+                border-color: rgb(107 114 128) !important;
+                color: white !important;
+            }
+
+            .select2-container--default .select2-selection--single:focus {
+                border-color: rgb(59 130 246) !important;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+            }
+        </style>
+    @endpush
     <div class="max-w-full mx-auto py-6 sm:px-6 lg:px-8">
         {{-- Modern Header with Stats --}}
         <div class="mb-8">
@@ -149,8 +235,10 @@
                                 <option value="">-- Semua Customer --</option>
                                 @foreach ($customers as $customer)
                                     <option value="{{ $customer->id }}"
+                                        data-name="{{ $customer->company ?? $customer->nama }}"
+                                        data-kode="{{ $customer->kode_customer }}"
                                         {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                        {{ $customer->kode_customer }} - {{ $customer->nama }}
+                                        {{ $customer->kode_customer }} - {{ $customer->company ?? $customer->nama }}
                                     </option>
                                 @endforeach
                             </select>
@@ -595,7 +683,8 @@
                                 </a>
                             </th>
                             <th scope="col"
-                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                                title="Total pembayaran piutang + uang muka diterapkan">
                                 {{ __('Total Pembayaran') }}
                             </th>
                             <th scope="col"
@@ -690,6 +779,11 @@
                             @php
                                 // Use accessor to ensure nota kredit is included in calculation
                                 $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+
+                                // Add uang muka diterapkan to total payments
+                                $totalUangMukaDiterapkan = $invoice->uangMukaAplikasi->sum('jumlah_aplikasi');
+                                $totalPaymentsIncludingUangMuka = $totalPayments + $totalUangMukaDiterapkan;
+
                                 $sisaPiutang = $invoice->sisa_piutang; // This accessor includes nota kredit
 
                                 // Status display logic
@@ -750,7 +844,7 @@
                                     Rp {{ number_format($invoice->total ?? 0, 0, ',', '.') }}</td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 text-right">
-                                    Rp {{ number_format($totalPayments, 0, ',', '.') }}
+                                    Rp {{ number_format($totalPaymentsIncludingUangMuka, 0, ',', '.') }}
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right {{ $sisaPiutang > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
@@ -877,6 +971,13 @@
             <div
                 class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 pagination-container">
                 {{ $invoices->appends(request()->except('page'))->links() }}
+            </div>
+
+            <!-- Keterangan Footer -->
+            <div class="px-6 py-2 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                    <span class="font-medium">*</span> Total Pembayaran = Pembayaran Piutang + Uang Muka Diterapkan
+                </p>
             </div>
         </div>
     </div>
@@ -1238,4 +1339,45 @@
             });
         </script>
     </x-slot>
+    @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                function formatCustomerOption(customer) {
+                    if (!customer.id) {
+                        return customer.text;
+                    }
+                    var $customer = $(customer.element);
+                    var kode = $customer.data('kode') || '';
+                    var name = $customer.data('name') || '';
+                    return $(
+                        '<div class="flex flex-col py-1">' +
+                        '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + name + '</div>' +
+                        '</div>'
+                    );
+                }
+
+                function formatCustomerSelection(customer) {
+                    if (!customer.id) {
+                        return '-- Semua Customer --';
+                    }
+                    var $customer = $(customer.element);
+                    var kode = $customer.data('kode') || '';
+                    var name = $customer.data('name') || '';
+                    return kode + ' - ' + name;
+                }
+                $('#customer_id').select2({
+                    placeholder: '-- Semua Customer --',
+                    allowClear: true,
+                    width: '100%',
+                    templateResult: formatCustomerOption,
+                    templateSelection: formatCustomerSelection,
+                    escapeMarkup: function(markup) {
+                        return markup;
+                    }
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>

@@ -346,6 +346,95 @@
                         @endif
                     </div>
 
+                    {{-- Uang Muka History --}}
+                    @if ($invoice->uangMukaAplikasi && $invoice->uangMukaAplikasi->count() > 0)
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                                    <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    Riwayat Aplikasi Uang Muka
+                                </h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full min-w-full">
+                                    <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                        <tr>
+                                            <th
+                                                class="px-4 lg:px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Tanggal Aplikasi</th>
+                                            <th
+                                                class="px-4 lg:px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Nomor Uang Muka</th>
+                                            <th
+                                                class="px-4 lg:px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Jumlah Diterapkan</th>
+                                            <th
+                                                class="px-4 lg:px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                        @foreach ($invoice->uangMukaAplikasi as $aplikasi)
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                                <td class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                                    {{ \Carbon\Carbon::parse($aplikasi->created_at)->translatedFormat('d M Y') }}
+                                                </td>
+                                                <td
+                                                    class="px-4 lg:px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                    @if ($aplikasi->uangMukaPenjualan)
+                                                        <a href="{{ route('keuangan.uang-muka-penjualan.show', $aplikasi->uang_muka_penjualan_id) }}"
+                                                            target="_blank"
+                                                            class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline">
+                                                            {{ $aplikasi->uangMukaPenjualan->nomor }}
+                                                            <svg class="w-3 h-3 inline ml-1" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
+                                                                </path>
+                                                            </svg>
+                                                        </a>
+                                                    @else
+                                                        <span class="text-gray-400">Data uang muka tidak
+                                                            ditemukan</span>
+                                                    @endif
+                                                </td>
+                                                <td
+                                                    class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100 text-right font-mono font-semibold">
+                                                    Rp {{ number_format($aplikasi->jumlah_aplikasi, 0, ',', '.') }}
+                                                </td>
+                                                <td class="px-4 lg:px-6 py-4">
+                                                    <span
+                                                        class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                        Diterapkan
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-gray-50 dark:bg-gray-700/50">
+                                        <tr>
+                                            <td colspan="2"
+                                                class="px-4 lg:px-6 py-4 text-right text-base font-semibold text-gray-700 dark:text-gray-200">
+                                                Total Uang Muka Diterapkan</td>
+                                            <td
+                                                class="px-4 lg:px-6 py-4 text-right text-lg font-bold text-blue-600 dark:text-blue-400 font-mono">
+                                                Rp {{ number_format($totalUangMukaApplied, 0, ',', '.') }}
+                                            </td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Return History --}}
                     @if ($invoice->salesOrder && $returnsRelatedToSO && $returnsRelatedToSO->count() > 0)
                         <div
@@ -498,6 +587,57 @@
                                 </div>
                             </div>
 
+                            {{-- Uang Muka Applied --}}
+                            @if ($totalUangMukaApplied > 0)
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Uang Muka
+                                                Diterapkan</p>
+                                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 font-mono">
+                                                Rp {{ number_format($totalUangMukaApplied, 0, ',', '.') }}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Nota Kredit Applied --}}
+                            @if (($invoice->kredit_terapkan ?? 0) > 0)
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nota Kredit
+                                                Diterapkan</p>
+                                            <p
+                                                class="text-2xl font-bold text-purple-600 dark:text-purple-400 font-mono">
+                                                Rp {{ number_format($invoice->kredit_terapkan, 0, ',', '.') }}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+                                            <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             {{-- Outstanding Balance --}}
                             <div
                                 class="bg-white dark:bg-gray-800 rounded-xl p-4 border-2 {{ $invoice->sisa_piutang > 0 ? 'border-red-200 dark:border-red-800' : 'border-green-200 dark:border-green-800' }}">
@@ -606,7 +746,9 @@
                                     <div class="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
                                         @php
                                             $totalSeluruhPembayaran =
-                                                $totalPaymentsForInvoice + ($invoice->kredit_terapkan ?? 0);
+                                                $totalPaymentsForInvoice +
+                                                ($invoice->kredit_terapkan ?? 0) +
+                                                ($totalUangMukaApplied ?? 0);
                                             $persentaseTerbayar =
                                                 $invoice->total > 0
                                                     ? ($totalSeluruhPembayaran / $invoice->total) * 100
@@ -623,12 +765,52 @@
                                     </span>
                                 </div>
                             </div>
+
+                            {{-- Breakdown Detail --}}
+                            <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
+                                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Breakdown
+                                    Pembayaran:</h5>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-gray-500 dark:text-gray-400">• Pembayaran Piutang</span>
+                                        <span class="font-mono text-gray-900 dark:text-white">
+                                            Rp {{ number_format($totalPaymentsForInvoice, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                    @if ($totalUangMukaApplied > 0)
+                                        <div class="flex justify-between text-xs">
+                                            <span class="text-gray-500 dark:text-gray-400">• Uang Muka</span>
+                                            <span class="font-mono text-blue-600 dark:text-blue-400">
+                                                Rp {{ number_format($totalUangMukaApplied, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                    @if (($invoice->kredit_terapkan ?? 0) > 0)
+                                        <div class="flex justify-between text-xs">
+                                            <span class="text-gray-500 dark:text-gray-400">• Nota Kredit</span>
+                                            <span class="font-mono text-purple-600 dark:text-purple-400">
+                                                Rp {{ number_format($invoice->kredit_terapkan, 0, ',', '.') }}
+                                            </span>
+                                        </div>
+                                    @endif
+                                    <div
+                                        class="flex justify-between text-xs pt-1 border-t border-gray-100 dark:border-gray-700">
+                                        <span class="font-medium text-gray-700 dark:text-gray-300">Total
+                                            Terbayar</span>
+                                        <span class="font-mono font-medium text-green-600 dark:text-green-400">
+                                            Rp {{ number_format($totalSeluruhPembayaran, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             @if ($invoice->jatuh_tempo)
                                 @php
                                     $daysLeft = \Carbon\Carbon::parse($invoice->jatuh_tempo)->diffInDays(now(), false);
                                     $daysLeft = round($daysLeft);
                                 @endphp
-                                <div class="flex justify-between items-center">
+                                <div
+                                    class="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-700">
                                     <span class="text-sm text-gray-500 dark:text-gray-400">Hari
                                         Tersisa/Terlambat</span>
                                     <span

@@ -44,7 +44,7 @@ class PembayaranPiutangController extends Controller
         $bankAccounts = RekeningBank::where('is_aktif', true)->get();
 
         if ($invoiceId) {
-            $invoice = Invoice::with('customer')->find($invoiceId);
+            $invoice = Invoice::with(['customer', 'pembayaranPiutang', 'uangMukaAplikasi'])->find($invoiceId);
             if ($invoice) {
                 $sisaPiutang = $invoice->sisa_piutang;
                 $customer = $invoice->customer;
@@ -257,7 +257,7 @@ class PembayaranPiutangController extends Controller
      */
     public function show(string $id)
     {
-        $pembayaran = PembayaranPiutang::with(['invoice.customer', 'customer', 'user', 'kas', 'rekeningBank'])->findOrFail($id);
+        $pembayaran = PembayaranPiutang::with(['invoice.customer', 'invoice.pembayaranPiutang', 'customer', 'user', 'kas', 'rekeningBank'])->findOrFail($id);
         return view('keuangan.pembayaran_piutang.show', compact('pembayaran'));
     }
 

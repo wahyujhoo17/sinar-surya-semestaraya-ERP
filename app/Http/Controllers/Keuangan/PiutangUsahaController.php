@@ -27,7 +27,7 @@ class PiutangUsahaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranPiutang'])
+        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranPiutang', 'uangMukaAplikasi'])
             ->where('total', '>', 0); // Consider only invoices with a value
 
         // Get sort column and direction
@@ -125,7 +125,7 @@ class PiutangUsahaController extends Controller
         $nextWeek = $now->copy()->addDays(7);
 
         // Get all invoices for stats (without pagination)
-        $allInvoices = Invoice::where('total', '>', 0)->get();
+        $allInvoices = Invoice::with(['pembayaranPiutang', 'uangMukaAplikasi'])->where('total', '>', 0)->get();
 
         foreach ($allInvoices as $invoice) {
             $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
@@ -158,14 +158,19 @@ class PiutangUsahaController extends Controller
         }
 
         if ($request->ajax()) {
-            // For AJAX requests, return only the table partial
-            return view('keuangan.piutang_usaha.partials.table', [
+            // For AJAX requests, return the full index view 
+            // since there's no separate partial for the table
+            return view('keuangan.piutang_usaha.index', [
                 'invoices' => $invoices,
+                'customers' => $customers,
                 'request' => $request,
+                'totalPiutang' => $totalPiutang,
+                'jumlahInvoiceBelumLunas' => $jumlahInvoiceBelumLunas,
+                'jatuhTempoMingguIni' => $jatuhTempoMingguIni,
                 'totalSisaPiutangCurrent' => $totalSisaPiutangCurrent,
                 'sortColumn' => $sortColumn,
                 'sortDirection' => $sortDirection,
-            ])->render(); // render() is important to get HTML string for JS
+            ]);
         }
 
         return view('keuangan.piutang_usaha.index', [
@@ -196,6 +201,8 @@ class PiutangUsahaController extends Controller
             'details.produk', // Invoice items
             'pembayaranPiutang',
             'pembayaranPiutang.user', // Payments for this invoice
+            'uangMukaAplikasi', // Uang muka applications for this invoice
+            'uangMukaAplikasi.uangMukaPenjualan', // Related uang muka penjualan records
             'salesOrder', // Parent Sales Order for context
             'salesOrder.user', // User who created SO
             'salesOrder.details',
@@ -207,6 +214,9 @@ class PiutangUsahaController extends Controller
 
         // Total payments for this specific invoice (can also use $invoice->pembayaranPiutang->sum('jumlah'))
         $totalPaymentsForInvoice = $invoice->pembayaranPiutang->sum('jumlah');
+
+        // Total uang muka applied to this invoice
+        $totalUangMukaApplied = $invoice->uangMukaAplikasi->sum('jumlah_aplikasi');
 
         // Calculate total value of returns associated with the parent Sales Order (for informational display)
         $totalReturValueSO = 0;
@@ -237,6 +247,7 @@ class PiutangUsahaController extends Controller
             'invoice' => $invoice,
             'payments' => $invoice->pembayaranPiutang, // Payments specific to this invoice
             'totalPaymentsForInvoice' => $totalPaymentsForInvoice,
+            'totalUangMukaApplied' => $totalUangMukaApplied, // Total uang muka applied
             'returnsRelatedToSO' => $returnsRelatedToSO, // For display
             'totalReturValueSO' => $totalReturValueSO,   // For display
         ]);

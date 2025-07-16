@@ -102,7 +102,7 @@ class DashboardController extends Controller
 
         // Check for production role
         if (
-            $user->hasPermission('work_order.view') && $user->hasPermission('bill_of_material.view') &&
+            $user->hasPermission('work_order.view') && $user->hasPermission('work_order.create')  || $user->hasPermission('bill_of_material.view') &&
             $user->hasPermission('perencanaan_produksi.view')
         ) {
             return 'production';

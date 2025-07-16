@@ -123,4 +123,12 @@ class SalesOrder extends Model
     {
         return $this->hasMany(LogAktivitas::class, 'data_id')->where('modul', 'sales_order');
     }
+
+    /**
+     * Relasi ke UangMukaPenjualan
+     */
+    public function uangMukaPenjualan()
+    {
+        return $this->hasMany(UangMukaPenjualan::class, 'sales_order_id');
+    }
 }

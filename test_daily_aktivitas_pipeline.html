@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Daily Aktivitas Pipeline</title>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .pipeline-column.drag-over {
+            background-color: rgba(59, 130, 246, 0.1);
+            border: 2px dashed #3b82f6;
+        }
+
+        .pipeline-card.dragging {
+            opacity: 0.5;
+        }
+
+        .pipeline-card {
+            transition: opacity 0.15s ease;
+            cursor: move;
+        }
+    </style>
+</head>
+
+<body>
+    <div x-data="testPipeline()" class="p-4">
+        <h1 class="text-xl mb-4">Test Pipeline Daily Aktivitas</h1>
+
+        <div class="grid grid-cols-4 gap-4">
+            <div class="pipeline-column bg-gray-100 p-3 rounded" @dragover.prevent="handleDragOver($event)"
+                @dragleave="handleDragLeave($event)" @drop.prevent="handleDrop($event, 'pending')">
+                <h3>Pending</h3>
+                <template x-for="item in data.pending" :key="item.id">
+                    <div class="pipeline-card bg-white p-2 mb-2 rounded border" draggable="true"
+                        @dragstart="handleDragStart($event, item)" @dragend="handleDragEnd($event)">
+                        <span x-text="item.title"></span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="pipeline-column bg-gray-100 p-3 rounded" @dragover.prevent="handleDragOver($event)"
+                @dragleave="handleDragLeave($event)" @drop.prevent="handleDrop($event, 'dalam_proses')">
+                <h3>Dalam Proses</h3>
+                <template x-for="item in data.dalam_proses" :key="item.id">
+                    <div class="pipeline-card bg-white p-2 mb-2 rounded border" draggable="true"
+                        @dragstart="handleDragStart($event, item)" @dragend="handleDragEnd($event)">
+                        <span x-text="item.title"></span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="pipeline-column bg-gray-100 p-3 rounded" @dragover.prevent="handleDragOver($event)"
+                @dragleave="handleDragLeave($event)" @drop.prevent="handleDrop($event, 'selesai')">
+                <h3>Selesai</h3>
+                <template x-for="item in data.selesai" :key="item.id">
+                    <div class="pipeline-card bg-white p-2 mb-2 rounded border" draggable="true"
+                        @dragstart="handleDragStart($event, item)" @dragend="handleDragEnd($event)">
+                        <span x-text="item.title"></span>
+                    </div>
+                </template>
+            </div>
+
+            <div class="pipeline-column bg-gray-100 p-3 rounded" @dragover.prevent="handleDragOver($event)"
+                @dragleave="handleDragLeave($event)" @drop.prevent="handleDrop($event, 'dibatalkan')">
+                <h3>Dibatalkan</h3>
+                <template x-for="item in data.dibatalkan" :key="item.id">
+                    <div class="pipeline-card bg-white p-2 mb-2 rounded border" draggable="true"
+                        @dragstart="handleDragStart($event, item)" @dragend="handleDragEnd($event)">
+                        <span x-text="item.title"></span>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function testPipeline() {
+            return {
+                draggedItem: null,
+                data: {
+                    pending: [
+                        { id: 1, title: 'Task 1', status: 'pending' },
+                        { id: 2, title: 'Task 2', status: 'pending' }
+                    ],
+                    dalam_proses: [
+                        { id: 3, title: 'Task 3', status: 'dalam_proses' }
+                    ],
+                    selesai: [],
+                    dibatalkan: []
+                },
+
+                handleDragStart(event, item) {
+                    this.draggedItem = item;
+                    if (event.currentTarget && event.currentTarget.classList) {
+                        event.currentTarget.classList.add('dragging');
+                    }
+                },
+
+                handleDragEnd(event) {
+                    if (event.currentTarget) {
+                        event.currentTarget.classList.remove('dragging');
+                        if (event.currentTarget.style) {
+                            event.currentTarget.style.opacity = '1';
+                        }
+                    }
+
+                    // Remove drag over states
+                    document.querySelectorAll('.pipeline-column').forEach(col => {
+                        if (col && col.classList) {
+                            col.classList.remove('drag-over');
+                        }
+                    });
+                },
+
+                handleDragOver(event) {
+                    event.preventDefault();
+                    if (event.currentTarget && event.currentTarget.classList) {
+                        event.currentTarget.classList.add('drag-over');
+                    }
+                },
+
+                handleDragLeave(event) {
+                    if (event.currentTarget && event.currentTarget.classList &&
+                        (!event.relatedTarget || !event.currentTarget.contains(event.relatedTarget))) {
+                        event.currentTarget.classList.remove('drag-over');
+                    }
+                },
+
+                handleDrop(event, newStatus) {
+                    if (event.currentTarget && event.currentTarget.classList) {
+                        event.currentTarget.classList.remove('drag-over');
+                    }
+
+                    if (!this.draggedItem || this.draggedItem.status === newStatus) {
+                        return;
+                    }
+
+                    const originalStatus = this.draggedItem.status;
+
+                    // Move item
+                    const itemIndex = this.data[originalStatus].findIndex(item => item.id === this.draggedItem.id);
+                    if (itemIndex !== -1) {
+                        const item = this.data[originalStatus].splice(itemIndex, 1)[0];
+                        if (item) {
+                            item.status = newStatus;
+                            this.data[newStatus].push(item);
+                        }
+                    }
+
+                    console.log('Moved item to:', newStatus);
+                    this.draggedItem = null;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -61,6 +61,24 @@ class Customer extends Model
     }
 
     /**
+     * Relasi ke UangMukaPenjualan
+     */
+    public function uangMukaPenjualan()
+    {
+        return $this->hasMany(UangMukaPenjualan::class, 'customer_id');
+    }
+
+    /**
+     * Method untuk mendapatkan total saldo uang muka yang tersedia
+     */
+    public function getTotalSaldoUangMukaAttribute()
+    {
+        return $this->uangMukaPenjualan()
+            ->whereIn('status', ['confirmed', 'partially_applied'])
+            ->sum('jumlah_tersedia');
+    }
+
+    /**
      * Metode untuk menghasilkan alamat lengkap dari jalan, kota, provinsi, kode pos, dan negara
      * 
      * @return string

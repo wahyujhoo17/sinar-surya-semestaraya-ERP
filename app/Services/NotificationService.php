@@ -73,10 +73,6 @@ class NotificationService
             ]);
         }
     }
-
-    /**
-     * Send Sales Order notifications
-     */
     public function notifySalesOrderCreated($salesOrder, $createdBy)
     {
         $customerName = $salesOrder->customer->nama ?? $salesOrder->customer->company ?? 'Customer';
@@ -129,7 +125,6 @@ class NotificationService
             ]
         );
     }
-
     /**
      * Send Purchase Order notifications
      */
@@ -151,7 +146,6 @@ class NotificationService
             ]
         );
     }
-
     /**
      * Send approval notifications
      */
@@ -195,7 +189,6 @@ class NotificationService
             ]
         );
     }
-
     /**
      * Send production planning notifications
      */
@@ -306,7 +299,6 @@ class NotificationService
             ]
         );
     }
-
     public function notifyPurchaseRequestRejected($purchaseRequest, $rejectedBy, $reason = null)
     {
         $reasonText = $reason ? " dengan alasan: {$reason}" : '';
@@ -352,6 +344,249 @@ class NotificationService
                 'purchase_request_id' => $purchaseRequest->id
             ]
         );
+    }
+
+
+    /**
+     * Send Daily Aktivitas notifications
+     */
+    public function notifyDailyAktivitasCreated($dailyAktivitas, $createdBy, $assignedUserIds = [])
+    {
+        if (empty($assignedUserIds)) {
+            return;
+        }
+
+        $assignedUsers = User::whereIn('id', $assignedUserIds)->pluck('name')->toArray();
+        $assignedNames = implode(', ', $assignedUsers);
+
+        // Notify assigned users
+        $this->sendToUsers(
+            $assignedUserIds,
+            'order',
+            'Aktivitas Baru Ditugaskan',
+            "Anda ditugaskan pada aktivitas '{$dailyAktivitas->judul}' oleh {$createdBy->name}. " .
+                "Status: {$dailyAktivitas->status}" .
+                ($dailyAktivitas->deadline ? " | Deadline: " . $dailyAktivitas->deadline->format('d/m/Y H:i') : ''),
+            [
+                'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                'daily_aktivitas_id' => $dailyAktivitas->id,
+                'assigned_by' => $createdBy->id,
+                'deadline' => $dailyAktivitas->deadline?->toISOString()
+            ]
+        );
+
+        // Notify managers about new task assignment
+        $this->sendToRoles(
+            ['manager', 'admin'],
+            'order',
+            'Aktivitas Baru Dibuat',
+            "{$createdBy->name} membuat aktivitas '{$dailyAktivitas->judul}' dan menugaskan ke: {$assignedNames}",
+            [
+                'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                'daily_aktivitas_id' => $dailyAktivitas->id,
+                'created_by' => $createdBy->id,
+                'assigned_users_count' => count($assignedUserIds)
+            ]
+        );
+    }
+
+    public function notifyDailyAktivitasUpdated($dailyAktivitas, $updatedBy, $changes = [])
+    {
+        // Get all assigned users
+        $assignedUserIds = $dailyAktivitas->assignedUsers()->pluck('user_id')->toArray();
+
+        if (empty($assignedUserIds)) {
+            return;
+        }
+
+        $changeText = '';
+        if (!empty($changes)) {
+            $changeMessages = [];
+            foreach ($changes as $field => $change) {
+                if ($field === 'deadline') {
+                    $changeMessages[] = "Deadline: {$change['old']} → {$change['new']}";
+                } elseif ($field === 'prioritas') {
+                    $changeMessages[] = "Prioritas: {$change['old']} → {$change['new']}";
+                } elseif ($field === 'judul') {
+                    $changeMessages[] = "Judul diubah";
+                } elseif ($field === 'deskripsi') {
+                    $changeMessages[] = "Deskripsi diubah";
+                }
+            }
+            $changeText = ' Perubahan: ' . implode(', ', $changeMessages);
+        }
+
+        // Notify assigned users (except the one who updated)
+        $notifyUserIds = array_filter($assignedUserIds, function ($id) use ($updatedBy) {
+            return $id !== $updatedBy->id;
+        });
+
+        if (!empty($notifyUserIds)) {
+            $this->sendToUsers(
+                $notifyUserIds,
+                'order',
+                'Aktivitas Diperbarui',
+                "Aktivitas '{$dailyAktivitas->judul}' telah diperbarui oleh {$updatedBy->name}.{$changeText}",
+                [
+                    'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'updated_by' => $updatedBy->id,
+                    'changes' => $changes
+                ]
+            );
+        }
+    }
+
+    public function notifyDailyAktivitasStatusChanged($dailyAktivitas, $oldStatus, $newStatus, $changedBy)
+    {
+        $assignedUserIds = $dailyAktivitas->assignedUsers()->pluck('user_id')->toArray();
+
+        if (empty($assignedUserIds)) {
+            return;
+        }
+
+        $statusMessages = [
+            'todo' => 'Belum Dikerjakan',
+            'in_progress' => 'Sedang Dikerjakan',
+            'review' => 'Review',
+            'done' => 'Selesai',
+            'cancelled' => 'Dibatalkan'
+        ];
+
+        $oldStatusText = $statusMessages[$oldStatus] ?? $oldStatus;
+        $newStatusText = $statusMessages[$newStatus] ?? $newStatus;
+
+        $notificationType = 'order';
+        if ($newStatus === 'done') {
+            $notificationType = 'success';
+        } elseif ($newStatus === 'cancelled') {
+            $notificationType = 'warning';
+        }
+
+        // Notify assigned users (except the one who changed)
+        $notifyUserIds = array_filter($assignedUserIds, function ($id) use ($changedBy) {
+            return $id !== $changedBy->id;
+        });
+
+        if (!empty($notifyUserIds)) {
+            $this->sendToUsers(
+                $notifyUserIds,
+                $notificationType,
+                'Status Aktivitas Berubah',
+                "Status aktivitas '{$dailyAktivitas->judul}' berubah dari {$oldStatusText} menjadi {$newStatusText} oleh {$changedBy->name}",
+                [
+                    'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_by' => $changedBy->id
+                ]
+            );
+        }
+
+        if ($changedBy->id != $dailyAktivitas->user_id) {
+            $this->sendToUsers(
+                [$dailyAktivitas->user_id],
+                $notificationType,
+                'Status Aktivitas Berubah',
+                "Status aktivitas '{$dailyAktivitas->judul}' berubah dari {$oldStatusText} menjadi {$newStatusText} oleh {$changedBy->name}",
+                [
+                    'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'changed_by' => $changedBy->id
+                ]
+            );
+        }
+
+        // Notify managers when task is completed
+        if ($newStatus === 'selesai') {
+            $assignedUsers = User::whereIn('id', $assignedUserIds)->pluck('name')->toArray();
+            $assignedNames = implode(', ', $assignedUsers);
+
+            // Notifikasi ke pembuat aktivitas
+            if ($dailyAktivitas->user_id) {
+                $this->sendToUsers(
+                    [$dailyAktivitas->user_id],
+                    'success',
+                    'Aktivitas Selesai',
+                    "Aktivitas '{$dailyAktivitas->judul}' yang Anda buat telah diselesaikan oleh {$changedBy->name}. Tim: {$assignedNames}",
+                    [
+                        'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                        'daily_aktivitas_id' => $dailyAktivitas->id,
+                        'completed_by' => $changedBy->id
+                    ]
+                );
+            }
+        }
+    }
+
+    public function notifyDailyAktivitasAssignmentChanged($dailyAktivitas, $addedUsers, $removedUsers, $changedBy)
+    {
+        // Notify newly added users
+        if (!empty($addedUsers)) {
+            $this->sendToUsers(
+                $addedUsers,
+                'order',
+                'Ditugaskan ke Aktivitas',
+                "Anda ditugaskan ke aktivitas '{$dailyAktivitas->judul}' oleh {$changedBy->name}. " .
+                    "Status: {$dailyAktivitas->status}" .
+                    ($dailyAktivitas->deadline ? " | Deadline: " . $dailyAktivitas->deadline->format('d/m/Y H:i') : ''),
+                [
+                    'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'assigned_by' => $changedBy->id
+                ]
+            );
+        }
+
+        // Notify removed users
+        if (!empty($removedUsers)) {
+            $this->sendToUsers(
+                $removedUsers,
+                'order',
+                'Penugasan Dihapus',
+                "Penugasan Anda pada aktivitas '{$dailyAktivitas->judul}' telah dihapus oleh {$changedBy->name}",
+                [
+                    'url' => route('daily-aktivitas.index'),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'removed_by' => $changedBy->id
+                ]
+            );
+        }
+
+        // Notify remaining assigned users about team changes
+        $currentAssignedIds = $dailyAktivitas->assignedUsers()->pluck('user_id')->toArray();
+        $notifyUserIds = array_filter($currentAssignedIds, function ($id) use ($changedBy, $addedUsers) {
+            return $id !== $changedBy->id && !in_array($id, $addedUsers);
+        });
+
+        if (!empty($notifyUserIds) && (!empty($addedUsers) || !empty($removedUsers))) {
+            $changeText = [];
+            if (!empty($addedUsers)) {
+                $addedNames = User::whereIn('id', $addedUsers)->pluck('name')->toArray();
+                $changeText[] = 'Ditambahkan: ' . implode(', ', $addedNames);
+            }
+            if (!empty($removedUsers)) {
+                $removedNames = User::whereIn('id', $removedUsers)->pluck('name')->toArray();
+                $changeText[] = 'Dihapus: ' . implode(', ', $removedNames);
+            }
+
+            $this->sendToUsers(
+                $notifyUserIds,
+                'order',
+                'Tim Aktivitas Berubah',
+                "Tim aktivitas '{$dailyAktivitas->judul}' diubah oleh {$changedBy->name}. " . implode('. ', $changeText),
+                [
+                    'url' => route('daily-aktivitas.show', $dailyAktivitas->id),
+                    'daily_aktivitas_id' => $dailyAktivitas->id,
+                    'changed_by' => $changedBy->id,
+                    'added_users' => $addedUsers,
+                    'removed_users' => $removedUsers
+                ]
+            );
+        }
     }
 
     /**
@@ -649,7 +884,6 @@ class NotificationService
             );
         }
     }
-
     public function notifyStockAdjustmentDeleted($stockAdjustmentData, $deletedBy)
     {
         // Notify warehouse and inventory managers about deletion
