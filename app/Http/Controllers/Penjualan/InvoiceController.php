@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 
@@ -686,15 +687,27 @@ class InvoiceController extends Controller
      */
     private function createApplicationJournalEntry($aplikasi)
     {
+        // Cek apakah jurnal sudah ada untuk aplikasi ini
+        $existingJournal = \App\Models\JurnalUmum::where('ref_type', 'App\\Models\\UangMukaAplikasi')
+            ->where('ref_id', $aplikasi->id)
+            ->where('sumber', 'uang_muka_aplikasi')
+            ->exists();
+
+        if ($existingJournal) {
+            // Jurnal sudah ada, skip untuk menghindari duplikasi
+            return;
+        }
+
         $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('kode', '2201')->first();
-        $akunPiutang = \App\Models\AkunAkuntansi::where('kode', '1110')->first(); // Update kode dari 1101 ke 1110
+        $akunPiutang = \App\Models\AkunAkuntansi::where('id', env('AKUN_PIUTANG_USAHA_ID'))->first();
 
         if (!$akunUangMukaPenjualan) {
             throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            throw new \Exception('Akun Piutang Usaha (1110) tidak ditemukan. Silakan hubungi administrator.');
+            $piutangId = env('AKUN_PIUTANG_USAHA_ID');
+            throw new \Exception("Akun Piutang Usaha (ID: {$piutangId}) tidak ditemukan. Pastikan AKUN_PIUTANG_USAHA_ID di .env sudah benar.");
         }
 
         // Buat jurnal debit hutang uang muka
@@ -741,7 +754,7 @@ class InvoiceController extends Controller
                     return [
                         'id' => $item->id,
                         'nomor' => $item->nomor,
-                        'tanggal' => $item->tanggal->format('d/m/Y'),
+                        'tanggal' => isset($item->tanggal) && $item->tanggal ? $item->tanggal->format('d/m/Y') : '',
                         'jumlah' => (float) $item->jumlah,
                         'jumlah_tersedia' => (float) $item->jumlah_tersedia,
                         'jumlah_formatted' => 'Rp ' . number_format((float) $item->jumlah, 0, ',', '.'),

@@ -590,15 +590,27 @@ class UangMukaPenjualanController extends Controller
      */
     private function createApplicationJournalEntry($aplikasi)
     {
-        $akunUangMukaPenjualan = AkunAkuntansi::where('kode', '2201')->first(); // Hutang Uang Muka Penjualan
-        $akunPiutang = AkunAkuntansi::where('kode', '1101')->first(); // Piutang Usaha
+        // Cek apakah jurnal sudah ada untuk aplikasi ini
+        $existingJournal = JurnalUmum::where('ref_type', 'App\\Models\\UangMukaAplikasi')
+            ->where('ref_id', $aplikasi->id)
+            ->where('sumber', 'uang_muka_aplikasi')
+            ->exists();
+
+        if ($existingJournal) {
+            // Jurnal sudah ada, skip untuk menghindari duplikasi
+            return;
+        }
+
+        $akunUangMukaPenjualan = AkunAkuntansi::where('kode', '2201')->first();
+        $akunPiutang = AkunAkuntansi::where('id', env('AKUN_PIUTANG_USAHA_ID'))->first();
 
         if (!$akunUangMukaPenjualan) {
             throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            throw new \Exception('Akun Piutang Usaha (1101) tidak ditemukan. Silakan hubungi administrator.');
+            $piutangId = env('AKUN_PIUTANG_USAHA_ID');
+            throw new \Exception("Akun Piutang Usaha (ID: {$piutangId}) tidak ditemukan. Pastikan AKUN_PIUTANG_USAHA_ID di .env sudah benar.");
         }
 
         // Buat jurnal debit hutang uang muka

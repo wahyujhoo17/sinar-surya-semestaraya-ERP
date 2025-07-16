@@ -28,7 +28,7 @@ class UangMukaPenjualan extends Model
     ];
 
     protected $casts = [
-        'tanggal' => 'date',
+        'tanggal' => 'datetime',
         'jumlah' => 'decimal:2',
         'jumlah_tersedia' => 'decimal:2',
     ];

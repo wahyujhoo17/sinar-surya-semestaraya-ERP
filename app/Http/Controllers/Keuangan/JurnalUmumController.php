@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\LOG;
+use Illuminate\Support\Facades\Log;
 
 class JurnalUmumController extends Controller
 {
@@ -23,10 +23,23 @@ class JurnalUmumController extends Controller
      */
     public function index(Request $request)
     {
+        // Get sort parameters
+        $sortField = $request->get('sort', 'tanggal');
+        $sortDirection = $request->get('direction', 'desc');
+
+        // Validate sort field
+        $allowedSortFields = ['tanggal', 'no_referensi', 'keterangan'];
+        if (!in_array($sortField, $allowedSortFields)) {
+            $sortField = 'tanggal';
+        }
+
+        // Validate sort direction
+        if (!in_array($sortDirection, ['asc', 'desc'])) {
+            $sortDirection = 'desc';
+        }
+
         // Mendapatkan semua data jurnal umum yang diurutkan berdasarkan tanggal terbaru
-        $query = JurnalUmum::with(['akun', 'user'])
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('created_at', 'desc');
+        $query = JurnalUmum::with(['akun', 'user']);
 
         // Filter berdasarkan tanggal
         if ($request->has('start_date') && $request->has('end_date')) {
@@ -43,10 +56,68 @@ class JurnalUmumController extends Controller
             $query->where('no_referensi', 'like', '%' . $request->no_referensi . '%');
         }
 
-        $jurnals = $query->paginate(15);
+        // Get unique journal transactions by grouping by no_referensi and tanggal only
+        $groupedQuery = $query->select('tanggal', 'no_referensi')
+            ->selectRaw('MIN(id) as min_id')
+            ->selectRaw('MAX(keterangan) as keterangan')  // Take any keterangan from the group
+            ->groupBy('tanggal', 'no_referensi');
+
+        // Apply sorting to the grouped query
+        if ($sortField === 'tanggal') {
+            $groupedQuery->orderBy('tanggal', $sortDirection)->orderBy('min_id', $sortDirection);
+        } elseif ($sortField === 'no_referensi') {
+            $groupedQuery->orderBy('no_referensi', $sortDirection)->orderBy('tanggal', 'desc');
+        } elseif ($sortField === 'keterangan') {
+            $groupedQuery->orderBy('keterangan', $sortDirection)->orderBy('tanggal', 'desc');
+        }
+
+        // Paginate the grouped results
+        $distinctJournals = $groupedQuery->paginate(15);
+
+        // Now get the full jurnal data for each group
+        $jurnals = collect();
+        foreach ($distinctJournals as $distinctJournal) {
+            $fullJournal = JurnalUmum::with(['akun', 'user'])
+                ->where('tanggal', $distinctJournal->tanggal)
+                ->where('no_referensi', $distinctJournal->no_referensi)
+                ->first();
+            if ($fullJournal) {
+                // Add the grouped keterangan to the journal object
+                $fullJournal->keterangan = $distinctJournal->keterangan;
+                $jurnals->push($fullJournal);
+            }
+        }
+
+        // Convert the collection to a paginator to maintain pagination functionality
+        $jurnals = new \Illuminate\Pagination\LengthAwarePaginator(
+            $jurnals,
+            $distinctJournals->total(),
+            $distinctJournals->perPage(),
+            $distinctJournals->currentPage(),
+            [
+                'path' => request()->url(),
+                'pageName' => 'page',
+            ]
+        );
+        $jurnals->appends(request()->query());
+
         $akuns = AkunAkuntansi::where('is_active', 1)
             ->orderBy('kode', 'asc')
             ->get();
+
+        // Handle AJAX requests
+        if ($request->ajax()) {
+            $tableHtml = view('keuangan.jurnal_umum._table', compact('jurnals'))->render();
+            $paginationHtml = $jurnals->appends(request()->query())->links('vendor.pagination.tailwind')->toHtml();
+
+            return response()->json([
+                'table_html' => $tableHtml,
+                'pagination_html' => $paginationHtml,
+                'total' => $jurnals->total(),
+                'first_item' => $jurnals->firstItem() ?? 0,
+                'last_item' => $jurnals->lastItem() ?? 0,
+            ]);
+        }
 
         // Set breadcrumbs
         $breadcrumbs = [
@@ -57,7 +128,7 @@ class JurnalUmumController extends Controller
 
         $currentPage = 'jurnal-umum';
 
-        return view('keuangan.jurnal_umum.index', compact('jurnals', 'akuns', 'breadcrumbs', 'currentPage'));
+        return view('keuangan.jurnal_umum.index', compact('jurnals', 'akuns', 'breadcrumbs', 'currentPage', 'sortField', 'sortDirection'));
     }
 
     /**
@@ -716,7 +787,7 @@ class JurnalUmumController extends Controller
                 $filename
             );
         } catch (\Exception $e) {
-            \Log::error('Error exporting jurnal umum: ' . $e->getMessage());
+            Log::error('Error exporting jurnal umum: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Terjadi kesalahan saat export: ' . $e->getMessage()]);
         }
