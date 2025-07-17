@@ -48,9 +48,9 @@ class JurnalPenutupController extends Controller
         }
 
         // Get unique no_referensi with grouping
-        $subQuery = $query->select('no_referensi')
+        $subQuery = $query->select('no_referensi', DB::raw('MIN(tanggal) as min_tanggal'), DB::raw('MIN(keterangan) as min_keterangan'))
             ->groupBy('no_referensi')
-            ->orderBy($sort == 'tanggal' ? 'tanggal' : ($sort == 'no_referensi' ? 'no_referensi' : 'keterangan'), $direction);
+            ->orderBy($sort == 'tanggal' ? 'min_tanggal' : ($sort == 'no_referensi' ? 'no_referensi' : 'min_keterangan'), $direction);
 
         // Get paginated no_referensi
         $paginatedRefs = DB::table(DB::raw("({$subQuery->toSql()}) as sub"))

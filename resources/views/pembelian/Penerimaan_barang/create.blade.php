@@ -540,16 +540,16 @@
                                                     x-text="index + 1"></td>
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <div class="flex items-center">
-                                                        <div class="ml-4">
+                                                        <div>
                                                             <div
                                                                 class="text-sm font-medium text-gray-900 dark:text-white">
                                                                 <span
-                                                                    x-text="detail.produk ? (detail.produk.kode + ' - ' + detail.produk.nama) : detail.nama_item"></span>
+                                                                    x-text="detail.barang ? (detail.barang.kode + ' - ' + detail.barang.nama) : detail.nama_item"></span>
                                                                 <input type="hidden" :name="`items[${index}][id]`"
                                                                     :value="detail.id">
                                                                 <input type="hidden"
-                                                                    :name="`items[${index}][produk_id]`"
-                                                                    :value="detail.produk_id">
+                                                                    :name="`items[${index}][barang_id]`"
+                                                                    :value="detail.barang_id">
                                                             </div>
                                                             <div class="text-sm text-gray-500 dark:text-gray-400"
                                                                 x-text="detail.deskripsi || '-'"></div>
@@ -563,7 +563,8 @@
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <input type="number" :name="`items[${index}][qty_diterima]`"
                                                         x-model="detail.qty_diterima" @input="validateItemQty(detail)"
-                                                        min="0"
+                                                        @change="validateItemQty(detail)"
+                                                        @keyup="validateItemQty(detail)" min="0"
                                                         :max="detail.quantity - (detail.quantity_diterima || 0)"
                                                         class="block w-24 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-sky-500 focus:border-sky-500 sm:text-sm"
                                                         :class="{
@@ -637,7 +638,7 @@
                     @click="showConfirmModal = false"></div>
 
                 {{-- Modal content --}}
-                <div class="relative bg-white dark:bg-gray-800 rounded-xl max-w-md w-full mx-auto shadow-2xl overflow-hidden"
+                <div class="relative bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full mx-auto shadow-2xl overflow-hidden"
                     x-transition:enter="transition ease-out duration-300"
                     x-transition:enter-start="opacity-0 transform scale-95"
                     x-transition:enter-end="opacity-100 transform scale-100"
@@ -668,169 +669,146 @@
                     <div class="px-6 py-6">
                         <div class="text-center mb-6">
                             <div
-                                class="mx-auto flex items-center justify-center h-14 w-14 rounded-full bg-sky-100 dark:bg-sky-900/30 mb-4">
-                                <svg class="h-8 w-8 text-sky-600 dark:text-sky-400" fill="none"
+                                class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-sky-100 dark:bg-sky-900/30 mb-3">
+                                <svg class="h-6 w-6 text-sky-600 dark:text-sky-400" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                                 </svg>
                             </div>
-                            <h3 class="text-xl font-medium text-gray-900 dark:text-white">Konfirmasi Penerimaan Barang
+                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">Konfirmasi Penerimaan Barang
                             </h3>
                             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                                Tindakan ini akan mencatat penerimaan barang, mengupdate stok di gudang, dan mengubah
-                                status Purchase Order terkait.
+                                Pastikan data sudah benar sebelum menyimpan
                             </p>
                         </div>
 
-                        <div class="space-y-6">
-                            {{-- PO Information --}}
-                            <div
-                                class="bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                        </svg>
-                                        Detail Purchase Order
-                                    </h4>
+                        <div class="space-y-4">
+                            {{-- Summary Stats --}}
+                            <div class="grid grid-cols-3 gap-3">
+                                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 text-center">
+                                    <div class="text-lg font-semibold text-blue-600 dark:text-blue-400"
+                                        x-text="getValidItemsCount()"></div>
+                                    <div class="text-xs text-blue-600/70 dark:text-blue-400/70">Item</div>
                                 </div>
-                                <div class="px-4 py-3 grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nomor PO
-                                        </p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                            x-text="selectedPO?.nomor || '-'"></p>
-                                    </div>
-                                    <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal PO
-                                        </p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                            x-text="formatDate(selectedPO?.tanggal) || '-'"></p>
-                                    </div>
-                                    <div class="col-span-2">
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Supplier
-                                        </p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                            x-text="selectedPO?.supplier?.nama || '-'"></p>
-                                    </div>
+                                <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 text-center">
+                                    <div class="text-lg font-semibold text-green-600 dark:text-green-400"
+                                        x-text="getTotalQtyReceived()"></div>
+                                    <div class="text-xs text-green-600/70 dark:text-green-400/70">Total Qty</div>
+                                </div>
+                                <div class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-2 text-center">
+                                    <div class="text-lg font-semibold text-purple-600 dark:text-purple-400"
+                                        x-text="getProgressPercentage() + '%'"></div>
+                                    <div class="text-xs text-purple-600/70 dark:text-purple-400/70">Progress</div>
                                 </div>
                             </div>
 
-                            {{-- Receipt Information --}}
-                            <div
-                                class="bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        Detail Penerimaan
-                                    </h4>
-                                </div>
-                                <div class="px-4 py-3 grid grid-cols-2 gap-4">
+                            {{-- Basic Info --}}
+                            <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-4">
+                                <div class="grid grid-cols-2 gap-3 text-sm">
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal
-                                            Penerimaan</p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                            x-text="receiptDate"></p>
+                                        <span class="text-gray-500 dark:text-gray-400">PO:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="selectedPO?.nomor || '-'"></span>
                                     </div>
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Gudang
-                                            Tujuan</p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                            x-text="getGudangName()"></p>
+                                        <span class="text-gray-500 dark:text-gray-400">Tanggal:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="formatReceiptDate()"></span>
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Nomor
-                                            Surat Jalan</p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                            <span
-                                                x-text="document.getElementById('nomor_surat_jalan').value || '-'"></span>
-                                        </p>
+                                    <div class="col-span-2">
+                                        <span class="text-gray-500 dark:text-gray-400">Supplier:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="selectedPO?.supplier?.nama || '-'"></span>
                                     </div>
-                                    <div>
-                                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal
-                                            Surat Jalan</p>
-                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
-                                            <span
-                                                x-text="document.getElementById('tanggal_surat_jalan').value || '-'"></span>
-                                        </p>
+                                    <div class="col-span-2">
+                                        <span class="text-gray-500 dark:text-gray-400">Gudang:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="getGudangName()"></span>
+                                    </div>
+                                    <div x-show="getNomorSuratJalan()">
+                                        <span class="text-gray-500 dark:text-gray-400">No. SJ:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="getNomorSuratJalan()"></span>
+                                    </div>
+                                    <div x-show="getTanggalSuratJalan()">
+                                        <span class="text-gray-500 dark:text-gray-400">Tgl. SJ:</span>
+                                        <span class="font-medium text-gray-900 dark:text-white ml-1"
+                                            x-text="getTanggalSuratJalan()"></span>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Item Summary --}}
-                            <div
-                                class="bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-gray-200 dark:border-gray-700">
-                                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                            class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                        </svg>
-                                        Ringkasan Item
+                            <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                                <div class="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
+                                    <h4 class="text-sm font-medium text-gray-900 dark:text-white">
+                                        Item yang akan diterima (<span x-text="getValidItemsCount()"></span>)
                                     </h4>
                                 </div>
-                                <div class="px-4 py-3 divide-y divide-gray-200 dark:divide-gray-700">
-                                    <div class="py-2">
-                                        <div class="flex justify-between">
-                                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Item
-                                                Diterima</p>
-                                            <p class="text-sm font-medium text-gray-900 dark:text-white"
-                                                x-text="countReceivedItems() + ' item'"></p>
-                                        </div>
-                                    </div>
-                                    <div class="py-2">
-                                        <div class="mb-2">
-                                            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Detail Item
-                                            </p>
-                                        </div>
-                                        <div class="max-h-36 overflow-y-auto pr-2 space-y-1.5">
-                                            <template
-                                                x-for="(item, index) in poDetails.filter(i => (parseFloat(i.qty_diterima) || 0) > 0)"
-                                                :key="item.id">
-                                                <div class="flex justify-between text-xs">
-                                                    <div class="flex-1 truncate">
+                                <div class="p-3 max-h-32 overflow-y-auto">
+                                    <div x-show="getValidItemsCount() > 0" class="space-y-2">
+                                        <template x-for="(item, index) in getItemsToReceive()"
+                                            :key="`modal-item-${item.id || index}`">
+                                            <div
+                                                class="flex justify-between items-center text-xs bg-white dark:bg-gray-800 rounded p-2">
+                                                <div class="flex-1 truncate">
+                                                    <span class="font-medium text-gray-900 dark:text-white">
+                                                        <!-- Enhanced fallback logic -->
                                                         <span
-                                                            x-text="item.produk ? (item.produk.kode + ' - ' + item.produk.nama) : item.nama_item"></span>
-                                                    </div>
-                                                    <div class="flex-none ml-2 font-medium">
-                                                        <span x-text="item.qty_diterima"></span>
-                                                        <span x-text="item.satuan?.nama || '-'"></span>
-                                                    </div>
+                                                            x-text="(() => {
+                                                            if (item.barang && item.barang.kode && item.barang.nama) {
+                                                                return item.barang.kode + ' - ' + item.barang.nama;
+                                                            }
+                                                            if (item.barang && item.barang.nama) {
+                                                                return item.barang.nama;
+                                                            }
+                                                            if (item.nama_item) {
+                                                                return item.nama_item;
+                                                            }
+                                                            if (item.nama) {
+                                                                return item.nama;
+                                                            }
+                                                            if (item.deskripsi) {
+                                                                return item.deskripsi;
+                                                            }
+                                                            if (item.barang_id) {
+                                                                return 'Barang ID: ' + item.barang_id;
+                                                            }
+                                                            return 'Item ID: ' + item.id;
+                                                        })()"></span>
+                                                    </span>
                                                 </div>
-                                            </template>
-                                        </div>
+                                                <div class="text-right font-semibold text-sky-600 dark:text-sky-400">
+                                                    <span x-text="parseFloat(item.qty_diterima) || 0"></span>
+                                                    <span class="ml-1" x-text="getItemUnit(item)"></span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+
+                                    <!-- Show empty state -->
+                                    <div x-show="getValidItemsCount() === 0"
+                                        class="text-center py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        Belum ada item yang akan diterima
                                     </div>
                                 </div>
                             </div>
 
-                            {{-- Warning message --}}
+                            {{-- Warning --}}
                             <div
-                                class="bg-yellow-50 dark:bg-yellow-900/10 border border-yellow-200 dark:border-yellow-800 rounded-md p-3">
+                                class="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                                 <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg"
-                                            viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                    <div class="ml-3">
-                                        <p class="text-sm text-yellow-700 dark:text-yellow-300">
-                                            Pastikan data yang dimasukkan sudah benar. Anda dapat mengedit catatan
-                                            setelah disimpan, tetapi jumlah barang yang diterima tidak dapat diubah.
-                                        </p>
+                                    <svg class="h-4 w-4 text-amber-400 mt-0.5 mr-2 flex-shrink-0" fill="currentColor"
+                                        viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-xs text-amber-700 dark:text-amber-300 font-medium">Perhatian</p>
+                                        <p class="text-xs text-amber-600 dark:text-amber-400 mt-1">Data tidak dapat
+                                            diubah setelah disimpan. Stok akan otomatis bertambah.</p>
                                     </div>
                                 </div>
                             </div>
@@ -887,12 +865,23 @@
                 errors: [],
                 isSubmitting: false,
                 showConfirmModal: false,
+                selectedGudangName: 'Belum dipilih',
 
                 init() {
                     // Use setTimeout to simulate loading and prevent initial UI flicker
                     setTimeout(() => {
                         this.filteredPurchaseOrders = [...this.purchaseOrders];
                         this.loading = false;
+
+                        // Set up gudang select listener
+                        this.$nextTick(() => {
+                            const gudangSelect = document.getElementById('gudang_id');
+                            if (gudangSelect) {
+                                gudangSelect.addEventListener('change', () => {
+                                    this.updateGudangName();
+                                });
+                            }
+                        });
                     }, 300);
                 },
 
@@ -957,6 +946,12 @@
                         return false;
                     } else {
                         item.error = null;
+
+                        // Force Alpine to re-evaluate reactive data
+                        this.$nextTick(() => {
+                            // This will trigger reactivity for any computed properties
+                        });
+
                         return true;
                     }
                 },
@@ -1013,12 +1008,20 @@
                 },
 
                 openConfirmModal(e) {
+                    e.preventDefault();
+
+                    // Update gudang name before showing modal
+                    this.updateGudangName();
+
                     // Validate form before showing modal
                     if (!this.validateBeforeModal()) {
                         return;
                     }
 
-                    this.showConfirmModal = true;
+                    // Force refresh the reactive data
+                    this.$nextTick(() => {
+                        this.showConfirmModal = true;
+                    });
                 },
 
                 validateBeforeModal() {
@@ -1319,9 +1322,110 @@
                 },
 
                 getGudangName() {
-                    const gudangId = document.getElementById('gudang_id').value;
-                    const gudangElement = document.querySelector(`#gudang_id option[value="${gudangId}"]`);
-                    return gudangElement ? gudangElement.textContent : '-';
+                    return this.selectedGudangName;
+                },
+
+                updateGudangName() {
+                    const gudangSelect = document.getElementById('gudang_id');
+                    if (!gudangSelect || !gudangSelect.value) {
+                        this.selectedGudangName = 'Belum dipilih';
+                        return;
+                    }
+                    const selectedOption = gudangSelect.options[gudangSelect.selectedIndex];
+                    this.selectedGudangName = selectedOption ? selectedOption.text : 'Belum dipilih';
+                },
+
+                getNomorSuratJalan() {
+                    const value = document.getElementById('nomor_surat_jalan')?.value;
+                    return value && value.trim() ? value.trim() : null;
+                },
+
+                getTanggalSuratJalan() {
+                    const value = document.getElementById('tanggal_surat_jalan')?.value;
+                    return value ? this.formatDate(value) : null;
+                },
+
+                formatReceiptDate() {
+                    return this.receiptDate ? this.formatDate(this.receiptDate) : '-';
+                },
+
+                getValidItemsCount() {
+                    return this.poDetails.filter(item => (parseFloat(item.qty_diterima) || 0) > 0).length;
+                },
+
+                getItemsToReceive() {
+                    return this.poDetails.filter(item => {
+                        const qty = parseFloat(item.qty_diterima) || 0;
+                        return qty > 0;
+                    });
+                },
+
+                getItemDisplayName(item) {
+                    // Try multiple approaches to get item name
+
+                    // Method 1: Check barang relationship (most common)
+                    if (item.barang) {
+                        if (item.barang.kode && item.barang.nama) {
+                            return `${item.barang.kode} - ${item.barang.nama}`;
+                        }
+                        if (item.barang.nama) {
+                            return item.barang.nama;
+                        }
+                    }
+
+                    // Method 2: Check direct properties
+                    if (item.nama_item) {
+                        return item.nama_item;
+                    }
+
+                    if (item.nama) {
+                        return item.nama;
+                    }
+
+                    // Method 3: Check if there's a kode_barang property
+                    if (item.kode_barang && item.nama_barang) {
+                        return `${item.kode_barang} - ${item.nama_barang}`;
+                    }
+
+                    if (item.nama_barang) {
+                        return item.nama_barang;
+                    }
+
+                    // Method 4: Try to construct from barang_id (fallback)
+                    if (item.barang_id) {
+                        return `Item ID: ${item.barang_id}`;
+                    }
+
+                    // Last resort
+                    return 'Item tidak diketahui';
+                },
+
+                getItemUnit(item) {
+                    if (item.barang && item.barang.satuan) {
+                        return item.barang.satuan;
+                    }
+                    return item.satuan || '';
+                },
+
+                getTotalQtyReceived() {
+                    return this.poDetails.reduce((total, item) => {
+                        return total + (parseFloat(item.qty_diterima) || 0);
+                    }, 0);
+                },
+
+                getProgressPercentage() {
+                    if (!this.poDetails.length) return 0;
+
+                    let totalPO = 0;
+                    let totalReceived = 0;
+
+                    this.poDetails.forEach(item => {
+                        totalPO += parseFloat(item.quantity) || 0;
+                        totalReceived += (parseFloat(item.quantity_diterima) || 0) + (parseFloat(item
+                            .qty_diterima) || 0);
+                    });
+
+                    return totalPO > 0 ? Math.round((totalReceived / totalPO) * 100) : 0;
                 },
 
                 countReceivedItems() {
