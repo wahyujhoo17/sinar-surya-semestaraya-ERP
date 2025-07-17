@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Keuangan;
 use App\Http\Controllers\Controller;
 use App\Models\AkunAkuntansi;
 use App\Models\JurnalUmum;
+use App\Models\PeriodeAkuntansi;
 use App\Exports\BukuBesarExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 
@@ -20,6 +22,7 @@ class BukuBesarController extends Controller
     {
         // Get filter parameters
         $akunId = $request->get('akun_id');
+        $periodeId = $request->get('periode_id');
         $tanggalAwal = $request->get('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->get('tanggal_akhir', Carbon::now()->endOfMonth()->format('Y-m-d'));
 
@@ -28,22 +31,34 @@ class BukuBesarController extends Controller
             ->orderBy('kode')
             ->get();
 
+        // Get all periods
+        $periodes = PeriodeAkuntansi::orderBy('tanggal_mulai', 'desc')->get();
+
         $bukuBesarData = null;
         $selectedAkun = null;
+        $selectedPeriode = null;
         $allAccountsData = null;
+
+        if ($periodeId) {
+            $selectedPeriode = PeriodeAkuntansi::findOrFail($periodeId);
+            $tanggalAwal = $selectedPeriode->tanggal_mulai->format('Y-m-d');
+            $tanggalAkhir = $selectedPeriode->tanggal_akhir->format('Y-m-d');
+        }
 
         if ($akunId) {
             // Single account view
             $selectedAkun = AkunAkuntansi::findOrFail($akunId);
-            $bukuBesarData = $this->getBukuBesarData($akunId, $tanggalAwal, $tanggalAkhir);
+            $bukuBesarData = $this->getBukuBesarData($request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId);
         } else {
             // All accounts view - show accounts with balances
-            $allAccountsData = $this->getAllAccountsWithBalances($tanggalAkhir);
+            $allAccountsData = $this->getAllAccountsWithBalances($request, $tanggalAkhir, $periodeId);
         }
 
         return view('keuangan.buku_besar.index', compact(
             'akuns',
+            'periodes',
             'selectedAkun',
+            'selectedPeriode',
             'bukuBesarData',
             'allAccountsData',
             'tanggalAwal',
@@ -61,25 +76,37 @@ class BukuBesarController extends Controller
     /**
      * Get buku besar data for specific account and date range
      */
-    private function getBukuBesarData($akunId, $tanggalAwal, $tanggalAkhir)
+    private function getBukuBesarData(Request $request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId = null)
     {
         $akun = AkunAkuntansi::findOrFail($akunId);
 
-        // Get opening balance (before start date)
-        $openingDebit = JurnalUmum::where('akun_id', $akunId)
-            ->where('tanggal', '<', $tanggalAwal)
-            ->sum('debit');
+        // Build base query
+        $baseQuery = JurnalUmum::where('akun_id', $akunId);
 
-        $openingKredit = JurnalUmum::where('akun_id', $akunId)
-            ->where('tanggal', '<', $tanggalAwal)
-            ->sum('kredit');
+        // Filter for posted journals (with option to include drafts for debugging)
+        $includeDrafts = $request->get('include_drafts', '0') == '1'; // Default false - only posted journals
+
+        if (!$includeDrafts) {
+            $baseQuery->where('is_posted', true); // Only posted journals
+        }
+
+        if ($periodeId) {
+            $baseQuery->where('periode_id', $periodeId);
+        }
+
+        // Get opening balance (before start date)
+        $openingQuery = clone $baseQuery;
+        $openingDebit = $openingQuery->where('tanggal', '<', $tanggalAwal)->sum('debit');
+
+        $openingQuery = clone $baseQuery;
+        $openingKredit = $openingQuery->where('tanggal', '<', $tanggalAwal)->sum('kredit');
 
         // Calculate opening balance based on account category
         $openingBalance = $this->calculateBalance($akun->kategori, $openingDebit, $openingKredit);
 
         // Get transactions for the period
-        $transaksi = JurnalUmum::where('akun_id', $akunId)
-            ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+        $transaksiQuery = clone $baseQuery;
+        $transaksi = $transaksiQuery->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
             ->orderBy('tanggal')
             ->orderBy('created_at')
             ->get();
@@ -131,10 +158,11 @@ class BukuBesarController extends Controller
     /**
      * Get all accounts with their balances
      */
-    private function getAllAccountsWithBalances($tanggalAkhir)
+    private function getAllAccountsWithBalances(Request $request, $tanggalAkhir, $periodeId = null)
     {
         $accounts = AkunAkuntansi::where('is_active', true)
-            ->where('tipe', 'detail') // Only detail accounts have transactions
+            // Include both detail and header accounts that have transactions
+            ->whereIn('tipe', ['detail', 'header'])
             ->orderBy('kode')
             ->get();
 
@@ -149,13 +177,35 @@ class BukuBesarController extends Controller
         ];
 
         foreach ($accounts as $account) {
-            $totalDebit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $tanggalAkhir)
-                ->sum('debit');
+            $query = JurnalUmum::where('akun_id', $account->id)
+                ->where('tanggal', '<=', $tanggalAkhir);
 
-            $totalKredit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $tanggalAkhir)
-                ->sum('kredit');
+            // Filter for posted journals (with option to include drafts for debugging)
+            $includeDrafts = $request->get('include_drafts', '0') == '1';
+            if (!$includeDrafts) {
+                $query->where('is_posted', true); // Only posted journals
+            }
+
+            if ($periodeId) {
+                $query->where('periode_id', $periodeId);
+            }
+
+            $totalDebit = $query->sum('debit');
+
+            $query = JurnalUmum::where('akun_id', $account->id)
+                ->where('tanggal', '<=', $tanggalAkhir);
+
+            // Filter for posted journals (with option to include drafts for debugging)
+            $includeDrafts = $request->get('include_drafts', '0') == '1';
+            if (!$includeDrafts) {
+                $query->where('is_posted', true); // Only posted journals
+            }
+
+            if ($periodeId) {
+                $query->where('periode_id', $periodeId);
+            }
+
+            $totalKredit = $query->sum('kredit');
 
             $balance = $this->calculateBalance($account->kategori, $totalDebit, $totalKredit);
 
@@ -227,8 +277,16 @@ class BukuBesarController extends Controller
     {
         try {
             $akunId = $request->get('akun_id');
+            $periodeId = $request->get('periode_id');
             $tanggalAwal = $request->get('tanggal_awal', now()->startOfMonth()->format('Y-m-d'));
             $tanggalAkhir = $request->get('tanggal_akhir', now()->endOfMonth()->format('Y-m-d'));
+
+            // If periode is selected, use periode dates
+            if ($periodeId) {
+                $periode = PeriodeAkuntansi::findOrFail($periodeId);
+                $tanggalAwal = $periode->tanggal_mulai->format('Y-m-d');
+                $tanggalAkhir = $periode->tanggal_akhir->format('Y-m-d');
+            }
 
             // Validate date range
             if ($tanggalAwal > $tanggalAkhir) {
@@ -251,7 +309,7 @@ class BukuBesarController extends Controller
                 return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\BukuBesarAllAccountsExport($tanggalAwal, $tanggalAkhir), $filename);
             }
         } catch (\Exception $e) {
-            \Log::error('Error exporting buku besar: ' . $e->getMessage());
+            Log::error('Error exporting buku besar: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Terjadi kesalahan saat export: ' . $e->getMessage()]);
         }
@@ -281,12 +339,22 @@ class BukuBesarController extends Controller
         }
 
         $totalDebit = JurnalUmum::where('akun_id', $akunId)
-            ->where('tanggal', '<=', $tanggal)
-            ->sum('debit');
+            ->where('tanggal', '<=', $tanggal);
+
+        // TEMPORARY FIX: Include draft journals with warning
+        $includeDrafts = request()->get('include_drafts', true);
+        if (!$includeDrafts) {
+            $totalDebit->where('is_posted', true); // Only posted journals
+        }
+        $totalDebit = $totalDebit->sum('debit');
 
         $totalKredit = JurnalUmum::where('akun_id', $akunId)
-            ->where('tanggal', '<=', $tanggal)
-            ->sum('kredit');
+            ->where('tanggal', '<=', $tanggal);
+
+        if (!$includeDrafts) {
+            $totalKredit->where('is_posted', true); // Only posted journals
+        }
+        $totalKredit = $totalKredit->sum('kredit');
 
         $balance = $this->calculateBalance($akun->kategori, $totalDebit, $totalKredit);
 

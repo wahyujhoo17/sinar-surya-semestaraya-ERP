@@ -68,7 +68,7 @@ class KasDanBankController extends Controller
         $kas = Kas::findOrFail($id);
 
         // Start query builder for filters
-        $baseQuery = TransaksiKas::where('kas_id', $id);
+        $baseQuery = TransaksiKas::where('kas_id', $id)->orderBy('created_at', 'desc');
 
         // Apply filters based on request parameters - clone the base query for reuse
         $query = clone $baseQuery;
@@ -174,7 +174,7 @@ class KasDanBankController extends Controller
         $rekening = RekeningBank::findOrFail($id);
 
         // Start query builder for filters
-        $baseQuery = TransaksiBank::where('rekening_id', $id);
+        $baseQuery = TransaksiBank::where('rekening_id', $id)->orderBy('created_at', 'desc');
 
         // Apply filters based on request parameters - clone the base query for reuse
         $query = clone $baseQuery;

@@ -64,9 +64,13 @@ trait AutomaticJournalEntry
                     'debit' => $entry['debit'] ?? 0,
                     'kredit' => $entry['kredit'] ?? 0,
                     'keterangan' => $keterangan,
+                    'jenis_jurnal' => 'umum',
                     'user_id' => $userId,
                     'ref_type' => get_class($this),
-                    'ref_id' => $this->id
+                    'ref_id' => $this->id,
+                    'is_posted' => true, // Jurnal otomatis langsung diposting
+                    'posted_at' => now(),
+                    'posted_by' => $userId
                 ]);
 
                 // Periksa apakah akun ini terkait dengan Kas atau RekeningBank

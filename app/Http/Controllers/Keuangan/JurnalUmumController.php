@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AkunAkuntansi;
 use App\Models\JurnalUmum;
 use App\Models\Kas;
+use App\Models\PeriodeAkuntansi;
 use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
@@ -39,7 +40,13 @@ class JurnalUmumController extends Controller
         }
 
         // Mendapatkan semua data jurnal umum yang diurutkan berdasarkan tanggal terbaru
-        $query = JurnalUmum::with(['akun', 'user']);
+        $query = JurnalUmum::with(['akun', 'user', 'periode'])
+            ->where('jenis_jurnal', 'umum');
+
+        // Filter berdasarkan periode
+        if ($request->has('periode_id') && $request->periode_id) {
+            $query->where('periode_id', $request->periode_id);
+        }
 
         // Filter berdasarkan tanggal
         if ($request->has('start_date') && $request->has('end_date')) {
@@ -54,6 +61,15 @@ class JurnalUmumController extends Controller
         // Filter berdasarkan nomor referensi
         if ($request->has('no_referensi') && $request->no_referensi) {
             $query->where('no_referensi', 'like', '%' . $request->no_referensi . '%');
+        }
+
+        // Filter berdasarkan status posting
+        if ($request->has('status_posting') && $request->status_posting !== '') {
+            if ($request->status_posting === 'posted') {
+                $query->where('is_posted', true);
+            } elseif ($request->status_posting === 'draft') {
+                $query->where('is_posted', false);
+            }
         }
 
         // Get unique journal transactions by grouping by no_referensi and tanggal only
@@ -105,8 +121,11 @@ class JurnalUmumController extends Controller
             ->orderBy('kode', 'asc')
             ->get();
 
-        // Handle AJAX requests
-        if ($request->ajax()) {
+        $periodes = PeriodeAkuntansi::orderBy('tanggal_mulai', 'desc')->get();
+
+        // Handle AJAX requests - only respond with JSON if it's a genuine AJAX request
+        // Check for X-Requested-With header AND Accept header to ensure it's a real AJAX call
+        if ($request->ajax() && $request->wantsJson()) {
             $tableHtml = view('keuangan.jurnal_umum._table', compact('jurnals'))->render();
             $paginationHtml = $jurnals->appends(request()->query())->links('vendor.pagination.tailwind')->toHtml();
 
@@ -128,7 +147,7 @@ class JurnalUmumController extends Controller
 
         $currentPage = 'jurnal-umum';
 
-        return view('keuangan.jurnal_umum.index', compact('jurnals', 'akuns', 'breadcrumbs', 'currentPage', 'sortField', 'sortDirection'));
+        return view('keuangan.jurnal_umum.index', compact('jurnals', 'akuns', 'periodes', 'breadcrumbs', 'currentPage', 'sortField', 'sortDirection'));
     }
 
     /**
@@ -140,6 +159,8 @@ class JurnalUmumController extends Controller
             ->orderBy('kode', 'asc')
             ->get();
 
+        $periodes = PeriodeAkuntansi::orderBy('tanggal_mulai', 'desc')->get();
+
         $breadcrumbs = [
             ['url' => route('dashboard'), 'label' => 'Dashboard'],
             ['url' => '#', 'label' => 'Keuangan'],
@@ -149,7 +170,7 @@ class JurnalUmumController extends Controller
 
         $currentPage = 'jurnal-umum';
 
-        return view('keuangan.jurnal_umum.create', compact('akuns', 'breadcrumbs', 'currentPage'));
+        return view('keuangan.jurnal_umum.create', compact('akuns', 'periodes', 'breadcrumbs', 'currentPage'));
     }
 
     /**
@@ -204,11 +225,7 @@ class JurnalUmumController extends Controller
         try {
             DB::beginTransaction();
 
-            // Array untuk menyimpan akun-akun kas dan rekening yang perlu diupdate
-            $kasToUpdate = [];
-            $rekeningToUpdate = [];
-
-            // Simpan semua item jurnal
+            // Simpan semua item jurnal TANPA mengubah saldo (akan diubah saat posting)
             foreach ($request->jurnal_items as $item) {
                 // Buat entri jurnal
                 $jurnal = JurnalUmum::create([
@@ -218,104 +235,16 @@ class JurnalUmumController extends Controller
                     'akun_id' => $item['akun_id'],
                     'debit' => $item['debit'] ?? 0,
                     'kredit' => $item['kredit'] ?? 0,
+                    'jenis_jurnal' => 'umum',
                     'user_id' => Auth::id(),
+                    'is_posted' => false, // Jurnal manual dimulai sebagai draft
                 ]);
-
-                // Periksa apakah akun ini terkait dengan Kas atau RekeningBank
-                $akun = AkunAkuntansi::with('reference')->find($item['akun_id']);
-
-                if ($akun && $akun->ref_type) {
-                    $debit = (float)($item['debit'] ?? 0);
-                    $kredit = (float)($item['kredit'] ?? 0);
-
-                    if ($akun->ref_type === 'App\Models\Kas') {
-                        // Untuk akun Kas, kita perlu membalik logika
-                        // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
-                        // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
-                        $nilaiPerubahan = $debit - $kredit;
-
-                        if (!isset($kasToUpdate[$akun->ref_id])) {
-                            $kasToUpdate[$akun->ref_id] = 0;
-                        }
-                        $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
-                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
-                        // Untuk akun Rekening Bank, kita perlu membalik logika
-                        // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
-                        // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
-                        $nilaiPerubahan = $debit - $kredit;
-
-                        if (!isset($rekeningToUpdate[$akun->ref_id])) {
-                            $rekeningToUpdate[$akun->ref_id] = 0;
-                        }
-                        $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
-                    }
-                }
-            }
-
-            // Update saldo kas
-            foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
-                $kas = Kas::find($kasId);
-                if ($kas) {
-                    // Log saldo sebelum update
-                    Log::info('Store - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
-
-                    $kas->saldo += $nilaiPerubahan;
-                    $kas->save();
-
-                    // Log saldo setelah update
-                    Log::info('Store - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
-
-                    // Buat transaksi kas untuk mencatat perubahan
-                    if ($nilaiPerubahan != 0) {
-                        TransaksiKas::create([
-                            'tanggal' => $request->tanggal,
-                            'kas_id' => $kasId,
-                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
-                            'jumlah' => abs($nilaiPerubahan),
-                            'keterangan' => $request->keterangan,
-                            'no_bukti' => $request->no_referensi,
-                            'related_id' => $jurnal->id,
-                            'related_type' => JurnalUmum::class,
-                            'user_id' => Auth::id()
-                        ]);
-                    }
-                }
-            }
-
-            // Update saldo rekening bank
-            foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
-                $rekening = RekeningBank::find($rekeningId);
-                if ($rekening) {
-                    // Log saldo sebelum update
-                    Log::info('RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
-
-                    $rekening->saldo += $nilaiPerubahan;
-                    $rekening->save();
-
-                    // Log saldo setelah update
-                    Log::info('RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
-
-                    // Buat transaksi bank untuk mencatat perubahan
-                    if ($nilaiPerubahan != 0) {
-                        TransaksiBank::create([
-                            'tanggal' => $request->tanggal,
-                            'rekening_id' => $rekeningId,
-                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
-                            'jumlah' => abs($nilaiPerubahan),
-                            'keterangan' => $request->keterangan,
-                            'no_referensi' => $request->no_referensi,
-                            'related_id' => $jurnal->id,
-                            'related_type' => JurnalUmum::class,
-                            'user_id' => Auth::id()
-                        ]);
-                    }
-                }
             }
 
             DB::commit();
 
             return redirect()->route('keuangan.jurnal-umum.index')
-                ->with('success', 'Jurnal berhasil disimpan.');
+                ->with('success', 'Jurnal berhasil disimpan sebagai draft. Post jurnal untuk menerapkan perubahan saldo.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -331,9 +260,10 @@ class JurnalUmumController extends Controller
     {
         // Karena jurnal biasanya berisi banyak entri dengan no_referensi yang sama,
         // kita akan menampilkan semua entri dengan no_referensi yang sama
-        $jurnal = JurnalUmum::findOrFail($id);
+        $jurnal = JurnalUmum::where('jenis_jurnal', 'umum')->findOrFail($id);
         $relatedJurnals = JurnalUmum::where('no_referensi', $jurnal->no_referensi)
             ->where('tanggal', $jurnal->tanggal)
+            ->where('jenis_jurnal', 'umum')
             ->with(['akun', 'user'])
             ->get();
 
@@ -355,9 +285,10 @@ class JurnalUmumController extends Controller
     public function edit($id)
     {
         // Mendapatkan jurnal yang akan diedit dan semua entri terkait
-        $jurnal = JurnalUmum::findOrFail($id);
+        $jurnal = JurnalUmum::where('jenis_jurnal', 'umum')->findOrFail($id);
         $jurnalItems = JurnalUmum::where('no_referensi', $jurnal->no_referensi)
             ->where('tanggal', $jurnal->tanggal)
+            ->where('jenis_jurnal', 'umum')
             ->with('akun')
             ->get();
 
@@ -429,8 +360,8 @@ class JurnalUmumController extends Controller
         try {
             DB::beginTransaction();
 
-            // Dapatkan jurnal yang diedit
-            $jurnal = JurnalUmum::findOrFail($id);
+            // Dapatkan jurnal yang diedit (hanya jurnal umum)
+            $jurnal = JurnalUmum::where('jenis_jurnal', 'umum')->findOrFail($id);
             $oldReferensi = $jurnal->no_referensi;
             $oldTanggal = $jurnal->tanggal;
 
@@ -458,14 +389,15 @@ class JurnalUmumController extends Controller
             // Dapatkan semua akun terkait kas dan bank yang terpengaruh oleh jurnal lama
             $akunIds = JurnalUmum::where('no_referensi', $oldReferensi)
                 ->where('tanggal', $oldTanggal)
+                ->where('jenis_jurnal', 'umum')
                 ->pluck('akun_id');
 
             $kasIds = AkunAkuntansi::whereIn('id', $akunIds)
-                ->where('ref_type', 'App\\Models\\Kas')
+                ->where('ref_type', 'App\Models\Kas')
                 ->pluck('ref_id');
 
             $rekeningIds = AkunAkuntansi::whereIn('id', $akunIds)
-                ->where('ref_type', 'App\\Models\\RekeningBank')
+                ->where('ref_type', 'App\Models\RekeningBank')
                 ->pluck('ref_id');
 
             // Reset saldo kas yang terpengaruh oleh jurnal lama
@@ -511,6 +443,7 @@ class JurnalUmumController extends Controller
             // Hapus semua entri jurnal terkait
             JurnalUmum::where('no_referensi', $oldReferensi)
                 ->where('tanggal', $oldTanggal)
+                ->where('jenis_jurnal', 'umum')
                 ->delete();
 
             // Array untuk menyimpan akun-akun kas dan rekening yang perlu diupdate
@@ -527,6 +460,7 @@ class JurnalUmumController extends Controller
                     'akun_id' => $item['akun_id'],
                     'debit' => $item['debit'] ?? 0,
                     'kredit' => $item['kredit'] ?? 0,
+                    'jenis_jurnal' => 'umum',
                     'user_id' => Auth::id(),
                 ]);
 
@@ -537,7 +471,7 @@ class JurnalUmumController extends Controller
                     $debit = (float)($item['debit'] ?? 0);
                     $kredit = (float)($item['kredit'] ?? 0);
 
-                    if ($akun->ref_type === 'App\\Models\\Kas') {
+                    if ($akun->ref_type === 'App\Models\Kas') {
                         // Untuk akun Kas, kita perlu membalik logika
                         // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
                         // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
@@ -548,7 +482,7 @@ class JurnalUmumController extends Controller
                             $kasToUpdate[$akun->ref_id] = 0;
                         }
                         $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
-                    } elseif ($akun->ref_type === 'App\\Models\\RekeningBank') {
+                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
                         // Untuk akun Rekening Bank, kita perlu membalik logika
                         // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
                         // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
@@ -648,9 +582,15 @@ class JurnalUmumController extends Controller
             DB::beginTransaction();
 
             // Dapatkan jurnal yang akan dihapus
-            $jurnal = JurnalUmum::findOrFail($id);
+            $jurnal = JurnalUmum::where('jenis_jurnal', 'umum')->findOrFail($id);
             $referensi = $jurnal->no_referensi;
             $tanggal = $jurnal->tanggal;
+
+            // Cek apakah jurnal sudah diposting, jika ya maka unpost dulu
+            if ($jurnal->is_posted) {
+                // Unpost jurnal terlebih dahulu untuk membalik saldo
+                $this->unpostJournal($referensi);
+            }
 
             // Hapus transaksi kas dan bank terkait dengan jurnal ini
             TransaksiKas::where('related_type', JurnalUmum::class)
@@ -673,73 +613,11 @@ class JurnalUmumController extends Controller
                     });
                 })->delete();
 
-            // Dapatkan semua akun terkait kas dan bank yang terpengaruh oleh jurnal
-            $akunIds = JurnalUmum::where('no_referensi', $referensi)
-                ->where('tanggal', $tanggal)
-                ->pluck('akun_id');
-
-            $kasIds = AkunAkuntansi::whereIn('id', $akunIds)
-                ->where('ref_type', 'App\\Models\\Kas')
-                ->pluck('ref_id');
-
-            $rekeningIds = AkunAkuntansi::whereIn('id', $akunIds)
-                ->where('ref_type', 'App\\Models\\RekeningBank')
-                ->pluck('ref_id');
-
             // Hapus semua entri jurnal terkait
             JurnalUmum::where('no_referensi', $referensi)
                 ->where('tanggal', $tanggal)
+                ->where('jenis_jurnal', 'umum')
                 ->delete();
-
-            // Perbarui saldo kas yang terpengaruh
-            if ($kasIds->count() > 0) {
-                foreach ($kasIds as $kasId) {
-                    $kas = Kas::find($kasId);
-                    if ($kas) {
-                        // Log saldo sebelum update
-                        Log::info('Destroy - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo);
-
-                        $totalMasuk = TransaksiKas::where('kas_id', $kasId)
-                            ->where('jenis', 'masuk')
-                            ->sum('jumlah');
-
-                        $totalKeluar = TransaksiKas::where('kas_id', $kasId)
-                            ->where('jenis', 'keluar')
-                            ->sum('jumlah');
-
-                        $kas->saldo = $totalMasuk - $totalKeluar;
-                        $kas->save();
-
-                        // Log saldo setelah update
-                        Log::info('Destroy - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
-                    }
-                }
-            }
-
-            // Perbarui saldo rekening yang terpengaruh
-            if ($rekeningIds->count() > 0) {
-                foreach ($rekeningIds as $rekeningId) {
-                    $rekening = RekeningBank::find($rekeningId);
-                    if ($rekening) {
-                        // Log saldo sebelum update
-                        Log::info('Destroy - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo);
-
-                        $totalMasuk = TransaksiBank::where('rekening_id', $rekeningId)
-                            ->where('jenis', 'masuk')
-                            ->sum('jumlah');
-
-                        $totalKeluar = TransaksiBank::where('rekening_id', $rekeningId)
-                            ->where('jenis', 'keluar')
-                            ->sum('jumlah');
-
-                        $rekening->saldo = $totalMasuk - $totalKeluar;
-                        $rekening->save();
-
-                        // Log saldo setelah update
-                        Log::info('Destroy - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
-                    }
-                }
-            }
 
             DB::commit();
 
@@ -749,6 +627,79 @@ class JurnalUmumController extends Controller
             DB::rollBack();
             return redirect()->back()
                 ->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Helper method to reverse balance changes for kas/bank accounts only
+     * Used internally by destroy() method when deleting posted journals
+     */
+    private function unpostJournal($noReferensi)
+    {
+        // Get all entries for this reference
+        $entries = JurnalUmum::where('no_referensi', $noReferensi)->get();
+
+        if ($entries->isEmpty()) {
+            return;
+        }
+
+        // Array untuk menyimpan akun-akun kas dan rekening yang perlu diupdate (reverse)
+        $kasToUpdate = [];
+        $rekeningToUpdate = [];
+
+        // Process each entry to calculate balance changes (reverse)
+        foreach ($entries as $entry) {
+            // Periksa apakah akun ini terkait dengan Kas atau RekeningBank
+            $akun = AkunAkuntansi::with('reference')->find($entry->akun_id);
+
+            if ($akun && $akun->ref_type) {
+                $debit = (float)$entry->debit;
+                $kredit = (float)$entry->kredit;
+
+                if ($akun->ref_type === 'App\Models\Kas') {
+                    // Reverse logic: subtract what was previously added
+                    $nilaiPerubahan = $kredit - $debit; // Opposite of what was done during posting
+
+                    if (!isset($kasToUpdate[$akun->ref_id])) {
+                        $kasToUpdate[$akun->ref_id] = 0;
+                    }
+                    $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
+                    // Reverse logic: subtract what was previously added
+                    $nilaiPerubahan = $kredit - $debit; // Opposite of what was done during posting
+
+                    if (!isset($rekeningToUpdate[$akun->ref_id])) {
+                        $rekeningToUpdate[$akun->ref_id] = 0;
+                    }
+                    $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                }
+            }
+        }
+
+        // Update saldo kas (reverse)
+        foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
+            $kas = Kas::find($kasId);
+            if ($kas) {
+                Log::info('Internal Unpost - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                $kas->saldo += $nilaiPerubahan;
+                $kas->save();
+
+                Log::info('Internal Unpost - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
+            }
+        }
+
+        // Update saldo rekening bank (reverse)
+        foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
+            $rekening = RekeningBank::find($rekeningId);
+            if ($rekening) {
+                Log::info('Internal Unpost - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                $rekening->saldo += $nilaiPerubahan;
+                $rekening->save();
+
+                Log::info('Internal Unpost - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
+            }
         }
     }
 
@@ -790,6 +741,263 @@ class JurnalUmumController extends Controller
             Log::error('Error exporting jurnal umum: ' . $e->getMessage());
             return redirect()->back()
                 ->withErrors(['error' => 'Terjadi kesalahan saat export: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Post the specified journal entries
+     */
+    public function post(Request $request)
+    {
+        $noReferensi = $request->input('no_referensi');
+
+        if (!$noReferensi) {
+            return redirect()->back()->withErrors(['error' => 'Nomor referensi tidak ditemukan']);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Get all entries for this reference (only jurnal umum)
+            $entries = JurnalUmum::where('no_referensi', $noReferensi)
+                ->where('jenis_jurnal', 'umum')
+                ->get();
+
+            if ($entries->isEmpty()) {
+                return redirect()->back()->withErrors(['error' => 'Jurnal tidak ditemukan']);
+            }
+
+            // Check if already posted
+            if ($entries->first()->is_posted) {
+                return redirect()->back()->withErrors(['error' => 'Jurnal sudah diposting sebelumnya']);
+            }
+
+            // Array untuk menyimpan akun-akun kas dan rekening yang perlu diupdate
+            $kasToUpdate = [];
+            $rekeningToUpdate = [];
+
+            // Process each entry to calculate balance changes
+            foreach ($entries as $entry) {
+                // Periksa apakah akun ini terkait dengan Kas atau RekeningBank
+                $akun = AkunAkuntansi::with('reference')->find($entry->akun_id);
+
+                if ($akun && $akun->ref_type) {
+                    $debit = (float)$entry->debit;
+                    $kredit = (float)$entry->kredit;
+
+                    if ($akun->ref_type === 'App\Models\Kas') {
+                        // Untuk akun Kas, kita perlu membalik logika
+                        // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
+                        // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
+                        $nilaiPerubahan = $debit - $kredit;
+
+                        if (!isset($kasToUpdate[$akun->ref_id])) {
+                            $kasToUpdate[$akun->ref_id] = 0;
+                        }
+                        $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
+                        // Untuk akun Rekening Bank, kita perlu membalik logika
+                        // Nilai perubahan positif jika debit > kredit (masuk/penambahan)
+                        // Nilai perubahan negatif jika kredit > debit (keluar/pengurangan)
+                        $nilaiPerubahan = $debit - $kredit;
+
+                        if (!isset($rekeningToUpdate[$akun->ref_id])) {
+                            $rekeningToUpdate[$akun->ref_id] = 0;
+                        }
+                        $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    }
+                }
+            }
+
+            // Update saldo kas
+            foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
+                $kas = Kas::find($kasId);
+                if ($kas) {
+                    // Log saldo sebelum update
+                    Log::info('Post - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $kas->saldo += $nilaiPerubahan;
+                    $kas->save();
+
+                    // Log saldo setelah update
+                    Log::info('Post - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
+
+                    // Buat transaksi kas untuk mencatat perubahan
+                    if ($nilaiPerubahan != 0) {
+                        $firstEntry = $entries->first();
+                        TransaksiKas::create([
+                            'tanggal' => $firstEntry->tanggal,
+                            'kas_id' => $kasId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => $firstEntry->keterangan,
+                            'no_bukti' => $firstEntry->no_referensi,
+                            'related_id' => $firstEntry->id,
+                            'related_type' => JurnalUmum::class,
+                            'user_id' => Auth::id()
+                        ]);
+                    }
+                }
+            }
+
+            // Update saldo rekening bank
+            foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
+                $rekening = RekeningBank::find($rekeningId);
+                if ($rekening) {
+                    // Log saldo sebelum update
+                    Log::info('Post - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $rekening->saldo += $nilaiPerubahan;
+                    $rekening->save();
+
+                    // Log saldo setelah update
+                    Log::info('Post - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
+
+                    // Buat transaksi bank untuk mencatat perubahan
+                    if ($nilaiPerubahan != 0) {
+                        $firstEntry = $entries->first();
+                        TransaksiBank::create([
+                            'tanggal' => $firstEntry->tanggal,
+                            'rekening_id' => $rekeningId,
+                            'jenis' => $nilaiPerubahan > 0 ? 'masuk' : 'keluar',
+                            'jumlah' => abs($nilaiPerubahan),
+                            'keterangan' => $firstEntry->keterangan,
+                            'no_referensi' => $firstEntry->no_referensi,
+                            'related_id' => $firstEntry->id,
+                            'related_type' => JurnalUmum::class,
+                            'user_id' => Auth::id()
+                        ]);
+                    }
+                }
+            }
+
+            // Post all entries with this reference
+            JurnalUmum::where('no_referensi', $noReferensi)
+                ->update([
+                    'is_posted' => true,
+                    'posted_at' => now(),
+                    'posted_by' => Auth::id()
+                ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Jurnal berhasil diposting dan saldo kas/bank telah diperbarui');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error posting journal: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Gagal memposting jurnal: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Unpost the specified journal entries
+     */
+    public function unpost(Request $request)
+    {
+        $noReferensi = $request->input('no_referensi');
+
+        if (!$noReferensi) {
+            return redirect()->back()->withErrors(['error' => 'Nomor referensi tidak ditemukan']);
+        }
+
+        DB::beginTransaction();
+        try {
+            // Get all entries for this reference (only jurnal umum)
+            $entries = JurnalUmum::where('no_referensi', $noReferensi)
+                ->where('jenis_jurnal', 'umum')
+                ->get();
+
+            if ($entries->isEmpty()) {
+                return redirect()->back()->withErrors(['error' => 'Jurnal tidak ditemukan']);
+            }
+
+            // Check if not posted
+            if (!$entries->first()->is_posted) {
+                return redirect()->back()->withErrors(['error' => 'Jurnal belum diposting']);
+            }
+
+            // Array untuk menyimpan akun-akun kas dan rekening yang perlu diupdate (reverse)
+            $kasToUpdate = [];
+            $rekeningToUpdate = [];
+
+            // Process each entry to calculate balance changes (reverse)
+            foreach ($entries as $entry) {
+                // Periksa apakah akun ini terkait dengan Kas atau RekeningBank
+                $akun = AkunAkuntansi::with('reference')->find($entry->akun_id);
+
+                if ($akun && $akun->ref_type) {
+                    $debit = (float)$entry->debit;
+                    $kredit = (float)$entry->kredit;
+
+                    if ($akun->ref_type === 'App\Models\Kas') {
+                        // Reverse logic: subtract what was previously added
+                        $nilaiPerubahan = $kredit - $debit; // Opposite of what was done during posting
+
+                        if (!isset($kasToUpdate[$akun->ref_id])) {
+                            $kasToUpdate[$akun->ref_id] = 0;
+                        }
+                        $kasToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    } elseif ($akun->ref_type === 'App\Models\RekeningBank') {
+                        // Reverse logic: subtract what was previously added
+                        $nilaiPerubahan = $kredit - $debit; // Opposite of what was done during posting
+
+                        if (!isset($rekeningToUpdate[$akun->ref_id])) {
+                            $rekeningToUpdate[$akun->ref_id] = 0;
+                        }
+                        $rekeningToUpdate[$akun->ref_id] += $nilaiPerubahan;
+                    }
+                }
+            }
+
+            // Update saldo kas (reverse)
+            foreach ($kasToUpdate as $kasId => $nilaiPerubahan) {
+                $kas = Kas::find($kasId);
+                if ($kas) {
+                    // Log saldo sebelum update
+                    Log::info('Unpost - Kas - ID: ' . $kasId . ', Saldo Sebelum: ' . $kas->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $kas->saldo += $nilaiPerubahan;
+                    $kas->save();
+
+                    // Log saldo setelah update
+                    Log::info('Unpost - Kas - ID: ' . $kasId . ', Saldo Setelah: ' . $kas->saldo);
+                }
+            }
+
+            // Update saldo rekening bank (reverse)
+            foreach ($rekeningToUpdate as $rekeningId => $nilaiPerubahan) {
+                $rekening = RekeningBank::find($rekeningId);
+                if ($rekening) {
+                    // Log saldo sebelum update
+                    Log::info('Unpost - RekeningBank - ID: ' . $rekeningId . ', Saldo Sebelum: ' . $rekening->saldo . ', Nilai Perubahan: ' . $nilaiPerubahan);
+
+                    $rekening->saldo += $nilaiPerubahan;
+                    $rekening->save();
+
+                    // Log saldo setelah update
+                    Log::info('Unpost - RekeningBank - ID: ' . $rekeningId . ', Saldo Setelah: ' . $rekening->saldo);
+                }
+            }
+
+            // Delete related transactions
+            TransaksiKas::where('no_bukti', $noReferensi)->delete();
+
+            TransaksiBank::where('no_referensi', $noReferensi)->delete();
+
+            // Unpost all entries with this reference
+            JurnalUmum::where('no_referensi', $noReferensi)
+                ->update([
+                    'is_posted' => false,
+                    'posted_at' => null,
+                    'posted_by' => null
+                ]);
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Jurnal berhasil dibatalkan postingnya dan saldo kas/bank telah dikembalikan');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error unposting journal: ' . $e->getMessage());
+            return redirect()->back()->withErrors(['error' => 'Gagal membatalkan posting jurnal: ' . $e->getMessage()]);
         }
     }
 }

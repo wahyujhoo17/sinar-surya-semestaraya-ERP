@@ -62,6 +62,24 @@
                             class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
                     </div>
 
+                    {{-- Period Dropdown --}}
+                    <div class="flex-1 min-w-48">
+                        <label for="periode_id"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Periode
+                            Akuntansi</label>
+                        <select name="periode_id" id="periode_id"
+                            class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                            <option value="">Semua Periode</option>
+                            @foreach ($periodes as $periode)
+                                <option value="{{ $periode->id }}"
+                                    {{ request('periode_id') == $periode->id ? 'selected' : '' }}>
+                                    {{ $periode->nama }} ({{ $periode->tanggal_mulai->format('d/m/Y') }} -
+                                    {{ $periode->tanggal_akhir->format('d/m/Y') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Account Dropdown --}}
                     <div class="flex-1 min-w-64">
                         <label for="akun_id"
@@ -103,6 +121,23 @@
                         <input type="text" name="no_referensi" id="no_referensi"
                             value="{{ request('no_referensi') }}" placeholder="Cari nomor referensi..."
                             class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                    </div>
+
+                    {{-- Status Posting Filter --}}
+                    <div class="flex-1 min-w-48">
+                        <label for="status_posting"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Status
+                            Posting</label>
+                        <select name="status_posting" id="status_posting"
+                            class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                            <option value="">Semua Status</option>
+                            <option value="draft" {{ request('status_posting') === 'draft' ? 'selected' : '' }}>
+                                Draft
+                            </option>
+                            <option value="posted" {{ request('status_posting') === 'posted' ? 'selected' : '' }}>
+                                Posted
+                            </option>
+                        </select>
                     </div>
 
                     {{-- Action Buttons --}}
@@ -320,27 +355,15 @@
                                 </div>
                             </th>
                             <th scope="col"
-                                class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
+                                class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
                                 <div class="flex items-center justify-center">
                                     <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-1.5 text-emerald-500 dark:text-emerald-400" fill="none"
+                                        class="h-4 w-4 mr-1.5 text-purple-500 dark:text-purple-400" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                     </svg>
-                                    Total Debit
-                                </div>
-                            </th>
-                            <th scope="col"
-                                class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
-                                <div class="flex items-center justify-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="h-4 w-4 mr-1.5 text-blue-500 dark:text-blue-400" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 12H4" />
-                                    </svg>
-                                    Total Kredit
+                                    Total & Status
                                 </div>
                             </th>
                             <th scope="col"
@@ -391,17 +414,289 @@
         </div>
     </div>
 
+    {{-- Custom Delete Confirmation Modal --}}
+    <div id="deleteModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {{-- Background overlay --}}
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75 dark:bg-gray-900"></div>
+            </div>
+
+            {{-- Modal panel --}}
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                Konfirmasi Hapus Jurnal
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400" id="modal-message">
+                                    <!-- Dynamic message will be inserted here -->
+                                </p>
+                                <div
+                                    class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md border border-yellow-200 dark:border-yellow-800">
+                                    <div class="flex">
+                                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd"
+                                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                clip-rule="evenodd" />
+                                        </svg>
+                                        <div class="ml-3">
+                                            <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                                                <strong>Perhatian:</strong> Jika jurnal sudah diposting, sistem akan
+                                                otomatis membatalkan posting terlebih dahulu untuk memulihkan saldo kas
+                                                dan rekening bank, kemudian menghapus seluruh entri jurnal.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmDeleteBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Ya, Hapus Jurnal
+                    </button>
+                    <button type="button" id="cancelDeleteBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Post/Unpost Confirmation Modal --}}
+    <div id="postModal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            {{-- Background overlay --}}
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75 dark:bg-gray-900"></div>
+            </div>
+
+            {{-- Modal panel --}}
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div id="postModalIcon"
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10">
+                            <!-- Icon will be set dynamically -->
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                                id="postModalTitle">
+                                <!-- Title will be set dynamically -->
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400" id="postModalMessage">
+                                    <!-- Dynamic message will be inserted here -->
+                                </p>
+                                <div id="postModalWarning" class="mt-3 p-3 rounded-md border">
+                                    <!-- Warning content will be set dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="confirmPostBtn"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        <!-- Button text will be set dynamically -->
+                    </button>
+                    <button type="button" id="cancelPostBtn"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let currentSort = '{{ request('sort', 'tanggal') }}';
         let currentDirection = '{{ request('direction', 'desc') }}';
         let loading = false;
+        let currentDeleteId = null; // Store current delete ID for modal
+        let currentPostForm = null; // Store current post/unpost form for modal
 
         // Initialize table content
         document.addEventListener('DOMContentLoaded', function() {
             initializeTable();
             setupPaginationListeners();
+            setupModalEventListeners();
+            setupPostModalEventListeners();
         });
+
+        // Use event delegation for delete buttons - this works even after AJAX reload
+        document.addEventListener('click', function(e) {
+            const deleteButton = e.target.closest('.btn-delete, [data-delete-id]');
+            if (deleteButton) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const id = deleteButton.getAttribute('data-delete-id');
+                const noReferensi = deleteButton.getAttribute('data-no-referensi') || 'N/A';
+                const tanggal = deleteButton.getAttribute('data-tanggal') || 'N/A';
+
+                // console.log('Delete button clicked for ID:', id);
+                showDeleteModal(id, noReferensi, tanggal);
+            }
+        });
+
+        function setupModalEventListeners() {
+            // Modal confirm button
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                if (currentDeleteId) {
+                    // console.log('Confirm delete clicked for ID:', currentDeleteId);
+                    executeDelete(currentDeleteId);
+                } else {
+                    // console.error('No currentDeleteId set');
+                }
+                hideDeleteModal();
+            });
+
+            // Modal cancel button
+            document.getElementById('cancelDeleteBtn').addEventListener('click', function() {
+                // console.log('Delete cancelled');
+                hideDeleteModal();
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('deleteModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    // console.log('Modal closed by clicking outside');
+                    hideDeleteModal();
+                }
+            });
+
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !document.getElementById('deleteModal').classList.contains(
+                        'hidden')) {
+                    // console.log('Modal closed with Escape key');
+                    hideDeleteModal();
+                }
+            });
+        }
+
+        function showDeleteModal(id, noReferensi = 'N/A', tanggal = 'N/A') {
+            currentDeleteId = id;
+
+            // Update modal message with detailed information
+            const modal = document.getElementById('deleteModal');
+            const message = document.getElementById('modal-message');
+            message.innerHTML = `
+                <div class="space-y-2">
+                    <p>Apakah Anda yakin ingin menghapus jurnal berikut?</p>
+                    <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md text-sm">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><strong>ID:</strong> ${id}</div>
+                            <div><strong>Tanggal:</strong> ${tanggal}</div>
+                            <div class="col-span-2"><strong>No. Referensi:</strong> ${noReferensi}</div>
+                        </div>
+                    </div>
+                    <p class="text-red-600 dark:text-red-400 font-medium">Tindakan ini tidak dapat dibatalkan!</p>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+            // Focus on cancel button for accessibility
+            document.getElementById('cancelDeleteBtn').focus();
+        }
+
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore scrolling
+            currentDeleteId = null;
+
+            // Reset confirm button state
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = 'Ya, Hapus Jurnal';
+        }
+
+        function executeDelete(id) {
+            // console.log('Attempting to delete journal with ID:', id);
+
+            // First try to find the form
+            const form = document.getElementById('delete-form-' + id);
+
+            if (form) {
+                // console.log('Form found, submitting...');
+
+                // Disable the confirm button to prevent double submission
+                const confirmBtn = document.getElementById('confirmDeleteBtn');
+                const originalText = confirmBtn.textContent;
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Menghapus...';
+
+                // Submit the form
+                form.submit();
+            } else {
+                console.error('Form not found with id: delete-form-' + id);
+
+                // Debug: List all delete forms that exist
+                const allForms = document.querySelectorAll('form[id^="delete-form-"]');
+                // console.log('Available delete forms:', Array.from(allForms).map(f => f.id));
+
+                // Try alternative method: create and submit form dynamically
+                // console.log('Trying alternative method: creating form dynamically');
+
+                const dynamicForm = document.createElement('form');
+                dynamicForm.method = 'POST';
+
+                // Build the URL manually using the current page URL
+                const baseUrl = window.location.origin + '/keuangan/jurnal-umum/' + id;
+                dynamicForm.action = baseUrl;
+
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                dynamicForm.appendChild(csrfInput);
+
+                // Add method field for DELETE
+                const methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                methodInput.value = 'DELETE';
+                dynamicForm.appendChild(methodInput);
+
+                // Add to document and submit
+                document.body.appendChild(dynamicForm);
+                dynamicForm.submit();
+
+                // console.log('Dynamic form created and submitted');
+            }
+        }
+
+        // Legacy function for backward compatibility (not used anymore)
+        function confirmDelete(id) {
+            showDeleteModal(id);
+        }
 
         function initializeTable() {
             const tableContainer = document.getElementById('table-container');
@@ -450,20 +745,28 @@
                                     </button>
                                 </div>
                             </th>
-                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
-                                <div class="flex items-center justify-end">
+                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
+                                <div class="flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-emerald-500 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
-                                    Total Debit
+                                    Akun Debit
                                 </div>
                             </th>
-                            <th scope="col" class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
-                                <div class="flex items-center justify-end">
+                            <th scope="col" class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
+                                <div class="flex items-center">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-blue-500 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
                                     </svg>
-                                    Total Kredit
+                                    Akun Kredit
+                                </div>
+                            </th>
+                            <th scope="col" class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
+                                <div class="flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-purple-500 dark:text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    Total & Status
                                 </div>
                             </th>
                             <th scope="col" class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 dark:text-gray-200 uppercase tracking-wider">
@@ -510,7 +813,23 @@
                 currentDirection = 'desc';
             }
 
-            loadData();
+            // Get current filter parameters from the form
+            const form = document.getElementById('filterForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams();
+
+            for (let [key, value] of formData.entries()) {
+                if (value) {
+                    params.append(key, value);
+                }
+            }
+
+            // Add sort parameters
+            params.set('sort', currentSort);
+            params.set('direction', currentDirection);
+
+            // Reload the page with new sort parameters
+            window.location.search = params.toString();
         }
 
         function loadData(url = null) {
@@ -572,6 +891,10 @@
             // Update total count
             const totalCount = document.getElementById('total-count');
             totalCount.textContent = `${data.total} entri jurnal`;
+
+            // Debug: Log delete buttons after update
+            // console.log('Table updated. Delete buttons found:', document.querySelectorAll('.btn-delete, [data-delete-id]')
+            //     .length);
         }
 
         function updatePagination(data) {
@@ -617,14 +940,6 @@
             loadData();
         });
 
-        function confirmDelete(id) {
-            if (confirm(
-                    'Apakah Anda yakin ingin menghapus jurnal ini? Tindakan ini akan menghapus seluruh entri jurnal dengan nomor referensi yang sama dan memulihkan saldo kas dan rekening bank yang terkait.'
-                )) {
-                document.getElementById('delete-form-' + id).submit();
-            }
-        }
-
         function setQuickPeriod(period) {
             const today = new Date();
             let startDate, endDate;
@@ -645,17 +960,282 @@
 
             document.getElementById('start_date').value = startDate;
             document.getElementById('end_date').value = endDate;
+            // Reset other filters when using quick period
+            document.getElementById('periode_id').selectedIndex = 0;
             loadData();
         }
 
         function resetFilters() {
             document.getElementById('start_date').value = '';
             document.getElementById('end_date').value = '';
+            document.getElementById('periode_id').selectedIndex = 0;
             document.getElementById('akun_id').selectedIndex = 0;
             document.getElementById('no_referensi').value = '';
+            document.getElementById('status_posting').selectedIndex = 0;
             currentSort = 'tanggal';
             currentDirection = 'desc';
             loadData();
+        }
+
+        // Auto-fill dates when period is selected
+        document.getElementById('periode_id').addEventListener('change', function() {
+            if (this.value) {
+                // Clear date inputs when period is selected
+                document.getElementById('start_date').value = '';
+                document.getElementById('end_date').value = '';
+                loadData();
+            }
+        });
+
+        // Clear period when dates are manually set
+        document.getElementById('start_date').addEventListener('change', function() {
+            if (this.value || document.getElementById('end_date').value) {
+                document.getElementById('periode_id').selectedIndex = 0;
+            }
+        });
+
+        document.getElementById('end_date').addEventListener('change', function() {
+            if (this.value || document.getElementById('start_date').value) {
+                document.getElementById('periode_id').selectedIndex = 0;
+            }
+        });
+
+        // Handle browser back/forward button using pageshow event for bfcache compatibility
+        window.addEventListener('pageshow', function(event) {
+            // The pageshow event is fired every time the page is displayed.
+            // The event.persisted property is false on initial load, and true if the page is from the bfcache.
+            // If the page is restored from the back-forward cache, we need to reload it to
+            // ensure we get the correct HTML content instead of a stale JSON response.
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+
+        // Post/Unpost modal functionality
+        // Use event delegation for post/unpost buttons
+        document.addEventListener('click', function(e) {
+            const postButton = e.target.closest('.post-unpost-btn');
+            if (postButton) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const action = postButton.getAttribute('data-action');
+                const noReferensi = postButton.getAttribute('data-no-referensi') || 'N/A';
+                const formAction = postButton.getAttribute('data-form-action');
+
+
+                // Validate required data
+                if (!action || !formAction) {
+                    console.error('Missing required data for post/unpost action:', {
+                        action,
+                        formAction
+                    });
+                    return;
+                }
+
+                // Create a form for submission
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = formAction;
+
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = '{{ csrf_token() }}';
+                form.appendChild(csrfInput);
+
+                // Add no_referensi
+                const noRefInput = document.createElement('input');
+                noRefInput.type = 'hidden';
+                noRefInput.name = 'no_referensi';
+                noRefInput.value = noReferensi;
+                form.appendChild(noRefInput);
+
+                // Add form to body temporarily (required for submission)
+                document.body.appendChild(form);
+                form.style.display = 'none';
+
+                // console.log('Form created successfully, showing modal'); // Debug log
+                showPostModal(action, form, noReferensi);
+            }
+        });
+
+        function setupPostModalEventListeners() {
+            document.getElementById('confirmPostBtn').addEventListener('click', function() {
+                if (currentPostForm) {
+                    // console.log('Submitting post form'); // Debug log
+
+                    // Disable the confirm button to prevent double submission
+                    const confirmBtn = document.getElementById('confirmPostBtn');
+                    const originalText = confirmBtn.textContent;
+                    confirmBtn.disabled = true;
+                    confirmBtn.textContent = 'Memproses...';
+
+                    currentPostForm.submit();
+
+                    // Clean up the form after submission
+                    setTimeout(() => {
+                        if (currentPostForm && currentPostForm.parentNode) {
+                            currentPostForm.parentNode.removeChild(currentPostForm);
+                        }
+                        closePostModal();
+                    }, 100);
+                } else {
+                    console.error('No currentPostForm set');
+                    closePostModal();
+                }
+            });
+
+            document.getElementById('cancelPostBtn').addEventListener('click', function() {
+                // console.log('Post/unpost cancelled');
+                closePostModal();
+            });
+
+            document.getElementById('postModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    // console.log('Modal closed by clicking outside');
+                    closePostModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && !document.getElementById('postModal').classList.contains(
+                        'hidden')) {
+                    // console.log('Modal closed with Escape key');
+                    closePostModal();
+                }
+            });
+        }
+
+        function showPostModal(action, form, noReferensi = 'N/A') {
+
+
+            currentPostForm = form;
+
+            const modal = document.getElementById('postModal');
+            const title = document.getElementById('postModalTitle');
+            const message = document.getElementById('postModalMessage');
+            const warning = document.getElementById('postModalWarning');
+            const icon = document.getElementById('postModalIcon');
+            const confirmBtn = document.getElementById('confirmPostBtn');
+
+            if (!modal || !title || !message || !warning || !icon || !confirmBtn) {
+                console.error('Modal elements not found:', {
+                    modal,
+                    title,
+                    message,
+                    warning,
+                    icon,
+                    confirmBtn
+                });
+                return;
+            }
+
+            if (action === 'post') {
+                // Post configuration
+                title.textContent = 'Konfirmasi Posting Jurnal';
+
+                message.innerHTML = `
+                    <div class="space-y-2">
+                        <p>Apakah Anda yakin ingin memposting jurnal berikut?</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md text-sm">
+                            <div><strong>No. Referensi:</strong> ${noReferensi}</div>
+                        </div>
+                    </div>
+                `;
+
+                icon.className =
+                    'mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 sm:mx-0 sm:h-10 sm:w-10';
+                icon.innerHTML = `
+                    <svg class="h-6 w-6 text-green-600 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                `;
+
+                warning.className =
+                    'mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-md border border-green-200 dark:border-green-800';
+                warning.innerHTML = `
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-green-700 dark:text-green-300">
+                                <strong>Informasi:</strong> Setelah diposting, jurnal ini akan mempengaruhi saldo kas/bank dan tidak dapat diedit lagi. Pastikan semua entri sudah benar sebelum melanjutkan.
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                confirmBtn.className =
+                    'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 hover:bg-green-700 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200';
+                confirmBtn.textContent = 'Ya, Posting Jurnal';
+
+            } else {
+                // Unpost configuration
+                title.textContent = 'Konfirmasi Pembatalan Posting';
+
+                message.innerHTML = `
+                    <div class="space-y-2">
+                        <p>Apakah Anda yakin ingin membatalkan posting jurnal berikut?</p>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-md text-sm">
+                            <div><strong>No. Referensi:</strong> ${noReferensi}</div>
+                        </div>
+                    </div>
+                `;
+
+                icon.className =
+                    'mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/30 sm:mx-0 sm:h-10 sm:w-10';
+                icon.innerHTML = `
+                    <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                    </svg>
+                `;
+
+                warning.className =
+                    'mt-3 p-3 bg-orange-50 dark:bg-orange-900/20 rounded-md border border-orange-200 dark:border-orange-800';
+                warning.innerHTML = `
+                    <div class="flex">
+                        <svg class="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                        <div class="ml-3">
+                            <p class="text-sm text-orange-700 dark:text-orange-300">
+                                <strong>Perhatian:</strong> Pembatalan posting akan membalik perubahan saldo kas/bank yang telah dilakukan. Jurnal akan kembali ke status draft dan dapat diedit kembali.
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                confirmBtn.className =
+                    'w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-600 hover:bg-orange-700 text-base font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition-colors duration-200';
+                confirmBtn.textContent = 'Ya, Unpost';
+            }
+
+            // Show modal
+            // console.log('Showing modal...'); // Debug log
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            confirmBtn.focus();
+            // console.log('Modal should be visible now'); // Debug log
+        }
+
+        function closePostModal() {
+            const modal = document.getElementById('postModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore scrolling
+
+            // Clean up the form if it exists
+            if (currentPostForm && currentPostForm.parentNode) {
+                currentPostForm.parentNode.removeChild(currentPostForm);
+            }
+            currentPostForm = null;
+
+            // Reset confirm button state
+            const confirmBtn = document.getElementById('confirmPostBtn');
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = confirmBtn.textContent.includes('Posting') ? 'Ya, Posting Jurnal' : 'Ya, Unpost';
         }
     </script>
 </x-app-layout>

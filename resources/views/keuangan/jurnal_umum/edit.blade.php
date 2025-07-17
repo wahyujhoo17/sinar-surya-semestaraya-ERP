@@ -63,7 +63,7 @@
                                     Tanggal <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" name="tanggal" id="tanggal"
-                                    value="{{ old('tanggal', $jurnal->tanggal) }}"
+                                    value="{{ old('tanggal', \Illuminate\Support\Carbon::parse($jurnal->tanggal)->format('Y-m-d')) }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                                     required>
                             </div>
@@ -275,7 +275,7 @@
                 const deleteButtons = document.querySelectorAll('.deleteRow');
                 deleteButtons.forEach(button => {
                     button.removeEventListener('click',
-                    deleteRowHandler); // Remove existing listener to avoid duplicates
+                        deleteRowHandler); // Remove existing listener to avoid duplicates
                     button.addEventListener('click', deleteRowHandler);
                 });
             }
@@ -298,7 +298,7 @@
                 const inputs = document.querySelectorAll('.debit-input, .kredit-input');
                 inputs.forEach(input => {
                     input.removeEventListener('input',
-                    inputHandler); // Remove existing listener to avoid duplicates
+                        inputHandler); // Remove existing listener to avoid duplicates
                     input.addEventListener('input', inputHandler);
                 });
             }

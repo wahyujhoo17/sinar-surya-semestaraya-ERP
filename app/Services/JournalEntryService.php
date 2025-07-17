@@ -54,6 +54,7 @@ class JournalEntryService
                     'debit' => $entry['debit'] ?? 0,
                     'kredit' => $entry['kredit'] ?? 0,
                     'keterangan' => $keterangan,
+                    'jenis_jurnal' => 'umum',
                     'user_id' => $userId,
                 ];
 

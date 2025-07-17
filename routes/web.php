@@ -37,6 +37,7 @@ use App\Http\Controllers\Keuangan\PembayaranPiutangController;
 use App\Http\Controllers\Keuangan\ManagementPajakController;
 use App\Http\Controllers\Keuangan\RekonsiliasiBankController;
 use App\Http\Controllers\Keuangan\BukuBesarController;
+use App\Http\Controllers\Keuangan\JurnalPenyesuaianController;
 use App\Http\Controllers\Inventaris\TransferGudangController;
 use App\Http\Controllers\Inventaris\PenyesuaianStokController;
 use App\Http\Controllers\Produksi\BOMController;
@@ -188,9 +189,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:kategori_produk.view')->group(function () {
             Route::get('kategori-produk/{kategoriProduk}/get', [KategoriProdukController::class, 'getKategori'])->name('kategori-produk.get');
         });
-        Route::resource('kategori-produk', KategoriProdukController::class)->parameters([
-            'kategori-produk' => 'kategoriProduk' // Ensure parameter name matches controller type hint
-        ]);
+        Route::resource('kategori-produk', KategoriProdukController::class)->parameters([]);
 
         // CUSTOMER - with permission middleware
         Route::middleware('permission:pelanggan.delete')->group(function () {
@@ -606,7 +605,31 @@ Route::middleware(['auth'])->group(function () {
 
         // Jurnal Umum Routes
         Route::get('jurnal-umum/export-excel', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'exportExcel'])->name('jurnal-umum.export-excel');
+        Route::post('jurnal-umum/post', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'post'])->name('jurnal-umum.post');
+        Route::post('jurnal-umum/unpost', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'unpost'])->name('jurnal-umum.unpost');
         Route::resource('jurnal-umum', App\Http\Controllers\Keuangan\JurnalUmumController::class);
+
+        // Jurnal Penyesuaian Routes
+        Route::post('jurnal-penyesuaian/post', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'post'])->name('jurnal-penyesuaian.post');
+        Route::post('jurnal-penyesuaian/unpost', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'unpost'])->name('jurnal-penyesuaian.unpost');
+        Route::get('jurnal-penyesuaian', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'index'])->name('jurnal-penyesuaian.index');
+        Route::get('jurnal-penyesuaian/create', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'create'])->name('jurnal-penyesuaian.create');
+        Route::post('jurnal-penyesuaian', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'store'])->name('jurnal-penyesuaian.store');
+        Route::get('jurnal-penyesuaian/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'show'])->name('jurnal-penyesuaian.show');
+        Route::get('jurnal-penyesuaian/{no_referensi}/edit', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'edit'])->name('jurnal-penyesuaian.edit');
+        Route::put('jurnal-penyesuaian/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'update'])->name('jurnal-penyesuaian.update');
+        Route::delete('jurnal-penyesuaian/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'destroy'])->name('jurnal-penyesuaian.destroy');
+
+        // Jurnal Penutup Routes
+        Route::get('jurnal-penutup', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'index'])->name('jurnal-penutup.index');
+        Route::get('jurnal-penutup/create', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'create'])->name('jurnal-penutup.create');
+        Route::get('jurnal-penutup/auto-preview', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'getAutoClosingPreviewData'])->name('jurnal-penutup.auto-preview');
+        Route::post('jurnal-penutup', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'store'])->name('jurnal-penutup.store');
+        Route::get('jurnal-penutup/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'show'])->name('jurnal-penutup.show');
+        Route::get('jurnal-penutup/{no_referensi}/edit', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'edit'])->name('jurnal-penutup.edit');
+        Route::put('jurnal-penutup/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'update'])->name('jurnal-penutup.update');
+        Route::delete('jurnal-penutup/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'destroy'])->name('jurnal-penutup.destroy');
+        Route::post('jurnal-penutup/{no_referensi}/toggle-post', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'togglePost'])->name('jurnal-penutup.toggle-post');
 
         // Buku Besar Routes
         Route::get('buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');

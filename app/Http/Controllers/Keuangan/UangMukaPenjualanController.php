@@ -13,6 +13,8 @@ use App\Models\RekeningBank;
 use App\Models\LogAktivitas;
 use App\Models\JurnalUmum;
 use App\Models\AkunAkuntansi;
+use App\Models\TransaksiKas;
+use App\Models\TransaksiBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -162,19 +164,8 @@ class UangMukaPenjualanController extends Controller
             $uangMuka->keterangan = $request->keterangan;
             $uangMuka->save();
 
-            // Buat jurnal entry untuk penerimaan uang muka
+            // Buat jurnal entry untuk penerimaan uang muka (langsung posted)
             $this->createJournalEntry($uangMuka);
-
-            // Update saldo kas/bank
-            if ($request->metode_pembayaran === 'kas') {
-                $kas = Kas::find($request->kas_id);
-                $kas->saldo += $request->jumlah;
-                $kas->save();
-            } else {
-                $bank = RekeningBank::find($request->rekening_bank_id);
-                $bank->saldo += $request->jumlah;
-                $bank->save();
-            }
 
             // Log aktivitas
             LogAktivitas::create([
@@ -563,11 +554,15 @@ class UangMukaPenjualanController extends Controller
             'akun_id' => $akunKasBankId,
             'debit' => $uangMuka->jumlah,
             'kredit' => 0,
-            'keterangan' => 'Penerimaan uang muka dari customer: ' . ($uangMuka->customer->nama ?? $uangMuka->customer->company),
+            'keterangan' => 'Penerimaan uang muka dari customer: ' . ($uangMuka->customer->company ?? $uangMuka->customer->nama),
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_penjualan',
             'ref_type' => 'App\\Models\\UangMukaPenjualan',
             'ref_id' => $uangMuka->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Jurnal otomatis langsung diposting
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
 
         // Buat jurnal kredit hutang uang muka
@@ -577,12 +572,57 @@ class UangMukaPenjualanController extends Controller
             'akun_id' => $akunUangMukaPenjualan->id,
             'debit' => 0,
             'kredit' => $uangMuka->jumlah,
-            'keterangan' => 'Hutang uang muka penjualan dari customer: ' . ($uangMuka->customer->nama ?? $uangMuka->customer->company),
+            'keterangan' => 'Hutang uang muka penjualan dari customer: ' . ($uangMuka->customer->company ?? $uangMuka->customer->nama),
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_penjualan',
             'ref_type' => 'App\\Models\\UangMukaPenjualan',
             'ref_id' => $uangMuka->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Jurnal otomatis langsung diposting
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
+
+        // Update saldo kas/bank dan catat transaksi karena jurnal sudah posted
+        if ($uangMuka->metode_pembayaran === 'kas') {
+            $kas = Kas::find($uangMuka->kas_id);
+            if ($kas) {
+                $kas->saldo += $uangMuka->jumlah;
+                $kas->save();
+
+                // Catat transaksi kas untuk audit trail
+                TransaksiKas::create([
+                    'tanggal' => $uangMuka->tanggal,
+                    'kas_id' => $uangMuka->kas_id,
+                    'jenis' => 'masuk',
+                    'jumlah' => $uangMuka->jumlah,
+                    'keterangan' => 'Penerimaan uang muka penjualan - ' . ($uangMuka->customer->company ?? $uangMuka->customer->nama),
+                    'no_bukti' => 'DP-' . $uangMuka->nomor,
+                    'related_id' => $uangMuka->id,
+                    'related_type' => 'App\\Models\\UangMukaPenjualan',
+                    'user_id' => Auth::id()
+                ]);
+            }
+        } else {
+            $bank = RekeningBank::find($uangMuka->rekening_bank_id);
+            if ($bank) {
+                $bank->saldo += $uangMuka->jumlah;
+                $bank->save();
+
+                // Catat transaksi bank untuk audit trail
+                TransaksiBank::create([
+                    'tanggal' => $uangMuka->tanggal,
+                    'rekening_id' => $uangMuka->rekening_bank_id,
+                    'jenis' => 'masuk',
+                    'jumlah' => $uangMuka->jumlah,
+                    'keterangan' => 'Penerimaan uang muka penjualan - ' . ($uangMuka->customer->company ?? $uangMuka->customer->nama),
+                    'no_referensi' => 'DP-' . $uangMuka->nomor,
+                    'related_id' => $uangMuka->id,
+                    'related_type' => 'App\\Models\\UangMukaPenjualan',
+                    'user_id' => Auth::id()
+                ]);
+            }
+        }
     }
 
     /**
@@ -621,10 +661,14 @@ class UangMukaPenjualanController extends Controller
             'debit' => $aplikasi->jumlah_aplikasi,
             'kredit' => 0,
             'keterangan' => 'Aplikasi uang muka ke invoice: ' . $aplikasi->invoice->nomor,
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_aplikasi',
             'ref_type' => 'App\Models\UangMukaAplikasi',
             'ref_id' => $aplikasi->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Aplikasi uang muka tidak mempengaruhi saldo kas/bank
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
 
         // Buat jurnal kredit piutang usaha
@@ -635,10 +679,14 @@ class UangMukaPenjualanController extends Controller
             'debit' => 0,
             'kredit' => $aplikasi->jumlah_aplikasi,
             'keterangan' => 'Pengurangan piutang karena aplikasi uang muka',
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_aplikasi',
             'ref_type' => 'App\Models\UangMukaAplikasi',
             'ref_id' => $aplikasi->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Aplikasi uang muka tidak mempengaruhi saldo kas/bank
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
     }
 

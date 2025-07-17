@@ -718,10 +718,14 @@ class InvoiceController extends Controller
             'debit' => $aplikasi->jumlah_aplikasi,
             'kredit' => 0,
             'keterangan' => 'Aplikasi uang muka ke invoice: ' . $aplikasi->invoice->nomor,
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_aplikasi',
-            'ref_type' => 'App\\Models\\UangMukaAplikasi',
+            'ref_type' => 'App\Models\UangMukaAplikasi',
             'ref_id' => $aplikasi->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Aplikasi uang muka tidak mempengaruhi saldo kas/bank
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
 
         // Buat jurnal kredit piutang usaha
@@ -732,10 +736,14 @@ class InvoiceController extends Controller
             'debit' => 0,
             'kredit' => $aplikasi->jumlah_aplikasi,
             'keterangan' => 'Pengurangan piutang karena aplikasi uang muka',
+            'jenis_jurnal' => 'umum',
             'sumber' => 'uang_muka_aplikasi',
-            'ref_type' => 'App\\Models\\UangMukaAplikasi',
+            'ref_type' => 'App\Models\UangMukaAplikasi',
             'ref_id' => $aplikasi->id,
-            'user_id' => Auth::id()
+            'user_id' => Auth::id(),
+            'is_posted' => true, // Jurnal otomatis langsung diposting
+            'posted_at' => now(),
+            'posted_by' => Auth::id()
         ]);
     }
 

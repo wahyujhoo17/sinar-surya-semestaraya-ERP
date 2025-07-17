@@ -70,6 +70,24 @@
                         </select>
                     </div>
 
+                    {{-- Period Dropdown --}}
+                    <div class="flex-1 min-w-48">
+                        <label for="periode_id"
+                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Periode
+                            Akuntansi</label>
+                        <select name="periode_id" id="periode_id"
+                            class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                            <option value="">Pilih Periode (atau gunakan tanggal)</option>
+                            @foreach ($periodes as $periode)
+                                <option value="{{ $periode->id }}"
+                                    {{ request('periode_id') == $periode->id ? 'selected' : '' }}>
+                                    {{ $periode->nama }} ({{ $periode->tanggal_mulai->format('d/m/Y') }} -
+                                    {{ $periode->tanggal_akhir->format('d/m/Y') }})
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     {{-- Date Inputs --}}
                     <div>
                         <label for="tanggal_awal"
@@ -83,6 +101,16 @@
                             class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Sampai</label>
                         <input type="date" name="tanggal_akhir" id="tanggal_akhir" value="{{ $tanggalAkhir }}"
                             class="text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:ring-1">
+                    </div>
+
+                    {{-- Draft Journals Toggle --}}
+                    <div class="flex items-center gap-2">
+                        <label for="include_drafts" class="text-xs font-medium text-gray-600 dark:text-gray-400">
+                            Tampilkan Draft
+                        </label>
+                        <input type="checkbox" name="include_drafts" id="include_drafts" value="1"
+                            {{ request()->get('include_drafts', '0') == '1' ? 'checked' : '' }}
+                            class="rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
 
                     {{-- Action Buttons --}}

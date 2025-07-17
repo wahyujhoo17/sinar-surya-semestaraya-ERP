@@ -50,22 +50,37 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
     {
         $akun = AkunAkuntansi::findOrFail($this->akunId);
 
-        // Get opening balance (before start date)
+        // Get opening balance (before start date) - Include drafts temporarily
         $openingDebit = JurnalUmum::where('akun_id', $this->akunId)
-            ->where('tanggal', '<', $this->tanggalAwal)
-            ->sum('debit');
+            ->where('tanggal', '<', $this->tanggalAwal);
+
+        // TEMPORARY FIX: Include draft journals (remove after proper posting implementation)
+        // if (request()->get('only_posted', false)) {
+        //     $openingDebit->where('is_posted', true);
+        // }
+        $openingDebit = $openingDebit->sum('debit');
 
         $openingKredit = JurnalUmum::where('akun_id', $this->akunId)
-            ->where('tanggal', '<', $this->tanggalAwal)
-            ->sum('kredit');
+            ->where('tanggal', '<', $this->tanggalAwal);
+
+        // TEMPORARY FIX: Include draft journals (remove after proper posting implementation)
+        // if (request()->get('only_posted', false)) {
+        //     $openingKredit->where('is_posted', true);
+        // }
+        $openingKredit = $openingKredit->sum('kredit');
 
         // Calculate opening balance based on account category
         $openingBalance = $this->calculateBalance($akun->kategori, $openingDebit, $openingKredit);
 
-        // Get transactions for the period
+        // Get transactions for the period - Include drafts temporarily
         $transaksi = JurnalUmum::where('akun_id', $this->akunId)
-            ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
-            ->orderBy('tanggal')
+            ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
+
+        // TEMPORARY FIX: Include draft journals (remove after proper posting implementation)
+        // if (request()->get('only_posted', false)) {
+        //     $transaksi->where('is_posted', true);
+        // }
+        $transaksi = $transaksi->orderBy('tanggal')
             ->orderBy('created_at')
             ->get();
 

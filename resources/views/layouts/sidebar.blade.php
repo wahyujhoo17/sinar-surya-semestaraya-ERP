@@ -502,10 +502,21 @@
                                     Umum</span></a>
                         @endif
                         @if (auth()->user()->hasPermission('jurnal_umum.view'))
+                            <a href="{{ route('keuangan.jurnal-penyesuaian.index') }}"
+                                class="{{ request()->is('keuangan/jurnal-penyesuaian') || request()->is('keuangan/jurnal-penyesuaian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Jurnal
+                                    Penyesuaian</span></a>
+                        @endif
+                        @if (auth()->user()->hasPermission('jurnal_umum.view'))
+                            <a href="{{ route('keuangan.jurnal-penutup.index') }}"
+                                class="{{ request()->is('keuangan/jurnal-penutup') || request()->is('keuangan/jurnal-penutup/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Jurnal
+                                    Penutup</span></a>
+                        @endif
+                        @if (auth()->user()->hasPermission('jurnal_umum.view'))
                             <a href="{{ route('keuangan.buku-besar.index') }}"
                                 class="{{ request()->is('keuangan/buku-besar') || request()->is('keuangan/buku-besar/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Buku
                                     Besar (General Ledger)</span></a>
                         @endif
+
                         @if (auth()->user()->hasPermission('piutang_usaha.view'))
                             <a href="/keuangan/piutang-usaha"
                                 class="{{ request()->is('keuangan/piutang-usaha') || request()->is('keuangan/piutang-usaha/*') || request()->is('keuangan/pembayaran-piutang/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Piutang
