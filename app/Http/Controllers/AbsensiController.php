@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Exports\AbsensiExport;
+use App\Exports\AbsensiTemplateExport;
+use App\Imports\AbsensiImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -32,6 +34,14 @@ class AbsensiController extends Controller
                 ->join('karyawan', 'absensi.karyawan_id', '=', 'karyawan.id')
                 ->leftJoin('department', 'karyawan.department_id', '=', 'department.id')
                 ->select('absensi.*', 'karyawan.nama_lengkap as nama_karyawan', 'department.nama as nama_department');
+
+            // Default ke hari ini jika tidak ada filter tanggal
+            if (!$request->has('tanggal_mulai') || !$request->tanggal_mulai) {
+                $request->merge(['tanggal_mulai' => now()->toDateString()]);
+            }
+            if (!$request->has('tanggal_akhir') || !$request->tanggal_akhir) {
+                $request->merge(['tanggal_akhir' => now()->toDateString()]);
+            }
 
             // Filter berdasarkan tanggal
             if ($request->has('tanggal_mulai') && $request->tanggal_mulai) {
@@ -83,7 +93,7 @@ class AbsensiController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in getAbsensiData: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Error in getAbsensiData: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Terjadi kesalahan saat memuat data',
                 'message' => $e->getMessage()
@@ -120,7 +130,29 @@ class AbsensiController extends Controller
             ], 422);
         }
 
-        Absensi::create($request->all());
+        $data = $request->all();
+
+        // Cek keterlambatan jika status hadir dan ada jam masuk (skip jika jam masuk 00:00)
+        if ($request->status === 'hadir' && $request->jam_masuk && $request->jam_masuk !== '00:00') {
+            $jamMasuk = Carbon::createFromFormat('H:i', $request->jam_masuk);
+            $batasMasuk = Carbon::createFromFormat('H:i', '08:30');
+
+            if ($jamMasuk->gt($batasMasuk)) {
+                $menitTerlambat = $jamMasuk->diffInMinutes($batasMasuk);
+                $keteranganTerlambat = "Terlambat {$menitTerlambat} menit";
+
+                // Cek apakah keterangan ada dan tidak kosong (trim untuk menghilangkan spasi)
+                $keteranganExisting = trim($request->keterangan ?? '');
+
+                if (!empty($keteranganExisting)) {
+                    $data['keterangan'] = $keteranganExisting . '. ' . $keteranganTerlambat;
+                } else {
+                    $data['keterangan'] = $keteranganTerlambat;
+                }
+            }
+        }
+
+        Absensi::create($data);
 
         return response()->json([
             'success' => true,
@@ -168,7 +200,49 @@ class AbsensiController extends Controller
             ], 422);
         }
 
-        $absensi->update($request->all());
+        $data = $request->all();
+
+        // Cek keterlambatan jika status hadir dan ada jam masuk (skip jika jam masuk 00:00)
+        if ($request->status === 'hadir' && $request->jam_masuk && $request->jam_masuk !== '00:00') {
+            $jamMasuk = Carbon::createFromFormat('H:i', $request->jam_masuk);
+            $batasMasuk = Carbon::createFromFormat('H:i', '08:30');
+
+            if ($jamMasuk->gt($batasMasuk)) {
+                $menitTerlambat = $jamMasuk->diffInMinutes($batasMasuk);
+                $keteranganTerlambat = "Terlambat {$menitTerlambat} menit";
+
+                // Hapus keterangan terlambat lama jika ada
+                $keteranganBersih = $request->keterangan ?
+                    preg_replace('/\. ?Terlambat \d+ menit/', '', $request->keterangan) : '';
+                $keteranganBersih = preg_replace('/^Terlambat \d+ menit\.? ?/', '', $keteranganBersih);
+                $keteranganBersih = trim($keteranganBersih);
+
+                // Gabungkan dengan keterangan yang sudah ada (jika ada dan tidak kosong)
+                if (!empty($keteranganBersih)) {
+                    $data['keterangan'] = $keteranganBersih . '. ' . $keteranganTerlambat;
+                } else {
+                    $data['keterangan'] = $keteranganTerlambat;
+                }
+            } else {
+                // Jika tidak terlambat, hapus keterangan terlambat jika ada
+                if ($request->keterangan) {
+                    $keteranganBersih = preg_replace('/\. ?Terlambat \d+ menit/', '', $request->keterangan);
+                    $keteranganBersih = preg_replace('/^Terlambat \d+ menit\.? ?/', '', $keteranganBersih);
+                    $keteranganBersih = trim($keteranganBersih);
+                    $data['keterangan'] = $keteranganBersih;
+                }
+            }
+        } else if ($request->status === 'hadir' && $request->jam_masuk === '00:00') {
+            // Jika jam masuk adalah 00:00, hapus keterangan terlambat jika ada
+            if ($request->keterangan) {
+                $keteranganBersih = preg_replace('/\. ?Terlambat \d+ menit/', '', $request->keterangan);
+                $keteranganBersih = preg_replace('/^Terlambat \d+ menit\.? ?/', '', $keteranganBersih);
+                $keteranganBersih = trim($keteranganBersih);
+                $data['keterangan'] = $keteranganBersih;
+            }
+        }
+
+        $absensi->update($data);
 
         return response()->json([
             'success' => true,
@@ -234,54 +308,17 @@ class AbsensiController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:csv,txt|max:2048'
+            'file' => 'required|mimes:csv,txt,xlsx,xls|max:2048'
         ]);
 
         try {
             $file = $request->file('file');
-            $path = $file->getRealPath();
-            $data = array_map('str_getcsv', file($path));
-            $header = array_shift($data);
+            $import = new AbsensiImport();
 
-            $imported = 0;
-            $errors = [];
+            Excel::import($import, $file);
 
-            foreach ($data as $index => $row) {
-                if (count($row) < 4) continue; // Skip invalid rows
-
-                $rowData = array_combine($header, $row);
-
-                // Find karyawan by nama or nip
-                $karyawan = Karyawan::where('nama_lengkap', $rowData['nama_karyawan'] ?? '')
-                    ->orWhere('nip', $rowData['nip'] ?? '')
-                    ->first();
-
-                if (!$karyawan) {
-                    $errors[] = "Baris " . ($index + 2) . ": Karyawan tidak ditemukan";
-                    continue;
-                }
-
-                // Check if record already exists
-                $exists = Absensi::where('karyawan_id', $karyawan->id)
-                    ->whereDate('tanggal', $rowData['tanggal'] ?? '')
-                    ->exists();
-
-                if ($exists) {
-                    $errors[] = "Baris " . ($index + 2) . ": Data sudah ada";
-                    continue;
-                }
-
-                Absensi::create([
-                    'karyawan_id' => $karyawan->id,
-                    'tanggal' => $rowData['tanggal'] ?? null,
-                    'jam_masuk' => $rowData['jam_masuk'] ?? null,
-                    'jam_keluar' => $rowData['jam_keluar'] ?? null,
-                    'status' => $rowData['status'] ?? 'hadir',
-                    'keterangan' => $rowData['keterangan'] ?? null
-                ]);
-
-                $imported++;
-            }
+            $imported = $import->getImported();
+            $errors = $import->getErrors();
 
             return response()->json([
                 'success' => true,
@@ -305,5 +342,66 @@ class AbsensiController extends Controller
             ->pluck('nama');
 
         return response()->json($departemen);
+    }
+
+    public function downloadTemplate()
+    {
+        // Get a few active employees for template
+        $karyawans = Karyawan::where('status', 'aktif')
+            ->with('department')
+            ->take(5)
+            ->get();
+
+        $templateData = [];
+        $today = date('Y-m-d');
+
+        foreach ($karyawans as $karyawan) {
+            $templateData[] = [
+                'nama_karyawan' => $karyawan->nama_lengkap,
+                'tanggal' => $today,
+                'jam_masuk' => '08:00',
+                'jam_keluar' => '17:00',
+                'status' => 'hadir',
+                'keterangan' => ''
+            ];
+        }
+
+        // Add some example variations
+        if (count($templateData) > 1) {
+            $templateData[1]['jam_masuk'] = '08:35';
+            $templateData[1]['keterangan'] = ''; // Kosong untuk demo auto-fill keterlambatan
+        }
+
+        if (count($templateData) > 2) {
+            $templateData[2]['jam_masuk'] = '';
+            $templateData[2]['jam_keluar'] = '';
+            $templateData[2]['status'] = 'sakit';
+            $templateData[2]['keterangan'] = 'Sakit flu';
+        }
+
+        if (count($templateData) > 3) {
+            $templateData[3]['jam_masuk'] = '09:15';
+            $templateData[3]['keterangan'] = 'Ada urusan penting'; // Akan ditambah otomatis: "Ada urusan penting. Terlambat 45 menit"
+        }
+
+        if (count($templateData) > 4) {
+            $templateData[4]['jam_masuk'] = '00:00';
+            $templateData[4]['jam_keluar'] = '00:00';
+            $templateData[4]['keterangan'] = 'Jam 00:00 tidak akan dianggap sebagai jam masuk/keluar';
+        }
+
+        // Add example with different time formats if there are more employees
+        if (count($karyawans) > 5) {
+            $templateData[] = [
+                'nama_karyawan' => 'Contoh Format Waktu',
+                'tanggal' => $today,
+                'jam_masuk' => '08.45.00',
+                'jam_keluar' => '17.30',
+                'status' => 'hadir',
+                'keterangan' => 'Format dengan titik dan detik (akan dinormalisasi)'
+            ];
+        }
+
+        return Excel::download(new AbsensiTemplateExport($templateData), 'template-import-absensi.xlsx');
     }
 }

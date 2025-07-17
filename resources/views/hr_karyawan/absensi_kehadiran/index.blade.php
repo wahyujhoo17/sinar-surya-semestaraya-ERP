@@ -9,7 +9,7 @@
         </div>
 
         {{-- Dashboard Cards --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8" x-data="attendanceStats">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 mb-8" x-data="attendanceStats">
             {{-- Total Hadir Hari Ini --}}
             <div
                 class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:-translate-y-1">
@@ -36,6 +36,31 @@
                 </div>
             </div>
 
+            {{-- Terlambat Hari Ini --}}
+            <div
+                class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:-translate-y-1">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 rounded-lg bg-orange-100 dark:bg-orange-900/30 p-3.5">
+                            <svg class="h-7 w-7 text-orange-500 dark:text-orange-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Terlambat Hari Ini</p>
+                            <div class="mt-1 flex items-baseline">
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white"
+                                    x-text="stats.terlambat">-</p>
+                                <p class="ml-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">orang</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Sakit Hari Ini --}}
             <div
                 class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:-translate-y-1">
@@ -52,8 +77,8 @@
                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 Sakit Hari Ini</p>
                             <div class="mt-1 flex items-baseline">
-                                <p class="text-2xl font-semibold text-gray-900 dark:text-white"
-                                    x-text="stats.terlambat">-</p>
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="stats.sakit">-
+                                </p>
                                 <p class="ml-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">orang</p>
                             </div>
                         </div>
@@ -126,8 +151,10 @@
                                 Tanggal</label>
                             <div class="grid grid-cols-2 gap-2">
                                 <input type="date" x-model="filters.tanggal_mulai" @change="applyFilters()"
+                                    value="{{ date('Y-m-d') }}"
                                     class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                                 <input type="date" x-model="filters.tanggal_akhir" @change="applyFilters()"
+                                    value="{{ date('Y-m-d') }}"
                                     class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
                             </div>
                         </div>
@@ -303,7 +330,7 @@
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             <template x-for="item in data" :key="item.id">
-                                <tr :class="getRowClass(item.status)"
+                                <tr :class="getRowClass(item.status, item.keterangan)"
                                     class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-150">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white"
                                         x-text="formatDate(item.tanggal)"></td>
@@ -322,8 +349,11 @@
                                             class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
                                             x-text="getStatusLabel(item.status)"></span>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400"
-                                        x-text="item.keterangan || '-'"></td>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        <span x-text="item.keterangan || '-'"
+                                            :class="item.keterangan && item.keterangan.toLowerCase().includes('terlambat') ?
+                                                'text-orange-600 dark:text-orange-400 font-medium' : ''"></span>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end space-x-2">
                                             <button @click="editItem(item)"
@@ -428,6 +458,49 @@
         </div>
     </div>
 
+    {{-- Toast Notification --}}
+    <div x-data="toastNotification" x-show="show" x-transition:enter="transition ease-out duration-300"
+        x-transition:enter-start="opacity-0 transform translate-x-full"
+        x-transition:enter-end="opacity-100 transform translate-x-0"
+        x-transition:leave="transition ease-in duration-200"
+        x-transition:leave-start="opacity-100 transform translate-x-0"
+        x-transition:leave-end="opacity-0 transform translate-x-full"
+        class="fixed top-4 right-4 z-50 max-w-sm w-full">
+        <div :class="type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'"
+            class="rounded-lg shadow-lg text-white p-4">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <svg x-show="type === 'success'" class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                        </path>
+                    </svg>
+                    <svg x-show="type === 'error'" class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <svg x-show="type === 'info'" class="h-5 w-5 text-white" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 w-0 flex-1">
+                    <p class="text-sm font-medium" x-text="message"></p>
+                </div>
+                <div class="ml-4 flex-shrink-0">
+                    <button @click="hide()" class="inline-flex text-white hover:text-gray-200 focus:outline-none">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Modals will be included here --}}
     @include('hr_karyawan.absensi_kehadiran.modals.create')
     @include('hr_karyawan.absensi_kehadiran.modals.edit')
@@ -520,17 +593,61 @@
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
             document.addEventListener('alpine:init', () => {
+                // Toast Notification Component
+                Alpine.data('toastNotification', () => ({
+                    show: false,
+                    type: 'success', // success, error, info
+                    message: '',
+                    timer: null,
+
+                    init() {
+                        this.$watch('show', (show) => {
+                            if (show && this.timer) {
+                                clearTimeout(this.timer);
+                                this.timer = setTimeout(() => {
+                                    this.hide();
+                                }, 5000);
+                            }
+                        });
+
+                        // Listen for global notification events
+                        window.addEventListener('show-notification', (event) => {
+                            this.showNotification(event.detail.message, event.detail.type ||
+                                'info');
+                        });
+                    },
+
+                    showNotification(message, type = 'info') {
+                        this.message = message;
+                        this.type = type;
+                        this.show = true;
+                    },
+
+                    hide() {
+                        this.show = false;
+                        if (this.timer) {
+                            clearTimeout(this.timer);
+                            this.timer = null;
+                        }
+                    }
+                }));
+
                 // Attendance Statistics Component
                 Alpine.data('attendanceStats', () => ({
                     stats: {
                         hadir: 0,
-                        terlambat: 0, // Will show "sakit" count
+                        terlambat: 0,
+                        sakit: 0,
                         alpha: 0,
                         izin_cuti: 0
                     },
 
                     init() {
                         this.loadStats();
+                        // Refresh stats when data changes
+                        window.addEventListener('data-updated', () => {
+                            this.loadStats();
+                        });
                     },
 
                     async loadStats() {
@@ -566,8 +683,12 @@
                             // Calculate stats from today's data
                             this.stats = {
                                 hadir: result.data.filter(item => item.status === 'hadir').length,
-                                terlambat: result.data.filter(item => item.status === 'sakit')
-                                    .length,
+                                terlambat: result.data.filter(item =>
+                                    item.status === 'hadir' &&
+                                    item.keterangan &&
+                                    item.keterangan.toLowerCase().includes('terlambat')
+                                ).length,
+                                sakit: result.data.filter(item => item.status === 'sakit').length,
                                 alpha: result.data.filter(item => item.status === 'alpha').length,
                                 izin_cuti: result.data.filter(item => ['izin', 'cuti'].includes(item
                                     .status)).length
@@ -591,15 +712,18 @@
                     init() {
                         // Set default date range to today
                         const today = new Date().toISOString().split('T')[0];
+
                         this.filters.tanggal_mulai = today;
                         this.filters.tanggal_akhir = today;
 
                         // Initialize Select2 for filter employee dropdown
                         this.$nextTick(() => {
                             this.initFilterSelect2();
+                            // Apply initial filters after a short delay to ensure DOM is ready
+                            setTimeout(() => {
+                                this.applyFilters();
+                            }, 1000);
                         });
-
-                        this.applyFilters();
                     },
 
                     initFilterSelect2() {
@@ -637,14 +761,13 @@
                         const $employee = $(employee.element);
                         const name = $employee.data('name') || '';
                         const department = $employee.data('department') || '';
-                        const nip = $employee.data('nip') || '';
 
                         return $(
                             '<div class="flex flex-col py-2">' +
                             '<div class="font-medium text-gray-900 dark:text-white">' + name +
                             '</div>' +
                             '<div class="text-sm text-gray-500 dark:text-gray-400">' +
-                            (department ? department : '') +
+                            (department ? department : 'Tidak ada departemen') +
                             '</div>' +
                             '</div>'
                         );
@@ -697,15 +820,22 @@
                     currentFilters: {},
 
                     init() {
+                        // Watch for filter changes
                         this.$watch('currentFilters', () => {
+                            this.pagination.current_page = 1;
                             this.loadData();
                         });
 
-                        this.$nextTick(() => {
-                            window.addEventListener('filters-changed', (event) => {
-                                this.currentFilters = event.detail;
-                                this.pagination.current_page = 1;
-                            });
+                        // Listen for filter changes
+                        window.addEventListener('filters-changed', (event) => {
+                            this.currentFilters = {
+                                ...event.detail
+                            };
+                        });
+
+                        // Listen for data refresh events
+                        window.addEventListener('refresh-data', () => {
+                            this.loadData();
                         });
                     },
 
@@ -716,6 +846,13 @@
                                 ...this.currentFilters,
                                 page: this.pagination.current_page
                             });
+
+                            // Remove empty values
+                            for (let [key, value] of [...params.entries()]) {
+                                if (!value || value === '') {
+                                    params.delete(key);
+                                }
+                            }
 
                             const response = await fetch(`{{ route('hr.absensi.index') }}?${params}`, {
                                 headers: {
@@ -749,6 +886,9 @@
                                 from: 0,
                                 to: 0
                             };
+
+                            // Dispatch event for stats update
+                            window.dispatchEvent(new CustomEvent('data-updated'));
                         } catch (error) {
                             console.error('Error loading data:', error);
                             this.showNotification('Terjadi kesalahan saat memuat data', 'error');
@@ -794,8 +934,11 @@
                             'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
                     },
 
-                    getRowClass(status) {
-                        if (status === 'sakit') {
+                    getRowClass(status, keterangan) {
+                        if (status === 'hadir' && keterangan && keterangan.toLowerCase().includes(
+                                'terlambat')) {
+                            return 'bg-orange-50 dark:bg-orange-900/10 border-l-4 border-orange-400';
+                        } else if (status === 'sakit') {
                             return 'bg-yellow-50 dark:bg-yellow-900/10';
                         } else if (status === 'alpha') {
                             return 'bg-red-50 dark:bg-red-900/10';
@@ -816,13 +959,14 @@
 
                         try {
                             const response = await fetch(
-                                `{{ route('hr.absensi.index') }}/${item.id}`, {
-                                    method: 'DELETE',
-                                    headers: {
-                                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
+                            `{{ route('hr.absensi.index') }}/${item.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json'
+                                }
+                            });
 
                             const result = await response.json();
 
@@ -878,12 +1022,12 @@
                     },
 
                     showNotification(message, type = 'info') {
-                        // You can implement a notification system here
-                        if (type === 'error') {
-                            alert('Error: ' + message);
-                        } else {
-                            alert(message);
-                        }
+                        window.dispatchEvent(new CustomEvent('show-notification', {
+                            detail: {
+                                message,
+                                type
+                            }
+                        }));
                     }
                 }));
             });

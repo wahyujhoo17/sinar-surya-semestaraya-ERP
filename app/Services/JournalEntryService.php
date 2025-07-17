@@ -56,6 +56,9 @@ class JournalEntryService
                     'keterangan' => $keterangan,
                     'jenis_jurnal' => 'umum',
                     'user_id' => $userId,
+                    'is_posted' => true,
+                    'posted_at' => now(),
+                    'posted_by' => $userId
                 ];
 
                 // Tambahkan referensi jika ada

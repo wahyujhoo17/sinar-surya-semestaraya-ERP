@@ -35,7 +35,7 @@
                             Import Data Absensi
                         </h3>
                         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            Upload file CSV untuk mengimpor data absensi karyawan secara massal
+                            Upload file CSV atau Excel untuk mengimpor data absensi karyawan secara massal
                         </p>
                     </div>
                 </div>
@@ -48,7 +48,7 @@
                     {{-- File Input --}}
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            File CSV <span class="text-red-500">*</span>
+                            File CSV/Excel <span class="text-red-500">*</span>
                         </label>
                         <div
                             class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md">
@@ -63,13 +63,13 @@
                                     <label for="file-upload"
                                         class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                                         <span>Upload file</span>
-                                        <input id="file-upload" name="file-upload" type="file" accept=".csv"
-                                            class="sr-only" @change="handleFileSelect($event)">
+                                        <input id="file-upload" name="file-upload" type="file"
+                                            accept=".csv,.xlsx,.xls" class="sr-only" @change="handleFileSelect($event)">
                                     </label>
                                     <p class="pl-1">atau drag and drop</p>
                                 </div>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                                    File CSV hingga 2MB
+                                    File CSV/Excel hingga 2MB (Format: .csv, .xlsx, .xls)
                                 </p>
                             </div>
                         </div>
@@ -92,10 +92,10 @@
                             </div>
                             <div class="ml-3">
                                 <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
-                                    Format CSV
+                                    Format File (CSV/Excel)
                                 </h3>
                                 <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
-                                    <p>File CSV harus memiliki kolom header berikut:</p>
+                                    <p>File CSV atau Excel harus memiliki kolom header berikut:</p>
                                     <ul class="list-disc pl-5 mt-1">
                                         <li><strong>nama_karyawan</strong> atau <strong>nip</strong> - Nama atau NIP
                                             karyawan</li>
@@ -114,14 +114,39 @@
                     {{-- Sample Data --}}
                     <div class="border border-gray-200 dark:border-gray-700 rounded-md">
                         <div
-                            class="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">Contoh Data CSV:</h4>
+                            class="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex justify-between items-center">
+                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">Template Import:</h4>
+                            <div class="flex gap-2">
+                                <a href="{{ route('hr.absensi.template') }}"
+                                    class="inline-flex items-center px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">
+                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    Download Template Excel
+                                </a>
+                            </div>
                         </div>
                         <div class="p-4">
-                            <pre class="text-xs text-gray-600 dark:text-gray-400 overflow-x-auto">nama_karyawan,tanggal,jam_masuk,jam_keluar,status,keterangan
-John Doe,2025-06-20,08:00,17:00,hadir,
-Jane Smith,2025-06-20,08:15,17:00,terlambat,Terlambat 15 menit
-Bob Johnson,2025-06-20,,,alpha,Tidak masuk tanpa keterangan</pre>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                <p class="font-medium mb-2">Petunjuk Penggunaan:</p>
+                                <ol class="list-decimal pl-5 space-y-1">
+                                    <li>Download template Excel di atas</li>
+                                    <li>Isi data absensi sesuai format yang sudah disediakan</li>
+                                    <li>Pastikan nama karyawan sesuai dengan data yang ada di sistem</li>
+                                    <li>Format jam masuk/keluar yang didukung:
+                                        <ul class="list-disc pl-4 mt-1 text-xs">
+                                            <li>08:30 (standar)</li>
+                                            <li>08.30 (dengan titik)</li>
+                                            <li>08:30:00 atau 08.30.00 (dengan detik, akan diabaikan)</li>
+                                        </ul>
+                                    </li>
+                                    <li>Jam 00:00 tidak akan dianggap sebagai jam masuk/keluar yang valid</li>
+                                    <li>Sistem akan otomatis mendeteksi keterlambatan jika jam masuk > 08:30</li>
+                                    <li>Upload file yang sudah diisi</li>
+                                </ol>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -243,11 +268,26 @@ Bob Johnson,2025-06-20,,,alpha,Tidak masuk tanpa keterangan</pre>
 
             handleFileSelect(event) {
                 const file = event.target.files[0];
-                if (file && file.type === 'text/csv') {
-                    this.selectedFile = file;
+                if (file) {
+                    // Accept CSV and Excel files
+                    const allowedTypes = [
+                        'text/csv',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                    ];
+
+                    const fileExtension = file.name.split('.').pop().toLowerCase();
+                    const allowedExtensions = ['csv', 'xls', 'xlsx'];
+
+                    if (allowedTypes.includes(file.type) || allowedExtensions.includes(
+                            fileExtension)) {
+                        this.selectedFile = file;
+                    } else {
+                        alert('Silakan pilih file CSV atau Excel (.csv, .xls, .xlsx) yang valid');
+                        event.target.value = '';
+                    }
                 } else {
-                    alert('Silakan pilih file CSV yang valid');
-                    event.target.value = '';
+                    this.selectedFile = null;
                 }
             },
 
@@ -272,6 +312,20 @@ Bob Johnson,2025-06-20,,,alpha,Tidak masuk tanpa keterangan</pre>
                     this.importResult = result;
                     this.showResults = true;
 
+                    if (result.success) {
+                        // Show toast notification
+                        window.dispatchEvent(new CustomEvent('show-notification', {
+                            detail: {
+                                message: result.message,
+                                type: 'success'
+                            }
+                        }));
+                        // Trigger data reload
+                        setTimeout(() => {
+                            window.dispatchEvent(new CustomEvent('refresh-data'));
+                        }, 1000);
+                    }
+
                 } catch (error) {
                     console.error('Error:', error);
                     this.importResult = {
@@ -280,6 +334,13 @@ Bob Johnson,2025-06-20,,,alpha,Tidak masuk tanpa keterangan</pre>
                         errors: []
                     };
                     this.showResults = true;
+                    // Show error notification
+                    window.dispatchEvent(new CustomEvent('show-notification', {
+                        detail: {
+                            message: 'Terjadi kesalahan saat mengimpor file',
+                            type: 'error'
+                        }
+                    }));
                 } finally {
                     this.loading = false;
                 }

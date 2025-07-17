@@ -570,6 +570,7 @@ Route::middleware(['auth'])->group(function () {
         // Absensi & Kehadiran routes
         Route::get('absensi/export-excel', [AbsensiController::class, 'exportExcel'])->name('absensi.export-excel');
         Route::get('absensi/export-pdf', [AbsensiController::class, 'exportPdf'])->name('absensi.export-pdf');
+        Route::get('absensi/template', [AbsensiController::class, 'downloadTemplate'])->name('absensi.template');
         Route::post('absensi/import', [AbsensiController::class, 'import'])->name('absensi.import');
         Route::get('absensi/departemen', [AbsensiController::class, 'getDepartemen'])->name('absensi.departemen');
         Route::resource('absensi', AbsensiController::class);

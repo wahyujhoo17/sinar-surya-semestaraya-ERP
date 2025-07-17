@@ -328,7 +328,7 @@
                         this.closeModal();
                         this.showNotification(result.message, 'success');
                         // Trigger data reload
-                        this.$dispatch('filters-changed', {});
+                        window.dispatchEvent(new CustomEvent('refresh-data'));
                     } else {
                         if (result.errors) {
                             this.errors = result.errors;
@@ -346,12 +346,12 @@
             },
 
             showNotification(message, type = 'info') {
-                // You can implement a notification system here
-                if (type === 'error') {
-                    alert('Error: ' + message);
-                } else {
-                    alert(message);
-                }
+                window.dispatchEvent(new CustomEvent('show-notification', {
+                    detail: {
+                        message,
+                        type
+                    }
+                }));
             }
         }));
     });

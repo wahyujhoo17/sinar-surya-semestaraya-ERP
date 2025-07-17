@@ -774,6 +774,7 @@ class KasDanBankController extends Controller
                     'keterangan' => $request->keterangan,
                     'no_referensi' => $noReferensi,
                     'user_id' => Auth::id(),
+                    'no_bukti' => $noReferensi,
                 ]);
 
                 // Update saldo kas
@@ -798,6 +799,7 @@ class KasDanBankController extends Controller
                             'keterangan' => 'Transfer dari ' . $account->nama . ' - ' . $request->keterangan,
                             'no_referensi' => $noReferensi . '-IN',
                             'user_id' => Auth::id(),
+                            'no_bukti' => $noReferensi,
                         ]);
                     } else {
                         TransaksiBank::create([
@@ -808,6 +810,7 @@ class KasDanBankController extends Controller
                             'keterangan' => 'Transfer dari ' . $account->nama . ' - ' . $request->keterangan,
                             'no_referensi' => $noReferensi . '-IN',
                             'user_id' => Auth::id(),
+                            'no_bukti' => $noReferensi,
                         ]);
                     }
                 }
@@ -844,6 +847,7 @@ class KasDanBankController extends Controller
                             'keterangan' => 'Transfer dari ' . $account->nama_bank . ' - ' . $account->nomor_rekening . ' - ' . $request->keterangan,
                             'no_referensi' => $noReferensi . '-IN',
                             'user_id' => Auth::id(),
+                            'no_bukti' => $noReferensi,
                         ]);
                     } else {
                         TransaksiBank::create([
@@ -854,6 +858,7 @@ class KasDanBankController extends Controller
                             'keterangan' => 'Transfer dari ' . $account->nama_bank . ' - ' . $account->nomor_rekening . ' - ' . $request->keterangan,
                             'no_referensi' => $noReferensi . '-IN',
                             'user_id' => Auth::id(),
+                            'no_bukti' => $noReferensi,
                         ]);
                     }
                 }
