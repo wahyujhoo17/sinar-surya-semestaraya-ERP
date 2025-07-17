@@ -222,8 +222,12 @@ class InvoiceController extends Controller
     public function create()
     {
         // Get sales orders that are not fully invoiced
-        $salesOrders = SalesOrder::where('status_pembayaran', '!=', 'lunas')
-            ->with('customer')
+        $salesOrders = SalesOrder::with('customer')
+            ->whereRaw('(
+                SELECT COALESCE(SUM(total), 0) 
+                FROM invoice 
+                WHERE invoice.sales_order_id = sales_order.id
+            ) < sales_order.total')
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -239,20 +243,61 @@ class InvoiceController extends Controller
     {
         try {
             $salesOrder = SalesOrder::with(['customer'])->findOrFail($id);
+
+            // Hitung total invoice yang sudah ada untuk sales order ini
+            $totalInvoiced = Invoice::where('sales_order_id', $id)->sum('total');
+
+            // Hitung sisa yang belum di-invoice
+            $sisaInvoice = $salesOrder->total - $totalInvoiced;
+
+            // Jika sisa invoice <= 0, berarti sudah fully invoiced
+            if ($sisaInvoice <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sales Order ini sudah fully invoiced',
+                    'total_sales_order' => $salesOrder->total,
+                    'total_invoiced' => $totalInvoiced,
+                    'sisa_invoice' => $sisaInvoice
+                ], 400);
+            }
+
+            // Hitung proporsi untuk setiap detail item
+            $proporsiSisa = $sisaInvoice / $salesOrder->total;
+
             $details = SalesOrderDetail::with(['produk', 'satuan'])
                 ->where('sales_order_id', $id)
                 ->get()
-                ->map(function ($detail) {
+                ->map(function ($detail) use ($proporsiSisa, $id) {
+                    // Hitung qty yang sudah di-invoice untuk produk ini
+                    $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+                        ->where('invoice.sales_order_id', $id)
+                        ->where('invoice_detail.produk_id', $detail->produk_id)
+                        ->sum('invoice_detail.quantity');
+
+                    // Hitung qty yang tersedia untuk di-invoice
+                    $qtyAvailable = $detail->quantity - $qtyAlreadyInvoiced;
+
+                    // Hitung subtotal berdasarkan proporsi sisa
+                    $subtotalProporsional = $detail->subtotal * $proporsiSisa;
+
                     return [
                         'produk_id' => $detail->produk_id,
                         'nama_produk' => $detail->produk ? $detail->produk->nama : $detail->deskripsi,
                         'satuan' => $detail->satuan ? $detail->satuan->nama : '',
-                        'qty' => $detail->quantity,
+                        'qty' => $qtyAvailable, // Qty yang tersedia untuk di-invoice
+                        'original_qty' => $detail->quantity, // Qty asli dari SO
+                        'max_available_qty' => $qtyAvailable, // Qty maksimum yang bisa di-invoice
                         'harga' => $detail->harga,
                         'diskon' => $detail->diskon_persen,
-                        'subtotal' => $detail->subtotal,
+                        'subtotal' => $subtotalProporsional,
+                        'subtotal_original' => $detail->subtotal, // Simpan subtotal asli untuk referensi
                     ];
-                });
+                })
+                ->filter(function ($item) {
+                    // Filter hanya item yang masih memiliki qty tersedia
+                    return $item['qty'] > 0;
+                })
+                ->values(); // Re-index array
 
             // Hitung tanggal jatuh tempo berdasarkan terms pembayaran dari sales order
             $jatuhTempo = now()->format('Y-m-d');
@@ -265,7 +310,13 @@ class InvoiceController extends Controller
                 'sales_order' => $salesOrder,
                 'details' => $details,
                 'jatuh_tempo' => $jatuhTempo,
-                'terms_pembayaran' => $salesOrder->terms_pembayaran
+                'terms_pembayaran' => $salesOrder->terms_pembayaran,
+                'invoice_info' => [
+                    'total_sales_order' => $salesOrder->total,
+                    'total_invoiced' => $totalInvoiced,
+                    'sisa_invoice' => $sisaInvoice,
+                    'proporsi_sisa' => $proporsiSisa
+                ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -299,7 +350,16 @@ class InvoiceController extends Controller
             'items.*.harga' => 'required|numeric|min:0',
             'items.*.diskon' => 'nullable|numeric|min:0|max:100',
             'items.*.subtotal' => 'required|numeric|min:0',
+            'gunakan_uang_muka' => 'nullable|boolean',
+            'uang_muka_terpilih' => 'nullable|array',
+            'uang_muka_terpilih.*' => 'nullable|exists:uang_muka_penjualan,id',
         ]);
+
+        // Custom validation for qty based on available stock
+        $validationResponse = $this->validateInvoiceQuantities($request);
+        if ($validationResponse) {
+            return $validationResponse;
+        }
 
         DB::beginTransaction();
 
@@ -340,8 +400,14 @@ class InvoiceController extends Controller
                 ]);
             }
 
-            // Otomatis aplikasikan uang muka jika ada
-            $this->autoApplyAdvancePayment($invoice);
+            // Aplikasikan uang muka jika user memilih untuk menggunakan uang muka
+            if ($request->filled('gunakan_uang_muka') && $request->gunakan_uang_muka) {
+                if ($request->filled('uang_muka_terpilih') && !empty($request->uang_muka_terpilih)) {
+                    $this->applySelectedAdvancePayments($invoice, $request->uang_muka_terpilih);
+                } else {
+                    $this->autoApplyAdvancePayment($invoice);
+                }
+            }
 
             // Update sales order status if needed
             $this->updateSalesOrderStatus($request->sales_order_id);
@@ -525,11 +591,17 @@ class InvoiceController extends Controller
      */
     public function generateFromSalesOrder(SalesOrder $salesOrder)
     {
+        // Hitung total invoice yang sudah ada untuk sales order ini
+        $totalInvoiced = Invoice::where('sales_order_id', $salesOrder->id)->sum('total');
+
+        // Hitung sisa yang belum di-invoice
+        $sisaInvoice = $salesOrder->total - $totalInvoiced;
+
         // Check if sales order is already fully invoiced
-        if ($salesOrder->status_pembayaran === 'lunas') {
+        if ($sisaInvoice <= 0) {
             return redirect()
                 ->back()
-                ->with('error', 'Sales Order ini sudah memiliki invoice penuh.');
+                ->with('error', 'Sales Order ini sudah fully invoiced. Total SO: ' . number_format($salesOrder->total, 0, ',', '.') . ', Total Invoice: ' . number_format($totalInvoiced, 0, ',', '.'));
         }
 
         // Generate invoice number
@@ -546,7 +618,12 @@ class InvoiceController extends Controller
             'salesOrders' => [$salesOrder],
             'preselectedSalesOrder' => $salesOrder->id,
             'jatuhTempo' => $jatuhTempo,
-            'termsPembayaran' => $salesOrder->terms_pembayaran
+            'termsPembayaran' => $salesOrder->terms_pembayaran,
+            'invoiceInfo' => [
+                'total_sales_order' => $salesOrder->total,
+                'total_invoiced' => $totalInvoiced,
+                'sisa_invoice' => $sisaInvoice
+            ]
         ]);
     }
 
@@ -563,11 +640,15 @@ class InvoiceController extends Controller
         // Get the total amount from sales order
         $totalSalesOrder = $salesOrder->total;
 
+        // Use proper rounding to handle floating point precision issues
+        $totalSalesOrderRounded = round($totalSalesOrder, 2);
+        $totalInvoicedRounded = round($totalInvoiced, 2);
+
         // Check if sales order has been invoiced fully or partially
-        if ($totalInvoiced >= $totalSalesOrder) {
+        if ($totalInvoicedRounded >= $totalSalesOrderRounded) {
             // Sales order is fully invoiced
             $salesOrder->status_invoice = 'fully_invoiced';
-        } elseif ($totalInvoiced > 0) {
+        } elseif ($totalInvoicedRounded > 0) {
             // Partially invoiced
             $salesOrder->status_invoice = 'partially_invoiced';
         } else {
@@ -575,14 +656,74 @@ class InvoiceController extends Controller
             $salesOrder->status_invoice = 'not_invoiced';
         }
 
-        // Status pembayaran is separate from invoice status
-        // Status should remain "belum_bayar" until payment is recorded in pembayaran_piutang
-        // We're not changing status to "lunas" here, that will be done in PembayaranPiutangController
-        if ($salesOrder->status_pembayaran != 'lunas' && $salesOrder->status_pembayaran != 'sebagian') {
+        // Update status pembayaran berdasarkan total pembayaran dari semua invoice
+        $totalPembayaran = \App\Models\PembayaranPiutang::whereHas('invoice', function ($query) use ($salesOrderId) {
+            $query->where('sales_order_id', $salesOrderId);
+        })->sum('jumlah');
+
+        // Hitung total uang muka yang sudah diaplikasikan
+        $totalUangMukaTerapkan = \App\Models\UangMukaAplikasi::whereHas('invoice', function ($query) use ($salesOrderId) {
+            $query->where('sales_order_id', $salesOrderId);
+        })->sum('jumlah_aplikasi');
+
+        // Hitung total kredit yang sudah diaplikasikan
+        $totalKreditTerapkan = Invoice::where('sales_order_id', $salesOrderId)->sum('kredit_terapkan') ?? 0;
+
+        // Total yang sudah dibayar (pembayaran + uang muka + kredit)
+        $totalTerbayar = $totalPembayaran + $totalUangMukaTerapkan + $totalKreditTerapkan;
+        $totalTerbayarRounded = round($totalTerbayar, 2);
+
+        // Update status pembayaran
+        // Sales order can only be "lunas" if it's fully invoiced AND all invoices are paid
+        // Use tolerance for floating point comparison
+        $isFullyInvoiced = ($totalInvoicedRounded >= $totalSalesOrderRounded - 0.001);
+        $isFullyPaid = ($totalTerbayarRounded >= $totalInvoicedRounded - 0.001);
+
+        if ($isFullyInvoiced && $isFullyPaid) {
+            $salesOrder->status_pembayaran = 'lunas';
+        } elseif ($totalTerbayarRounded > 0) {
+            $salesOrder->status_pembayaran = 'sebagian';
+        } else {
             $salesOrder->status_pembayaran = 'belum_bayar';
         }
 
+        // Log status before save
+        Log::info('About to save sales order status', [
+            'sales_order_id' => $salesOrderId,
+            'new_status_pembayaran' => $salesOrder->status_pembayaran,
+            'new_status_invoice' => $salesOrder->status_invoice,
+            'is_dirty' => $salesOrder->isDirty(),
+            'dirty_attributes' => $salesOrder->getDirty()
+        ]);
+
         $salesOrder->save();
+
+        // Log untuk debugging
+        Log::info('Sales Order Status Updated', [
+            'sales_order_id' => $salesOrderId,
+            'total_sales_order' => $totalSalesOrder,
+            'total_invoiced' => $totalInvoiced,
+            'total_pembayaran' => $totalPembayaran,
+            'total_uang_muka' => $totalUangMukaTerapkan,
+            'total_kredit' => $totalKreditTerapkan,
+            'total_terbayar' => $totalTerbayar,
+            'total_sales_order_rounded' => $totalSalesOrderRounded,
+            'total_invoiced_rounded' => $totalInvoicedRounded,
+            'total_terbayar_rounded' => $totalTerbayarRounded,
+            'is_fully_invoiced' => $isFullyInvoiced,
+            'is_fully_paid' => $isFullyPaid,
+            'calculation_result' => [
+                'should_be_lunas' => $isFullyInvoiced && $isFullyPaid,
+                'should_be_sebagian' => $totalTerbayarRounded > 0 && !($isFullyInvoiced && $isFullyPaid),
+                'should_be_belum_bayar' => $totalTerbayarRounded <= 0
+            ],
+            'status_invoice' => $salesOrder->status_invoice,
+            'status_pembayaran' => $salesOrder->status_pembayaran,
+            'status_before_update' => [
+                'status_invoice' => $salesOrder->getOriginal('status_invoice'),
+                'status_pembayaran' => $salesOrder->getOriginal('status_pembayaran')
+            ]
+        ]);
 
         return $salesOrder;
     }
@@ -616,7 +757,7 @@ class InvoiceController extends Controller
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
 
         } catch (\Exception $e) {
-            \Log::error('Error printing delivery order template: ' . $e->getMessage());
+            Log::error('Error printing delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
         }
     }
@@ -683,6 +824,68 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Aplikasikan uang muka yang dipilih user
+     */
+    private function applySelectedAdvancePayments($invoice, $selectedAdvanceIds)
+    {
+        // Validate dan ambil uang muka yang dipilih
+        $selectedAdvances = UangMukaPenjualan::whereIn('id', $selectedAdvanceIds)
+            ->where('customer_id', $invoice->customer_id)
+            ->available()
+            ->orderBy('tanggal', 'asc')
+            ->get();
+
+        if ($selectedAdvances->isEmpty()) {
+            return; // Tidak ada uang muka yang valid
+        }
+
+        $remainingInvoiceAmount = $invoice->total;
+        $totalAdvanceApplied = 0;
+
+        foreach ($selectedAdvances as $advance) {
+            if ($remainingInvoiceAmount <= 0) {
+                break; // Invoice sudah fully covered
+            }
+
+            $amountToApply = min($advance->jumlah_tersedia, $remainingInvoiceAmount);
+
+            if ($amountToApply > 0) {
+                $aplikasi = UangMukaAplikasi::create([
+                    'uang_muka_penjualan_id' => $advance->id,
+                    'invoice_id' => $invoice->id,
+                    'jumlah_aplikasi' => $amountToApply,
+                    'tanggal_aplikasi' => today(),
+                    'keterangan' => 'Aplikasi uang muka ke invoice ' . $invoice->nomor . ' (dipilih user)'
+                ]);
+
+                // Update uang muka
+                $advance->updateStatus();
+
+                $totalAdvanceApplied += $amountToApply;
+                $remainingInvoiceAmount -= $amountToApply;
+
+                // Buat jurnal entry untuk aplikasi
+                $this->createApplicationJournalEntry($aplikasi);
+            }
+        }
+
+        // Update invoice
+        if ($totalAdvanceApplied > 0) {
+            $invoice->uang_muka_terapkan = $totalAdvanceApplied;
+            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
+
+            // Update status invoice jika fully covered
+            if ($invoice->sisa_tagihan <= 0) {
+                $invoice->status = 'lunas';
+            } elseif ($totalAdvanceApplied > 0) {
+                $invoice->status = 'sebagian';
+            }
+
+            $invoice->save();
+        }
+    }
+
+    /**
      * Buat jurnal entry untuk aplikasi uang muka ke invoice
      */
     private function createApplicationJournalEntry($aplikasi)
@@ -699,14 +902,14 @@ class InvoiceController extends Controller
         }
 
         $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('kode', '2201')->first();
-        $akunPiutang = \App\Models\AkunAkuntansi::where('id', env('AKUN_PIUTANG_USAHA_ID'))->first();
+        $akunPiutang = \App\Models\AkunAkuntansi::where('id', '24')->first();
 
         if (!$akunUangMukaPenjualan) {
             throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            $piutangId = env('AKUN_PIUTANG_USAHA_ID');
+            $piutangId = '24';
             throw new \Exception("Akun Piutang Usaha (ID: {$piutangId}) tidak ditemukan. Pastikan AKUN_PIUTANG_USAHA_ID di .env sudah benar.");
         }
 
@@ -781,5 +984,63 @@ class InvoiceController extends Controller
                 'error' => app()->environment('local') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    private function validateInvoiceQuantities(Request $request)
+    {
+        $salesOrderId = $request->sales_order_id;
+        $errors = [];
+
+        foreach ($request->items as $index => $item) {
+            $produkId = $item['produk_id'];
+            $qtyRequested = $item['qty'];
+
+            // Get original qty from sales order
+            $soDetail = SalesOrderDetail::where('sales_order_id', $salesOrderId)
+                ->where('produk_id', $produkId)
+                ->first();
+
+            if (!$soDetail) {
+                $errors[] = "Produk {$item['nama_produk']} tidak ditemukan dalam Sales Order";
+                continue;
+            }
+
+            // Get qty already invoiced for this product
+            $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+                ->where('invoice.sales_order_id', $salesOrderId)
+                ->where('invoice_detail.produk_id', $produkId)
+                ->sum('invoice_detail.quantity');
+
+            // Calculate available qty
+            $qtyAvailable = $soDetail->quantity - $qtyAlreadyInvoiced;
+
+            // Check if requested qty exceeds available
+            if ($qtyRequested > $qtyAvailable) {
+                $qtyInvoiced = $qtyAlreadyInvoiced > 0 ? " (sudah di-invoice: {$qtyAlreadyInvoiced})" : "";
+                $errors[] = "Produk {$item['nama_produk']}: Qty {$qtyRequested} melebihi qty yang tersedia {$qtyAvailable} dari total SO {$soDetail->quantity}{$qtyInvoiced}";
+            }
+
+            // Check if requested qty is less than minimum
+            if ($qtyRequested <= 0) {
+                $errors[] = "Produk {$item['nama_produk']}: Qty harus lebih dari 0";
+            }
+        }
+
+        if (!empty($errors)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi gagal',
+                'errors' => $errors
+            ], 422);
+        }
+    }
+
+    /**
+     * Public method to update sales order status that can be called from other controllers
+     */
+    public static function updateSalesOrderStatusFromPayment($salesOrderId)
+    {
+        $instance = new self();
+        return $instance->updateSalesOrderStatus($salesOrderId);
     }
 }

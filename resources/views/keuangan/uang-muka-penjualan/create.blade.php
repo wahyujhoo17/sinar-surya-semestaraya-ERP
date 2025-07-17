@@ -160,7 +160,7 @@
                                     </div>
 
                                     <!-- Sales Order (Optional) -->
-                                    <div>
+                                    {{-- <div>
                                         <label for="sales_order_id"
                                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                             Sales Order (Opsional)
@@ -176,7 +176,7 @@
                                         @error('sales_order_id')
                                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                         @enderror
-                                    </div>
+                                    </div> --}}
 
                                     <!-- Jumlah -->
                                     <div class="md:col-span-2">

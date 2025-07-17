@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\PembayaranPiutang;
 use App\Models\Customer;
 use App\Models\SalesOrder; // Added SalesOrder
+use App\Http\Controllers\Penjualan\InvoiceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -179,42 +180,33 @@ class PembayaranPiutangController extends Controller
 
                 if ($sisaPiutangAfterPayment <= 0.009) { // Tolerance for zero
                     $invoice->status = 'lunas'; // Changed from status_pembayaran to status
-                    if ($salesOrder) {
-                        $salesOrder->status_pembayaran = 'lunas';
-                        $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
-                    }
-
                     LogAktivitas::create([
                         'user_id' => Auth::id(),
                         'aktivitas' => 'Ubah Status Pembayaran Menjadi Lunas Karena karena Pembayaran Nomor : ' . $pembayaran->nomor,
                         'modul' => 'sales_order',
                         'data_id' => $salesOrder->id,
                     ]);
-                    DB::commit();
                 } else {
                     $invoice->status = 'sebagian'; // Changed from status_pembayaran to status
-                    if ($salesOrder) {
-                        $salesOrder->status_pembayaran = 'sebagian';
-                        $salesOrder->total_pembayaran = $totalPaymentsBefore + $pembayaran->jumlah;
-                    }
                     LogAktivitas::create([
                         'user_id' => Auth::id(),
                         'aktivitas' => 'Ubah Status Pembayaran Menjadi Sebagian Karena karena Pembayaran Nomor : ' . $pembayaran->nomor,
                         'modul' => 'sales_order',
                         'data_id' => $salesOrder->id,
                     ]);
-                    DB::commit();
                 }
 
                 $invoice->save();
-                if ($salesOrder) {
-                    $salesOrder->save();
-                }
             } else {
                 $pembayaran->customer_id = $validatedData['customer_id'];
             }
 
             $pembayaran->save();
+
+            // Update sales order status after payment is saved
+            if ($invoice && $invoice->sales_order_id) {
+                InvoiceController::updateSalesOrderStatusFromPayment($invoice->sales_order_id);
+            }
 
             // Update invoice status
             $customerName = Customer::find($pembayaran->customer_id);
@@ -411,34 +403,12 @@ class PembayaranPiutangController extends Controller
             // Update Sales Order statuses 
             if ($originalSalesOrderToUpdate && (!$newSalesOrderToUpdate || $originalSalesOrderToUpdate->id != $newSalesOrderToUpdate->id)) {
                 // Update status of the SO from the original invoice if it's different from the new SO or if there's no new SO from invoice
-                $totalSisaPiutangSO = $originalSalesOrderToUpdate->invoices()->sum('sisa_piutang');
-                if ($totalSisaPiutangSO <= 0.009) {
-                    $originalSalesOrderToUpdate->status_pembayaran = 'Lunas';
-                } else {
-                    $anyPaymentMade = $originalSalesOrderToUpdate->invoices()->where('status', '!=', 'Belum Lunas')->exists();
-                    if ($anyPaymentMade) {
-                        $originalSalesOrderToUpdate->status_pembayaran = 'sebagian';
-                    } else {
-                        $originalSalesOrderToUpdate->status_pembayaran = 'lunas';
-                    }
-                }
-                $originalSalesOrderToUpdate->save();
+                InvoiceController::updateSalesOrderStatusFromPayment($originalSalesOrderToUpdate->id);
             }
 
             if ($newSalesOrderToUpdate) {
                 // Always update the status of the SO related to the new/updated invoice
-                $totalSisaPiutangSO = $newSalesOrderToUpdate->invoices()->sum('sisa_piutang');
-                if ($totalSisaPiutangSO <= 0.009) {
-                    $newSalesOrderToUpdate->status_pembayaran = 'lunas';
-                } else {
-                    $anyPaymentMade = $newSalesOrderToUpdate->invoices()->where('status', '!=', 'belum_dibayar')->exists();
-                    if ($anyPaymentMade) {
-                        $newSalesOrderToUpdate->status_pembayaran = 'sebagian';
-                    } else {
-                        $newSalesOrderToUpdate->status_pembayaran = 'belum_dibayar';
-                    }
-                }
-                $newSalesOrderToUpdate->save();
+                InvoiceController::updateSalesOrderStatusFromPayment($newSalesOrderToUpdate->id);
             }
 
             $customerName = Customer::find($pembayaran->customer_id)->nama ?? 'N/A';
@@ -500,19 +470,8 @@ class PembayaranPiutangController extends Controller
                     if ($invoice->sales_order_id) {
                         $salesOrder = SalesOrder::find($invoice->sales_order_id);
                         if ($salesOrder) {
-                            $totalSisaPiutangSO = $salesOrder->invoices()->sum('sisa_piutang');
-                            if ($totalSisaPiutangSO <= 0.009) {
-                                $salesOrder->status_pembayaran = 'lunas';
-                            } else {
-                                // Check if any payment still exists for any invoice of this SO
-                                $anyPaymentMade = $salesOrder->invoices()->where('status', '!=', 'belum_lunas')->exists();
-                                if ($anyPaymentMade) {
-                                    $salesOrder->status_pembayaran = 'sebagian';
-                                } else {
-                                    $salesOrder->status_pembayaran = 'belum_lunas';
-                                }
-                            }
-                            $salesOrder->save();
+                            // Use centralized method to update sales order status
+                            InvoiceController::updateSalesOrderStatusFromPayment($salesOrder->id);
                         }
                     }
                 }

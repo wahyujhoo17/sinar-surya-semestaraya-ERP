@@ -240,8 +240,18 @@
                                             class="select2 mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
                                             <option value="">Pilih Sales Order</option>
                                             @foreach ($salesOrders as $salesOrder)
-                                                <option value="{{ $salesOrder->id }}">{{ $salesOrder->nomor }} -
+                                                @php
+                                                    $totalInvoiced = \App\Models\Invoice::where(
+                                                        'sales_order_id',
+                                                        $salesOrder->id,
+                                                    )->sum('total');
+                                                    $sisaInvoice = $salesOrder->total - $totalInvoiced;
+                                                @endphp
+                                                <option value="{{ $salesOrder->id }}">
+                                                    {{ $salesOrder->nomor }} -
                                                     {{ $salesOrder->customer->company ?? $salesOrder->customer->nama }}
+                                                    (Sisa: {{ number_format($sisaInvoice, 0, ',', '.') }} dari
+                                                    {{ number_format($salesOrder->total, 0, ',', '.') }})
                                                 </option>
                                             @endforeach
                                         </select>
@@ -260,18 +270,62 @@
 
                                     <!-- Uang Muka Tersedia -->
                                     <div x-show="customerAdvancePayments.length > 0" x-cloak>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Uang Muka Tersedia
                                         </label>
+
+                                        <!-- Checkbox untuk menggunakan uang muka -->
+                                        <div class="mb-3">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" name="gunakan_uang_muka" value="1"
+                                                    x-model="gunakanUangMuka"
+                                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                    Gunakan uang muka untuk invoice ini
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <!-- Opsi pemilihan uang muka -->
+                                        <div x-show="gunakanUangMuka" x-cloak class="mb-3">
+                                            <div class="flex items-center space-x-4 mb-2">
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="cara_aplikasi_uang_muka"
+                                                        value="otomatis" x-model="caraAplikasiUangMuka"
+                                                        class="text-primary-600 focus:ring-primary-500">
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        Otomatis (gunakan semua yang tersedia)
+                                                    </span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="cara_aplikasi_uang_muka" value="manual"
+                                                        x-model="caraAplikasiUangMuka"
+                                                        class="text-primary-600 focus:ring-primary-500">
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        Pilih manual
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Daftar uang muka -->
                                         <div
                                             class="space-y-2 max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-600">
                                             <template x-for="advance in customerAdvancePayments" :key="advance.id">
                                                 <div
                                                     class="flex justify-between items-center text-xs bg-white dark:bg-gray-700 p-2 rounded border">
-                                                    <div>
-                                                        <span class="font-medium" x-text="advance.nomor"></span>
-                                                        <span class="text-gray-500 dark:text-gray-400"
-                                                            x-text="advance.tanggal"></span>
+                                                    <!-- Checkbox untuk pemilihan manual -->
+                                                    <div class="flex items-center space-x-2">
+                                                        <input type="checkbox"
+                                                            x-show="gunakanUangMuka && caraAplikasiUangMuka === 'manual'"
+                                                            :name="'uang_muka_terpilih[]'" :value="advance.id"
+                                                            x-model="selectedAdvancePayments"
+                                                            class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                        <div>
+                                                            <span class="font-medium" x-text="advance.nomor"></span>
+                                                            <span class="text-gray-500 dark:text-gray-400"
+                                                                x-text="advance.tanggal"></span>
+                                                        </div>
                                                     </div>
                                                     <div class="text-right">
                                                         <div class="text-green-600 dark:text-green-400 font-medium"
@@ -282,13 +336,22 @@
                                                 </div>
                                             </template>
                                         </div>
-                                        <p class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+
+                                        <!-- Info aplikasi uang muka -->
+                                        <p class="text-xs mt-2" x-show="gunakanUangMuka" x-cloak>
                                             <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                 <path fill-rule="evenodd"
                                                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                                                     clip-rule="evenodd"></path>
                                             </svg>
-                                            Uang muka akan otomatis diaplikasikan ke invoice ini
+                                            <span class="text-blue-600 dark:text-blue-400"
+                                                x-show="caraAplikasiUangMuka === 'otomatis'">
+                                                Semua uang muka yang tersedia akan otomatis diaplikasikan ke invoice ini
+                                            </span>
+                                            <span class="text-green-600 dark:text-green-400"
+                                                x-show="caraAplikasiUangMuka === 'manual'">
+                                                Hanya uang muka yang dipilih yang akan diaplikasikan ke invoice ini
+                                            </span>
                                         </p>
                                     </div>
 
@@ -362,6 +425,20 @@
                                 </svg>
                                 Detail Barang
                             </h3>
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-4 h-4 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                            clip-rule="evenodd"></path>
+                                    </svg>
+                                    <span class="text-sm font-medium text-blue-800">Petunjuk Partial Invoice</span>
+                                </div>
+                                <p class="text-xs text-blue-700">
+                                    Anda dapat mengubah qty produk untuk membuat partial invoice. Qty yang dapat diinput
+                                    tidak boleh melebihi sisa qty dari Sales Order yang belum di-invoice.
+                                </p>
+                            </div>
 
                             <div
                                 class="relative overflow-x-auto sm:rounded-lg border border-gray-200 dark:border-gray-700 mb-5">
@@ -371,7 +448,7 @@
                                         <tr>
                                             <th scope="col" class="px-4 py-3 w-5/12">Produk</th>
                                             <th scope="col" class="px-4 py-3 w-1/12 text-center">Satuan</th>
-                                            <th scope="col" class="px-4 py-3 w-1/12 text-center">Qty</th>
+                                            <th scope="col" class="px-4 py-3 w-1/12 text-center">Qty Invoice</th>
                                             <th scope="col" class="px-4 py-3 w-2/12 text-right">Harga</th>
                                             <th scope="col" class="px-4 py-3 w-1/12 text-center">Diskon (%)</th>
                                             <th scope="col" class="px-4 py-3 w-2/12 text-right">Subtotal</th>
@@ -381,7 +458,12 @@
                                         <template x-for="(item, index) in items" :key="index">
                                             <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
                                                 <td class="px-4 py-3">
-                                                    <span x-text="item.nama_produk"></span>
+                                                    <div>
+                                                        <span x-text="item.nama_produk" class="font-medium"></span>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                            SO Qty: <span x-text="item.original_qty"></span>
+                                                        </div>
+                                                    </div>
                                                     <input type="hidden" :name="'items[' + index + '][produk_id]'"
                                                         x-model="item.produk_id">
                                                     <input type="hidden" :name="'items[' + index + '][nama_produk]'"
@@ -393,9 +475,15 @@
                                                         x-model="item.satuan">
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
-                                                    <span x-text="item.qty"></span>
-                                                    <input type="hidden" :name="'items[' + index + '][qty]'"
-                                                        x-model="item.qty">
+                                                    <input type="number" :name="'items[' + index + '][qty]'"
+                                                        x-model="item.qty" :data-original-qty="item.original_qty"
+                                                        :data-max-qty="item.max_available_qty"
+                                                        @input="updateItemSubtotal(index)"
+                                                        :max="item.max_available_qty" step="0.01"
+                                                        class="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                        Max: <span x-text="item.max_available_qty"></span>
+                                                    </div>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
                                                     <span x-text="formatRupiah(item.harga)"></span>
@@ -417,7 +505,10 @@
                                         <tr x-show="items.length === 0">
                                             <td colspan="6"
                                                 class="px-4 py-3 text-center text-gray-500 dark:text-gray-400">
-                                                Pilih Sales Order untuk menampilkan item
+                                                <span x-show="!customerId">Pilih Sales Order untuk menampilkan
+                                                    item</span>
+                                                <span x-show="customerId">Semua item dalam Sales Order ini sudah fully
+                                                    invoiced</span>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -617,7 +708,7 @@
                                 </svg>
                                 Batal
                             </a>
-                            <button type="submit"
+                            <button type="submit" @click="submitForm"
                                 class="inline-flex justify-center items-center py-2.5 px-5 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
@@ -643,7 +734,10 @@
                 return {
                     customerId: '',
                     customerName: '',
-                    customerAdvancePayments: [], // Add this for advance payments
+                    customerAdvancePayments: [], // Untuk advance payments
+                    gunakanUangMuka: false, // Untuk checkbox uang muka
+                    caraAplikasiUangMuka: 'otomatis', // Untuk radio button cara aplikasi
+                    selectedAdvancePayments: [], // Untuk manual selection uang muka
                     items: [],
                     subtotal: 0,
                     diskonPersen: 0,
@@ -655,6 +749,25 @@
                     termsPembayaran: '', // Track terms pembayaran from sales order
 
                     init() {
+                        console.log('Initializing invoice form...');
+
+                        // Initialize all variables to prevent undefined errors
+                        this.customerId = this.customerId || '';
+                        this.customerName = this.customerName || '';
+                        this.customerAdvancePayments = this.customerAdvancePayments || [];
+                        this.gunakanUangMuka = this.gunakanUangMuka || false;
+                        this.caraAplikasiUangMuka = this.caraAplikasiUangMuka || 'otomatis';
+                        this.selectedAdvancePayments = this.selectedAdvancePayments || [];
+                        this.items = this.items || [];
+                        this.subtotal = this.subtotal || 0;
+                        this.diskonPersen = this.diskonPersen || 0;
+                        this.diskonNominal = this.diskonNominal || 0;
+                        this.ppnPersen = this.ppnPersen || {{ setting('tax_percentage', 11) }};
+                        this.ppnNominal = this.ppnNominal || 0;
+                        this.ongkosKirim = this.ongkosKirim || 0;
+                        this.total = this.total || 0;
+                        this.termsPembayaran = this.termsPembayaran || '';
+
                         // Initialize select2
                         $(document).ready(() => {
                             $('.select2').select2();
@@ -671,6 +784,40 @@
                         });
                     },
 
+                    // Update item subtotal when qty changes
+                    updateItemSubtotal(index) {
+                        console.log('Updating item subtotal for index:', index);
+
+                        if (!this.items[index]) {
+                            console.error('Item not found at index:', index);
+                            return;
+                        }
+
+                        const item = this.items[index];
+                        const qty = parseFloat(item.qty) || 0;
+                        const harga = parseFloat(item.harga) || 0;
+                        const diskon = parseFloat(item.diskon) || 0;
+                        const maxAvailable = parseFloat(item.max_available_qty) || 0;
+
+                        // Validate qty doesn't exceed max available
+                        if (qty > maxAvailable) {
+                            alert(`Qty tidak boleh melebihi ${maxAvailable} (jumlah tersedia)`);
+                            item.qty = maxAvailable;
+                            this.updateItemSubtotal(index);
+                            return;
+                        }
+
+                        // Calculate subtotal with discount
+                        const subtotalSebelumDiskon = qty * harga;
+                        const nominalDiskon = subtotalSebelumDiskon * (diskon / 100);
+                        item.subtotal = subtotalSebelumDiskon - nominalDiskon;
+
+                        // Recalculate totals
+                        this.calculateSubtotal();
+                        this.calculateTotal();
+                    },
+
+                    // Fetch sales order data
                     fetchSalesOrderData() {
                         console.log('Fetching sales order data...');
                         const salesOrderId = document.getElementById('sales_order_id').value;
@@ -694,10 +841,10 @@
                             .then(data => {
                                 if (data.success) {
                                     // Set customer data
-                                    this.customerId = data.sales_order.customer_id;
+                                    this.customerId = data.sales_order.customer_id || '';
                                     this.customerName = data.sales_order.customer ?
                                         (data.sales_order.customer.company ?
-                                            ` (${data.sales_order.customer.company})` :
+                                            `${data.sales_order.customer.nama} (${data.sales_order.customer.company})` :
                                             data.sales_order.customer.nama) :
                                         'Unknown Customer';
 
@@ -719,7 +866,7 @@
                                     }
 
                                     // Save the terms_pembayaran for reference
-                                    this.termsPembayaran = data.terms_pembayaran;
+                                    this.termsPembayaran = data.terms_pembayaran || '';
 
                                     // Set items data
                                     this.items = data.details.map(item => ({
@@ -727,10 +874,19 @@
                                         nama_produk: item.nama_produk,
                                         satuan: item.satuan,
                                         qty: item.qty,
+                                        original_qty: item.original_qty || item
+                                            .qty, // Store original qty for reference
+                                        max_available_qty: item.max_available_qty || item
+                                            .qty, // Store max available qty
                                         harga: item.harga,
                                         diskon: item.diskon || 0,
                                         subtotal: item.subtotal,
                                     }));
+
+                                    // Show invoice information if available
+                                    if (data.invoice_info) {
+                                        this.showInvoiceInfo(data.invoice_info);
+                                    }
 
                                     // Calculate totals
                                     this.calculateSubtotal();
@@ -739,13 +895,52 @@
                                     // Fetch customer advance payments
                                     this.fetchCustomerAdvancePayments();
                                 } else {
-                                    alert('Gagal mengambil data Sales Order');
+                                    alert('Gagal mengambil data Sales Order: ' + (data.message || 'Unknown error'));
                                 }
                             })
                             .catch(error => {
                                 console.error('Error:', error);
                                 alert('Terjadi kesalahan saat mengambil data');
                             });
+                    },
+
+                    showInvoiceInfo(invoiceInfo) {
+                        // Display invoice info in a notification or alert
+                        const formatter = new Intl.NumberFormat('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                            minimumFractionDigits: 0
+                        });
+
+                        const infoMessage = `
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center mb-2">
+                                    <svg class="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <h4 class="text-blue-800 font-semibold">Informasi Invoice Sales Order</h4>
+                                </div>
+                                <div class="text-sm text-blue-700">
+                                    <p><strong>Total Sales Order:</strong> ${formatter.format(invoiceInfo.total_sales_order)}</p>
+                                    <p><strong>Sudah di-Invoice:</strong> ${formatter.format(invoiceInfo.total_invoiced)}</p>
+                                    <p><strong>Sisa yang akan di-Invoice:</strong> ${formatter.format(invoiceInfo.sisa_invoice)}</p>
+                                </div>
+                            </div>
+                        `;
+
+                        // Insert the info message before the form
+                        const formContainer = document.querySelector('.form-card');
+                        if (formContainer) {
+                            const existingInfo = document.querySelector('.invoice-info');
+                            if (existingInfo) {
+                                existingInfo.remove();
+                            }
+
+                            const infoDiv = document.createElement('div');
+                            infoDiv.className = 'invoice-info';
+                            infoDiv.innerHTML = infoMessage;
+                            formContainer.parentNode.insertBefore(infoDiv, formContainer);
+                        }
                     },
 
                     fetchCustomerAdvancePayments() {
@@ -758,7 +953,7 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    this.customerAdvancePayments = data.data;
+                                    this.customerAdvancePayments = data.data || [];
                                     console.log('Customer advance payments:', this.customerAdvancePayments);
                                 } else {
                                     console.error('Failed to fetch advance payments:', data.message);
@@ -772,9 +967,13 @@
                     },
 
                     resetForm() {
+                        console.log('Resetting form...');
                         this.customerId = '';
                         this.customerName = '';
                         this.customerAdvancePayments = []; // Reset advance payments
+                        this.gunakanUangMuka = false; // Reset checkbox
+                        this.caraAplikasiUangMuka = 'otomatis'; // Reset radio button
+                        this.selectedAdvancePayments = []; // Reset manual selection
                         this.items = [];
                         this.subtotal = 0;
                         this.diskonPersen = 0;
@@ -784,37 +983,93 @@
                         this.ongkosKirim = 0;
                         this.total = 0;
                         this.termsPembayaran = '';
+
                         // Reset jatuh_tempo to default (30 days)
-                        document.getElementById('jatuh_tempo').value = this.calculateDueDate();
+                        const jatuhTempoElement = document.getElementById('jatuh_tempo');
+                        if (jatuhTempoElement) {
+                            jatuhTempoElement.value = this.calculateDueDate();
+                        }
+
+                        // Remove invoice info display
+                        const existingInfo = document.querySelector('.invoice-info');
+                        if (existingInfo) {
+                            existingInfo.remove();
+                        }
                     },
 
                     calculateSubtotal() {
-                        this.subtotal = this.items.reduce((sum, item) => sum + parseFloat(item.subtotal), 0);
+                        this.subtotal = this.items.reduce((sum, item) => {
+                            const subtotal = parseFloat(item.subtotal) || 0;
+                            return sum + subtotal;
+                        }, 0);
                     },
 
                     calculateTotal() {
                         // Calculate diskon nominal
-                        this.diskonNominal = this.subtotal * (this.diskonPersen / 100);
+                        const diskonPersen = parseFloat(this.diskonPersen) || 0;
+                        this.diskonNominal = this.subtotal * (diskonPersen / 100);
 
                         // Calculate PPN nominal (applied after discount)
                         const afterDiscount = this.subtotal - this.diskonNominal;
-                        this.ppnNominal = afterDiscount * (this.ppnPersen / 100);
+                        const ppnPersen = parseFloat(this.ppnPersen) || 0;
+                        this.ppnNominal = afterDiscount * (ppnPersen / 100);
 
                         // Calculate total (including ongkos kirim)
-                        this.total = afterDiscount + this.ppnNominal + parseFloat(this.ongkosKirim);
+                        const ongkosKirim = parseFloat(this.ongkosKirim) || 0;
+                        this.total = afterDiscount + this.ppnNominal + ongkosKirim;
                     },
 
                     formatRupiah(value) {
-                        return 'Rp ' + parseFloat(value).toLocaleString('id-ID');
+                        const numValue = parseFloat(value) || 0;
+                        return 'Rp ' + numValue.toLocaleString('id-ID');
+                    },
+
+                    // Handle form submission
+                    submitForm(event) {
+                        event.preventDefault();
+
+                        console.log('Submitting form...');
+
+                        // Validate quantities before submission
+                        let hasError = false;
+                        this.items.forEach((item, index) => {
+                            const qty = parseFloat(item.qty) || 0;
+                            const maxAvailable = parseFloat(item.max_available_qty) || 0;
+
+                            if (qty > maxAvailable) {
+                                alert(
+                                    `Produk ${item.nama_produk || 'Unknown'}: Qty ${qty} melebihi qty yang tersedia (${maxAvailable})`
+                                    );
+                                hasError = true;
+                            }
+                        });
+
+                        if (hasError) {
+                            return;
+                        }
+
+                        // Submit form
+                        const formElement = document.getElementById('invoice-form');
+                        if (formElement) {
+                            formElement.submit();
+                        } else {
+                            console.error('Form element not found');
+                        }
                     },
 
                     calculateDueDate() {
                         // This is a fallback method that sets a default due date (30 days)
                         // Only used when no terms_pembayaran_hari is available from sales order
-                        const today = new Date();
-                        const dueDate = new Date(today);
-                        dueDate.setDate(today.getDate() + 30);
-                        return dueDate.toISOString().split('T')[0];
+                        try {
+                            const today = new Date();
+                            const dueDate = new Date(today);
+                            dueDate.setDate(today.getDate() + 30);
+                            return dueDate.toISOString().split('T')[0];
+                        } catch (error) {
+                            console.error('Error calculating due date:', error);
+                            // Return current date as fallback
+                            return new Date().toISOString().split('T')[0];
+                        }
                     }
                 }
             }
