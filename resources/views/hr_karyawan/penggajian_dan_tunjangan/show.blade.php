@@ -328,77 +328,461 @@
                         @php
                             $komisiKomponen = $penggajian->komponenGaji
                                 ->where('nama_komponen', 'Komisi Penjualan')
+                                ->where('jenis', 'pendapatan')
                                 ->first();
                         @endphp
 
                         @if ($komisiKomponen)
-                            <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <div class="mt-6 p-4">
+                                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                     <span class="flex items-center">
                                         <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                                         </svg>
-                                        Detail Komisi Penjualan:
+                                        Detail Komisi Penjualan
                                     </span>
                                 </h3>
-                                <div class="text-sm text-gray-600 dark:text-gray-400">
-                                    <p><span class="font-medium">Total Komisi:</span> Rp
-                                        {{ number_format($komisiKomponen->nilai, 0, ',', '.') }}</p>
-                                    <p><span class="font-medium">Periode:</span>
-                                        {{ \Carbon\Carbon::createFromDate($penggajian->tahun, $penggajian->bulan, 1)->isoFormat('MMMM Y') }}
-                                    </p> @php
-                                        $salesOrderInfo = [];
-                                        $salesOrderCount = 0;
 
-                                        // Check for new format with sales order nomors
-                                        if (strpos($komisiKomponen->keterangan, 'SO:') !== false) {
-                                            preg_match('/SO: ([\w\-,\s]+)/', $komisiKomponen->keterangan, $matches);
-                                            if (isset($matches[1])) {
-                                                $salesOrderNomors = array_map('trim', explode(',', $matches[1]));
-                                                $salesOrderInfo = $salesOrderNomors;
-                                                $salesOrderCount = count($salesOrderNomors);
+                                <!-- Summary Info -->
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-lg p-3 mb-4 border border-blue-200 dark:border-blue-700">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                            <span class="text-gray-500 dark:text-gray-400">Total Komisi:</span>
+                                            <div class="font-bold text-lg text-blue-600 dark:text-blue-400">
+                                                Rp {{ number_format($komisiKomponen->nilai, 0, ',', '.') }}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-500 dark:text-gray-400">Periode:</span>
+                                            <div class="font-medium text-gray-900 dark:text-white">
+                                                {{ \Carbon\Carbon::createFromDate($penggajian->tahun, $penggajian->bulan, 1)->isoFormat('MMMM Y') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @php
+                                    $salesOrderInfo = [];
+                                    $salesOrderCount = 0;
+                                    $salesOrderDetails = [];
+
+                                    // Helper function untuk menghitung rate komisi sesuai controller
+                                    $getKomisiRateByMargin = function ($marginPersen) {
+                                        $komisiTiers = [
+                                            ['min' => 18.0, 'max' => 20.0, 'rate' => 1.0],
+                                            ['min' => 20.5, 'max' => 25.0, 'rate' => 1.25],
+                                            ['min' => 25.5, 'max' => 30.0, 'rate' => 1.5],
+                                            ['min' => 30.5, 'max' => 35.0, 'rate' => 1.75],
+                                            ['min' => 35.5, 'max' => 40.0, 'rate' => 2.0],
+                                            ['min' => 40.5, 'max' => 45.0, 'rate' => 2.25],
+                                            ['min' => 45.5, 'max' => 50.0, 'rate' => 2.5],
+                                            ['min' => 50.5, 'max' => 55.0, 'rate' => 2.75],
+                                            ['min' => 55.5, 'max' => 60.0, 'rate' => 3.0],
+                                            ['min' => 60.5, 'max' => 65.0, 'rate' => 3.25],
+                                            ['min' => 65.5, 'max' => 70.0, 'rate' => 3.5],
+                                            ['min' => 70.5, 'max' => 75.0, 'rate' => 3.75],
+                                            ['min' => 75.5, 'max' => 80.0, 'rate' => 4.0],
+                                            ['min' => 80.5, 'max' => 85.0, 'rate' => 4.25],
+                                            ['min' => 85.5, 'max' => 90.0, 'rate' => 4.5],
+                                            ['min' => 90.5, 'max' => 95.0, 'rate' => 4.75],
+                                            ['min' => 95.5, 'max' => 100.0, 'rate' => 5.0],
+                                            ['min' => 101.0, 'max' => 110.0, 'rate' => 5.25],
+                                            ['min' => 111.0, 'max' => 125.0, 'rate' => 5.5],
+                                            ['min' => 126.0, 'max' => 140.0, 'rate' => 5.75],
+                                            ['min' => 141.0, 'max' => 160.0, 'rate' => 6.0],
+                                            ['min' => 161.0, 'max' => 180.0, 'rate' => 6.25],
+                                            ['min' => 181.0, 'max' => 200.0, 'rate' => 6.5],
+                                            ['min' => 201.0, 'max' => 225.0, 'rate' => 7.0],
+                                            ['min' => 226.0, 'max' => 250.0, 'rate' => 7.25],
+                                            ['min' => 251.0, 'max' => 275.0, 'rate' => 7.5],
+                                            ['min' => 276.0, 'max' => 300.0, 'rate' => 8.0],
+                                            ['min' => 301.0, 'max' => 325.0, 'rate' => 8.25],
+                                            ['min' => 326.0, 'max' => 350.0, 'rate' => 8.5],
+                                            ['min' => 351.0, 'max' => 400.0, 'rate' => 9.0],
+                                            ['min' => 401.0, 'max' => 450.0, 'rate' => 9.5],
+                                            ['min' => 451.0, 'max' => 500.0, 'rate' => 10.0],
+                                            ['min' => 501.0, 'max' => 600.0, 'rate' => 10.5],
+                                            ['min' => 601.0, 'max' => 700.0, 'rate' => 11.0],
+                                            ['min' => 701.0, 'max' => 800.0, 'rate' => 11.5],
+                                            ['min' => 801.0, 'max' => 900.0, 'rate' => 12.0],
+                                            ['min' => 901.0, 'max' => 1000.0, 'rate' => 12.5],
+                                            ['min' => 1001.0, 'max' => 1100.0, 'rate' => 13.0],
+                                            ['min' => 1101.0, 'max' => 1200.0, 'rate' => 13.5],
+                                            ['min' => 1201.0, 'max' => 1300.0, 'rate' => 14.0],
+                                            ['min' => 1301.0, 'max' => 1400.0, 'rate' => 14.5],
+                                            ['min' => 1401.0, 'max' => 1500.0, 'rate' => 15.0],
+                                            ['min' => 1501.0, 'max' => 1600.0, 'rate' => 15.5],
+                                            ['min' => 1601.0, 'max' => 1700.0, 'rate' => 16.0],
+                                            ['min' => 1701.0, 'max' => 1800.0, 'rate' => 16.5],
+                                            ['min' => 1801.0, 'max' => 1900.0, 'rate' => 17.0],
+                                            ['min' => 1901.0, 'max' => 2000.0, 'rate' => 17.5],
+                                            ['min' => 2001.0, 'max' => 2100.0, 'rate' => 18.0],
+                                            ['min' => 2101.0, 'max' => 2200.0, 'rate' => 18.5],
+                                            ['min' => 2201.0, 'max' => 2300.0, 'rate' => 19.0],
+                                            ['min' => 2301.0, 'max' => 2400.0, 'rate' => 19.5],
+                                            ['min' => 2401.0, 'max' => 2501.0, 'rate' => 20.0],
+                                            ['min' => 2501.0, 'max' => 2600.0, 'rate' => 20.5],
+                                            ['min' => 2601.0, 'max' => 2700.0, 'rate' => 21.0],
+                                            ['min' => 2701.0, 'max' => 2800.0, 'rate' => 21.5],
+                                            ['min' => 2801.0, 'max' => 2900.0, 'rate' => 22.0],
+                                            ['min' => 2901.0, 'max' => 3000.0, 'rate' => 22.5],
+                                            ['min' => 3001.0, 'max' => 3100.0, 'rate' => 23.0],
+                                            ['min' => 3101.0, 'max' => 3200.0, 'rate' => 23.5],
+                                            ['min' => 3201.0, 'max' => 3300.0, 'rate' => 24.0],
+                                            ['min' => 3301.0, 'max' => 3400.0, 'rate' => 24.5],
+                                            ['min' => 3401.0, 'max' => 3500.0, 'rate' => 25.0],
+                                            ['min' => 3501.0, 'max' => 3600.0, 'rate' => 25.5],
+                                            ['min' => 3601.0, 'max' => 3700.0, 'rate' => 26.0],
+                                            ['min' => 3701.0, 'max' => 3800.0, 'rate' => 26.5],
+                                            ['min' => 3801.0, 'max' => 3900.0, 'rate' => 27.0],
+                                            ['min' => 3901.0, 'max' => 4000.0, 'rate' => 27.5],
+                                            ['min' => 4001.0, 'max' => 4100.0, 'rate' => 28.0],
+                                            ['min' => 4101.0, 'max' => 4200.0, 'rate' => 28.5],
+                                            ['min' => 4201.0, 'max' => 4300.0, 'rate' => 29.0],
+                                            ['min' => 4301.0, 'max' => 4400.0, 'rate' => 29.5],
+                                            ['min' => 4401.0, 'max' => 4500.0, 'rate' => 30.0],
+                                        ];
+
+                                        // Cari tier yang sesuai dengan margin
+                                        foreach ($komisiTiers as $tier) {
+                                            if ($marginPersen >= $tier['min'] && $marginPersen <= $tier['max']) {
+                                                return $tier['rate'];
                                             }
                                         }
-                                        // Check for old format with sales order IDs (backward compatibility)
-                                        elseif (strpos($komisiKomponen->keterangan, 'sales order ID:') !== false) {
-                                            preg_match(
-                                                '/sales order ID: ([\d,]+)/',
-                                                $komisiKomponen->keterangan,
-                                                $matches,
+
+                                        // Jika margin lebih dari 4500%, gunakan rate tertinggi
+                                        if ($marginPersen > 4500.0) {
+                                            return 30.0;
+                                        }
+
+                                        // Jika margin kurang dari 18%, tidak ada komisi
+                                        return 0;
+                                    };
+
+                                    // Enhanced pattern matching to be more flexible
+                                    $keterangan = $komisiKomponen->keterangan;
+
+                                    // Check for new format with sales order nomors
+                                    if (strpos($keterangan, 'SO:') !== false) {
+                                        // More robust regex pattern that handles various formats
+                                        preg_match('/SO:\s*([A-Z0-9\-,\s]+)/i', $keterangan, $matches);
+
+                                        if (isset($matches[1])) {
+                                            // Clean and split the SO numbers - remove any trailing parentheses
+                                            $rawSoString = preg_replace('/\)+\s*$/', '', trim($matches[1]));
+                                            $salesOrderNomors = array_map('trim', explode(',', $rawSoString));
+                                            // Remove empty values and ensure clean data
+                                            $salesOrderNomors = array_filter(
+                                                array_map(function ($so) {
+                                                    return trim(preg_replace('/[\)\(\s]+$/', '', trim($so)));
+                                                }, $salesOrderNomors),
                                             );
-                                            if (isset($matches[1])) {
-                                                $salesOrderIds = explode(',', $matches[1]);
-                                                $salesOrderCount = count($salesOrderIds);
-                                                // Convert IDs to nomors for display
-                                                $salesOrderNomors = \App\Models\SalesOrder::whereIn(
-                                                    'id',
-                                                    $salesOrderIds,
+                                            $salesOrderInfo = $salesOrderNomors;
+                                            $salesOrderCount = count($salesOrderNomors);
+
+                                            // Get detailed sales order information
+                                            try {
+                                                $salesOrders = \App\Models\SalesOrder::whereIn(
+                                                    'nomor',
+                                                    $salesOrderNomors,
                                                 )
-                                                    ->pluck('nomor')
+                                                    ->with(['details.produk', 'customer'])
+                                                    ->get();
+
+                                                $salesOrderDetails = $salesOrders
+                                                    ->map(function ($so) use ($getKomisiRateByMargin) {
+                                                        $totalPenjualan = 0;
+                                                        $totalHpp = 0;
+                                                        $totalMargin = 0;
+                                                        $totalKomisi = 0;
+
+                                                        foreach ($so->details as $detail) {
+                                                            $hargaSatuan = $detail->harga ?? 0;
+                                                            $quantity = $detail->quantity ?? 0;
+                                                            $hargaBeli = $detail->produk->harga_beli ?? 0;
+
+                                                            // Netto Penjualan dan Netto Beli per item
+                                                            $nettoPenjualan = $hargaSatuan * $quantity;
+                                                            $nettoBeli = $hargaBeli * $quantity;
+
+                                                            $totalPenjualan += $nettoPenjualan;
+                                                            $totalHpp += $nettoBeli;
+
+                                                            // Hitung margin per item dan komisi sesuai controller
+                                                            if ($nettoBeli > 0) {
+                                                                // Margin % = (Netto Penjualan - Netto Beli) / Netto Beli × 100
+                                                                $marginPersen =
+                                                                    (($nettoPenjualan - $nettoBeli) / $nettoBeli) * 100;
+
+                                                                // Dapatkan rate komisi berdasarkan margin
+                                                                $komisiRate = $getKomisiRateByMargin($marginPersen);
+
+                                                                // Komisi = Netto Penjualan × %Komisi
+                                                                $komisiItem = $nettoPenjualan * ($komisiRate / 100);
+                                                                $totalKomisi += $komisiItem;
+                                                            }
+                                                        }
+
+                                                        $totalMargin = $totalPenjualan - $totalHpp;
+                                                        // Margin percentage untuk display (berdasarkan total penjualan untuk tampilan)
+                                                        $marginPercentageDisplay =
+                                                            $totalPenjualan > 0
+                                                                ? ($totalMargin / $totalPenjualan) * 100
+                                                                : 0;
+
+                                                        return [
+                                                            'nomor' => $so->nomor,
+                                                            'tanggal' => $so->tanggal,
+                                                            'customer' =>
+                                                                $so->customer->nama ??
+                                                                ($so->customer->company ?? 'N/A'),
+                                                            'total_penjualan' => $totalPenjualan,
+                                                            'total_hpp' => $totalHpp,
+                                                            'margin' => $totalMargin,
+                                                            'margin_percentage' => $marginPercentageDisplay,
+                                                            'commission_amount' => $totalKomisi,
+                                                            'detail_count' => $so->details->count(),
+                                                        ];
+                                                    })
                                                     ->toArray();
-                                                $salesOrderInfo = $salesOrderNomors;
+                                            } catch (\Exception $e) {
+                                                $salesOrderDetails = [];
                                             }
                                         }
-                                    @endphp
+                                    }
+                                    // Check for old format with sales order IDs (backward compatibility)
+                                    elseif (strpos($keterangan, 'sales order ID:') !== false) {
+                                        preg_match('/sales order ID:\s*([\d,\s]+)/', $keterangan, $matches);
 
-                                    @if ($salesOrderCount > 0)
-                                        <p class="mt-1"><span class="font-medium">Berdasarkan
-                                                {{ $salesOrderCount }} Sales Order:</span></p>
-                                        @if (!empty($salesOrderInfo))
-                                            <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 ml-2">
-                                                {{ implode(', ', $salesOrderInfo) }}
+                                        if (isset($matches[1])) {
+                                            $salesOrderIds = array_map('trim', explode(',', $matches[1]));
+                                            // Remove empty values and convert to integers
+                                            $salesOrderIds = array_filter(array_map('intval', $salesOrderIds));
+                                            $salesOrderCount = count($salesOrderIds);
+
+                                            // Get detailed sales order information
+                                            try {
+                                                $salesOrders = \App\Models\SalesOrder::whereIn('id', $salesOrderIds)
+                                                    ->with(['details.produk', 'customer'])
+                                                    ->get();
+
+                                                $salesOrderDetails = $salesOrders
+                                                    ->map(function ($so) use ($getKomisiRateByMargin) {
+                                                        $totalPenjualan = 0;
+                                                        $totalHpp = 0;
+                                                        $totalMargin = 0;
+                                                        $totalKomisi = 0;
+
+                                                        foreach ($so->details as $detail) {
+                                                            $hargaSatuan = $detail->harga ?? 0;
+                                                            $quantity = $detail->quantity ?? 0;
+                                                            $hargaBeli = $detail->produk->harga_beli ?? 0;
+
+                                                            // Netto Penjualan dan Netto Beli per item
+                                                            $nettoPenjualan = $hargaSatuan * $quantity;
+                                                            $nettoBeli = $hargaBeli * $quantity;
+
+                                                            $totalPenjualan += $nettoPenjualan;
+                                                            $totalHpp += $nettoBeli;
+
+                                                            // Hitung margin per item dan komisi sesuai controller
+                                                            if ($nettoBeli > 0) {
+                                                                // Margin % = (Netto Penjualan - Netto Beli) / Netto Beli × 100
+                                                                $marginPersen =
+                                                                    (($nettoPenjualan - $nettoBeli) / $nettoBeli) * 100;
+
+                                                                // Dapatkan rate komisi berdasarkan margin
+                                                                $komisiRate = $getKomisiRateByMargin($marginPersen);
+
+                                                                // Komisi = Netto Penjualan × %Komisi
+                                                                $komisiItem = $nettoPenjualan * ($komisiRate / 100);
+                                                                $totalKomisi += $komisiItem;
+                                                            }
+                                                        }
+
+                                                        $totalMargin = $totalPenjualan - $totalHpp;
+                                                        // Margin percentage untuk display (berdasarkan total penjualan untuk tampilan)
+                                                        $marginPercentageDisplay =
+                                                            $totalPenjualan > 0
+                                                                ? ($totalMargin / $totalPenjualan) * 100
+                                                                : 0;
+
+                                                        return [
+                                                            'nomor' => $so->nomor,
+                                                            'tanggal' => $so->tanggal,
+                                                            'customer' => $so->customer->nama ?? 'N/A',
+                                                            'total_penjualan' => $totalPenjualan,
+                                                            'total_hpp' => $totalHpp,
+                                                            'margin' => $totalMargin,
+                                                            'margin_percentage' => $marginPercentageDisplay,
+                                                            'commission_amount' => $totalKomisi,
+                                                            'detail_count' => $so->details->count(),
+                                                        ];
+                                                    })
+                                                    ->toArray();
+
+                                                $salesOrderInfo = array_column($salesOrderDetails, 'nomor');
+                                            } catch (\Exception $e) {
+                                                $salesOrderDetails = [];
+                                            }
+                                        }
+                                    } else {
+                                        // No recognizable pattern found in keterangan
+                                    }
+                                @endphp
+
+                                <!-- Force Display: ALWAYS show commission details section -->
+                                <div class="mt-4 mb-6">
+                                    <h4
+                                        style="font-weight: 600; color: #374151; margin-bottom: 12px; font-size: 16px;">
+                                        📊 Detail Komisi Penjualan
+                                    </h4>
+
+                                    @if (!empty($salesOrderDetails))
+                                        <!-- Sales Order Details dengan style inline -->
+                                        <div style="margin-bottom: 20px;">
+                                            @foreach ($salesOrderDetails as $index => $soDetail)
+                                                <div
+                                                    style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                                                    <!-- Header SO -->
+                                                    <div
+                                                        style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                                                        <div style="flex: 1;">
+                                                            <h5
+                                                                style="font-weight: 600; color: #111827; font-size: 16px; margin: 0 0 4px 0;">
+                                                                {{ $soDetail['nomor'] }}
+                                                            </h5>
+                                                            <p style="font-size: 14px; color: #6b7280; margin: 0;">
+                                                                {{ \Carbon\Carbon::parse($soDetail['tanggal'])->format('d M Y') }}
+                                                                •
+                                                                {{ $soDetail['customer'] }} •
+                                                                {{ $soDetail['detail_count'] }} item(s)
+                                                            </p>
+                                                        </div>
+                                                        <span
+                                                            style="display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+                                                            {{ $soDetail['margin_percentage'] <= 30
+                                                                ? 'background: #fee2e2; color: #991b1b;'
+                                                                : ($soDetail['margin_percentage'] <= 50
+                                                                    ? 'background: #fef3c7; color: #92400e;'
+                                                                    : ($soDetail['margin_percentage'] <= 100
+                                                                        ? 'background: #d1fae5; color: #065f46;'
+                                                                        : 'background: #dbeafe; color: #1e40af;')) }}">
+                                                            {{ number_format($soDetail['margin_percentage'], 1) }}%
+                                                            Margin
+                                                        </span>
+                                                    </div>
+
+                                                    <!-- Financial Details dengan grid sederhana -->
+                                                    <div
+                                                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
+                                                        <div
+                                                            style="background: #f9fafb; border-radius: 6px; padding: 8px;">
+                                                            <span
+                                                                style="color: #6b7280; font-size: 10px; display: block;">Total
+                                                                Penjualan</span>
+                                                            <div
+                                                                style="font-weight: 600; color: #111827; font-size: 14px;">
+                                                                Rp
+                                                                {{ number_format($soDetail['total_penjualan'], 0, ',', '.') }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            style="background: #f9fafb; border-radius: 6px; padding: 8px;">
+                                                            <span
+                                                                style="color: #6b7280; font-size: 10px; display: block;">HPP</span>
+                                                            <div
+                                                                style="font-weight: 600; color: #111827; font-size: 14px;">
+                                                                Rp
+                                                                {{ number_format($soDetail['total_hpp'], 0, ',', '.') }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            style="background: #ecfdf5; border-radius: 6px; padding: 8px;">
+                                                            <span
+                                                                style="color: #047857; font-size: 10px; display: block;">Margin</span>
+                                                            <div
+                                                                style="font-weight: 600; color: #047857; font-size: 14px;">
+                                                                Rp
+                                                                {{ number_format($soDetail['margin'], 0, ',', '.') }}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            style="background: #eff6ff; border-radius: 6px; padding: 8px;">
+                                                            <span
+                                                                style="color: #1d4ed8; font-size: 10px; display: block;">Komisi</span>
+                                                            <div
+                                                                style="font-weight: 600; color: #1d4ed8; font-size: 14px;">
+                                                                Rp
+                                                                {{ number_format($soDetail['commission_amount'], 0, ',', '.') }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+
+                                            <!-- Total Summary -->
+                                            <div
+                                                style="background: #eff6ff; border: 1px solid #93c5fd; border-radius: 8px; padding: 16px;">
+                                                <div
+                                                    style="display: flex; justify-content: space-between; align-items: center;">
+                                                    <div>
+                                                        <span
+                                                            style="font-weight: 500; color: #1e3a8a; font-size: 16px;">💰
+                                                            Total Komisi Keseluruhan:</span>
+                                                        <div style="color: #1e40af; font-size: 12px; margin-top: 4px;">
+                                                            Dari {{ count($salesOrderDetails) }} sales order
+                                                        </div>
+                                                    </div>
+                                                    <span style="font-size: 20px; font-weight: 700; color: #1e3a8a;">
+                                                        Rp
+                                                        {{ number_format(array_sum(array_column($salesOrderDetails, 'commission_amount')), 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @elseif (!empty($salesOrderInfo))
+                                        <!-- Fallback dengan style inline -->
+                                        <div
+                                            style="background: #fffbeb; border: 1px solid #fbbf24; border-radius: 8px; padding: 12px;">
+                                            <p style="font-size: 14px; color: #92400e; margin: 0 0 4px 0;">
+                                                <strong>Sales Order:</strong> {{ implode(', ', $salesOrderInfo) }}
                                             </p>
-                                        @endif
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                            Komisi dihitung berdasarkan margin penjualan dengan rate:
-                                            <span class="block mt-1 ml-2">• 5.5% untuk margin ≤ 30%</span>
-                                            <span class="block ml-2">• 7% untuk margin 30% - 50%</span>
-                                            <span class="block ml-2">• 6% untuk margin 50% - 100%</span>
-                                            <span class="block ml-2">• 11.5% untuk margin > 100%</span>
-                                        </p>
+                                            <p style="font-size: 12px; color: #a16207; margin: 0;">
+                                                Detail perhitungan tidak tersedia. Hubungi administrator untuk informasi
+                                                lebih lanjut.
+                                            </p>
+                                        </div>
+                                    @else
+                                        <!-- Jika tidak ada data dengan style inline -->
+                                        <div
+                                            style="background: #f9fafb; border: 1px solid #d1d5db; border-radius: 8px; padding: 12px;">
+                                            <p style="font-size: 14px; color: #374151; margin: 0 0 4px 0;">
+                                                <strong>Keterangan:</strong> {{ $komisiKomponen->keterangan }}
+                                            </p>
+                                            <p style="font-size: 12px; color: #6b7280; margin: 0;">
+                                                Detail sales order tidak dapat diambil dari keterangan ini.
+                                            </p>
+                                        </div>
                                     @endif
+                                </div>
+
+                                <!-- Commission Rate Info dengan style inline -->
+                                <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
+                                    <p style="font-weight: 500; color: #374151; margin: 0 0 8px 0; font-size: 14px;">📋
+                                        Informasi Sistem Komisi:</p>
+                                    <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
+                                        <p style="margin: 0 0 4px 0;">• Komisi dihitung berdasarkan margin penjualan
+                                            per item</p>
+                                        <p style="margin: 0 0 4px 0;">• Rate komisi menggunakan sistem tier dari 1%
+                                            hingga 30%</p>
+                                        <p style="margin: 0 0 4px 0;">• Margin minimum untuk mendapat komisi: 18%</p>
+                                        <p style="margin: 0;">• Komisi total adalah akumulasi dari semua item dalam
+                                            sales order</p>
+                                    </div>
                                 </div>
                             </div>
                         @endif
@@ -810,217 +1194,295 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize UI components
-                setupStickyActionBar();
-                addKeyboardNavigation();
+            // Ensure script only runs once
+            if (!window.payrollDetailInitialized) {
+                window.payrollDetailInitialized = true;
 
-                // Handle form submission
-                const paymentForm = document.getElementById('payment-form');
-                if (paymentForm) {
-                    paymentForm.addEventListener('submit', function(e) {
-                        e.preventDefault();
-
-                        // Validate form
-                        const paymentMethod = document.querySelector('input[name="payment_method"]:checked')
-                            ?.value;
-                        let isValid = true;
-
-                        if (paymentMethod === 'cash') {
-                            const kasId = document.getElementById('kas_id').value;
-                            if (!kasId) {
-                                showValidationError(document.getElementById('kas_id'),
-                                    'Silahkan pilih akun kas');
-                                isValid = false;
-                            }
-                        } else if (paymentMethod === 'bank') {
-                            const rekeningId = document.getElementById('rekening_id').value;
-                            if (!rekeningId) {
-                                showValidationError(document.getElementById('rekening_id'),
-                                    'Silahkan pilih rekening bank');
-                                isValid = false;
-                            }
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Delay initialization to ensure all DOM elements are fully rendered
+                    setTimeout(function() {
+                        try {
+                            // Initialize UI components
+                            setupStickyActionBar();
+                            addKeyboardNavigation();
+                            initializePaymentForm();
+                        } catch (error) {
+                            console.warn('Error initializing UI components:', error);
                         }
+                    }, 100);
+                });
 
-                        const paymentDate = document.getElementById('payment_date').value;
-                        if (!paymentDate) {
-                            showValidationError(document.getElementById('payment_date'),
-                                'Tanggal pembayaran harus diisi');
-                            isValid = false;
-                        }
+                function initializePaymentForm() {
+                    // Handle form submission
+                    const paymentForm = document.getElementById('payment-form');
+                    if (paymentForm) {
+                        // Remove existing listeners to prevent duplicates
+                        const newForm = paymentForm.cloneNode(true);
+                        paymentForm.parentNode.replaceChild(newForm, paymentForm);
 
-                        if (isValid) {
-                            // Show loading overlay
-                            showLoadingOverlay('Memproses pembayaran...');
-                            // Submit the form
-                            this.submit();
-                        }
-                    });
-                }
-            });
-
-            // Function to set up sticky action bar on mobile
-            function setupStickyActionBar() {
-                const mobileActionBar = document.getElementById('mobile-action-bar');
-
-                if (mobileActionBar) {
-                    let lastScrollTop = 0;
-                    window.addEventListener('scroll', function() {
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-
-                        if (scrollTop > lastScrollTop && scrollTop > 300) {
-                            mobileActionBar.classList.remove('translate-y-full');
-                        } else if (scrollTop < 100 || scrollTop < lastScrollTop) {
-                            mobileActionBar.classList.add('translate-y-full');
-                        }
-
-                        lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
-                    });
-                }
-            }
-
-            // Function to switch between payment methods
-            function selectPaymentMethod(method) {
-                const cashCard = document.getElementById('cash_payment_card');
-                const bankCard = document.getElementById('bank_payment_card');
-                const cashAccounts = document.getElementById('cash_accounts');
-                const bankAccounts = document.getElementById('bank_accounts');
-
-                clearValidationErrors();
-
-                if (method === 'cash') {
-                    document.getElementById('payment_cash').checked = true;
-                    if (cashCard) {
-                        cashCard.classList.add('selected', 'border-primary-500');
-                        cashCard.classList.remove('border-gray-200', 'dark:border-gray-700');
-                        cashCard.setAttribute('aria-checked', 'true');
-                    }
-                    if (bankCard) {
-                        bankCard.classList.remove('selected', 'border-primary-500');
-                        bankCard.classList.add('border-gray-200', 'dark:border-gray-700');
-                        bankCard.setAttribute('aria-checked', 'false');
-                    }
-                    if (cashAccounts) cashAccounts.classList.remove('hidden');
-                    if (bankAccounts) bankAccounts.classList.add('hidden');
-
-                    if (document.getElementById('kas_id')) document.getElementById('kas_id').required = true;
-                    if (document.getElementById('rekening_id')) document.getElementById('rekening_id').required = false;
-                } else if (method === 'bank') {
-                    document.getElementById('payment_bank').checked = true;
-                    if (bankCard) {
-                        bankCard.classList.add('selected', 'border-primary-500');
-                        bankCard.classList.remove('border-gray-200', 'dark:border-gray-700');
-                        bankCard.setAttribute('aria-checked', 'true');
-                    }
-                    if (cashCard) {
-                        cashCard.classList.remove('selected', 'border-primary-500');
-                        cashCard.classList.add('border-gray-200', 'dark:border-gray-700');
-                        cashCard.setAttribute('aria-checked', 'false');
-                    }
-                    if (bankAccounts) bankAccounts.classList.remove('hidden');
-                    if (cashAccounts) cashAccounts.classList.add('hidden');
-
-                    if (document.getElementById('kas_id')) document.getElementById('kas_id').required = false;
-                    if (document.getElementById('rekening_id')) document.getElementById('rekening_id').required = true;
-                }
-            }
-
-            // Add keyboard navigation for accessibility
-            function addKeyboardNavigation() {
-                const paymentCards = document.querySelectorAll('.payment-method-card');
-
-                paymentCards.forEach(card => {
-                    card.addEventListener('keydown', function(e) {
-                        if (e.key === 'Enter' || e.key === ' ') {
+                        newForm.addEventListener('submit', function(e) {
                             e.preventDefault();
-                            this.click();
+
+                            // Validate form
+                            const paymentMethodEl = document.querySelector('input[name="payment_method"]:checked');
+                            const paymentMethod = paymentMethodEl ? paymentMethodEl.value : null;
+                            let isValid = true;
+
+                            if (paymentMethod === 'cash') {
+                                const kasIdEl = document.getElementById('kas_id');
+                                if (!kasIdEl || !kasIdEl.value) {
+                                    if (kasIdEl) {
+                                        showValidationError(kasIdEl, 'Silahkan pilih akun kas');
+                                    }
+                                    isValid = false;
+                                }
+                            } else if (paymentMethod === 'bank') {
+                                const rekeningIdEl = document.getElementById('rekening_id');
+                                if (!rekeningIdEl || !rekeningIdEl.value) {
+                                    if (rekeningIdEl) {
+                                        showValidationError(rekeningIdEl, 'Silahkan pilih rekening bank');
+                                    }
+                                    isValid = false;
+                                }
+                            }
+
+                            const paymentDateEl = document.getElementById('payment_date');
+                            if (!paymentDateEl || !paymentDateEl.value) {
+                                if (paymentDateEl) {
+                                    showValidationError(paymentDateEl, 'Tanggal pembayaran harus diisi');
+                                }
+                                isValid = false;
+                            }
+
+                            if (isValid) {
+                                // Show loading overlay
+                                showLoadingOverlay('Memproses pembayaran...');
+                                // Submit the form
+                                this.submit();
+                            }
+                        });
+                    }
+                }
+
+                // Function to set up sticky action bar on mobile
+                function setupStickyActionBar() {
+                    const mobileActionBar = document.getElementById('mobile-action-bar');
+
+                    if (mobileActionBar) {
+                        let lastScrollTop = 0;
+                        const handleScroll = function() {
+                            try {
+                                const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+                                if (scrollTop > lastScrollTop && scrollTop > 300) {
+                                    mobileActionBar.classList.remove('translate-y-full');
+                                } else if (scrollTop < 100 || scrollTop < lastScrollTop) {
+                                    mobileActionBar.classList.add('translate-y-full');
+                                }
+
+                                lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+                            } catch (error) {
+                                console.warn('Error in scroll handler:', error);
+                            }
+                        };
+
+                        window.addEventListener('scroll', handleScroll, {
+                            passive: true
+                        });
+                    }
+                }
+
+                // Function to switch between payment methods
+                window.selectPaymentMethod = function(method) {
+                    try {
+                        const cashCard = document.getElementById('cash_payment_card');
+                        const bankCard = document.getElementById('bank_payment_card');
+                        const cashAccounts = document.getElementById('cash_accounts');
+                        const bankAccounts = document.getElementById('bank_accounts');
+
+                        clearValidationErrors();
+
+                        if (method === 'cash') {
+                            const paymentCashEl = document.getElementById('payment_cash');
+                            if (paymentCashEl) paymentCashEl.checked = true;
+
+                            if (cashCard) {
+                                cashCard.classList.add('selected', 'border-primary-500');
+                                cashCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+                                cashCard.setAttribute('aria-checked', 'true');
+                            }
+                            if (bankCard) {
+                                bankCard.classList.remove('selected', 'border-primary-500');
+                                bankCard.classList.add('border-gray-200', 'dark:border-gray-700');
+                                bankCard.setAttribute('aria-checked', 'false');
+                            }
+                            if (cashAccounts) cashAccounts.classList.remove('hidden');
+                            if (bankAccounts) bankAccounts.classList.add('hidden');
+
+                            const kasIdEl = document.getElementById('kas_id');
+                            const rekeningIdEl = document.getElementById('rekening_id');
+                            if (kasIdEl) kasIdEl.required = true;
+                            if (rekeningIdEl) rekeningIdEl.required = false;
+                        } else if (method === 'bank') {
+                            const paymentBankEl = document.getElementById('payment_bank');
+                            if (paymentBankEl) paymentBankEl.checked = true;
+
+                            if (bankCard) {
+                                bankCard.classList.add('selected', 'border-primary-500');
+                                bankCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+                                bankCard.setAttribute('aria-checked', 'true');
+                            }
+                            if (cashCard) {
+                                cashCard.classList.remove('selected', 'border-primary-500');
+                                cashCard.classList.add('border-gray-200', 'dark:border-gray-700');
+                                cashCard.setAttribute('aria-checked', 'false');
+                            }
+                            if (bankAccounts) bankAccounts.classList.remove('hidden');
+                            if (cashAccounts) cashAccounts.classList.add('hidden');
+
+                            const kasIdEl = document.getElementById('kas_id');
+                            const rekeningIdEl = document.getElementById('rekening_id');
+                            if (kasIdEl) kasIdEl.required = false;
+                            if (rekeningIdEl) rekeningIdEl.required = true;
                         }
-                    });
-                });
-            }
+                    } catch (error) {
+                        console.warn('Error in selectPaymentMethod:', error);
+                    }
+                };
 
-            // Validation error display
-            function showValidationError(element, message) {
-                clearValidationErrors();
+                // Add keyboard navigation for accessibility
+                function addKeyboardNavigation() {
+                    try {
+                        const paymentCards = document.querySelectorAll('.payment-method-card');
 
-                element.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-
-                const errorElement = document.createElement('p');
-                errorElement.classList.add('text-red-500', 'text-xs', 'mt-1', 'validation-error');
-                errorElement.innerText = message;
-
-                element.parentNode.insertBefore(errorElement, element.nextSibling);
-                showToast(message, 'error');
-                element.focus();
-            }
-
-            function clearValidationErrors() {
-                document.querySelectorAll('.border-red-500').forEach(el => {
-                    el.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-                });
-
-                document.querySelectorAll('.validation-error').forEach(el => {
-                    el.remove();
-                });
-            }
-
-            // Loading overlay
-            function showLoadingOverlay(message = 'Memproses...') {
-                const overlay = document.getElementById('loading-overlay');
-                const messageEl = document.getElementById('loading-message');
-
-                if (messageEl) messageEl.textContent = message;
-                if (overlay) {
-                    overlay.classList.remove('hidden');
-                    overlay.classList.add('flex');
-                }
-            }
-
-            function hideLoadingOverlay() {
-                const overlay = document.getElementById('loading-overlay');
-                if (overlay) {
-                    overlay.classList.add('hidden');
-                    overlay.classList.remove('flex');
-                }
-            }
-
-            // Toast notifications
-            function showToast(message, type = 'info') {
-                const toast = document.getElementById('toast-notification');
-                const toastMessage = document.getElementById('toast-message');
-                const toastIcon = document.getElementById('toast-icon');
-
-                if (!toast || !toastMessage || !toastIcon) return;
-
-                toastMessage.textContent = message;
-
-                if (type === 'success') {
-                    toastIcon.className =
-                        'flex-shrink-0 h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3';
-                    toastIcon.innerHTML =
-                        '<svg class="h-5 w-5 text-green-500 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
-                } else if (type === 'error') {
-                    toastIcon.className =
-                        'flex-shrink-0 h-8 w-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mr-3';
-                    toastIcon.innerHTML =
-                        '<svg class="h-5 w-5 text-red-500 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
-                } else if (type === 'warning') {
-                    toastIcon.className =
-                        'flex-shrink-0 h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mr-3';
-                    toastIcon.innerHTML =
-                        '<svg class="h-5 w-5 text-yellow-500 dark:text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
-                } else {
-                    toastIcon.className =
-                        'flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3';
-                    toastIcon.innerHTML =
-                        '<svg class="h-5 w-5 text-blue-500 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                        paymentCards.forEach(card => {
+                            if (card) {
+                                card.addEventListener('keydown', function(e) {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        this.click();
+                                    }
+                                });
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('Error in addKeyboardNavigation:', error);
+                    }
                 }
 
-                toast.classList.remove('hidden');
+                // Validation error display
+                function showValidationError(element, message) {
+                    if (!element) return;
 
-                setTimeout(() => {
-                    toast.classList.add('hidden');
-                }, 3000);
+                    try {
+                        clearValidationErrors();
+
+                        element.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+
+                        const errorElement = document.createElement('p');
+                        errorElement.classList.add('text-red-500', 'text-xs', 'mt-1', 'validation-error');
+                        errorElement.innerText = message;
+
+                        if (element.parentNode) {
+                            element.parentNode.insertBefore(errorElement, element.nextSibling);
+                        }
+                        showToast(message, 'error');
+                        element.focus();
+                    } catch (error) {
+                        console.warn('Error in showValidationError:', error);
+                    }
+                }
+
+                function clearValidationErrors() {
+                    try {
+                        document.querySelectorAll('.border-red-500').forEach(el => {
+                            if (el) {
+                                el.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                            }
+                        });
+
+                        document.querySelectorAll('.validation-error').forEach(el => {
+                            if (el) {
+                                el.remove();
+                            }
+                        });
+                    } catch (error) {
+                        console.warn('Error in clearValidationErrors:', error);
+                    }
+                }
+
+                // Loading overlay
+                function showLoadingOverlay(message = 'Memproses...') {
+                    try {
+                        const overlay = document.getElementById('loading-overlay');
+                        const messageEl = document.getElementById('loading-message');
+
+                        if (messageEl) messageEl.textContent = message;
+                        if (overlay) {
+                            overlay.classList.remove('hidden');
+                            overlay.classList.add('flex');
+                        }
+                    } catch (error) {
+                        console.warn('Error in showLoadingOverlay:', error);
+                    }
+                }
+
+                function hideLoadingOverlay() {
+                    try {
+                        const overlay = document.getElementById('loading-overlay');
+                        if (overlay) {
+                            overlay.classList.add('hidden');
+                            overlay.classList.remove('flex');
+                        }
+                    } catch (error) {
+                        console.warn('Error in hideLoadingOverlay:', error);
+                    }
+                }
+
+                // Toast notifications
+                function showToast(message, type = 'info') {
+                    try {
+                        const toast = document.getElementById('toast-notification');
+                        const toastMessage = document.getElementById('toast-message');
+                        const toastIcon = document.getElementById('toast-icon');
+
+                        if (!toast || !toastMessage || !toastIcon) return;
+
+                        toastMessage.textContent = message;
+
+                        if (type === 'success') {
+                            toastIcon.className =
+                                'flex-shrink-0 h-8 w-8 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center mr-3';
+                            toastIcon.innerHTML =
+                                '<svg class="h-5 w-5 text-green-500 dark:text-green-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+                        } else if (type === 'error') {
+                            toastIcon.className =
+                                'flex-shrink-0 h-8 w-8 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center mr-3';
+                            toastIcon.innerHTML =
+                                '<svg class="h-5 w-5 text-red-500 dark:text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+                        } else if (type === 'warning') {
+                            toastIcon.className =
+                                'flex-shrink-0 h-8 w-8 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center mr-3';
+                            toastIcon.innerHTML =
+                                '<svg class="h-5 w-5 text-yellow-500 dark:text-yellow-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+                        } else {
+                            toastIcon.className =
+                                'flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-3';
+                            toastIcon.innerHTML =
+                                '<svg class="h-5 w-5 text-blue-500 dark:text-blue-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>';
+                        }
+
+                        toast.classList.remove('hidden');
+
+                        setTimeout(() => {
+                            if (toast) {
+                                toast.classList.add('hidden');
+                            }
+                        }, 3000);
+                    } catch (error) {
+                        console.warn('Error in showToast:', error);
+                    }
+                }
             }
         </script>
     @endpush

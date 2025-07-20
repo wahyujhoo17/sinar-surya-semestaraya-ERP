@@ -15,11 +15,14 @@ class PDFTemplateService
     {
 
         // Tambahkan parameter opsional untuk menonaktifkan template background
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
         // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
-        $customWidth = 165;
+        // $customWidth = 165;
+        // $customHeight = 212;
+
+        $customWidth = 185;
         $customHeight = 212;
 
         try {
@@ -60,21 +63,31 @@ class PDFTemplateService
             // --- Penempatan absolut sesuai layout PDF asli ---
             // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
-            $nomorX = 30;
-            $nomorY = 42.5;
+            $nomorX = 33;
+            $nomorY = 39.5;
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
+            if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
+                $userX = 145;
+                $userY = 200;
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetXY($userX, $userY);
+                $pdf->Cell(60, 0, $deliveryOrder->user->name, 0, 0, 'L');
+            }
+
             // Tanggal (di bawah nomor)
-            $tanggalX = 31;
-            $tanggalY = 197;
+            $tanggalX = 130;
+            $tanggalY = 20;
             $pdf->SetXY($tanggalX, $tanggalY);
-            $pdf->Cell(40, 0, $deliveryOrder->tanggal_kirim ?
-                \Carbon\Carbon::parse($deliveryOrder->tanggal_kirim)->format('d/m/Y') :
-                \Carbon\Carbon::parse($deliveryOrder->created_at)->format('d/m/Y'), 0, 0, 'L');
+            // Format tanggal seperti "Jakarta, 3 July 2025"
+            $tanggal = $deliveryOrder->tanggal_kirim ?? $deliveryOrder->created_at;
+            $tanggalObj = \Carbon\Carbon::parse($tanggal);
+            $formattedTanggal = 'Jakarta, ' . $tanggalObj->day . ' ' . $tanggalObj->format('F Y');
+            $pdf->Cell(60, 0, $formattedTanggal, 0, 0, 'L');
 
             // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
-            $customerX = 111;
+            $customerX = 95;
             $customerY = 35;
             $maxCustomerWidth = 50;
 
@@ -100,7 +113,7 @@ class PDFTemplateService
             }
 
             // Items table (misal mulai X=15mm, Y=55mm)
-            $itemsStartY = 75;
+            $itemsStartY = 70;
             $lineHeight = 6;
             $currentY = $itemsStartY;
             $maxItemsY = 170;
@@ -108,9 +121,9 @@ class PDFTemplateService
             // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
             $noCol = 9;
             $namaCol = 20;
-            $kodeCol = 100;
-            $qtyCol = 130;
-            $satuanCol = 140;
+            $kodeCol = 115;
+            $qtyCol = 140;
+            $satuanCol = 155;
 
             foreach ($deliveryOrder->details as $index => $detail) {
                 if ($currentY > $maxItemsY) break;

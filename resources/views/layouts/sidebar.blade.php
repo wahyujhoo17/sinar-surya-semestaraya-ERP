@@ -20,6 +20,7 @@
                 localStorage.setItem('activeDropdown', this.activeDropdown);
             }
         }">
+
             <!-- Dashboard -->
             @if (auth()->user()->hasPermission('dashboard.view'))
                 <a href="{{ route('dashboard') }}"
