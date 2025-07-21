@@ -552,20 +552,20 @@
                                             <div class="flex justify-between items-center mb-1">
                                                 <span
                                                     class="text-xs font-medium text-gray-500 dark:text-gray-400">Bank:</span>
-                                                <span class="text-xs font-medium text-gray-800 dark:text-gray-200">Bank
-                                                    Central Asia (BCA)</span>
+                                                <span
+                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">Mandiri</span>
                                             </div>
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">No.
                                                     Rekening:</span>
                                                 <span
-                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">123-456-7890</span>
+                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">006.000.301.9563</span>
                                             </div>
                                             <div class="flex justify-between items-center">
                                                 <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
                                                     Nama:</span>
                                                 <span
-                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya') }}</span>
+                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}</span>
                                             </div>
                                         </div>
                                         <p class="text-xs text-gray-600 dark:text-gray-400 italic">Harap sertakan nomor
@@ -844,7 +844,7 @@
                                     this.customerId = data.sales_order.customer_id || '';
                                     this.customerName = data.sales_order.customer ?
                                         (data.sales_order.customer.company ?
-                                            `${data.sales_order.customer.nama} (${data.sales_order.customer.company})` :
+                                            `(${data.sales_order.customer.company ?? data.sales_order.customer.nama })` :
                                             data.sales_order.customer.nama) :
                                         'Unknown Customer';
 
@@ -1039,7 +1039,7 @@
                             if (qty > maxAvailable) {
                                 alert(
                                     `Produk ${item.nama_produk || 'Unknown'}: Qty ${qty} melebihi qty yang tersedia (${maxAvailable})`
-                                    );
+                                );
                                 hasError = true;
                             }
                         });
