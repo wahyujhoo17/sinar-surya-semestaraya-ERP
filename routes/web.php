@@ -547,7 +547,15 @@ Route::middleware(['auth'])->group(function () {
 
     // -- HR & Karyawan --
     Route::prefix('hr')->name('hr.')->group(function () {
-        Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
+        Route::middleware('permission:karyawan.delete')->group(function () {
+            Route::delete('karyawan/bulk-destroy', [DataKaryawanController::class, 'bulkDestroy'])->name('karyawan.bulk-destroy');
+        });
+
+        Route::get('karyawan/export', [DataKaryawanController::class, 'export'])->name('karyawan.export');
+        Route::get('karyawan/template', [DataKaryawanController::class, 'downloadTemplate'])->name('karyawan.template');
+
+        Route::post('karyawan/import', [DataKaryawanController::class, 'import'])->name('karyawan.import');
+
         Route::resource('karyawan', DataKaryawanController::class);
 
         // Struktur Organisasi routes

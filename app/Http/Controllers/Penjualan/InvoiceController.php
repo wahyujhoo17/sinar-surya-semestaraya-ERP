@@ -13,6 +13,7 @@ use App\Models\Customer;
 use App\Models\LogAktivitas;
 use App\Models\UangMukaPenjualan;
 use App\Models\UangMukaAplikasi;
+use App\Models\JurnalUmum;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -554,7 +555,65 @@ class InvoiceController extends Controller
         DB::beginTransaction();
 
         try {
-            // First, delete associated details
+            // First, handle uang muka applications if any
+            $uangMukaAplikasi = UangMukaAplikasi::where('invoice_id', $invoice->id)->get();
+
+            if ($uangMukaAplikasi->isNotEmpty()) {
+                Log::info('Restoring advance payments for deleted invoice', [
+                    'invoice_id' => $invoice->id,
+                    'invoice_nomor' => $invoice->nomor,
+                    'applications_count' => $uangMukaAplikasi->count()
+                ]);
+
+                foreach ($uangMukaAplikasi as $aplikasi) {
+                    // Simpan data uang muka sebelum aplikasi dihapus
+                    $uangMuka = $aplikasi->uangMukaPenjualan;
+                    $restoredAmount = $aplikasi->jumlah_aplikasi;
+
+                    if ($uangMuka) {
+                        $oldStatus = $uangMuka->status;
+                        $oldJumlahTersedia = $uangMuka->jumlah_tersedia;
+
+                        // Hapus jurnal entry untuk aplikasi uang muka
+                        JurnalUmum::where('ref_type', 'App\\Models\\UangMukaAplikasi')
+                            ->where('ref_id', $aplikasi->id)
+                            ->where('sumber', 'uang_muka_aplikasi')
+                            ->delete();
+
+                        // Hapus record aplikasi DULU
+                        $aplikasi->delete();
+
+                        // SETELAH aplikasi dihapus, baru refresh dan update status
+                        $uangMuka->refresh(); // Refresh model dari database
+                        $uangMuka->load('aplikasi'); // Load relasi aplikasi yang terbaru
+                        $uangMuka->updateStatus(); // Recalculate status dan jumlah_tersedia
+
+                        Log::info('Advance payment status updated after invoice deletion', [
+                            'uang_muka_id' => $uangMuka->id,
+                            'uang_muka_nomor' => $uangMuka->nomor,
+                            'old_status' => $oldStatus,
+                            'new_status' => $uangMuka->status,
+                            'old_jumlah_tersedia' => $oldJumlahTersedia,
+                            'new_jumlah_tersedia' => $uangMuka->jumlah_tersedia,
+                            'restored_amount' => $restoredAmount
+                        ]);
+                    } else {
+                        // Jika uang muka tidak ditemukan, tetap hapus jurnal dan aplikasi
+                        JurnalUmum::where('ref_type', 'App\\Models\\UangMukaAplikasi')
+                            ->where('ref_id', $aplikasi->id)
+                            ->where('sumber', 'uang_muka_aplikasi')
+                            ->delete();
+
+                        $aplikasi->delete();
+                    }
+                }
+
+                // Reset uang_muka_terapkan field pada invoice yang akan dihapus
+                $invoice->uang_muka_terapkan = 0;
+                $invoice->save();
+            }
+
+            // Delete associated details
             InvoiceDetail::where('invoice_id', $invoice->id)->delete();
 
             // Log the deletion

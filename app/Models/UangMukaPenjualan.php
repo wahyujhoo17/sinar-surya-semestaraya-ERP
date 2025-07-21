@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class UangMukaPenjualan extends Model
 {
@@ -84,21 +85,38 @@ class UangMukaPenjualan extends Model
     // Method untuk update status berdasarkan aplikasi
     public function updateStatus()
     {
-        $totalAplikasi = (float) $this->totalAplikasi;
+        // Hitung total aplikasi langsung dari database untuk data yang paling update
+        $totalAplikasi = (float) \App\Models\UangMukaAplikasi::where('uang_muka_penjualan_id', $this->id)
+            ->sum('jumlah_aplikasi');
+
         $jumlah = (float) $this->jumlah;
 
+        // Hitung jumlah tersedia
+        $jumlahTersedia = 0;
+        $status = 'confirmed';
+
         if ($totalAplikasi >= $jumlah) {
-            $this->status = 'applied';
-            $this->jumlah_tersedia = 0;
+            $status = 'applied';
+            $jumlahTersedia = 0;
         } elseif ($totalAplikasi > 0) {
-            $this->status = 'partially_applied';
-            $this->jumlah_tersedia = $jumlah - $totalAplikasi;
+            $status = 'partially_applied';
+            $jumlahTersedia = $jumlah - $totalAplikasi;
         } else {
-            $this->status = 'confirmed';
-            $this->jumlah_tersedia = $jumlah;
+            $status = 'confirmed';
+            $jumlahTersedia = $jumlah;
         }
 
-        $this->save();
+        // Update menggunakan DB query untuk menghindari masalah casting
+        DB::table('uang_muka_penjualan')
+            ->where('id', $this->id)
+            ->update([
+                'status' => $status,
+                'jumlah_tersedia' => $jumlahTersedia,
+                'updated_at' => now()
+            ]);
+
+        // Refresh model
+        $this->refresh();
     }
 
     // Scope untuk filter berdasarkan customer

@@ -191,17 +191,51 @@
                                 </div>
 
                                 <div class="flex items-center space-x-2">
-                                    {{-- Export Button --}}
-                                    <a href="#"
-                                        class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                                        <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
-                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        Export
-                                    </a>
+                                    {{-- Export Dropdown --}}
+                                    <div x-data="{ open: false }" class="relative">
+                                        <button @click="open = !open"
+                                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                            <svg class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400"
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Export
+                                            <svg class="ml-1.5 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
+                                        <div x-show="open" @click.outside="open = false" x-transition
+                                            class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-40"
+                                            style="display: none;">
+                                            <div class="py-1" role="menu" aria-orientation="vertical">
+                                                <a href="{{ route('hr.karyawan.export', request()->all()) }}"
+                                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                                                    <svg class="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    Export Excel
+                                                </a>
+                                                <a href="{{ route('hr.karyawan.template') }}"
+                                                    class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50">
+                                                    <svg class="mr-3 h-4 w-4" xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    Download Template
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
 
                                     {{-- Import Button --}}
                                     <button type="button" @click="$dispatch('open-modal', 'import-modal')"
@@ -477,6 +511,92 @@
             {{-- Input akan dimasukkan secara dinamis saat submit --}}
         </div>
     </form>
+
+    {{-- Import Modal --}}
+    <x-modal name="import-modal" :show="$errors->userBag->isNotEmpty()" focusable>
+        <form method="POST" action="{{ route('hr.karyawan.import') }}" enctype="multipart/form-data"
+            class="p-6">
+            @csrf
+
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                {{ __('Import Data Karyawan') }}
+            </h2>
+
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                Upload file Excel (.xlsx, .xls) atau CSV (.csv) untuk mengimport data karyawan secara massal.
+            </p>
+
+            <div class="mt-6">
+                <label for="import_file" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    File Import
+                </label>
+                <div class="mt-2">
+                    <input type="file" name="file" id="import_file" accept=".xlsx,.xls,.csv" required
+                        class="block w-full text-sm text-gray-500 dark:text-gray-400 
+                               file:mr-4 file:py-2 file:px-4 
+                               file:rounded-md file:border-0 
+                               file:text-sm file:font-medium 
+                               file:bg-primary-50 file:text-primary-700 
+                               hover:file:bg-primary-100 
+                               dark:file:bg-primary-900/20 dark:file:text-primary-400 
+                               dark:hover:file:bg-primary-900/30
+                               border border-gray-300 dark:border-gray-600 rounded-md
+                               focus:ring-primary-500 focus:border-primary-500">
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Format yang didukung: .xlsx, .xls, .csv. Maksimal 2MB.
+                </p>
+            </div>
+
+            <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800 dark:text-blue-200">
+                            Petunjuk Import
+                        </h3>
+                        <div class="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Download template terlebih dahulu untuk format yang benar</li>
+                                <li>Pastikan Department dan Jabatan sudah ada di sistem</li>
+                                <li>Format tanggal: DD/MM/YYYY</li>
+                                <li>Status: aktif, nonaktif, cuti, atau keluar</li>
+                                <li>Role: admin, manager, atau karyawan</li>
+                            </ul>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ route('hr.karyawan.template') }}"
+                                class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300">
+                                <svg class="mr-1 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download Template
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <x-secondary-button x-on:click="$dispatch('close')">
+                    {{ __('Batal') }}
+                </x-secondary-button>
+
+                <x-primary-button type="submit">
+                    {{ __('Import') }}
+                </x-primary-button>
+            </div>
+        </form>
+    </x-modal>
 
     <script>
         function karyawanTableManager() {

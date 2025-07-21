@@ -13,9 +13,20 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log; // Import Log facade
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\KaryawanExport;
+use App\Exports\KaryawanTemplateExport;
+use App\Imports\KaryawanImport;
 
 class DataKaryawanController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:karyawan.view')->only(['index', 'show']);
+        $this->middleware('permission:karyawan.create')->only(['create', 'store']);
+        $this->middleware('permission:karyawan.edit')->only(['edit', 'update']);
+        $this->middleware('permission:karyawan.delete')->only(['destroy', 'bulkDestroy']);
+    }
     /**
      * Display a listing of the resource.
      */
@@ -335,5 +346,71 @@ class DataKaryawanController extends Controller
 
         return redirect()->route('hr.karyawan.index')
             ->with('success', "{$count} karyawan berhasil dihapus");
+    }
+
+    /**
+     * Export karyawan data to Excel
+     */
+    public function export(Request $request)
+    {
+        $filters = $request->only(['search', 'department_id', 'status', 'tanggal_masuk']);
+
+        return Excel::download(
+            new KaryawanExport($filters),
+            'data-karyawan-' . date('Y-m-d') . '.xlsx'
+        );
+    }
+
+    /**
+     * Download template for import
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(
+            new KaryawanTemplateExport(),
+            'template-import-karyawan.xlsx'
+        );
+    }
+
+    /**
+     * Import karyawan data from Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv|max:2048'
+        ], [
+            'file.required' => 'File wajib diupload',
+            'file.mimes' => 'File harus berformat Excel (.xlsx, .xls) atau CSV (.csv)',
+            'file.max' => 'Ukuran file maksimal 2MB'
+        ]);
+
+        try {
+            $import = new KaryawanImport();
+            Excel::import($import, $request->file('file'));
+
+            $results = $import->getResults();
+
+            if ($results['failed_count'] > 0) {
+                $message = "Import selesai. {$results['success_count']} data berhasil diimport, {$results['failed_count']} data gagal.";
+
+                if (!empty($results['errors'])) {
+                    $errorMessages = implode('; ', array_slice($results['errors'], 0, 5));
+                    if (count($results['errors']) > 5) {
+                        $errorMessages .= ' dan ' . (count($results['errors']) - 5) . ' error lainnya.';
+                    }
+                    $message .= " Error: " . $errorMessages;
+                }
+
+                return redirect()->route('hr.karyawan.index')->with('warning', $message);
+            }
+
+            return redirect()->route('hr.karyawan.index')
+                ->with('success', "Import berhasil! {$results['success_count']} data karyawan telah diimport.");
+        } catch (\Exception $e) {
+            Log::error('Error importing karyawan: ' . $e->getMessage());
+            return redirect()->route('hr.karyawan.index')
+                ->with('error', 'Terjadi kesalahan saat import data: ' . $e->getMessage());
+        }
     }
 }

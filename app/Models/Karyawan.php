@@ -31,6 +31,16 @@ class Karyawan extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'tanggal_lahir' => 'date',
+        'tanggal_masuk' => 'date',
+        'tanggal_keluar' => 'date',
+        'gaji_pokok' => 'decimal:0',
+    ];
+
+    /**
      * Relasi ke Department
      */
     public function department()
