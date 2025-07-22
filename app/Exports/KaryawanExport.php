@@ -80,8 +80,6 @@ class KaryawanExport implements FromCollection, WithHeadings, WithMapping, WithS
             'Alamat',
             'Tanggal Lahir',
             'Jenis Kelamin',
-            'Status Pernikahan',
-            'No. KTP',
             'Role User',
             'Tanggal Dibuat',
             'Terakhir Diupdate'
@@ -120,7 +118,7 @@ class KaryawanExport implements FromCollection, WithHeadings, WithMapping, WithS
             $karyawan->nip,
             $karyawan->nama_lengkap,
             $karyawan->email,
-            $karyawan->no_telepon,
+            $karyawan->telepon,
             $karyawan->department ? $karyawan->department->nama : '',
             $karyawan->jabatan ? $karyawan->jabatan->nama : '',
             $formatDate($karyawan->tanggal_masuk),
@@ -129,8 +127,6 @@ class KaryawanExport implements FromCollection, WithHeadings, WithMapping, WithS
             $karyawan->alamat,
             $formatDate($karyawan->tanggal_lahir),
             $karyawan->jenis_kelamin ? ucfirst($karyawan->jenis_kelamin) : '',
-            $karyawan->status_pernikahan ? ucfirst($karyawan->status_pernikahan) : '',
-            $karyawan->no_ktp,
             $karyawan->user && $karyawan->user->roles->isNotEmpty() ? $karyawan->user->roles->first()->nama : '',
             $formatDate($karyawan->created_at, 'd/m/Y H:i'),
             $formatDate($karyawan->updated_at, 'd/m/Y H:i')

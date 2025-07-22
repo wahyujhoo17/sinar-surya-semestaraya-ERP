@@ -33,8 +33,7 @@ class KaryawanTemplateExport implements FromArray, WithHeadings, WithStyles, Wit
                 'Jl. Contoh No. 123, Jakarta',
                 '15/06/1990',
                 'laki-laki',
-                'menikah',
-                '1234567890123456',
+
                 'karyawan'
             ],
             [
@@ -50,8 +49,7 @@ class KaryawanTemplateExport implements FromArray, WithHeadings, WithStyles, Wit
                 'Jl. Sample No. 456, Bandung',
                 '20/08/1988',
                 'perempuan',
-                'belum_menikah',
-                '1234567890123457',
+
                 'manager'
             ]
         ];
@@ -75,8 +73,7 @@ class KaryawanTemplateExport implements FromArray, WithHeadings, WithStyles, Wit
             'Alamat',
             'Tanggal Lahir (DD/MM/YYYY)',
             'Jenis Kelamin (laki-laki/perempuan)',
-            'Status Pernikahan (menikah/belum_menikah)',
-            'No. KTP',
+
             'Role User (admin/manager/karyawan)'
         ];
     }

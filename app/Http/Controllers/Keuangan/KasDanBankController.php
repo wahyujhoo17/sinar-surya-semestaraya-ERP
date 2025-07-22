@@ -42,6 +42,42 @@ class KasDanBankController extends Controller
             ->limit(5)
             ->get();
 
+        // Data project untuk tab manajemen project
+        $projects = \App\Models\Project::with(['customer', 'salesOrder', 'transaksi'])
+            ->aktif()
+            ->get()
+            ->map(function ($project) {
+                $project->total_alokasi = $project->transaksi()
+                    ->where('jenis', 'alokasi')
+                    ->sum('nominal');
+                $project->total_penggunaan = $project->transaksi()
+                    ->where('jenis', 'penggunaan')
+                    ->sum('nominal');
+                $project->total_pengembalian = $project->transaksi()
+                    ->where('jenis', 'pengembalian')
+                    ->sum('nominal');
+
+                // Hitung saldo project (gunakan attribut dari model)
+                // $project->saldo sudah dihitung otomatis melalui accessor di model
+
+                // Hitung persentase penggunaan budget
+                $project->persentase_penggunaan = $project->budget > 0
+                    ? round(($project->total_penggunaan / $project->budget) * 100, 2)
+                    : 0;
+
+                // Hitung persentase alokasi budget (untuk Progress Budget)
+                $project->persentase_alokasi = $project->budget > 0
+                    ? round(($project->total_alokasi / $project->budget) * 100, 2)
+                    : 0;
+
+                return $project;
+            });
+
+        // Statistik project
+        $totalBudget = $projects->sum('budget');
+        $totalAlokasi = $projects->sum('total_alokasi');
+        $sisaBudget = $totalBudget - $totalAlokasi;
+
         // Breadcrumbs untuk navigasi
         $breadcrumbs = [
             ['name' => 'Dashboard', 'url' => route('dashboard')],
@@ -56,6 +92,10 @@ class KasDanBankController extends Controller
             'totalRekening',
             'transaksiKas',
             'transaksiBank',
+            'projects',
+            'totalBudget',
+            'totalAlokasi',
+            'sisaBudget',
             'breadcrumbs'
         ))->with('currentPage', 'Kas & Bank');
     }

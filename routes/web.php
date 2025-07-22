@@ -57,6 +57,8 @@ use App\Http\Controllers\CRM\ProspekLeadController;
 use App\Http\Controllers\CRM\ProspekAktivitasController;
 use App\Http\Controllers\Pengaturan\LogAktivitasController;
 use App\Http\Controllers\Pengaturan\PengaturanUmumController;
+use App\Http\Controllers\Keuangan\ProjectController;
+use App\Http\Controllers\Keuangan\TransaksiProjectController;
 
 
 /*
@@ -730,6 +732,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('uang-muka-penjualan/customer/{id}', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'getByCustomer'])->name('uang-muka-penjualan.by-customer');
         Route::post('uang-muka-penjualan/{id}/apply', [\App\Http\Controllers\Keuangan\UangMukaPenjualanController::class, 'applyToInvoice'])->name('uang-muka-penjualan.apply');
         Route::resource('uang-muka-penjualan', \App\Http\Controllers\Keuangan\UangMukaPenjualanController::class);
+
+        // Project Management Routes
+        Route::get('projects/customers', [ProjectController::class, 'getCustomers'])->name('projects.customers');
+        Route::get('projects/sales-orders/{customer_id?}', [ProjectController::class, 'getSalesOrders'])->name('projects.sales-orders');
+        Route::resource('projects', ProjectController::class);
+
+        // Transaksi Project Routes
+        Route::get('transaksi-projects/projects', [TransaksiProjectController::class, 'getProjects'])->name('transaksi-projects.projects');
+        Route::get('transaksi-projects/kas-accounts', [TransaksiProjectController::class, 'getKasAccounts'])->name('transaksi-projects.kas-accounts');
+        Route::get('transaksi-projects/bank-accounts', [TransaksiProjectController::class, 'getBankAccounts'])->name('transaksi-projects.bank-accounts');
+        Route::get('transaksi-projects/project-summary/{project_id}', [TransaksiProjectController::class, 'getProjectSummary'])->name('transaksi-projects.project-summary');
+
+        // Route khusus untuk modal detail transaksi project
+        Route::get('transaksi-project', [TransaksiProjectController::class, 'index'])->name('transaksi-project.index');
+        Route::get('transaksi-project/{id}', [TransaksiProjectController::class, 'show'])->name('transaksi-project.show');
+
+        Route::resource('transaksi-projects', TransaksiProjectController::class);
     });
 
     // -- Laporan --
