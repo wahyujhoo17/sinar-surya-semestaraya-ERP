@@ -19,11 +19,11 @@ class PDFTemplateService
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
         // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
-        // $customWidth = 165;
-        // $customHeight = 212;
-
-        $customWidth = 185;
+        $customWidth = 165;
         $customHeight = 212;
+
+        // $customWidth = 185;
+        // $customHeight = 212;
 
         try {
             // Create FPDI instance

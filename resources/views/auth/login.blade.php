@@ -1,7 +1,4 @@
 <x-guest-layout>
-
-
-
     <div
         class="flex min-h-screen bg-gradient-to-br from-primary-50 via-blue-50 to-white dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <!-- Left side - Logo and company image -->
