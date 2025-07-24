@@ -15,7 +15,7 @@ class PDFTemplateService
     {
 
         // Tambahkan parameter opsional untuk menonaktifkan template background
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
         // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
@@ -105,8 +105,8 @@ class PDFTemplateService
             $maxItemsY = 170;
 
             // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
-            $noCol = 9;
-            $namaCol = 20;
+            $noCol = 11;
+            $namaCol = 24;
             $kodeCol = 103;
             $qtyCol = 114;
             $satuanCol = 145;
