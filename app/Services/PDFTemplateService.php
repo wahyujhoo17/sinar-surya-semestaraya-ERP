@@ -22,8 +22,8 @@ class PDFTemplateService
         $customWidth = 165;
         $customHeight = 212;
 
-        // $customWidth = 185;
-        // $customHeight = 212;
+        // $customWidth = 176;
+        // $customHeight = 250;
 
         try {
             // Create FPDI instance
@@ -69,7 +69,7 @@ class PDFTemplateService
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
             if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
-                $userX = 145;
+                $userX = 135;
                 $userY = 200;
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY($userX, $userY);
@@ -88,7 +88,7 @@ class PDFTemplateService
 
             // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
             $customerX = 95;
-            $customerY = 35;
+            $customerY = 40;
             $maxCustomerWidth = 50;
 
             // Nama customer bold
@@ -113,17 +113,17 @@ class PDFTemplateService
             }
 
             // Items table (misal mulai X=15mm, Y=55mm)
-            $itemsStartY = 70;
+            $itemsStartY = 73;
             $lineHeight = 6;
             $currentY = $itemsStartY;
             $maxItemsY = 170;
 
             // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
-            $noCol = 9;
-            $namaCol = 20;
-            $kodeCol = 115;
-            $qtyCol = 140;
-            $satuanCol = 155;
+            $noCol = 11;
+            $namaCol = 23;
+            $kodeCol = 107;
+            $qtyCol = 132;
+            $satuanCol = 147;
 
             foreach ($deliveryOrder->details as $index => $detail) {
                 if ($currentY > $maxItemsY) break;
