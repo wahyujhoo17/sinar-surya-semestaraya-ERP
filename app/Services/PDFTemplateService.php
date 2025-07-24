@@ -64,7 +64,7 @@ class PDFTemplateService
             // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
             $nomorX = 31;
-            $nomorY = 41.5;
+            $nomorY = 42.5;
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
@@ -77,7 +77,7 @@ class PDFTemplateService
             }
 
             // Tanggal (di bawah nomor)
-            $tanggalX = 130;
+            $tanggalX = 120;
             $tanggalY = 20;
             $pdf->SetXY($tanggalX, $tanggalY);
             // Format tanggal seperti "Jakarta, 3 July 2025"
@@ -87,7 +87,7 @@ class PDFTemplateService
             $pdf->Cell(60, 0, $formattedTanggal, 0, 0, 'L');
 
             // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
-            $customerX = 95;
+            $customerX = 90;
             $customerY = 40;
             $maxCustomerWidth = 50;
 
@@ -107,8 +107,8 @@ class PDFTemplateService
             // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
             $noCol = 9;
             $namaCol = 20;
-            $kodeCol = 102;
-            $qtyCol = 115;
+            $kodeCol = 103;
+            $qtyCol = 114;
             $satuanCol = 145;
 
             foreach ($deliveryOrder->details as $index => $detail) {
@@ -126,10 +126,10 @@ class PDFTemplateService
                 $detailNomor = $detail->produk->kode ?? '-';
                 $pdf->SetXY($kodeCol, $currentY);
                 $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, $detailNomor, 0, 0, 'L');
-                // Qty & Satuan dalam 1 cell agar lebih rapi
+                // Qty & Satuan dalam 1 cell, digeser lebih kiri 3mm
                 $qtyValue = number_format($detail->quantity, 0);
                 $satuanValue = $detail->satuan->nama ?? 'PCS';
-                $pdf->SetXY($qtyCol, $currentY);
+                $pdf->SetXY($qtyCol - 5, $currentY);
                 $pdf->Cell(($satuanCol - $qtyCol - 2) + 3, $lineHeight, $qtyValue . ' ' . $satuanValue, 0, 0, 'R');
                 $currentY += $lineHeight;
             }
