@@ -19,14 +19,14 @@ return new class extends Migration
             // alokasi = dana masuk ke project
             // penggunaan = project mengeluarkan dana untuk operasional
             // pengembalian = dana kembali dari project ke kas/bank
-            $table->decimal('nominal', 15, 2);
+            $table->decimal('jumlah', 15, 2);
             $table->text('keterangan');
             $table->string('no_bukti')->nullable();
 
             // Sumber dana (dari mana dana berasal)
             $table->enum('sumber_dana_type', ['kas', 'bank'])->nullable();
-            $table->foreignId('sumber_kas_id')->nullable()->constrained('kas')->onDelete('set null');
-            $table->foreignId('sumber_bank_id')->nullable()->constrained('rekening_bank')->onDelete('set null');
+            $table->foreignId('kas_id')->nullable()->constrained('kas')->onDelete('set null');
+            $table->foreignId('rekening_bank_id')->nullable()->constrained('rekening_bank')->onDelete('set null');
 
             // Kategori pengeluaran project (untuk jenis 'penggunaan')
             $table->string('kategori_penggunaan')->nullable(); // 'material', 'tenaga_kerja', 'operasional', 'lainnya'
@@ -35,7 +35,7 @@ return new class extends Migration
             $table->string('related_type')->nullable(); // Model yang terkait
             $table->unsignedBigInteger('related_id')->nullable(); // ID dokumen terkait
 
-            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('user_id')->constrained('users');
             $table->timestamps();
 
             $table->index(['project_id', 'tanggal']);

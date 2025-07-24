@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Support\Facades\Log;
 
 class TransaksiProject extends Model
 {
@@ -17,22 +16,21 @@ class TransaksiProject extends Model
         'project_id',
         'tanggal',
         'jenis',
-        'nominal', // Changed from 'jumlah' to 'nominal'
+        'jumlah',
         'keterangan',
         'no_bukti',
         'sumber_dana_type',
-        'sumber_kas_id', // Changed from 'kas_id' 
-        'sumber_bank_id', // Changed from 'rekening_bank_id'
+        'kas_id',
+        'rekening_bank_id',
         'kategori_penggunaan',
         'related_type',
         'related_id',
-        'created_by' // Changed from 'user_id'
+        'user_id'
     ];
 
     protected $casts = [
-        'tanggal' => 'datetime',
-        'nominal' => 'decimal:2', // Changed from 'jumlah'
-        'is_reversed' => 'boolean'
+        'tanggal' => 'date',
+        'jumlah' => 'decimal:2'
     ];
 
     /**
@@ -48,7 +46,7 @@ class TransaksiProject extends Model
      */
     public function user(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -56,7 +54,7 @@ class TransaksiProject extends Model
      */
     public function kas(): BelongsTo
     {
-        return $this->belongsTo(Kas::class, 'sumber_kas_id');
+        return $this->belongsTo(Kas::class);
     }
 
     /**
@@ -64,7 +62,7 @@ class TransaksiProject extends Model
      */
     public function rekeningBank(): BelongsTo
     {
-        return $this->belongsTo(RekeningBank::class, 'sumber_bank_id');
+        return $this->belongsTo(RekeningBank::class);
     }
 
     /**
@@ -123,9 +121,9 @@ class TransaksiProject extends Model
         if (!$project) return;
 
         // Hitung ulang saldo project
-        $totalAlokasi = $project->transaksi()->where('jenis', 'alokasi')->sum('nominal');
-        $totalPenggunaan = $project->transaksi()->where('jenis', 'penggunaan')->sum('nominal');
-        $totalPengembalian = $project->transaksi()->where('jenis', 'pengembalian')->sum('nominal');
+        $totalAlokasi = $project->transaksi()->where('jenis', 'alokasi')->sum('jumlah');
+        $totalPenggunaan = $project->transaksi()->where('jenis', 'penggunaan')->sum('jumlah');
+        $totalPengembalian = $project->transaksi()->where('jenis', 'pengembalian')->sum('jumlah');
 
         // Saldo = alokasi - penggunaan + pengembalian
         $saldoBaru = $totalAlokasi - $totalPenggunaan + $totalPengembalian;
@@ -145,7 +143,7 @@ class TransaksiProject extends Model
             $akunBankDefault = config('accounting.project.bank');
 
             if (!$akunProject) {
-                Log::error("Akun project belum dikonfigurasi", [
+                \Log::error("Akun project belum dikonfigurasi", [
                     'transaksi_id' => $this->id,
                     'project_id' => $this->project_id
                 ]);
@@ -160,7 +158,7 @@ class TransaksiProject extends Model
                     // Debit: Project Asset/Expense, Kredit: Kas/Bank
                     $entries[] = [
                         'akun_id' => $akunProject,
-                        'debit' => $this->nominal,
+                        'debit' => $this->jumlah,
                         'kredit' => 0
                     ];
 
@@ -170,7 +168,7 @@ class TransaksiProject extends Model
                         $entries[] = [
                             'akun_id' => $akunSumber,
                             'debit' => 0,
-                            'kredit' => $this->nominal
+                            'kredit' => $this->jumlah
                         ];
                     }
                     break;
@@ -181,7 +179,7 @@ class TransaksiProject extends Model
                     if ($akunSumber) {
                         $entries[] = [
                             'akun_id' => $akunSumber,
-                            'debit' => $this->nominal,
+                            'debit' => $this->jumlah,
                             'kredit' => 0
                         ];
                     }
@@ -189,7 +187,7 @@ class TransaksiProject extends Model
                     $entries[] = [
                         'akun_id' => $akunProject,
                         'debit' => 0,
-                        'kredit' => $this->nominal
+                        'kredit' => $this->jumlah
                     ];
                     break;
             }
@@ -199,13 +197,13 @@ class TransaksiProject extends Model
                     $entries,
                     $this->no_bukti ?: "PROJ-{$this->id}",
                     "Transaksi project: {$this->project->nama} - {$this->keterangan}",
-                    (string) $this->tanggal
+                    $this->tanggal->format('Y-m-d')
                 );
             }
 
             return true;
         } catch (\Exception $e) {
-            Log::error("Error creating journal for project transaction: " . $e->getMessage(), [
+            \Log::error("Error creating journal for project transaction: " . $e->getMessage(), [
                 'transaksi_id' => $this->id,
                 'project_id' => $this->project_id
             ]);
@@ -218,14 +216,14 @@ class TransaksiProject extends Model
      */
     private function getAkunSumber()
     {
-        if ($this->sumber_dana_type === 'kas' && $this->sumber_kas_id) {
+        if ($this->sumber_dana_type === 'kas' && $this->kas_id) {
             $akunKas = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\Kas')
-                ->where('ref_id', $this->sumber_kas_id)
+                ->where('ref_id', $this->kas_id)
                 ->first();
             return $akunKas ? $akunKas->id : config('accounting.project.kas');
-        } elseif ($this->sumber_dana_type === 'bank' && $this->sumber_bank_id) {
+        } elseif ($this->sumber_dana_type === 'bank' && $this->rekening_bank_id) {
             $akunBank = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\RekeningBank')
-                ->where('ref_id', $this->sumber_bank_id)
+                ->where('ref_id', $this->rekening_bank_id)
                 ->first();
             return $akunBank ? $akunBank->id : config('accounting.project.bank');
         }

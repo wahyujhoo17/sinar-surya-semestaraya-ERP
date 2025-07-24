@@ -1,8 +1,8 @@
 {{-- Toast Notification Component --}}
-<div x-data="{
+<div x-data="{ 
     toasts: [],
     nextId: 1,
-
+    
     addToast(message, type = 'success', duration = 5000) {
         const id = this.nextId++;
         const toast = {
@@ -11,9 +11,9 @@
             type: type,
             show: false
         };
-
+        
         this.toasts.push(toast);
-
+        
         // Trigger show animation after a small delay
         setTimeout(() => {
             const toastElement = this.toasts.find(t => t.id === id);
@@ -21,17 +21,17 @@
                 toastElement.show = true;
             }
         }, 100);
-
+        
         // Auto remove after duration
         if (duration > 0) {
             setTimeout(() => {
                 this.removeToast(id);
             }, duration);
         }
-
+        
         return id;
     },
-
+    
     removeToast(id) {
         const toastIndex = this.toasts.findIndex(t => t.id === id);
         if (toastIndex > -1) {
@@ -42,10 +42,10 @@
             }, 300);
         }
     },
-
+    
     getToastClass(type) {
         const baseClass = 'flex items-center w-full max-w-sm p-4 text-gray-500 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800';
-        switch (type) {
+        switch(type) {
             case 'success':
                 return baseClass + ' border-l-4 border-green-500';
             case 'error':
@@ -58,9 +58,9 @@
                 return baseClass;
         }
     },
-
+    
     getIconClass(type) {
-        switch (type) {
+        switch(type) {
             case 'success':
                 return 'text-green-500 bg-green-100 dark:bg-green-800 dark:text-green-200';
             case 'error':
@@ -73,9 +73,9 @@
                 return 'text-gray-500 bg-gray-100 dark:bg-gray-800 dark:text-gray-200';
         }
     },
-
+    
     getIconPath(type) {
-        switch (type) {
+        switch(type) {
             case 'success':
                 return 'M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z';
             case 'error':
@@ -89,36 +89,40 @@
         }
     }
 }"
-    @show-toast.window="addToast($event.detail.message, $event.detail.type || 'success', $event.detail.duration || 5000)"
-    class="fixed top-4 right-4 z-50 space-y-2">
+@show-toast.window="addToast($event.detail.message, $event.detail.type || 'success', $event.detail.duration || 5000)"
+class="fixed top-4 right-4 z-50 space-y-2">
 
     <template x-for="toast in toasts" :key="toast.id">
-        <div :class="getToastClass(toast.type)" x-show="toast.show"
-            x-transition:enter="transform ease-out duration-300 transition"
-            x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-            x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
-            x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0" role="alert">
-
-            <div
-                :class="'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ' + getIconClass(toast.type)">
-                <svg :class="'w-5 h-5'" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                    viewBox="0 0 20 20">
-                    <path :d="getIconPath(toast.type)" />
+        <div :class="getToastClass(toast.type)"
+             x-show="toast.show"
+             x-transition:enter="transform ease-out duration-300 transition"
+             x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+             x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0"
+             x-transition:leave="transition ease-in duration-100"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             role="alert">
+            
+            <div :class="'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg ' + getIconClass(toast.type)">
+                <svg :class="'w-5 h-5'"
+                     aria-hidden="true" 
+                     xmlns="http://www.w3.org/2000/svg" 
+                     fill="currentColor" 
+                     viewBox="0 0 20 20">
+                    <path :d="getIconPath(toast.type)"/>
                 </svg>
                 <span class="sr-only" x-text="toast.type + ' icon'"></span>
             </div>
-
+            
             <div class="ml-3 text-sm font-normal" x-text="toast.message"></div>
-
-            <button type="button" @click="removeToast(toast.id)"
-                class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700"
-                aria-label="Close">
+            
+            <button type="button" 
+                    @click="removeToast(toast.id)"
+                    class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700" 
+                    aria-label="Close">
                 <span class="sr-only">Close</span>
-                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                    viewBox="0 0 14 14">
-                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+                <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
                 </svg>
             </button>
         </div>
@@ -130,27 +134,23 @@
     // Global function to show toast notifications
     window.showToast = function(message, type = 'success', duration = 5000) {
         window.dispatchEvent(new CustomEvent('show-toast', {
-            detail: {
-                message,
-                type,
-                duration
-            }
+            detail: { message, type, duration }
         }));
     };
-
+    
     // Shorthand functions for different types
     window.showSuccess = function(message, duration = 5000) {
         window.showToast(message, 'success', duration);
     };
-
+    
     window.showError = function(message, duration = 7000) {
         window.showToast(message, 'error', duration);
     };
-
+    
     window.showWarning = function(message, duration = 6000) {
         window.showToast(message, 'warning', duration);
     };
-
+    
     window.showInfo = function(message, duration = 5000) {
         window.showToast(message, 'info', duration);
     };

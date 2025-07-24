@@ -1,33 +1,5 @@
 <x-app-layout :breadcrumbs="$breadcrumbs" :currentPage="$currentPage">
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
-        {{-- Toast Notification --}}
-        <div id="toast-notification"
-            class="hidden fixed top-16 right-4 z-50 transform transition-transform duration-300 ease-in-out translate-x-full">
-            <div class="flex items-center w-full max-w-xs p-4 mb-4 text-gray-500 bg-white rounded-lg shadow dark:text-gray-400 dark:bg-gray-800"
-                role="alert">
-                <div id="toast-icon"
-                    class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
-                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                        viewBox="0 0 20 20">
-                        <path
-                            d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z" />
-                    </svg>
-                    <span class="sr-only">Success icon</span>
-                </div>
-                <div id="toast-message" class="ml-3 text-sm font-normal">Operasi berhasil.</div>
-                <button type="button"
-                    class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex items-center justify-center h-8 w-8 dark:text-gray-500 dark:hover:text-white dark:bg-gray-800 dark:hover:bg-gray-700"
-                    onclick="document.getElementById('toast-notification').classList.add('hidden')" aria-label="Close">
-                    <span class="sr-only">Close</span>
-                    <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 14 14">
-                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
         {{-- Overview Header --}}
         <div class="mb-8">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
@@ -40,7 +12,7 @@
                 {{-- Quick Transaction Button --}}
                 <div class="mt-4 sm:mt-0">
                     <button type="button"
-                        onclick="window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {}}));"
+                        onclick="console.log('Button clicked, dispatching event'); window.dispatchEvent(new CustomEvent('open-transaksi-modal', {detail: {}}));"
                         class="inline-flex items-center px-4 py-2 bg-primary-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 transform hover:-translate-y-0.5">
                         <svg class="mr-2 -ml-1 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -149,9 +121,8 @@
                             </dd>
                         </div>
                         <div class="flex-shrink-0 rounded-lg bg-purple-100 dark:bg-purple-900/30 p-2">
-                            <svg class="h-4 w-4 text-purple-500 dark:text-purple-400"
-                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="1.5" stroke="currentColor">
+                            <svg class="h-4 w-4 text-purple-500 dark:text-purple-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
                             </svg>
@@ -170,8 +141,8 @@
                         class="py-4 px-1 inline-flex items-center font-medium text-sm border-b-2 whitespace-nowrap"
                         :class="activeTab === 'kas' ? 'border-primary-500 text-primary-600 dark:text-primary-400' :
                             'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'">
-                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
                         </svg>
@@ -820,132 +791,110 @@
                     @else
                         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             @foreach ($projects ?? [] as $project)
-                                @if ($project && is_object($project))
-                                    <div
-                                        class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
-                                        <div class="p-6">
-                                            {{-- Project Header --}}
-                                            <div class="flex justify-between items-start mb-4">
-                                                <div>
-                                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
-                                                        {{ $project->nama ?? 'N/A' }}</h4>
-                                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                        {{ $project->kode ?? 'N/A' }}</p>
-                                                </div>
-                                                <span
-                                                    class="px-2 py-1 text-xs font-semibold rounded-full
-                                                @if (($project->status ?? '') == 'aktif') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
-                                                @elseif(($project->status ?? '') == 'selesai') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border border-gray-200/50 dark:border-gray-700/50 overflow-hidden">
+                                    <div class="p-6">
+                                        {{-- Project Header --}}
+                                        <div class="flex justify-between items-start mb-4">
+                                            <div>
+                                                <h4 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                                    {{ $project->nama }}</h4>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $project->kode }}</p>
+                                            </div>
+                                            <span
+                                                class="px-2 py-1 text-xs font-semibold rounded-full
+                                                @if ($project->status == 'aktif') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400
+                                                @elseif($project->status == 'selesai') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400
                                                 @else bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400 @endif">
-                                                    {{ ucfirst($project->status ?? 'tidak diketahui') }}
-                                                </span>
-                                            </div>
+                                                {{ ucfirst($project->status) }}
+                                            </span>
+                                        </div>
 
-                                            {{-- Project Details --}}
-                                            <div class="space-y-3 mb-4">
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500 dark:text-gray-400">Budget</span>
-                                                    <span class="font-medium text-gray-900 dark:text-white">Rp
-                                                        {{ number_format($project->budget ?? 0, 0, ',', '.') }}</span>
-                                                </div>
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500 dark:text-gray-400">Alokasi</span>
-                                                    <span class="font-medium text-green-600 dark:text-green-400">Rp
-                                                        {{ number_format($project->total_alokasi ?? 0, 0, ',', '.') }}</span>
-                                                </div>
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500 dark:text-gray-400">Penggunaan</span>
-                                                    <span class="font-medium text-red-600 dark:text-red-400">Rp
-                                                        {{ number_format($project->total_penggunaan ?? 0, 0, ',', '.') }}</span>
-                                                </div>
-                                                <div class="flex justify-between text-sm">
-                                                    <span class="text-gray-500 dark:text-gray-400">Saldo</span>
-                                                    <span class="font-medium text-gray-900 dark:text-white">Rp
-                                                        {{ number_format($project->saldo ?? 0, 0, ',', '.') }}</span>
-                                                </div>
+                                        {{-- Project Details --}}
+                                        <div class="space-y-3 mb-4">
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-500 dark:text-gray-400">Budget</span>
+                                                <span class="font-medium text-gray-900 dark:text-white">Rp
+                                                    {{ number_format($project->budget, 0, ',', '.') }}</span>
                                             </div>
-
-                                            {{-- Progress Bar --}}
-                                            <div class="mb-4">
-                                                <div class="flex justify-between text-sm mb-1">
-                                                    <span class="text-gray-500 dark:text-gray-400">Progress
-                                                        Budget</span>
-                                                    <span
-                                                        class="text-gray-700 dark:text-gray-300">{{ number_format($project->persentase_alokasi ?? 0, 1) }}%</span>
-                                                </div>
-                                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                    @php
-                                                        $persentase = $project->persentase_alokasi ?? 0;
-                                                        $colorClass = 'bg-gray-300';
-                                                        if ($persentase > 0 && $persentase <= 25) {
-                                                            $colorClass = 'bg-red-500';
-                                                        } elseif ($persentase > 25 && $persentase <= 50) {
-                                                            $colorClass = 'bg-yellow-500';
-                                                        } elseif ($persentase > 50 && $persentase <= 75) {
-                                                            $colorClass = 'bg-blue-500';
-                                                        } elseif ($persentase > 75) {
-                                                            $colorClass = 'bg-green-500';
-                                                        }
-                                                    @endphp
-                                                    <div class="{{ $colorClass }} h-2 rounded-full transition-all duration-300"
-                                                        style="width: {{ min($persentase, 100) }}%">
-                                                    </div>
-                                                </div>
-                                                <div class="flex justify-between text-xs text-gray-400 mt-1">
-                                                    <span>Rp
-                                                        {{ number_format($project->total_alokasi ?? 0, 0, ',', '.') }}</span>
-                                                    <span>Rp
-                                                        {{ number_format($project->budget ?? 0, 0, ',', '.') }}</span>
-                                                </div>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-500 dark:text-gray-400">Alokasi</span>
+                                                <span class="font-medium text-green-600 dark:text-green-400">Rp
+                                                    {{ number_format($project->total_alokasi, 0, ',', '.') }}</span>
                                             </div>
-
-                                            {{-- Action Buttons --}}
-                                            <div class="flex justify-between space-x-2">
-                                                <button type="button"
-                                                    onclick="window.dispatchEvent(new CustomEvent('open-detail-transaksi-project', {detail: {project: {{ Js::from($project) }}}}))"
-                                                    class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-purple-700 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition">
-                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                                    </svg>
-                                                    Detail
-                                                </button>
-                                                <button type="button"
-                                                    onclick="window.dispatchEvent(new CustomEvent('open-transaksi-project-modal', {detail: {project_id: {{ $project->id ?? 0 }}}}))"
-                                                    class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
-                                                    <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
-                                                    </svg>
-                                                    Transaksi
-                                                </button>
-                                                <button type="button"
-                                                    onclick="window.dispatchEvent(new CustomEvent('open-project-modal', {detail: {mode: 'edit', project: {{ Js::from($project) }}}}))"
-                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
-                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                                                    </svg>
-                                                </button> <button
-                                                    onclick="event.preventDefault(); event.stopPropagation(); deleteProject({{ $project->id ?? 0 }}, '{{ $project->nama ?? 'Project' }}');"
-                                                    class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
-                                                    <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                        stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                    </svg>
-                                                </button>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-500 dark:text-gray-400">Penggunaan</span>
+                                                <span class="font-medium text-red-600 dark:text-red-400">Rp
+                                                    {{ number_format($project->total_penggunaan, 0, ',', '.') }}</span>
+                                            </div>
+                                            <div class="flex justify-between text-sm">
+                                                <span class="text-gray-500 dark:text-gray-400">Saldo</span>
+                                                <span class="font-medium text-gray-900 dark:text-white">Rp
+                                                    {{ number_format($project->saldo, 0, ',', '.') }}</span>
                                             </div>
                                         </div>
+
+                                        {{-- Progress Bar --}}
+                                        <div class="mb-4">
+                                            <div class="flex justify-between text-sm mb-1">
+                                                <span class="text-gray-500 dark:text-gray-400">Progress Budget</span>
+                                                <span
+                                                    class="text-gray-700 dark:text-gray-300">{{ $project->persentase_penggunaan }}%</span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                                <div class="bg-primary-600 h-2 rounded-full"
+                                                    style="width: {{ min($project->persentase_penggunaan, 100) }}%">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Action Buttons --}}
+                                        <div class="flex justify-between space-x-2">
+                                            <button type="button"
+                                                onclick="window.dispatchEvent(new CustomEvent('open-detail-transaksi-project', {detail: {project: {{ Js::from($project) }}}}))"
+                                                class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-purple-700 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 17.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                                </svg>
+                                                Detail
+                                            </button>
+                                            <button type="button"
+                                                onclick="window.dispatchEvent(new CustomEvent('open-transaksi-project-modal', {detail: {project_id: {{ $project->id }}}}))"
+                                                class="flex-1 inline-flex justify-center items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition">
+                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                                </svg>
+                                                Transaksi
+                                            </button>
+                                            <button type="button"
+                                                onclick="window.dispatchEvent(new CustomEvent('open-project-modal', {detail: {mode: 'edit', project: {{ Js::from($project) }}}}))"
+                                                class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">
+                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                </svg>
+                                            </button>
+                                            <button onclick="event.preventDefault(); event.stopPropagation();"
+                                                class="inline-flex items-center px-3 py-2 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
+                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                </svg>
+                                            </button>
+                                        </div>
                                     </div>
-                                @endif
+                                </div>
                             @endforeach
                         </div>
                     @endif
@@ -961,92 +910,12 @@
     @include('keuangan.kas_dan_bank.modal-project')
     @include('keuangan.kas_dan_bank.modal-transaksi-project')
     @include('keuangan.kas_dan_bank.modal-detail-transaksi-project')
+    
+    {{-- Toast Notifications --}}
+    @include('components.toast')
 
     {{-- Initialize Transaction Modal --}}
     <script>
-        // Function to show toast notification
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast-notification');
-            const toastMessage = document.getElementById('toast-message');
-            const toastIcon = document.getElementById('toast-icon');
-
-            if (!toast || !toastMessage || !toastIcon) return;
-
-            toastMessage.textContent = message;
-
-            // Update icon based on type
-            if (type === 'success') {
-                toastIcon.className =
-                    'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200';
-                toastIcon.innerHTML =
-                    '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM16.707 7.293a1 1 0 0 0-1.414 0L9 13.586 6.707 11.293a1 1 0 0 0-1.414 1.414l3 3a1 1 0 0 0 1.414 0l7-7a1 1 0 0 0 0-1.414z"/></svg>';
-            } else if (type === 'error') {
-                toastIcon.className =
-                    'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200';
-                toastIcon.innerHTML =
-                    '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/></svg>';
-            } else {
-                toastIcon.className =
-                    'inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-blue-500 bg-blue-100 rounded-lg dark:bg-blue-800 dark:text-blue-200';
-                toastIcon.innerHTML =
-                    '<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20"><path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM10 15a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-4a1 1 0 0 1-2 0V6a1 1 0 0 1 2 0v5Z"/></svg>';
-            }
-
-            toast.classList.remove('hidden', 'translate-x-full');
-            toast.classList.add('translate-x-0');
-
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                // After animation completes, hide it
-                setTimeout(() => {
-                    toast.classList.add('hidden');
-                }, 300);
-            }, 3000);
-        }
-
-        // Make showToast available globally
-        window.showToast = showToast;
-
-        // Function to delete project
-        async function deleteProject(projectId, projectName) {
-            if (!confirm(
-                    `Apakah Anda yakin ingin menghapus project "${projectName}"?\n\nPERHATIAN:\n- Hanya project dengan status "Draft" atau "Ditunda" yang dapat dihapus\n- Saldo yang sudah dialokasikan akan dikembalikan ke kas/bank\n- Semua jurnal terkait akan dihapus\n\nProses ini tidak dapat dibatalkan!`
-                )) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/keuangan/projects/${projectId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                            'content'),
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    window.showToast(result.message || 'Project berhasil dihapus', 'success');
-                    // Reload page after short delay
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                } else {
-                    window.showToast(result.message || 'Gagal menghapus project', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                window.showToast('Terjadi kesalahan saat menghapus project', 'error');
-            }
-        }
-
-        // Make deleteProject available globally
-        window.deleteProject = deleteProject;
-
         // console.log('Script section loaded');
 
         // Listen for custom events and log them

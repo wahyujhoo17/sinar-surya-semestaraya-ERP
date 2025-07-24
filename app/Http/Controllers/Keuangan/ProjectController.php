@@ -6,21 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Customer;
 use App\Models\SalesOrder;
-use App\Models\Kas;
-use App\Models\RekeningBank;
-use App\Services\JournalEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ProjectController extends Controller
 {
-    protected $journalService;
-
-    public function __construct(JournalEntryService $journalService)
-    {
-        $this->journalService = $journalService;
-    }
     public function index()
     {
         $projects = Project::with(['customer', 'salesOrder', 'transaksi'])
@@ -181,67 +172,23 @@ class ProjectController extends Controller
     public function destroy($id)
     {
         try {
-            DB::beginTransaction();
+            $project = Project::findOrFail($id);
 
-            $project = Project::with(['transaksi.kas', 'transaksi.rekeningBank'])->findOrFail($id);
-
-            // Validasi keamanan: hanya bisa hapus project yang berstatus draft atau ditunda
-            if (!in_array($project->status, ['draft', 'ditunda'])) {
+            // Cek apakah masih ada transaksi
+            if ($project->transaksi()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Project dengan status "' . $project->status . '" tidak dapat dihapus. Hanya project dengan status "draft" atau "ditunda" yang dapat dihapus.'
+                    'message' => 'Project tidak dapat dihapus karena masih memiliki transaksi'
                 ], 422);
             }
 
-            $transaksiCount = $project->transaksi()->count();
-            $totalDikembalikan = 0;
-
-            if ($transaksiCount > 0) {
-                // Proses pengembalian saldo untuk setiap transaksi alokasi
-                foreach ($project->transaksi as $transaksi) {
-                    if ($transaksi->jenis === 'alokasi') {
-                        // Kembalikan saldo ke kas atau bank
-                        if ($transaksi->sumber_kas_id) {
-                            // Kembalikan ke kas
-                            $kas = $transaksi->kas;
-                            if ($kas) {
-                                $kas->increment('saldo', $transaksi->nominal);
-                                $totalDikembalikan += $transaksi->nominal;
-                            }
-                        } elseif ($transaksi->sumber_bank_id) {
-                            // Kembalikan ke rekening bank
-                            $rekening = $transaksi->rekeningBank;
-                            if ($rekening) {
-                                $rekening->increment('saldo', $transaksi->nominal);
-                                $totalDikembalikan += $transaksi->nominal;
-                            }
-                        }
-                    }
-
-                    // Hapus jurnal umum terkait transaksi ini menggunakan service
-                    $this->journalService->deleteJournalEntriesByReference($transaksi);
-                }
-
-                // Hapus semua transaksi project
-                $project->transaksi()->delete();
-            }
-
-            // Hapus project
             $project->delete();
-
-            DB::commit();
-
-            $message = 'Project berhasil dihapus';
-            if ($totalDikembalikan > 0) {
-                $message .= ' dan Rp ' . number_format($totalDikembalikan, 0, ',', '.') . ' telah dikembalikan ke kas/bank';
-            }
 
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => 'Project berhasil dihapus'
             ]);
         } catch (\Exception $e) {
-            DB::rollback();
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal menghapus project: ' . $e->getMessage()

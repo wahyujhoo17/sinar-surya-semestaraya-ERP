@@ -31,52 +31,12 @@ class Project extends Model
 
     protected $casts = [
         'metadata' => 'array',
-        'tanggal_mulai' => 'datetime',
-        'tanggal_selesai' => 'datetime',
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
         'budget' => 'decimal:2',
         'saldo' => 'decimal:2',
         'is_aktif' => 'boolean'
     ];
-
-    /**
-     * The attributes that should be cast to native types and formatted for JSON
-     */
-    protected $appends = [];
-
-    /**
-     * Get tanggal_mulai formatted for HTML input
-     */
-    public function getTanggalMulaiFormatAttribute()
-    {
-        return $this->tanggal_mulai ? $this->tanggal_mulai->format('Y-m-d') : null;
-    }
-
-    /**
-     * Get tanggal_selesai formatted for HTML input
-     */
-    public function getTanggalSelesaiFormatAttribute()
-    {
-        return $this->tanggal_selesai ? $this->tanggal_selesai->format('Y-m-d') : null;
-    }
-
-    /**
-     * Override toArray to ensure proper date formatting for JSON serialization
-     */
-    public function toArray()
-    {
-        $array = parent::toArray();
-
-        // Format dates for HTML5 input compatibility
-        if (isset($array['tanggal_mulai']) && $this->tanggal_mulai) {
-            $array['tanggal_mulai'] = $this->tanggal_mulai->format('Y-m-d');
-        }
-
-        if (isset($array['tanggal_selesai']) && $this->tanggal_selesai) {
-            $array['tanggal_selesai'] = $this->tanggal_selesai->format('Y-m-d');
-        }
-
-        return $array;
-    }
 
     /**
      * Relasi ke Customer
@@ -125,7 +85,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'alokasi')
-            ->sum('nominal'); // Changed from 'jumlah' to 'nominal'
+            ->sum('jumlah');
     }
 
     /**
@@ -135,7 +95,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'penggunaan')
-            ->sum('nominal'); // Changed from 'jumlah' to 'nominal'
+            ->sum('jumlah');
     }
 
     /**
@@ -145,7 +105,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'pengembalian')
-            ->sum('nominal'); // Changed from 'jumlah' to 'nominal'
+            ->sum('jumlah');
     }
 
     /**
@@ -157,39 +117,12 @@ class Project extends Model
     }
 
     /**
-     * Hitung saldo project (alokasi - penggunaan + pengembalian)
-     */
-    public function getSaldoAttribute()
-    {
-        return $this->total_alokasi - $this->total_penggunaan + $this->total_pengembalian;
-    }
-
-    /**
      * Hitung persentase penggunaan budget
      */
     public function getPersentasePenggunaanAttribute()
     {
         if ($this->budget == 0) return 0;
         return round(($this->total_penggunaan / $this->budget) * 100, 2);
-    }
-
-    /**
-     * Hitung persentase alokasi budget
-     */
-    public function getPersentaseAlokasiAttribute()
-    {
-        if ($this->budget == 0) return 0;
-        return round(($this->total_alokasi / $this->budget) * 100, 2);
-    }
-
-    /**
-     * Hitung persentase progress keseluruhan (alokasi + penggunaan)
-     */
-    public function getPersentaseProgressAttribute()
-    {
-        if ($this->budget == 0) return 0;
-        $totalUsed = $this->total_alokasi + $this->total_penggunaan;
-        return round(($totalUsed / $this->budget) * 100, 2);
     }
 
     /**

@@ -49,25 +49,20 @@ class KasDanBankController extends Controller
             ->map(function ($project) {
                 $project->total_alokasi = $project->transaksi()
                     ->where('jenis', 'alokasi')
-                    ->sum('nominal');
+                    ->sum('jumlah');
                 $project->total_penggunaan = $project->transaksi()
                     ->where('jenis', 'penggunaan')
-                    ->sum('nominal');
+                    ->sum('jumlah');
                 $project->total_pengembalian = $project->transaksi()
                     ->where('jenis', 'pengembalian')
-                    ->sum('nominal');
+                    ->sum('jumlah');
 
-                // Hitung saldo project (gunakan attribut dari model)
-                // $project->saldo sudah dihitung otomatis melalui accessor di model
+                // Hitung saldo project
+                $project->saldo = $project->total_alokasi - $project->total_penggunaan + $project->total_pengembalian;
 
                 // Hitung persentase penggunaan budget
                 $project->persentase_penggunaan = $project->budget > 0
                     ? round(($project->total_penggunaan / $project->budget) * 100, 2)
-                    : 0;
-
-                // Hitung persentase alokasi budget (untuk Progress Budget)
-                $project->persentase_alokasi = $project->budget > 0
-                    ? round(($project->total_alokasi / $project->budget) * 100, 2)
                     : 0;
 
                 return $project;

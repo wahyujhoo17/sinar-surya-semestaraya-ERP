@@ -56,12 +56,12 @@ class TransaksiProjectController extends Controller
             'project_id' => 'required|exists:projects,id',
             'tanggal' => 'required|date',
             'jenis' => 'required|in:alokasi,penggunaan,pengembalian',
-            'nominal' => 'required|numeric|min:0', // Changed from 'jumlah' to 'nominal'
+            'jumlah' => 'required|numeric|min:0',
             'keterangan' => 'required|string',
             'no_bukti' => 'nullable|string|max:255',
             'sumber_dana_type' => 'required|in:kas,bank',
-            'sumber_kas_id' => 'required_if:sumber_dana_type,kas|nullable|exists:kas,id', // Changed from 'kas_id'
-            'sumber_bank_id' => 'required_if:sumber_dana_type,bank|nullable|exists:rekening_bank,id', // Changed from 'rekening_bank_id'
+            'kas_id' => 'required_if:sumber_dana_type,kas|nullable|exists:kas,id',
+            'rekening_bank_id' => 'required_if:sumber_dana_type,bank|nullable|exists:rekening_bank,id',
             'kategori_penggunaan' => 'nullable|string|max:255',
         ]);
 
@@ -79,7 +79,7 @@ class TransaksiProjectController extends Controller
             // Validasi saldo untuk transaksi penggunaan
             if ($request->jenis === 'penggunaan') {
                 $project = Project::findOrFail($request->project_id);
-                if ($project->saldo < $request->nominal) {
+                if ($project->saldo < $request->jumlah) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Saldo project tidak mencukupi'
@@ -90,16 +90,16 @@ class TransaksiProjectController extends Controller
             // Validasi saldo kas/bank untuk transaksi alokasi
             if ($request->jenis === 'alokasi') {
                 if ($request->sumber_dana_type === 'kas') {
-                    $kas = Kas::findOrFail($request->sumber_kas_id);
-                    if ($kas->saldo < $request->nominal) {
+                    $kas = Kas::findOrFail($request->kas_id);
+                    if ($kas->saldo < $request->jumlah) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Saldo kas tidak mencukupi'
                         ], 422);
                     }
                 } else {
-                    $rekening = RekeningBank::findOrFail($request->sumber_bank_id);
-                    if ($rekening->saldo < $request->nominal) {
+                    $rekening = RekeningBank::findOrFail($request->rekening_bank_id);
+                    if ($rekening->saldo < $request->jumlah) {
                         return response()->json([
                             'success' => false,
                             'message' => 'Saldo rekening bank tidak mencukupi'
@@ -112,14 +112,14 @@ class TransaksiProjectController extends Controller
                 'project_id' => $request->project_id,
                 'tanggal' => $request->tanggal,
                 'jenis' => $request->jenis,
-                'nominal' => $request->nominal, // Changed from 'jumlah'
+                'jumlah' => $request->jumlah,
                 'keterangan' => $request->keterangan,
                 'no_bukti' => $request->no_bukti,
                 'sumber_dana_type' => $request->sumber_dana_type,
-                'sumber_kas_id' => $request->sumber_kas_id, // Changed from 'kas_id'
-                'sumber_bank_id' => $request->sumber_bank_id, // Changed from 'rekening_bank_id'
+                'kas_id' => $request->kas_id,
+                'rekening_bank_id' => $request->rekening_bank_id,
                 'kategori_penggunaan' => $request->kategori_penggunaan,
-                'created_by' => Auth::id() // Changed from 'user_id'
+                'user_id' => Auth::id()
             ]);
 
             // Buat transaksi kas/bank terkait
@@ -269,9 +269,9 @@ class TransaksiProjectController extends Controller
         }])->findOrFail($projectId);
 
         $summary = [
-            'total_alokasi' => $project->transaksi()->where('jenis', 'alokasi')->sum('nominal'),
-            'total_penggunaan' => $project->transaksi()->where('jenis', 'penggunaan')->sum('nominal'),
-            'total_pengembalian' => $project->transaksi()->where('jenis', 'pengembalian')->sum('nominal'),
+            'total_alokasi' => $project->transaksi()->where('jenis', 'alokasi')->sum('jumlah'),
+            'total_penggunaan' => $project->transaksi()->where('jenis', 'penggunaan')->sum('jumlah'),
+            'total_pengembalian' => $project->transaksi()->where('jenis', 'pengembalian')->sum('jumlah'),
             'saldo_aktual' => $project->saldo,
             'recent_transactions' => $project->transaksi()->with(['user', 'kas', 'rekeningBank'])->take(10)->get()
         ];
@@ -290,15 +290,15 @@ class TransaksiProjectController extends Controller
         // Hanya untuk transaksi alokasi dan pengembalian yang mempengaruhi kas/bank
         if (in_array($request->jenis, ['alokasi', 'pengembalian'])) {
 
-            if ($request->sumber_dana_type === 'kas' && $request->sumber_kas_id) {
+            if ($request->sumber_dana_type === 'kas' && $request->kas_id) {
                 // Buat transaksi kas
                 $jenis = $request->jenis === 'alokasi' ? 'keluar' : 'masuk';
 
                 TransaksiKas::create([
-                    'kas_id' => $request->sumber_kas_id,
+                    'kas_id' => $request->kas_id,
                     'tanggal' => $request->tanggal,
                     'jenis' => $jenis,
-                    'jumlah' => $request->nominal, // Changed from 'jumlah'
+                    'jumlah' => $request->jumlah,
                     'keterangan' => "Transaksi Project: {$request->keterangan}",
                     'no_bukti' => $request->no_bukti,
                     'user_id' => Auth::id(),
@@ -307,21 +307,21 @@ class TransaksiProjectController extends Controller
                 ]);
 
                 // Update saldo kas
-                $kas = Kas::find($request->sumber_kas_id);
+                $kas = Kas::find($request->kas_id);
                 if ($jenis === 'keluar') {
-                    $kas->decrement('saldo', $request->nominal);
+                    $kas->decrement('saldo', $request->jumlah);
                 } else {
-                    $kas->increment('saldo', $request->nominal);
+                    $kas->increment('saldo', $request->jumlah);
                 }
-            } elseif ($request->sumber_dana_type === 'bank' && $request->sumber_bank_id) {
+            } elseif ($request->sumber_dana_type === 'bank' && $request->rekening_bank_id) {
                 // Buat transaksi bank
                 $jenis = $request->jenis === 'alokasi' ? 'keluar' : 'masuk';
 
                 TransaksiBank::create([
-                    'rekening_bank_id' => $request->sumber_bank_id,
+                    'rekening_bank_id' => $request->rekening_bank_id,
                     'tanggal' => $request->tanggal,
                     'jenis' => $jenis,
-                    'jumlah' => $request->nominal, // Changed from 'jumlah'
+                    'jumlah' => $request->jumlah,
                     'keterangan' => "Transaksi Project: {$request->keterangan}",
                     'no_bukti' => $request->no_bukti,
                     'user_id' => Auth::id(),
@@ -330,11 +330,11 @@ class TransaksiProjectController extends Controller
                 ]);
 
                 // Update saldo rekening bank
-                $rekening = RekeningBank::find($request->sumber_bank_id);
+                $rekening = RekeningBank::find($request->rekening_bank_id);
                 if ($jenis === 'keluar') {
-                    $rekening->decrement('saldo', $request->nominal);
+                    $rekening->decrement('saldo', $request->jumlah);
                 } else {
-                    $rekening->increment('saldo', $request->nominal);
+                    $rekening->increment('saldo', $request->jumlah);
                 }
             }
         }
@@ -375,13 +375,13 @@ class TransaksiProjectController extends Controller
                     $this->journalService->createJournalEntries([
                         [
                             'akun_id' => $akunProject,
-                            'debit' => $request->nominal,
+                            'debit' => $request->jumlah,
                             'kredit' => 0
                         ],
                         [
                             'akun_id' => $akunKas,
                             'debit' => 0,
-                            'kredit' => $request->nominal
+                            'kredit' => $request->jumlah
                         ]
                     ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 } else {
@@ -389,13 +389,13 @@ class TransaksiProjectController extends Controller
                     $this->journalService->createJournalEntries([
                         [
                             'akun_id' => $akunProject,
-                            'debit' => $request->nominal,
+                            'debit' => $request->jumlah,
                             'kredit' => 0
                         ],
                         [
                             'akun_id' => $akunBank,
                             'debit' => 0,
-                            'kredit' => $request->nominal
+                            'kredit' => $request->jumlah
                         ]
                     ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 }
@@ -406,13 +406,13 @@ class TransaksiProjectController extends Controller
                 $this->journalService->createJournalEntries([
                     [
                         'akun_id' => $akunBiayaProject,
-                        'debit' => $request->nominal,
+                        'debit' => $request->jumlah,
                         'kredit' => 0
                     ],
                     [
                         'akun_id' => $akunProject,
                         'debit' => 0,
-                        'kredit' => $request->nominal
+                        'kredit' => $request->jumlah
                     ]
                 ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 break;
@@ -424,13 +424,13 @@ class TransaksiProjectController extends Controller
                     $this->journalService->createJournalEntries([
                         [
                             'akun_id' => $akunKas,
-                            'debit' => $request->nominal,
+                            'debit' => $request->jumlah,
                             'kredit' => 0
                         ],
                         [
                             'akun_id' => $akunProject,
                             'debit' => 0,
-                            'kredit' => $request->nominal
+                            'kredit' => $request->jumlah
                         ]
                     ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 } else {
@@ -438,13 +438,13 @@ class TransaksiProjectController extends Controller
                     $this->journalService->createJournalEntries([
                         [
                             'akun_id' => $akunBank,
-                            'debit' => $request->nominal,
+                            'debit' => $request->jumlah,
                             'kredit' => 0
                         ],
                         [
                             'akun_id' => $akunProject,
                             'debit' => 0,
-                            'kredit' => $request->nominal
+                            'kredit' => $request->jumlah
                         ]
                     ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 }

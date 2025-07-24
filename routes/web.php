@@ -743,11 +743,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('transaksi-projects/kas-accounts', [TransaksiProjectController::class, 'getKasAccounts'])->name('transaksi-projects.kas-accounts');
         Route::get('transaksi-projects/bank-accounts', [TransaksiProjectController::class, 'getBankAccounts'])->name('transaksi-projects.bank-accounts');
         Route::get('transaksi-projects/project-summary/{project_id}', [TransaksiProjectController::class, 'getProjectSummary'])->name('transaksi-projects.project-summary');
-
-        // Route khusus untuk modal detail transaksi project
-        Route::get('transaksi-project', [TransaksiProjectController::class, 'index'])->name('transaksi-project.index');
-        Route::get('transaksi-project/{id}', [TransaksiProjectController::class, 'show'])->name('transaksi-project.show');
-
         Route::resource('transaksi-projects', TransaksiProjectController::class);
     });
 

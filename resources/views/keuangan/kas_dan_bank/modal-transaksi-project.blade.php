@@ -176,29 +176,29 @@
                             x-text="errors.tanggal"></p>
                     </div>
 
-                    <!-- Nominal -->
+                    <!-- Jumlah -->
                     <div>
-                        <label for="nominal_transaksi"
+                        <label for="jumlah_transaksi"
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Nominal <span class="text-red-500">*</span>
+                            Jumlah <span class="text-red-500">*</span>
                         </label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" id="nominal_transaksi" x-model="form.nominal" required
+                            <input type="number" id="jumlah_transaksi" x-model="form.jumlah" required
                                 min="1000" step="1000"
                                 class="block w-full pl-8 pr-3 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm"
                                 placeholder="0">
                         </div>
-                        <p x-show="errors.nominal" class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            x-text="errors.nominal"></p>
+                        <p x-show="errors.jumlah" class="mt-1 text-sm text-red-600 dark:text-red-400"
+                            x-text="errors.jumlah"></p>
 
                         <!-- Validation alert for penggunaan -->
-                        <div x-show="form.jenis === 'penggunaan' && form.nominal > projectInfo.saldo && projectInfo.saldo > 0"
+                        <div x-show="form.jenis === 'penggunaan' && form.jumlah > projectInfo.saldo && projectInfo.saldo > 0"
                             class="mt-1 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
                             <p class="text-xs text-yellow-800 dark:text-yellow-400">
-                                ⚠️ Nominal melebihi saldo project (Rp <span
+                                ⚠️ Jumlah melebihi saldo project (Rp <span
                                     x-text="formatNumber(projectInfo.saldo)"></span>)
                             </p>
                         </div>
@@ -265,12 +265,12 @@
                     project_id: '',
                     jenis: '',
                     tanggal: new Date().toISOString().split('T')[0],
-                    nominal: '', // Changed from 'jumlah'
+                    jumlah: '',
                     keterangan: '',
                     no_bukti: '',
                     sumber_dana_type: '',
-                    sumber_kas_id: '',
-                    sumber_bank_id: '',
+                    kas_id: '',
+                    rekening_bank_id: '',
                     kategori_penggunaan: ''
                 },
                 errors: {},
@@ -318,7 +318,7 @@
                         project_id: '',
                         jenis: '',
                         tanggal: new Date().toISOString().split('T')[0],
-                        nominal: '',
+                        jumlah: '',
                         keterangan: '',
                         no_bukti: '',
                         sumber_dana_type: '',
@@ -408,8 +408,7 @@
 
                         if (response.ok) {
                             // Show success message
-                            const message = result.message || 'Transaksi project berhasil disimpan';
-                            this.showNotification(message, 'success');
+                            this.showNotification(result.message || 'Transaksi project berhasil disimpan', 'success');
 
                             // Close modal and refresh page
                             this.closeModal();
@@ -433,14 +432,10 @@
                 },
 
                 showNotification(message, type = 'info') {
-                    console.log('showNotification called with:', message, type);
-
                     // Use the global toast function
                     if (typeof window.showToast === 'function') {
-                        console.log('Using global showToast function');
                         window.showToast(message, type);
                     } else {
-                        console.log('Global showToast not found, using fallback alert');
                         // Fallback to alert if toast is not available
                         if (type === 'error') {
                             alert('Error: ' + message);

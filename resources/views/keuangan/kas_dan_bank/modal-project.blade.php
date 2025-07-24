@@ -89,7 +89,40 @@
                             x-text="errors.budget"></p>
                     </div>
 
+                    <!-- Customer -->
+                    <div>
+                        <label for="project_customer"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Customer
+                        </label>
+                        <select id="project_customer" x-model="form.customer_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm">
+                            <option value="">Pilih Customer (Optional)</option>
+                            @foreach (App\Models\Customer::orderBy('nama')->get() as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->nama }}</option>
+                            @endforeach
+                        </select>
+                        <p x-show="errors.customer_id" class="mt-1 text-sm text-red-600 dark:text-red-400"
+                            x-text="errors.customer_id"></p>
+                    </div>
 
+                    <!-- Sales Order -->
+                    <div>
+                        <label for="project_sales_order"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Sales Order
+                        </label>
+                        <select id="project_sales_order" x-model="form.sales_order_id"
+                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm">
+                            <option value="">Pilih Sales Order (Optional)</option>
+                            @foreach (App\Models\SalesOrder::with('customer')->orderBy('created_at', 'desc')->get() as $so)
+                                <option value="{{ $so->id }}">{{ $so->nomor }} -
+                                    {{ $so->customer->nama ?? 'No Customer' }}</option>
+                            @endforeach
+                        </select>
+                        <p x-show="errors.sales_order_id" class="mt-1 text-sm text-red-600 dark:text-red-400"
+                            x-text="errors.sales_order_id"></p>
+                    </div>
 
                     <!-- Tanggal Mulai -->
                     <div>
@@ -126,6 +159,7 @@
                             <option value="aktif">Aktif</option>
                             <option value="selesai">Selesai</option>
                             <option value="ditunda">Ditunda</option>
+                            <option value="dibatalkan">Dibatalkan</option>
                         </select>
                         <p x-show="errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400"
                             x-text="errors.status"></p>
@@ -218,8 +252,8 @@
                             budget: data.project.budget || '',
                             customer_id: data.project.customer_id || '',
                             sales_order_id: data.project.sales_order_id || '',
-                            tanggal_mulai: this.formatDateForInput(data.project.tanggal_mulai),
-                            tanggal_selesai: this.formatDateForInput(data.project.tanggal_selesai),
+                            tanggal_mulai: data.project.tanggal_mulai || '',
+                            tanggal_selesai: data.project.tanggal_selesai || '',
                             status: data.project.status || 'aktif',
                             deskripsi: data.project.deskripsi || ''
                         };
@@ -292,8 +326,7 @@
 
                         if (response.ok) {
                             // Show success message
-                            const message = result.message || 'Project berhasil disimpan';
-                            this.showNotification(message, 'success');
+                            this.showNotification(result.message || 'Project berhasil disimpan', 'success');
 
                             // Close modal and refresh page
                             this.closeModal();
@@ -317,71 +350,16 @@
                 },
 
                 showNotification(message, type = 'info') {
-                    console.log('showNotification called with:', message, type);
-
                     // Use the global toast function
                     if (typeof window.showToast === 'function') {
-                        console.log('Using global showToast function');
                         window.showToast(message, type);
                     } else {
-                        console.log('Global showToast not found, using fallback alert');
                         // Fallback to alert if toast is not available
                         if (type === 'error') {
                             alert('Error: ' + message);
                         } else {
                             alert(message);
                         }
-                    }
-                },
-
-                /**
-                 * Format date from database to HTML5 date input format (YYYY-MM-DD)
-                 */
-                formatDateForInput(dateValue) {
-                    if (!dateValue) return '';
-
-                    try {
-                        // If already in YYYY-MM-DD format, return as is
-                        if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-                            return dateValue;
-                        }
-
-                        // Try parsing various date formats
-                        let date;
-                        if (typeof dateValue === 'string') {
-                            // Handle different date formats from database
-                            if (dateValue.includes('/')) {
-                                // Handle DD/MM/YYYY or MM/DD/YYYY format
-                                const parts = dateValue.split('/');
-                                if (parts.length === 3) {
-                                    // Assume DD/MM/YYYY format (Indonesian format)
-                                    date = new Date(parts[2], parts[1] - 1, parts[0]);
-                                }
-                            } else if (dateValue.includes('-')) {
-                                // Handle YYYY-MM-DD or DD-MM-YYYY format
-                                date = new Date(dateValue);
-                            } else {
-                                date = new Date(dateValue);
-                            }
-                        } else {
-                            date = new Date(dateValue);
-                        }
-
-                        // Check if date is valid
-                        if (isNaN(date.getTime())) {
-                            console.warn('Invalid date value:', dateValue);
-                            return '';
-                        }
-
-                        // Format to YYYY-MM-DD
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-
-                        return `${year}-${month}-${day}`;
-                    } catch (error) {
-                        console.error('Error formatting date:', error, dateValue);
-                        return '';
                     }
                 }
             };
