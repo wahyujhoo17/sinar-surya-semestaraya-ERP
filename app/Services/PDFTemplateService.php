@@ -63,13 +63,13 @@ class PDFTemplateService
             // --- Penempatan absolut sesuai layout PDF asli ---
             // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
-            $nomorX = 33;
-            $nomorY = 39.5;
+            $nomorX = 31;
+            $nomorY = 41.5;
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
             if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
-                $userX = 135;
+                $userX = 130;
                 $userY = 200;
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY($userX, $userY);
@@ -96,34 +96,20 @@ class PDFTemplateService
             $pdf->SetXY($customerX, $customerY);
             $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
 
-            // Alamat customer (font lebih kecil, regular)
-            $alamatY = $customerY + 6;
             $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetXY($customerX, $alamatY);
-            $maxWidth = 50;
-            $alamatText = $deliveryOrder->customer->alamat_pengiriman;
-            $pdf->MultiCell($maxWidth, 4, $alamatText, 0, 'L');
-            $teleponY = $alamatY + $pdf->getStringHeight($maxWidth, $alamatText) + 2;
-
-            // Telepon customer (font lebih kecil, regular)
-            if (!empty($deliveryOrder->customer->telepon)) {
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->SetXY($customerX, $teleponY);
-                $pdf->Cell(60, 0, 'Telp: ' . $deliveryOrder->customer->telepon, 0, 0, 'L');
-            }
 
             // Items table (misal mulai X=15mm, Y=55mm)
-            $itemsStartY = 73;
+            $itemsStartY = 74;
             $lineHeight = 6;
             $currentY = $itemsStartY;
             $maxItemsY = 170;
 
             // Kolom tabel: No | Nama Barang | Kode | Qty | Satuan
-            $noCol = 11;
-            $namaCol = 23;
-            $kodeCol = 107;
-            $qtyCol = 132;
-            $satuanCol = 147;
+            $noCol = 9;
+            $namaCol = 20;
+            $kodeCol = 102;
+            $qtyCol = 115;
+            $satuanCol = 145;
 
             foreach ($deliveryOrder->details as $index => $detail) {
                 if ($currentY > $maxItemsY) break;
@@ -140,13 +126,11 @@ class PDFTemplateService
                 $detailNomor = $detail->produk->kode ?? '-';
                 $pdf->SetXY($kodeCol, $currentY);
                 $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, $detailNomor, 0, 0, 'L');
-                // Qty
+                // Qty & Satuan dalam 1 cell agar lebih rapi
                 $qtyValue = number_format($detail->quantity, 0);
+                $satuanValue = $detail->satuan->nama ?? 'PCS';
                 $pdf->SetXY($qtyCol, $currentY);
-                $pdf->Cell($satuanCol - $qtyCol - 2, $lineHeight, $qtyValue, 0, 0, 'R');
-                // Satuan
-                $pdf->SetXY($satuanCol, $currentY);
-                $pdf->Cell(15, $lineHeight, $detail->satuan->nama ?? 'PCS', 0, 0, 'L');
+                $pdf->Cell(($satuanCol - $qtyCol - 2) + 3, $lineHeight, $qtyValue . ' ' . $satuanValue, 0, 0, 'R');
                 $currentY += $lineHeight;
             }
 
