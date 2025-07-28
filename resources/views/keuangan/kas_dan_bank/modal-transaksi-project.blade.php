@@ -396,7 +396,7 @@
                             }
                         });
 
-                        const response = await fetch('/keuangan/transaksi-projects', {
+                        const response = await fetch('/keuangan/transaksi-project', {
                             method: 'POST',
                             body: formData,
                             headers: {

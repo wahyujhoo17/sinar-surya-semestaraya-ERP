@@ -739,11 +739,11 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('projects', ProjectController::class);
 
         // Transaksi Project Routes
-        Route::get('transaksi-projects/projects', [TransaksiProjectController::class, 'getProjects'])->name('transaksi-projects.projects');
-        Route::get('transaksi-projects/kas-accounts', [TransaksiProjectController::class, 'getKasAccounts'])->name('transaksi-projects.kas-accounts');
-        Route::get('transaksi-projects/bank-accounts', [TransaksiProjectController::class, 'getBankAccounts'])->name('transaksi-projects.bank-accounts');
-        Route::get('transaksi-projects/project-summary/{project_id}', [TransaksiProjectController::class, 'getProjectSummary'])->name('transaksi-projects.project-summary');
-        Route::resource('transaksi-projects', TransaksiProjectController::class);
+        Route::get('transaksi-project/projects', [TransaksiProjectController::class, 'getProjects'])->name('transaksi-project.projects');
+        Route::get('transaksi-project/kas-accounts', [TransaksiProjectController::class, 'getKasAccounts'])->name('transaksi-project.kas-accounts');
+        Route::get('transaksi-project/bank-accounts', [TransaksiProjectController::class, 'getBankAccounts'])->name('transaksi-project.bank-accounts');
+        Route::get('transaksi-project/project-summary/{project_id}', [TransaksiProjectController::class, 'getProjectSummary'])->name('transaksi-project.project-summary');
+        Route::resource('transaksi-project', TransaksiProjectController::class);
     });
 
     // -- Laporan --
