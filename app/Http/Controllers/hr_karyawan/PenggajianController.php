@@ -65,8 +65,18 @@ class PenggajianController extends Controller
         }
 
         // Filter berdasarkan status
-        if ($request->has('status') && $request->status !== null && $request->status !== '') {
-            $query->where('status', $request->status);
+        $statusFilter = $request->input('status');
+        $showOnlyUnpaid = false;
+
+        if ($statusFilter && $statusFilter !== '') {
+            if ($statusFilter === 'belum_dibayar') {
+                // Special handling for "belum_dibayar" - we'll filter this after pagination
+                $showOnlyUnpaid = true;
+                // Don't apply any filter to the query - we'll handle this later
+            } else {
+                // Filter for existing payment records
+                $query->where('status', $statusFilter);
+            }
         }
 
         // Pengurutan
@@ -74,10 +84,20 @@ class PenggajianController extends Controller
         $sortDirection = $request->input('direction', 'desc');
 
         // Validasi field yang diizinkan untuk sort
-        $allowedSortFields = ['bulan', 'tahun', 'total_gaji', 'status', 'tanggal_bayar', 'created_at'];
+        $allowedSortFields = ['bulan', 'tahun', 'total_gaji', 'status', 'tanggal_bayar', 'created_at', 'karyawan_nama'];
 
         if (in_array($sortField, $allowedSortFields)) {
-            $query->orderBy($sortField, $sortDirection);
+            if ($sortField === 'karyawan_nama') {
+                // Sort by employee name using subquery to avoid JOIN issues
+                $query->orderBy(
+                    \App\Models\Karyawan::select('nama_lengkap')
+                        ->whereColumn('karyawan.id', 'penggajian.karyawan_id')
+                        ->limit(1),
+                    $sortDirection
+                );
+            } else {
+                $query->orderBy($sortField, $sortDirection);
+            }
         } else {
             $query->orderBy('created_at', 'desc');
         }
@@ -92,10 +112,162 @@ class PenggajianController extends Controller
 
         // Pagination
         $perPage = $request->input('per_page', 10);
-        $penggajian = $query->paginate($perPage);
+        // Ensure perPage is a valid integer
+        $perPage = max(1, min(100, (int)$perPage)); // Limit between 1 and 100
 
         // Get unpaid employees for the current month/year
-        $unpaidEmployees = $activeEmployees->whereNotIn('id', $paidEmployeeIds);
+        $unpaidEmployeesQuery = $activeEmployees->whereNotIn('id', $paidEmployeeIds);
+
+        // Apply search filter to unpaid employees if search is present
+        if ($request->has('search') && !empty($request->search)) {
+            $search = $request->search;
+            $unpaidEmployees = $unpaidEmployeesQuery->filter(function ($employee) use ($search) {
+                return stripos($employee->nama_lengkap, $search) !== false ||
+                    stripos($employee->nip, $search) !== false;
+            });
+        } else {
+            $unpaidEmployees = $unpaidEmployeesQuery;
+        }
+
+        // Handle special case for "belum_dibayar" filter
+        if ($showOnlyUnpaid) {
+            // For "belum_dibayar", we need to paginate the unpaid employees
+            $unpaidEmployeesCollection = $unpaidEmployees->values(); // Reset keys
+
+            // Apply sorting to unpaid employees if needed
+            if (in_array($sortField, $allowedSortFields)) {
+                if ($sortField === 'karyawan_nama') {
+                    $unpaidEmployeesCollection = $sortDirection === 'asc'
+                        ? $unpaidEmployeesCollection->sortBy('nama_lengkap')
+                        : $unpaidEmployeesCollection->sortByDesc('nama_lengkap');
+                } elseif ($sortField === 'total_gaji') {
+                    $unpaidEmployeesCollection = $sortDirection === 'asc'
+                        ? $unpaidEmployeesCollection->sortBy('gaji_pokok')
+                        : $unpaidEmployeesCollection->sortByDesc('gaji_pokok');
+                }
+                // Reset keys after sorting
+                $unpaidEmployeesCollection = $unpaidEmployeesCollection->values();
+            }
+
+            // Create a paginator for unpaid employees
+            $currentPage = $request->input('page', 1);
+            $offset = ($currentPage - 1) * $perPage;
+            $paginatedUnpaidEmployees = $unpaidEmployeesCollection->slice($offset, $perPage);
+
+            // Create a LengthAwarePaginator for unpaid employees
+            $penggajian = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect(), // Empty collection for paid employees
+                0, // Total paid employees
+                $perPage,
+                $currentPage,
+                [
+                    'path' => $request->url(),
+                    'pageName' => 'page',
+                ]
+            );
+
+            // Set the unpaid employees for display
+            $unpaidEmployees = $paginatedUnpaidEmployees;
+
+            // Create a paginator specifically for unpaid employees to show pagination
+            $unpaidEmployeesPaginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                $paginatedUnpaidEmployees,
+                $unpaidEmployeesCollection->count(),
+                $perPage,
+                $currentPage,
+                [
+                    'path' => $request->url(),
+                    'pageName' => 'page',
+                ]
+            );
+            $unpaidEmployeesPaginator->appends($request->query());
+
+            // Override the penggajian paginator to use unpaid employees pagination
+            $penggajian = $unpaidEmployeesPaginator;
+        } else {
+            // For other cases (no filter or specific status filters)
+            if ($statusFilter && $statusFilter !== '') {
+                // Specific status filter - only show existing payment records
+                $penggajian = $query->paginate($perPage);
+                $penggajian->appends($request->query());
+                $unpaidEmployees = collect(); // Empty collection
+            } else {
+                // No status filter - create combined pagination for both paid and unpaid employees
+
+                // Get total counts
+                $totalPaidEmployees = $query->count();
+                $totalUnpaidEmployees = $unpaidEmployees->count();
+                $totalEmployees = $totalPaidEmployees + $totalUnpaidEmployees;
+
+                // Calculate pagination
+                $currentPage = $request->input('page', 1);
+                $offset = ($currentPage - 1) * $perPage;
+
+                // Determine how many paid and unpaid employees to show on this page
+                if ($offset < $totalPaidEmployees) {
+                    // We're still showing paid employees
+                    $paidEmployeesToShow = min($perPage, $totalPaidEmployees - $offset);
+                    $paidOffset = $offset;
+
+                    // Get the paid employees for this page
+                    $paidEmployeesForPage = $query->skip($paidOffset)->take($paidEmployeesToShow)->get();
+
+                    // Calculate remaining slots for unpaid employees
+                    $remainingSlots = $perPage - $paidEmployeesToShow;
+
+                    if ($remainingSlots > 0 && $totalUnpaidEmployees > 0) {
+                        // Apply sorting to unpaid employees
+                        if ($sortField === 'karyawan_nama') {
+                            $sortedUnpaidEmployees = $sortDirection === 'asc'
+                                ? $unpaidEmployees->sortBy('nama_lengkap')
+                                : $unpaidEmployees->sortByDesc('nama_lengkap');
+                        } elseif ($sortField === 'total_gaji') {
+                            $sortedUnpaidEmployees = $sortDirection === 'asc'
+                                ? $unpaidEmployees->sortBy('gaji_pokok')
+                                : $unpaidEmployees->sortByDesc('gaji_pokok');
+                        } else {
+                            $sortedUnpaidEmployees = $unpaidEmployees;
+                        }
+
+                        $unpaidEmployees = $sortedUnpaidEmployees->take($remainingSlots);
+                    } else {
+                        $unpaidEmployees = collect();
+                    }
+                } else {
+                    // We're beyond all paid employees, show only unpaid employees
+                    $paidEmployeesForPage = collect();
+                    $unpaidOffset = $offset - $totalPaidEmployees;
+
+                    // Apply sorting to unpaid employees
+                    if ($sortField === 'karyawan_nama') {
+                        $sortedUnpaidEmployees = $sortDirection === 'asc'
+                            ? $unpaidEmployees->sortBy('nama_lengkap')
+                            : $unpaidEmployees->sortByDesc('nama_lengkap');
+                    } elseif ($sortField === 'total_gaji') {
+                        $sortedUnpaidEmployees = $sortDirection === 'asc'
+                            ? $unpaidEmployees->sortBy('gaji_pokok')
+                            : $unpaidEmployees->sortByDesc('gaji_pokok');
+                    } else {
+                        $sortedUnpaidEmployees = $unpaidEmployees;
+                    }
+
+                    $unpaidEmployees = $sortedUnpaidEmployees->skip($unpaidOffset)->take($perPage);
+                }
+
+                // Create a custom paginator that represents the combined data
+                $penggajian = new \Illuminate\Pagination\LengthAwarePaginator(
+                    $paidEmployeesForPage ?? collect(),
+                    $totalEmployees, // Total count includes both paid and unpaid
+                    $perPage,
+                    $currentPage,
+                    [
+                        'path' => $request->url(),
+                        'pageName' => 'page',
+                    ]
+                );
+                $penggajian->appends($request->query());
+            }
+        }
 
         // Handle AJAX request - only return JSON for explicit AJAX requests with our custom parameter
         $isExplicitAjaxRequest = $request->has('ajax_request') && $request->get('ajax_request') === '1';
@@ -106,8 +278,11 @@ class PenggajianController extends Controller
                 Log::info('AJAX Penggajian Request', [
                     'selectedMonth' => $selectedMonth,
                     'selectedYear' => $selectedYear,
+                    'statusFilter' => $statusFilter,
+                    'showOnlyUnpaid' => $showOnlyUnpaid,
                     'penggajian_count' => $penggajian->count(),
                     'unpaidEmployees_count' => $unpaidEmployees->count(),
+                    'total_items' => $penggajian->total(),
                 ]);
 
                 $view = view('hr_karyawan.penggajian_dan_tunjangan._table_body', compact(
@@ -126,12 +301,16 @@ class PenggajianController extends Controller
                     'html' => $view,
                     'pagination' => $pagination,
                     'total' => $penggajian->total(),
-                    'first_item' => $penggajian->firstItem(),
-                    'last_item' => $penggajian->lastItem(),
+                    'first_item' => $penggajian->firstItem() ?: 0,
+                    'last_item' => $penggajian->lastItem() ?: 0,
+                    'current_page' => $penggajian->currentPage(),
+                    'last_page' => $penggajian->lastPage(),
+                    'per_page' => $penggajian->perPage(),
                     'currentMonth' => $currentMonth,
                     'currentYear' => $currentYear,
                     'selectedMonth' => $selectedMonth,
                     'selectedYear' => $selectedYear,
+                    'showOnlyUnpaid' => $showOnlyUnpaid,
                 ]);
             } catch (\Exception $e) {
                 Log::error('Error in Penggajian AJAX: ' . $e->getMessage(), [
@@ -177,11 +356,24 @@ class PenggajianController extends Controller
         $karyawan = Karyawan::where('status', 'aktif')->get();
         $selectedKaryawan = null;
         $gajiPokok = 0;
+        $salaryComponents = [];
 
         if ($karyawan_id) {
             $selectedKaryawan = Karyawan::find($karyawan_id);
             if ($selectedKaryawan) {
                 $gajiPokok = $selectedKaryawan->gaji_pokok;
+                $salaryComponents = [
+                    'tunjangan_btn' => $selectedKaryawan->tunjangan_btn ?? 0,
+                    'tunjangan_keluarga' => $selectedKaryawan->tunjangan_keluarga ?? 0,
+                    'tunjangan_jabatan' => $selectedKaryawan->tunjangan_jabatan ?? 0,
+                    'tunjangan_transport' => $selectedKaryawan->tunjangan_transport ?? 0,
+                    'tunjangan_makan' => $selectedKaryawan->tunjangan_makan ?? 0,
+                    'tunjangan_pulsa' => $selectedKaryawan->tunjangan_pulsa ?? 0,
+                    'default_tunjangan' => $selectedKaryawan->default_tunjangan ?? 0,
+                    'default_bonus' => $selectedKaryawan->default_bonus ?? 0,
+                    'bpjs' => $selectedKaryawan->bpjs ?? 0,
+                    'default_potongan' => $selectedKaryawan->default_potongan ?? 0,
+                ];
             }
         }
 
@@ -202,6 +394,7 @@ class PenggajianController extends Controller
             'karyawan' => $karyawan,
             'selectedKaryawan' => $selectedKaryawan,
             'gajiPokok' => $gajiPokok,
+            'salaryComponents' => $salaryComponents,
             'bulanSekarang' => $bulanSekarang,
             'tahunSekarang' => $tahunSekarang,
             'currentPage' => 'Tambah Penggajian',
@@ -228,6 +421,10 @@ class PenggajianController extends Controller
             'bonus' => 'nullable|numeric|min:0',
             'lembur' => 'nullable|numeric|min:0',
             'potongan' => 'nullable|numeric|min:0',
+            'komisi' => 'nullable|numeric|min:0',
+            'cash_bon' => 'nullable|numeric|min:0',
+            'keterlambatan' => 'nullable|numeric|min:0',
+            'bpjs_karyawan' => 'nullable|numeric|min:0',
             'tanggal_bayar' => 'nullable|date',
             'status' => 'required|in:draft,disetujui,dibayar',
             'catatan' => 'nullable|string',
@@ -253,13 +450,29 @@ class PenggajianController extends Controller
         $komisi = $komisiData['komisi'];
         $salesOrderIds = $komisiData['salesOrderIds'];
 
-        // Hitung total gaji
-        $totalGaji = $request->gaji_pokok +
+        // Override komisi jika dikirim dari request (manual input)
+        if ($request->has('komisi') && $request->komisi !== null) {
+            $komisi = $request->komisi;
+        }
+
+        // Hitung pendapatan
+        $pendapatan = $request->gaji_pokok +
             ($request->tunjangan ?? 0) +
             ($request->bonus ?? 0) +
             ($request->lembur ?? 0) +
-            $komisi -
-            ($request->potongan ?? 0);
+            $komisi;
+
+        // Hitung potongan
+        $potongan = ($request->potongan ?? 0) +
+            ($request->cash_bon ?? 0) +
+            ($request->keterlambatan ?? 0) +
+            ($request->bpjs_karyawan ?? 0);
+
+        // Total gaji (bruto)
+        $totalGaji = $pendapatan - $potongan;
+
+        // THP (Take Home Pay) sama dengan total gaji dalam hal ini
+        $thp = $totalGaji;
 
         // Tambahkan komponen gaji lainnya jika ada
         if ($request->has('komponenGaji')) {
@@ -284,7 +497,12 @@ class PenggajianController extends Controller
                 'bonus' => $request->bonus,
                 'lembur' => $request->lembur,
                 'potongan' => $request->potongan,
+                'komisi' => $komisi,
+                'cash_bon' => $request->cash_bon ?? 0,
+                'keterlambatan' => $request->keterlambatan ?? 0,
+                'bpjs_karyawan' => $request->bpjs_karyawan ?? 0,
                 'total_gaji' => $totalGaji,
+                'thp' => $thp,
                 'tanggal_bayar' => $request->tanggal_bayar,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
@@ -1210,5 +1428,29 @@ class PenggajianController extends Controller
                 'metode_pembayaran' => $penggajian->metode_pembayaran
             ]
         );
+    }
+
+    /**
+     * Helper method to get sort key for combined sorting
+     */
+    private function getSortKey($employee, $sortField, $type)
+    {
+        switch ($sortField) {
+            case 'karyawan_nama':
+                return $type === 'paid' ? $employee->karyawan->nama_lengkap : $employee->nama_lengkap;
+            case 'total_gaji':
+                return $type === 'paid' ? $employee->total_gaji : $employee->gaji_pokok;
+            case 'status':
+                return $type === 'paid' ? $employee->status : 'belum_dibayar';
+            case 'tanggal_bayar':
+                return $type === 'paid' ? $employee->tanggal_bayar : null;
+            case 'bulan':
+                return $type === 'paid' ? $employee->bulan : 0;
+            case 'tahun':
+                return $type === 'paid' ? $employee->tahun : 0;
+            case 'created_at':
+            default:
+                return $type === 'paid' ? $employee->created_at : Carbon::now();
+        }
     }
 }

@@ -77,7 +77,17 @@
                             <div class="relative flex items-stretch flex-grow focus-within:z-10">
                                 <input type="text"
                                     class="block w-full rounded-none rounded-l-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm search-input"
-                                    placeholder="Cari nama karyawan..." value="{{ request('search') }}">
+                                    placeholder="Cari nama karyawan atau NIP..." value="{{ request('search') }}">
+                                <!-- Clear search button (hidden by default) -->
+                                <button type="button"
+                                    class="absolute inset-y-0 right-0 pr-3 flex items-center clear-search-btn {{ request('search') ? '' : 'hidden' }}"
+                                    title="Hapus pencarian">
+                                    <svg class="h-4 w-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
                             </div>
                             <button
                                 class="relative -ml-px inline-flex items-center space-x-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 search-btn">
@@ -94,6 +104,8 @@
                             <select
                                 class="block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 sm:text-sm filter-status">
                                 <option value="">Semua Status</option>
+                                <option value="belum_dibayar"
+                                    {{ request('status') == 'belum_dibayar' ? 'selected' : '' }}>Belum Dibayar</option>
                                 <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft
                                 </option>
                                 <option value="disetujui" {{ request('status') == 'disetujui' ? 'selected' : '' }}>
@@ -211,26 +223,122 @@
                         <thead class="bg-gray-50 dark:bg-gray-700/50">
                             <tr>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="created_at">No.</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
+                                    No.</th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="karyawan">Karyawan</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="karyawan_nama">
+                                    <div class="flex items-center justify-between">
+                                        <span>Karyawan</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'karyawan_nama' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'karyawan_nama' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="bulan">Bulan</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="bulan">
+                                    <div class="flex items-center justify-between">
+                                        <span>Bulan</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'bulan' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'bulan' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="tahun">Tahun</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="tahun">
+                                    <div class="flex items-center justify-between">
+                                        <span>Tahun</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'tahun' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'tahun' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="total_gaji">Total Gaji</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="total_gaji">
+                                    <div class="flex items-center justify-between">
+                                        <span>Total Gaji</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'total_gaji' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'total_gaji' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="status">Status</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="status">
+                                    <div class="flex items-center justify-between">
+                                        <span>Status</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'status' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'status' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
-                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable"
-                                    data-sort="tanggal_bayar">Tanggal Bayar</th>
+                                    class="px-3 py-3.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400 sortable cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
+                                    data-sort="tanggal_bayar">
+                                    <div class="flex items-center justify-between">
+                                        <span>Tanggal Bayar</span>
+                                        <div class="ml-2 flex flex-col">
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-asc {{ request('sort') === 'tanggal_bayar' && request('direction') === 'asc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" />
+                                            </svg>
+                                            <svg class="w-3 h-3 text-gray-400 sort-arrow sort-desc {{ request('sort') === 'tanggal_bayar' && request('direction') === 'desc' ? 'text-primary-600' : '' }}"
+                                                fill="currentColor" viewBox="0 0 20 20">
+                                                <path
+                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </th>
                                 <th scope="col"
                                     class="px-3 py-3.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">
                                     Aksi</th>
@@ -247,8 +355,7 @@
                 <div
                     class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0 pagination-container">
                     <div class="text-sm text-gray-500 dark:text-gray-400 pagination-info">
-                        Menampilkan {{ $penggajian->firstItem() ?? 0 }} sampai {{ $penggajian->lastItem() ?? 0 }} dari
-                        {{ $penggajian->total() }} data
+                        <!-- JavaScript will populate this -->
                     </div>
                     <div class="pagination-links">
                         {{ $penggajian->links('vendor.pagination.tailwind-custom') }}
@@ -351,6 +458,275 @@
     // Global modal functions
     let deleteForm = null;
 
+    // Global pagination function for Alpine.js
+    function handlePaginationClick(url) {
+        loadTable(url);
+    }
+
+    // Global state for navigation tracking
+    window.isNavigating = false;
+
+    // Global loadTable function for AJAX pagination
+    function loadTable(url) {
+        // Get current URL parameters
+        let currentUrl = new URL(window.location);
+        let params = currentUrl.searchParams;
+
+        // Prevent AJAX during browser navigation
+        if (window.isNavigating) {
+            window.location.href = url;
+            return;
+        }
+
+        // Add ajax_request parameter to ensure we get JSON response
+        const urlObj = new URL(url, window.location.origin);
+        urlObj.searchParams.set('ajax_request', '1');
+        const ajaxUrl = urlObj.toString();
+
+        // Debug log untuk tracking request (uncomment jika diperlukan)
+        console.log('Loading table with URL:', ajaxUrl);
+        console.log('Current filters:', {
+            search: params.get('search'),
+            status: params.get('status'),
+            bulan: params.get('bulan'),
+            tahun: params.get('tahun'),
+            sort: params.get('sort'),
+            direction: params.get('direction'),
+            per_page: params.get('per_page')
+        });
+
+        // Add loading state to pagination
+        $('.pagination-links').addClass('opacity-50 pointer-events-none');
+
+        // Show loading indicator with better styling
+        $('.table-body').html(`
+            <tr>
+                <td colspan="8" class="px-3 py-12 text-center">
+                    <div class="flex flex-col items-center justify-center space-y-3">
+                        <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Memuat data penggajian...</p>
+                    </div>
+                </td>
+            </tr>
+        `);
+
+        $.ajax({
+            url: ajaxUrl,
+            type: 'GET',
+            dataType: 'json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(response) {
+                // console.log("Response received:", response); // Debug log
+                if (response.success) {
+                    $('.table-body').html(response.html);
+                    $('.pagination-links').html(response.pagination);
+
+                    // Update pagination info with more detailed information
+                    const totalData = response.total || 0;
+                    const firstItem = response.first_item || 0;
+                    const lastItem = response.last_item || 0;
+
+                    // Update pagination info text
+                    if (totalData > 0) {
+                        $('.pagination-info').text(
+                            `Menampilkan ${firstItem} sampai ${lastItem} dari ${totalData} data`
+                        );
+                    } else {
+                        $('.pagination-info').text('Tidak ada data yang ditemukan');
+                    }
+
+                    // Update URL without refreshing page (remove ajax_request parameter from URL)
+                    const cleanUrl = new URL(url, window.location.origin);
+                    cleanUrl.searchParams.delete('ajax_request');
+                    window.history.pushState({}, '', cleanUrl.toString());
+                    currentUrl = new URL(window.location);
+                    params = currentUrl.searchParams;
+
+                    // Ensure the correct values are selected in the dropdowns and inputs
+                    $('.filter-status').val(params.get('status') || '');
+                    $('.filter-bulan').val(params.get('bulan') || response.selectedMonth ||
+                        response.currentMonth || '');
+                    $('.filter-tahun-input').val(params.get('tahun') || response.selectedYear ||
+                        response.currentYear || '');
+                    $('.per-page-select').val(params.get('per_page') || '10');
+                    $('.search-input').val(params.get('search') || '');
+
+                    // Update search clear button visibility
+                    if (window.toggleClearSearchButton) {
+                        window.toggleClearSearchButton();
+                    }
+
+                    // Update quick year buttons
+                    if (window.updateQuickYearButtons) {
+                        window.updateQuickYearButtons();
+                    }
+
+                    // Update sorting indicators
+                    if (window.updateSortingIndicators) {
+                        window.updateSortingIndicators();
+                    }
+
+                    // Remove loading state
+                    $('.pagination-links').removeClass('opacity-50 pointer-events-none');
+
+                    // Log successful update for debugging
+                    console.log('Table updated successfully:', {
+                        total: totalData,
+                        first: firstItem,
+                        last: lastItem,
+                        pagination_visible: $('.pagination-links').children().length > 0
+                    });
+                } else if (response.error) {
+                    // Handle error from server
+                    // console.error('Server error:', response.error);
+                    $('.table-body').html(`
+                        <tr>
+                            <td colspan="8" class="px-3 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center space-y-4">
+                                    <div class="flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">Terjadi Kesalahan</p>
+                                        <p class="text-sm text-red-600 dark:text-red-400 font-medium">${response.error}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Silakan coba refresh halaman atau hubungi administrator</p>
+                                    </div>
+                                    <button class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 retry-btn transition-colors duration-200">
+                                        <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                        Coba Lagi
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `);
+
+                    // Retry button handler
+                    $('.retry-btn').on('click', function() {
+                        loadTable(url);
+                    });
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading data:', {
+                    xhr,
+                    status,
+                    error,
+                    responseText: xhr.responseText
+                });
+
+                // Try to parse the error response
+                let errorMessage = 'Terjadi kesalahan saat memuat data.';
+                let errorDetails = '';
+
+                try {
+                    const errorResponse = JSON.parse(xhr.responseText);
+                    if (errorResponse.error) {
+                        errorMessage = errorResponse.error;
+
+                        if (errorResponse.file && errorResponse.line) {
+                            errorDetails =
+                                `File: ${errorResponse.file}, Line: ${errorResponse.line}`;
+                        }
+                    }
+                } catch (e) {
+                    // If we can't parse the JSON, use the status text
+                    errorMessage = xhr.statusText || 'Unknown error';
+                }
+
+                // Show error message in table body
+                $('.table-body').html(`
+                    <tr>
+                        <td colspan="8" class="px-3 py-12 text-center">
+                            <div class="flex flex-col items-center justify-center space-y-4">
+                                <div class="flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-lg font-medium text-gray-900 dark:text-white mb-1">Gagal Memuat Data</p>
+                                    <p class="text-sm text-red-600 dark:text-red-400 font-medium">${errorMessage}</p>
+                                    ${errorDetails ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">${errorDetails}</p>` : ''}
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Silakan coba refresh halaman atau gunakan filter yang berbeda</p>
+                                </div>
+                                <button class="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 retry-btn transition-colors duration-200">
+                                    <svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Coba Lagi
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+
+                // Clear pagination
+                $('.pagination-links').html('').removeClass('opacity-50 pointer-events-none');
+                $('.pagination-info').text('Error memuat data');
+
+                // Retry button handler
+                $('.retry-btn').on('click', function() {
+                    loadTable(url);
+                });
+            }
+        });
+    }
+
+    // Global helper functions for AJAX functionality
+    window.toggleClearSearchButton = function() {
+        const searchValue = $('.search-input').val();
+        if (searchValue && searchValue.length > 0) {
+            $('.clear-search-btn').removeClass('hidden');
+        } else {
+            $('.clear-search-btn').addClass('hidden');
+        }
+    }
+
+    window.updateQuickYearButtons = function() {
+        const currentSelectedYear = $('.filter-tahun-input').val();
+        $('.quick-year-btn').each(function() {
+            const btnYear = $(this).data('year');
+            if (btnYear == currentSelectedYear) {
+                $(this).removeClass(
+                        'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+                    )
+                    .addClass(
+                        'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/20 dark:border-primary-600 dark:text-primary-400'
+                    );
+            } else {
+                $(this).removeClass(
+                        'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/20 dark:border-primary-600 dark:text-primary-400'
+                    )
+                    .addClass(
+                        'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
+                    );
+            }
+        });
+    }
+
+    window.updateSortingIndicators = function() {
+        let currentUrl = new URL(window.location);
+        let params = currentUrl.searchParams;
+        const currentSort = params.get('sort');
+        const currentDirection = params.get('direction');
+
+        // Reset all sort arrows
+        $('.sort-arrow').removeClass('text-primary-600').addClass('text-gray-400');
+
+        // Highlight current sort direction
+        if (currentSort && currentDirection) {
+            $(`.sortable[data-sort="${currentSort}"] .sort-${currentDirection}`)
+                .removeClass('text-gray-400').addClass('text-primary-600');
+        }
+    }
+
     function showDeleteModal() {
         const modal = $('#deleteModal');
         const modalContent = $('#deleteModalContent');
@@ -398,19 +774,26 @@
     document.addEventListener('DOMContentLoaded', function() {
         let currentUrl = new URL(window.location);
         let params = currentUrl.searchParams;
-        let isNavigating = false;
+
+        // If ajax_request parameter exists in URL (from page refresh), redirect to clean URL
+        if (params.has('ajax_request')) {
+            params.delete('ajax_request');
+            currentUrl.search = params.toString();
+            window.location.href = currentUrl.toString();
+            return;
+        }
 
         // Handle browser back/forward navigation
         window.addEventListener('popstate', function(event) {
             // For browser navigation, do a full page reload instead of AJAX
-            isNavigating = true;
+            window.isNavigating = true;
             // console.log('Browser navigation detected, reloading page...');
             window.location.reload();
         });
 
         // Also handle page unload to prevent AJAX during navigation
         window.addEventListener('beforeunload', function() {
-            isNavigating = true;
+            window.isNavigating = true;
         });
 
         // Set default filter to current month and year if not already set
@@ -430,11 +813,19 @@
             needsReload = true;
         }
 
+        // Set default per_page if not present
+        if (!params.has('per_page')) {
+            params.set('per_page', '10');
+            needsReload = true;
+        }
+
         if (needsReload) {
             currentUrl.search = params.toString();
             window.history.pushState({}, '', currentUrl.toString());
             // console.log('Setting default filters and reloading with URL:', currentUrl.toString());
-            loadTable(currentUrl.toString());
+            // For initial load with default filters, do a regular page redirect instead of AJAX
+            window.location.href = currentUrl.toString();
+            return;
         }
 
         // Pre-select the values in the dropdowns
@@ -445,11 +836,31 @@
             $('.filter-tahun-input').val(params.get('tahun') || '');
             $('.filter-status').val(params.get('status') || '');
             $('.per-page-select').val(params.get('per_page') || '10');
+
+            // Update sorting indicators on page load
+            window.updateSortingIndicators();
+
+            // Update clear search button on page load
+            window.toggleClearSearchButton();
+
+            // Set initial pagination info from server data
+            const totalData = {{ $penggajian->total() }};
+            const firstItem = {{ $penggajian->firstItem() ?? 0 }};
+            const lastItem = {{ $penggajian->lastItem() ?? 0 }};
+
+            if (totalData > 0) {
+                $('.pagination-info').text(
+                    `Menampilkan ${firstItem} sampai ${lastItem} dari ${totalData} data`
+                );
+            } else {
+                $('.pagination-info').text('Tidak ada data yang ditemukan');
+            }
         }, 100);
 
         // Filter functions
         $('.search-btn').on('click', function() {
             params.set('search', $('.search-input').val());
+            params.delete('page'); // Reset to first page when searching
             currentUrl.search = params.toString();
             loadTable(currentUrl.toString());
         });
@@ -457,9 +868,26 @@
         $('.search-input').on('keypress', function(e) {
             if (e.which === 13) {
                 params.set('search', $(this).val());
+                params.delete('page'); // Reset to first page when searching
                 currentUrl.search = params.toString();
                 loadTable(currentUrl.toString());
             }
+        });
+
+        // Clear search functionality
+        $('.clear-search-btn').on('click', function() {
+            $('.search-input').val('');
+            params.delete('search');
+            params.delete('page');
+            currentUrl.search = params.toString();
+            loadTable(currentUrl.toString());
+            // Use global function
+            window.toggleClearSearchButton();
+        });
+
+        // Show/hide clear search button based on input
+        $('.search-input').on('input', function() {
+            window.toggleClearSearchButton();
         });
 
         // Handle month and status dropdown changes
@@ -473,6 +901,11 @@
                 params.set(name, $(this).val());
             } else {
                 params.delete(name);
+            }
+
+            // Reset to first page when filtering (except for per_page)
+            if (name !== 'per_page') {
+                params.delete('page');
             }
 
             currentUrl.search = params.toString();
@@ -494,6 +927,7 @@
                 params.set('tahun', currentYear);
             }
 
+            params.delete('page'); // Reset to first page when changing year
             currentUrl.search = params.toString();
             loadTable(currentUrl.toString());
             updateQuickYearButtons();
@@ -511,33 +945,11 @@
             const year = $(this).data('year');
             $('.filter-tahun-input').val(year);
             params.set('tahun', year);
+            params.delete('page'); // Reset to first page when changing year
             currentUrl.search = params.toString();
             loadTable(currentUrl.toString());
-            updateQuickYearButtons();
+            window.updateQuickYearButtons();
         });
-
-        // Function to update quick year button states
-        function updateQuickYearButtons() {
-            const currentSelectedYear = $('.filter-tahun-input').val();
-            $('.quick-year-btn').each(function() {
-                const btnYear = $(this).data('year');
-                if (btnYear == currentSelectedYear) {
-                    $(this).removeClass(
-                            'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
-                            )
-                        .addClass(
-                            'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/20 dark:border-primary-600 dark:text-primary-400'
-                            );
-                } else {
-                    $(this).removeClass(
-                            'bg-primary-100 border-primary-300 text-primary-700 dark:bg-primary-900/20 dark:border-primary-600 dark:text-primary-400'
-                            )
-                        .addClass(
-                            'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600'
-                            );
-                }
-            });
-        }
 
         $('.reset-filter-btn').on('click', function() {
             params.delete('search');
@@ -546,17 +958,22 @@
             params.delete('tahun');
             params.delete('sort');
             params.delete('direction');
+            params.delete('page');
+            // Keep per_page setting when resetting other filters
+            // params.delete('per_page');
 
             // Reset form elements
             $('.search-input').val('');
             $('.filter-status').val('');
             $('.filter-bulan').val('');
             $('.filter-tahun-input').val('');
-            $('.per-page-select').val('10');
+            // Don't reset per_page selector
+            // $('.per-page-select').val('10');
 
             currentUrl.search = params.toString();
             loadTable(currentUrl.toString());
-            updateQuickYearButtons();
+            window.updateQuickYearButtons();
+            window.updateSortingIndicators();
         });
 
         // Sorting
@@ -570,6 +987,7 @@
 
             params.set('sort', sort);
             params.set('direction', direction);
+            params.delete('page'); // Reset to first page when sorting
             currentUrl.search = params.toString();
             loadTable(currentUrl.toString());
         });
@@ -648,137 +1066,56 @@
             }
         });
 
-        // Ajax Table loading
-        function loadTable(url) {
-            // Prevent AJAX during browser navigation
-            if (isNavigating) {
-                window.location.href = url;
-                return;
-            }
-
-            // Add ajax_request parameter to ensure we get JSON response
-            const urlObj = new URL(url, window.location.origin);
-            urlObj.searchParams.set('ajax_request', '1');
-            const ajaxUrl = urlObj.toString();
-
-            // Show loading indicator
-            $('.table-body').html(
-                '<tr><td colspan="8" class="px-3 py-8 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div><p class="mt-2">Loading data...</p></td></tr>'
-            );
-
-            $.ajax({
-                url: ajaxUrl,
-                type: 'GET',
-                dataType: 'json',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                success: function(response) {
-                    // console.log("Response received:", response); // Debug log
-                    if (response.success) {
-                        $('.table-body').html(response.html);
-                        $('.pagination-links').html(response.pagination);
-                        $('.pagination-info').text(
-                            `Menampilkan ${response.first_item || 0} sampai ${response.last_item || 0} dari ${response.total} data`
-                        );
-
-                        // Update URL without refreshing page
-                        window.history.pushState({}, '', url);
-                        currentUrl = new URL(window.location);
-                        params = currentUrl.searchParams;
-
-                        // Update filter selections with values from response
-
-
-                        // Ensure the correct values are selected in the dropdowns and inputs
-                        $('.filter-status').val(params.get('status') || '');
-                        $('.filter-bulan').val(params.get('bulan') || response.selectedMonth ||
-                            response.currentMonth || '');
-                        $('.filter-tahun-input').val(params.get('tahun') || response.selectedYear ||
-                            response.currentYear || '');
-                        $('.per-page-select').val(params.get('per_page') || '10');
-                        $('.search-input').val(params.get('search') || '');
-
-                        // Update quick year buttons
-                        updateQuickYearButtons();
-                    } else if (response.error) {
-                        // Handle error from server
-                        // console.error('Server error:', response.error);
-                        $('.table-body').html(`
-                            <tr>
-                                <td colspan="8" class="px-3 py-8 text-center text-sm text-red-500 dark:text-red-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <p class="font-medium">Error: ${response.error}</p>
-                                    <button class="mt-4 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 retry-btn">
-                                        Coba Lagi
-                                    </button>
-                                </td>
-                            </tr>
-                        `);
-
-                        // Retry button handler
-                        $('.retry-btn').on('click', function() {
-                            loadTable(url);
-                        });
-                    }
-                },
-                error: function(xhr, status, error) {
-                    console.error('Error loading data:', {
-                        xhr,
-                        status,
-                        error,
-                        responseText: xhr.responseText
-                    });
-
-                    // Try to parse the error response
-                    let errorMessage = 'Terjadi kesalahan saat memuat data.';
-                    let errorDetails = '';
-
-                    try {
-                        const errorResponse = JSON.parse(xhr.responseText);
-                        if (errorResponse.error) {
-                            errorMessage = errorResponse.error;
-
-                            if (errorResponse.file && errorResponse.line) {
-                                errorDetails =
-                                    `File: ${errorResponse.file}, Line: ${errorResponse.line}`;
-                            }
-                        }
-                    } catch (e) {
-                        // If we can't parse the JSON, use the status text
-                        errorMessage = xhr.statusText || 'Unknown error';
-                    }
-
-                    // Show error message in table body
-                    $('.table-body').html(`
-                        <tr>
-                            <td colspan="8" class="px-3 py-8 text-center text-sm text-red-500 dark:text-red-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <p class="font-medium">Error: ${errorMessage}</p>
-                                ${errorDetails ? `<p class="mt-1 text-xs">${errorDetails}</p>` : ''}
-                                <p class="mt-1">Silakan coba refresh halaman atau gunakan filter yang berbeda.</p>
-                                <button class="mt-4 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 retry-btn">
-                                    Coba Lagi
-                                </button>
-                            </td>
-                        </tr>
-                    `);
-
-                    // Clear pagination
-                    $('.pagination-links').html('');
-                    $('.pagination-info').text('Error memuat data');
-
-                    // Retry button handler
-                    $('.retry-btn').on('click', function() {
-                        loadTable(url);
-                    });
-                }
-            });
-        }
+        // Ajax Table loading function is now global
+        // The loadTable function has been moved to global scope above
     });
 </script>
+
+<style>
+    /* Sorting arrows styling */
+    .sortable .sort-arrow {
+        transition: color 0.2s ease-in-out;
+        opacity: 0.6;
+    }
+
+    .sortable:hover .sort-arrow {
+        opacity: 0.8;
+    }
+
+    .sortable .sort-arrow.text-primary-600 {
+        opacity: 1;
+    }
+
+    /* Spacing for sort arrows */
+    .sort-arrow+.sort-arrow {
+        margin-top: -2px;
+    }
+
+    /* Responsive table improvements */
+    @media (max-width: 768px) {
+        .sortable {
+            font-size: 0.75rem;
+            padding: 0.5rem;
+        }
+
+        .sort-arrow {
+            width: 0.75rem;
+            height: 0.75rem;
+        }
+    }
+
+    /* Smooth transitions for all interactive elements */
+    .pagination-links a,
+    .sortable,
+    .filter-bulan,
+    .filter-status,
+    .per-page-select,
+    .search-input {
+        transition: all 0.2s ease-in-out;
+    }
+
+    /* Hide pagination info from vendor template to avoid duplication */
+    .pagination-links .flex.items-center.justify-between>div.text-sm p {
+        display: none !important;
+    }
+</style>

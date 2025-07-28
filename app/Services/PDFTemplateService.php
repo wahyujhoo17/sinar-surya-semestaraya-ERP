@@ -15,7 +15,7 @@ class PDFTemplateService
     {
 
         // Tambahkan parameter opsional untuk menonaktifkan template background
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
         // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
@@ -92,9 +92,18 @@ class PDFTemplateService
             $maxCustomerWidth = 50;
 
             // Nama customer bold
+            // Nama customer bold
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->SetXY($customerX, $customerY);
             $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
+
+            // Alamat customer (jika ada), font normal, di bawah company/nama
+            if (!empty($deliveryOrder->customer)) {
+                $pdf->SetFont('helvetica', '', 8);
+                $alamatY = $customerY + 5.5; // geser ke bawah 5.5mm dari nama
+                $pdf->SetXY($customerX, $alamatY);
+                $pdf->MultiCell($maxCustomerWidth, 4, $deliveryOrder->customer->alamat_pengiriman, 0, 'L');
+            }
 
             $pdf->SetFont('helvetica', '', 8);
 

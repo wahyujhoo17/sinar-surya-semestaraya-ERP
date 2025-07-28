@@ -123,7 +123,7 @@
                     </h3>
                     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Komponen pendapatan dan potongan gaji</p>
                 </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {{-- Basic Salary --}}
                     <div>
                         <label for="gaji_pokok" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -143,10 +143,98 @@
                         @enderror
                     </div>
 
-                    {{-- Allowances --}}
+                    {{-- Tunjangan BTN --}}
                     <div>
-                        <label for="tunjangan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tunjangan
+                        <label for="tunjangan_btn"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan BTN
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="tunjangan_btn" id="tunjangan_btn" min="0" step="1000"
+                                x-model="salaryComponents.tunjangan_btn" @input="calculateTotal()"
+                                value="{{ old('tunjangan_btn', $penggajian->karyawan->tunjangan_btn ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Tunjangan Keluarga --}}
+                    <div>
+                        <label for="tunjangan_keluarga"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Keluarga
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga" min="0"
+                                step="1000" x-model="salaryComponents.tunjangan_keluarga"
+                                @input="calculateTotal()"
+                                value="{{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Tunjangan Jabatan --}}
+                    <div>
+                        <label for="tunjangan_jabatan"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Jabatan
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan" min="0"
+                                step="1000" x-model="salaryComponents.tunjangan_jabatan" @input="calculateTotal()"
+                                value="{{ old('tunjangan_jabatan', $penggajian->karyawan->tunjangan_jabatan ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Tunjangan Transport --}}
+                    <div>
+                        <label for="tunjangan_transport"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Transport
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="tunjangan_transport" id="tunjangan_transport" min="0"
+                                step="1000" x-model="salaryComponents.tunjangan_transport"
+                                @input="calculateTotal()"
+                                value="{{ old('tunjangan_transport', $penggajian->karyawan->tunjangan_transport ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Tunjangan Makan --}}
+                    <div>
+                        <label for="tunjangan_makan"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Makan
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="tunjangan_makan" id="tunjangan_makan" min="0"
+                                step="1000" x-model="salaryComponents.tunjangan_makan" @input="calculateTotal()"
+                                value="{{ old('tunjangan_makan', $penggajian->karyawan->tunjangan_makan ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Allowances (General) --}}
+                    <div>
+                        <label for="tunjangan"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Lainnya
                         </label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -190,11 +278,74 @@
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
+                </div>
 
-                    {{-- Deductions --}}
+                {{-- Deduction Section --}}
+                <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/20">
+                    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-red-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4">
+                            </path>
+                        </svg>
+                        Potongan Gaji
+                    </h4>
+                </div>
+                <div class="p-6 pt-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {{-- BPJS --}}
+                    <div>
+                        <label for="bpjs_karyawan"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            BPJS
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="bpjs_karyawan" id="bpjs_karyawan" min="0"
+                                step="1000" x-model="salaryComponents.bpjs_karyawan" @input="calculateTotal()"
+                                value="{{ old('bpjs_karyawan', $penggajian->bpjs_karyawan ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Cash Bon --}}
+                    <div>
+                        <label for="cash_bon" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Cash Bon
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="cash_bon" id="cash_bon" min="0" step="1000"
+                                x-model="salaryComponents.cash_bon" @input="calculateTotal()"
+                                value="{{ old('cash_bon', $penggajian->cash_bon ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Keterlambatan --}}
+                    <div>
+                        <label for="keterlambatan"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Keterlambatan
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="number" name="keterlambatan" id="keterlambatan" min="0"
+                                step="1000" x-model="salaryComponents.keterlambatan" @input="calculateTotal()"
+                                value="{{ old('keterlambatan', $penggajian->keterlambatan ?? 0) }}"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Deductions (General) --}}
                     <div>
                         <label for="potongan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Potongan
+                            Potongan Lainnya
                         </label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -463,13 +614,22 @@
                 return {
                     salaryComponents: {
                         gaji_pokok: {{ old('gaji_pokok', $penggajian->gaji_pokok) }},
+                        tunjangan_btn: {{ old('tunjangan_btn', $penggajian->karyawan->tunjangan_btn ?? 0) }},
+                        tunjangan_keluarga: {{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }},
+                        tunjangan_jabatan: {{ old('tunjangan_jabatan', $penggajian->karyawan->tunjangan_jabatan ?? 0) }},
+                        tunjangan_transport: {{ old('tunjangan_transport', $penggajian->karyawan->tunjangan_transport ?? 0) }},
+                        tunjangan_makan: {{ old('tunjangan_makan', $penggajian->karyawan->tunjangan_makan ?? 0) }},
                         tunjangan: {{ old('tunjangan', $penggajian->tunjangan ?? 0) }},
                         bonus: {{ old('bonus', $penggajian->bonus ?? 0) }},
                         lembur: {{ old('lembur', $penggajian->lembur ?? 0) }},
+                        bpjs_karyawan: {{ old('bpjs_karyawan', $penggajian->bpjs_karyawan ?? 0) }},
+                        cash_bon: {{ old('cash_bon', $penggajian->cash_bon ?? 0) }},
+                        keterlambatan: {{ old('keterlambatan', $penggajian->keterlambatan ?? 0) }},
                         potongan: {{ old('potongan', $penggajian->potongan ?? 0) }}
                     },
 
                     totalSalary: 0,
+                    totalGaji: 0, // Total bruto sebelum potongan
                     existingComponents: @json($penggajian->komponenGaji),
 
                     init() {
@@ -479,6 +639,11 @@
                     calculateTotal() {
                         // Calculate income from form inputs
                         const income = parseFloat(this.salaryComponents.gaji_pokok || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_btn || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_keluarga || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_jabatan || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_transport || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_makan || 0) +
                             parseFloat(this.salaryComponents.tunjangan || 0) +
                             parseFloat(this.salaryComponents.bonus || 0) +
                             parseFloat(this.salaryComponents.lembur || 0);
@@ -489,22 +654,25 @@
                             .reduce((sum, comp) => sum + parseFloat(comp.nilai || 0), 0);
 
                         // Calculate deductions from form inputs
-                        const deductions = parseFloat(this.salaryComponents.potongan || 0);
+                        const deductions = parseFloat(this.salaryComponents.bpjs_karyawan || 0) +
+                            parseFloat(this.salaryComponents.cash_bon || 0) +
+                            parseFloat(this.salaryComponents.keterlambatan || 0) +
+                            parseFloat(this.salaryComponents.potongan || 0);
 
                         // Add existing deduction components
                         const existingDeductions = this.existingComponents
                             .filter(comp => comp.jenis === 'potongan')
                             .reduce((sum, comp) => sum + parseFloat(comp.nilai || 0), 0);
 
-                        this.totalSalary = Math.max(0, income + existingIncome - deductions - existingDeductions);
+                        this.totalGaji = income + existingIncome;
+                        this.totalSalary = Math.max(0, this.totalGaji - deductions - existingDeductions);
                     },
 
                     formatRupiah(amount) {
                         return new Intl.NumberFormat('id-ID', {
                             style: 'currency',
                             currency: 'IDR',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
+                            minimumFractionDigits: 0
                         }).format(amount || 0);
                     }
                 }

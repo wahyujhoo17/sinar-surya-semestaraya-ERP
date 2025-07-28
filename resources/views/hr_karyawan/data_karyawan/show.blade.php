@@ -171,6 +171,21 @@
                                     </svg>
                                     Kepegawaian
                                 </button>
+                                <button @click="activeTab = 'salary'"
+                                    :class="activeTab === 'salary' ?
+                                        'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/10' :
+                                        'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                                    class="flex items-center py-4 px-6 font-medium text-sm border-b-2 whitespace-nowrap transition-all duration-200">
+                                    <svg class="w-5 h-5 mr-2"
+                                        :class="activeTab === 'salary' ? 'text-primary-500' : 'text-gray-400'"
+                                        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                        xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                                        </path>
+                                    </svg>
+                                    Komponen Gaji
+                                </button>
                                 <button @click="activeTab = 'account'"
                                     :class="activeTab === 'account' ?
                                         'border-primary-500 text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/10' :
@@ -358,13 +373,6 @@
                                                     <span
                                                         class="text-sm font-semibold text-gray-900 dark:text-white">{{ $karyawan->jabatan->nama ?? '-' }}</span>
                                                 </div>
-                                                <div class="flex justify-between">
-                                                    <span class="text-sm text-gray-500 dark:text-gray-400">Gaji
-                                                        Pokok</span>
-                                                    <span
-                                                        class="text-sm font-semibold text-gray-900 dark:text-white">Rp
-                                                        {{ number_format($karyawan->gaji_pokok ?? 0, 0, ',', '.') }}</span>
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -412,6 +420,316 @@
                                                         {{ ucfirst($karyawan->status) }}
                                                     </span>
                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Salary Components Tab -->
+                            <div x-show="activeTab === 'salary'" x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <!-- Left Column - Allowances (Tunjangan) -->
+                                    <div class="space-y-6">
+                                        <div
+                                            class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-6 border border-green-200 dark:border-green-800">
+                                            <h3
+                                                class="text-lg font-semibold text-green-800 dark:text-green-200 flex items-center mb-4">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                                </svg>
+                                                Tunjangan & Pendapatan
+                                            </h3>
+                                            <div class="space-y-4">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Gaji
+                                                        Pokok</span>
+                                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Rp {{ number_format($karyawan->gaji_pokok ?? 0, 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                                @if (($karyawan->tunjangan_btn ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            BTN</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_btn, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->tunjangan_keluarga ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Keluarga</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_keluarga, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->tunjangan_jabatan ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Jabatan</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_jabatan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->tunjangan_transport ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Transport</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_transport, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->tunjangan_makan ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Makan</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_makan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->tunjangan_pulsa ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Pulsa</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->tunjangan_pulsa, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->default_tunjangan ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">Tunjangan
+                                                            Lainnya</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->default_tunjangan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->default_bonus ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-sm text-gray-600 dark:text-gray-400">Bonus
+                                                            Default</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->default_bonus, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->default_lembur_rate ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-sm text-gray-600 dark:text-gray-400">Rate
+                                                            Lembur (per jam)</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->default_lembur_rate, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (
+                                                    ($karyawan->tunjangan_btn ?? 0) == 0 &&
+                                                        ($karyawan->tunjangan_keluarga ?? 0) == 0 &&
+                                                        ($karyawan->tunjangan_jabatan ?? 0) == 0 &&
+                                                        ($karyawan->tunjangan_transport ?? 0) == 0 &&
+                                                        ($karyawan->tunjangan_makan ?? 0) == 0 &&
+                                                        ($karyawan->tunjangan_pulsa ?? 0) == 0 &&
+                                                        ($karyawan->default_tunjangan ?? 0) == 0 &&
+                                                        ($karyawan->default_bonus ?? 0) == 0 &&
+                                                        ($karyawan->default_lembur_rate ?? 0) == 0)
+                                                    <div class="text-center py-4">
+                                                        <span
+                                                            class="text-sm text-gray-500 dark:text-gray-400 italic">Hanya
+                                                            gaji pokok yang dikonfigurasi</span>
+                                                    </div>
+                                                @endif
+                                                <hr class="border-green-200 dark:border-green-700">
+                                                <div class="flex justify-between items-center font-semibold">
+                                                    <span class="text-base text-green-800 dark:text-green-200">Total
+                                                        Tunjangan</span>
+                                                    <span class="text-base text-green-800 dark:text-green-200">
+                                                        Rp
+                                                        {{ number_format(
+                                                            ($karyawan->tunjangan_btn ?? 0) +
+                                                                ($karyawan->tunjangan_keluarga ?? 0) +
+                                                                ($karyawan->tunjangan_jabatan ?? 0) +
+                                                                ($karyawan->tunjangan_transport ?? 0) +
+                                                                ($karyawan->tunjangan_makan ?? 0) +
+                                                                ($karyawan->tunjangan_pulsa ?? 0) +
+                                                                ($karyawan->default_tunjangan ?? 0) +
+                                                                ($karyawan->default_bonus ?? 0),
+                                                            0,
+                                                            ',',
+                                                            '.',
+                                                        ) }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Right Column - Deductions (Potongan) -->
+                                    <div class="space-y-6">
+                                        <div
+                                            class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-xl p-6 border border-red-200 dark:border-red-800">
+                                            <h3
+                                                class="text-lg font-semibold text-red-800 dark:text-red-200 flex items-center mb-4">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M20 12H4"></path>
+                                                </svg>
+                                                Potongan & Pengurangan
+                                            </h3>
+                                            <div class="space-y-4">
+                                                @if (($karyawan->bpjs ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span
+                                                            class="text-sm text-gray-600 dark:text-gray-400">BPJS</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp {{ number_format($karyawan->bpjs, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->default_potongan ?? 0) > 0)
+                                                    <div class="flex justify-between items-center">
+                                                        <span class="text-sm text-gray-600 dark:text-gray-400">Potongan
+                                                            Lainnya</span>
+                                                        <span
+                                                            class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                            Rp
+                                                            {{ number_format($karyawan->default_potongan, 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
+                                                @if (($karyawan->bpjs ?? 0) == 0 && ($karyawan->default_potongan ?? 0) == 0)
+                                                    <div class="text-center py-4">
+                                                        <span
+                                                            class="text-sm text-gray-500 dark:text-gray-400 italic">Tidak
+                                                            ada potongan yang dikonfigurasi</span>
+                                                    </div>
+                                                @endif
+                                                <hr class="border-red-200 dark:border-red-700">
+                                                <div class="flex justify-between items-center font-semibold">
+                                                    <span class="text-base text-red-800 dark:text-red-200">Total
+                                                        Potongan</span>
+                                                    <span class="text-base text-red-800 dark:text-red-200">
+                                                        Rp
+                                                        {{ number_format(($karyawan->bpjs ?? 0) + ($karyawan->default_potongan ?? 0), 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Summary Card -->
+                                        <div
+                                            class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
+                                            <h3
+                                                class="text-lg font-semibold text-blue-800 dark:text-blue-200 flex items-center mb-4">
+                                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                                    </path>
+                                                </svg>
+                                                Ringkasan Gaji
+                                            </h3>
+                                            <div class="space-y-3">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Gaji
+                                                        Pokok</span>
+                                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                        Rp {{ number_format($karyawan->gaji_pokok ?? 0, 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Total
+                                                        Tunjangan</span>
+                                                    <span
+                                                        class="text-sm font-semibold text-green-600 dark:text-green-400">
+                                                        + Rp
+                                                        {{ number_format(
+                                                            ($karyawan->tunjangan_btn ?? 0) +
+                                                                ($karyawan->tunjangan_keluarga ?? 0) +
+                                                                ($karyawan->tunjangan_jabatan ?? 0) +
+                                                                ($karyawan->tunjangan_transport ?? 0) +
+                                                                ($karyawan->tunjangan_makan ?? 0) +
+                                                                ($karyawan->tunjangan_pulsa ?? 0) +
+                                                                ($karyawan->default_tunjangan ?? 0) +
+                                                                ($karyawan->default_bonus ?? 0),
+                                                            0,
+                                                            ',',
+                                                            '.',
+                                                        ) }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm text-gray-600 dark:text-gray-400">Total
+                                                        Potongan</span>
+                                                    <span class="text-sm font-semibold text-red-600 dark:text-red-400">
+                                                        - Rp
+                                                        {{ number_format(($karyawan->bpjs ?? 0) + ($karyawan->default_potongan ?? 0), 0, ',', '.') }}
+                                                    </span>
+                                                </div>
+                                                <hr class="border-blue-200 dark:border-blue-700">
+                                                <div class="flex justify-between items-center font-bold text-lg">
+                                                    <span class="text-blue-800 dark:text-blue-200">Total Gaji
+                                                        (estimasi)</span>
+                                                    <span class="text-blue-800 dark:text-blue-200">
+                                                        Rp
+                                                        {{ number_format(
+                                                            ($karyawan->gaji_pokok ?? 0) +
+                                                                (($karyawan->tunjangan_btn ?? 0) +
+                                                                    ($karyawan->tunjangan_keluarga ?? 0) +
+                                                                    ($karyawan->tunjangan_jabatan ?? 0) +
+                                                                    ($karyawan->tunjangan_transport ?? 0) +
+                                                                    ($karyawan->tunjangan_makan ?? 0) +
+                                                                    ($karyawan->tunjangan_pulsa ?? 0) +
+                                                                    ($karyawan->default_tunjangan ?? 0) +
+                                                                    ($karyawan->default_bonus ?? 0)) -
+                                                                (($karyawan->bpjs ?? 0) + ($karyawan->default_potongan ?? 0)),
+                                                            0,
+                                                            ',',
+                                                            '.',
+                                                        ) }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                    * Belum termasuk komisi, lembur, cash bon, keterlambatan, dan
+                                                    komponen variabel lainnya
+                                                </p>
                                             </div>
                                         </div>
                                     </div>

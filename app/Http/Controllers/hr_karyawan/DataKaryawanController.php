@@ -143,6 +143,17 @@ class DataKaryawanController extends Controller
             'department_id' => 'required|exists:department,id',
             'jabatan_id' => 'required|exists:jabatan,id',
             'gaji_pokok' => 'required|numeric|min:0',
+            'tunjangan_btn' => 'nullable|numeric|min:0',
+            'tunjangan_keluarga' => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'tunjangan_transport' => 'nullable|numeric|min:0',
+            'tunjangan_makan' => 'nullable|numeric|min:0',
+            'tunjangan_pulsa' => 'nullable|numeric|min:0',
+            'default_tunjangan' => 'nullable|numeric|min:0',
+            'default_bonus' => 'nullable|numeric|min:0',
+            'default_lembur_rate' => 'nullable|numeric|min:0',
+            'bpjs' => 'nullable|numeric|min:0',
+            'default_potongan' => 'nullable|numeric|min:0',
             'tanggal_masuk' => 'required|date',
             'status' => 'required|in:aktif,nonaktif,cuti,keluar',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Max 2MB
@@ -194,7 +205,17 @@ class DataKaryawanController extends Controller
     {
         // Eager load relationships
         $karyawan->load(['department', 'jabatan', 'user.roles', 'absensi', 'cuti']);
-        return view('hr_karyawan.data_karyawan.show', compact('karyawan'));
+
+        $breadcrumbs = [
+            ['name' => 'Dashboard', 'url' => route('dashboard')],
+            ['name' => 'HR & Karyawan', 'url' => route('hr.karyawan.index')],
+            ['name' => 'Data Karyawan', 'url' => route('hr.karyawan.index')],
+            ['name' => $karyawan->nama_lengkap, 'url' => null],
+        ];
+
+        $currentPage = 'Detail Karyawan - ' . $karyawan->nama_lengkap;
+
+        return view('hr_karyawan.data_karyawan.show', compact('karyawan', 'breadcrumbs', 'currentPage'));
     }
 
     /**

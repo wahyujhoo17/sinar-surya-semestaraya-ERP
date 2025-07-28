@@ -104,7 +104,8 @@
                             Tanggal Lahir <span class="text-red-500">*</span>
                         </label>
                         <input type="date" name="tanggal_lahir" id="tanggal_lahir"
-                            value="{{ old('tanggal_lahir', $karyawan->tanggal_lahir) }}" required
+                            value="{{ old('tanggal_lahir', $karyawan->tanggal_lahir ? \Carbon\Carbon::parse($karyawan->tanggal_lahir)->format('Y-m-d') : '') }}"
+                            required
                             class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('tanggal_lahir') border-red-500 dark:border-red-500 @enderror">
                         @error('tanggal_lahir')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
@@ -146,12 +147,255 @@
                 </div>
             </div>
 
+            {{-- Salary Components Card --}}
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
+                <div
+                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                            </path>
+                        </svg>
+                        Komponen Gaji & Tunjangan
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Konfigurasi default untuk komponen gaji
+                        karyawan
+                    </p>
+                </div>
+                <div class="p-6">
+                    {{-- Tunjangan Section --}}
+                    <div class="mb-6">
+                        <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Tunjangan (Pendapatan)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {{-- Tunjangan BTN --}}
+                            <div>
+                                <label for="tunjangan_btn"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan BTN
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_btn" id="tunjangan_btn"
+                                        value="{{ old('tunjangan_btn', $karyawan->tunjangan_btn ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Tunjangan Keluarga --}}
+                            <div>
+                                <label for="tunjangan_keluarga"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Keluarga
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga"
+                                        value="{{ old('tunjangan_keluarga', $karyawan->tunjangan_keluarga ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Tunjangan Jabatan --}}
+                            <div>
+                                <label for="tunjangan_jabatan"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Jabatan
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan"
+                                        value="{{ old('tunjangan_jabatan', $karyawan->tunjangan_jabatan ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Tunjangan Transport --}}
+                            <div>
+                                <label for="tunjangan_transport"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Transport
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_transport" id="tunjangan_transport"
+                                        value="{{ old('tunjangan_transport', $karyawan->tunjangan_transport ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Tunjangan Makan --}}
+                            <div>
+                                <label for="tunjangan_makan"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Makan
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_makan" id="tunjangan_makan"
+                                        value="{{ old('tunjangan_makan', $karyawan->tunjangan_makan ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Tunjangan Pulsa --}}
+                            <div>
+                                <label for="tunjangan_pulsa"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Pulsa
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="tunjangan_pulsa" id="tunjangan_pulsa"
+                                        value="{{ old('tunjangan_pulsa', $karyawan->tunjangan_pulsa ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Default Tunjangan --}}
+                            <div>
+                                <label for="default_tunjangan"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tunjangan Lainnya
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="default_tunjangan" id="default_tunjangan"
+                                        value="{{ old('default_tunjangan', $karyawan->default_tunjangan ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Default Bonus --}}
+                            <div>
+                                <label for="default_bonus"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Bonus Default
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="default_bonus" id="default_bonus"
+                                        value="{{ old('default_bonus', $karyawan->default_bonus ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Default Lembur Rate --}}
+                            <div>
+                                <label for="default_lembur_rate"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Rate Lembur (per jam)
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="default_lembur_rate" id="default_lembur_rate"
+                                        value="{{ old('default_lembur_rate', $karyawan->default_lembur_rate ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Potongan Section --}}
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <h4 class="text-base font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                            <svg class="w-4 h-4 mr-2 text-red-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4">
+                                </path>
+                            </svg>
+                            Potongan (Pengurangan)
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- BPJS --}}
+                            <div>
+                                <label for="bpjs"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    BPJS
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="bpjs" id="bpjs"
+                                        value="{{ old('bpjs', $karyawan->bpjs ?? 0) }}" min="0"
+                                        step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+
+                            {{-- Default Potongan --}}
+                            <div>
+                                <label for="default_potongan"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Potongan Lainnya
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="default_potongan" id="default_potongan"
+                                        value="{{ old('default_potongan', $karyawan->default_potongan ?? 0) }}"
+                                        min="0" step="1000"
+                                        class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Employment Information Card --}}
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Informasi Kepegawaian</h3>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Data kepegawaian karyawan</p>
+                <div
+                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6">
+                            </path>
+                        </svg>
+                        Informasi Kepegawaian
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Data jabatan dan status kepegawaian</p>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                     {{-- Department --}}
@@ -223,7 +467,8 @@
                             Tanggal Masuk <span class="text-red-500">*</span>
                         </label>
                         <input type="date" name="tanggal_masuk" id="tanggal_masuk"
-                            value="{{ old('tanggal_masuk', $karyawan->tanggal_masuk) }}" required
+                            value="{{ old('tanggal_masuk', $karyawan->tanggal_masuk ? \Carbon\Carbon::parse($karyawan->tanggal_masuk)->format('Y-m-d') : '') }}"
+                            required
                             class="mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('tanggal_masuk') border-red-500 dark:border-red-500 @enderror">
                         @error('tanggal_masuk')
                             <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>

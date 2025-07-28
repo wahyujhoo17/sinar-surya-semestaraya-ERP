@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\AutomaticJournalEntry;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
@@ -22,7 +23,12 @@ class Penggajian extends Model
         'bonus',
         'lembur',
         'potongan',
+        'komisi',
+        'cash_bon',
+        'keterlambatan',
+        'bpjs_karyawan',
         'total_gaji',
+        'thp',
         'tanggal_bayar',
         'metode_pembayaran', // 'kas', 'bank'
         'kas_id',
@@ -30,6 +36,24 @@ class Penggajian extends Model
         'status', // 'draft', 'disetujui', 'dibayar'
         'catatan',
         'disetujui_oleh'
+    ];
+
+    /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'gaji_pokok' => 'decimal:0',
+        'tunjangan' => 'decimal:0',
+        'bonus' => 'decimal:0',
+        'lembur' => 'decimal:0',
+        'potongan' => 'decimal:0',
+        'komisi' => 'decimal:0',
+        'cash_bon' => 'decimal:0',
+        'keterlambatan' => 'decimal:0',
+        'bpjs_karyawan' => 'decimal:0',
+        'total_gaji' => 'decimal:0',
+        'thp' => 'decimal:0',
+        'tanggal_bayar' => 'date',
     ];
 
     /**
@@ -173,7 +197,7 @@ class Penggajian extends Model
                 $entries,
                 $noReferensi,
                 $keterangan,
-                $this->tanggal_bayar
+                $this->tanggal_bayar ? (string) $this->tanggal_bayar : null
             );
         } catch (\Exception $e) {
             Log::error("Error saat membuat jurnal penggajian: " . $e->getMessage(), [

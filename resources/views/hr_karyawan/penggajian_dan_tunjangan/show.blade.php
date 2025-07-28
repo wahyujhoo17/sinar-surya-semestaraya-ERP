@@ -203,9 +203,80 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900 dark:text-white">
-                                            {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}
+                                            Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}
                                         </td>
                                     </tr>
+
+                                    <!-- Employee Salary Components from Karyawan -->
+                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan BTN
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan Keluarga
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan Jabatan
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan Transport
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan Makan
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
 
                                     <!-- Komponen Pendapatan -->
                                     @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
@@ -220,7 +291,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                {{ number_format($komponen->nilai, 0, ',', '.') }}
+                                                Rp {{ number_format($komponen->nilai, 0, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -230,11 +301,11 @@
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                                Tunjangan
+                                                Tunjangan Lainnya
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                {{ number_format($penggajian->tunjangan, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->tunjangan, 0, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -247,7 +318,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                {{ number_format($penggajian->bonus, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->bonus, 0, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -260,7 +331,73 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                {{ number_format($penggajian->lembur, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->lembur, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    <!-- Deduction Section Header -->
+                                    @if (
+                                        ($penggajian->bpjs_karyawan ?? 0) > 0 ||
+                                            ($penggajian->cash_bon ?? 0) > 0 ||
+                                            ($penggajian->keterlambatan ?? 0) > 0 ||
+                                            $penggajian->komponenGaji->where('jenis', 'potongan')->count() > 0 ||
+                                            $penggajian->potongan > 0)
+                                        <tr class="bg-red-50 dark:bg-red-900/20">
+                                            <td colspan="2" class="px-6 py-3">
+                                                <div class="flex items-center">
+                                                    <svg class="w-4 h-4 mr-2 text-red-500" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M20 12H4">
+                                                        </path>
+                                                    </svg>
+                                                    <span
+                                                        class="text-sm font-medium text-red-700 dark:text-red-300">Potongan
+                                                        Gaji</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    <!-- BPJS -->
+                                    @if (($penggajian->bpjs_karyawan ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                BPJS
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
+                                                (Rp {{ number_format($penggajian->bpjs_karyawan, 0, ',', '.') }})
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    <!-- Cash Bon -->
+                                    @if (($penggajian->cash_bon ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Cash Bon
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
+                                                (Rp {{ number_format($penggajian->cash_bon, 0, ',', '.') }})
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    <!-- Keterlambatan -->
+                                    @if (($penggajian->keterlambatan ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Keterlambatan
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
+                                                (Rp {{ number_format($penggajian->keterlambatan, 0, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -278,21 +415,21 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                ({{ number_format($komponen->nilai, 0, ',', '.') }})
+                                                (Rp {{ number_format($komponen->nilai, 0, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endforeach
 
-                                    <!-- Potongan -->
+                                    <!-- Potongan Lainnya -->
                                     @if ($penggajian->potongan > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                                Potongan
+                                                Potongan Lainnya
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                ({{ number_format($penggajian->potongan, 0, ',', '.') }})
+                                                (Rp {{ number_format($penggajian->potongan, 0, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -310,7 +447,7 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-base text-right font-bold text-gray-900 dark:text-white">
-                                            {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
+                                            Rp {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -792,6 +929,168 @@
 
             <!-- Right side (Action & Info Cards) -->
             <div class="xl:col-span-1 space-y-4 sm:space-y-6">
+                <!-- Salary Components Summary Card -->
+                <div
+                    class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+                    <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            Ringkasan Gaji
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        @php
+                            // Calculate totals
+                            $totalPendapatan = $penggajian->gaji_pokok;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_btn ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_keluarga ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_jabatan ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_transport ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_makan ?? 0;
+                            $totalPendapatan += $penggajian->tunjangan;
+                            $totalPendapatan += $penggajian->bonus;
+                            $totalPendapatan += $penggajian->lembur;
+                            $totalPendapatan += $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai');
+
+                            $totalPotongan = $penggajian->bpjs_karyawan ?? 0;
+                            $totalPotongan += $penggajian->cash_bon ?? 0;
+                            $totalPotongan += $penggajian->keterlambatan ?? 0;
+                            $totalPotongan += $penggajian->potongan;
+                            $totalPotongan += $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
+                        @endphp
+
+                        <div class="space-y-4">
+                            <!-- Pendapatan -->
+                            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h3 class="text-sm font-medium text-green-800 dark:text-green-300">Total Pendapatan
+                                    </h3>
+                                    <span class="text-lg font-bold text-green-600 dark:text-green-400">
+                                        Rp {{ number_format($totalPendapatan, 0, ',', '.') }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-green-600 dark:text-green-400 space-y-1">
+                                    <div class="flex justify-between">
+                                        <span>Gaji Pokok:</span>
+                                        <span>Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}</span>
+                                    </div>
+                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan BTN:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Keluarga:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Jabatan:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Transport:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Makan:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if ($penggajian->tunjangan > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Lainnya:</span>
+                                            <span>Rp {{ number_format($penggajian->tunjangan, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if ($penggajian->bonus > 0)
+                                        <div class="flex justify-between">
+                                            <span>Bonus:</span>
+                                            <span>Rp {{ number_format($penggajian->bonus, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if ($penggajian->lembur > 0)
+                                        <div class="flex justify-between">
+                                            <span>Lembur:</span>
+                                            <span>Rp {{ number_format($penggajian->lembur, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                                        <div class="flex justify-between">
+                                            <span>{{ $komponen->nama_komponen }}:</span>
+                                            <span>Rp {{ number_format($komponen->nilai, 0, ',', '.') }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Potongan -->
+                            @if ($totalPotongan > 0)
+                                <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-3">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Total Potongan
+                                        </h3>
+                                        <span class="text-lg font-bold text-red-600 dark:text-red-400">
+                                            Rp {{ number_format($totalPotongan, 0, ',', '.') }}
+                                        </span>
+                                    </div>
+                                    <div class="text-xs text-red-600 dark:text-red-400 space-y-1">
+                                        @if (($penggajian->bpjs_karyawan ?? 0) > 0)
+                                            <div class="flex justify-between">
+                                                <span>BPJS:</span>
+                                                <span>Rp
+                                                    {{ number_format($penggajian->bpjs_karyawan, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @if (($penggajian->cash_bon ?? 0) > 0)
+                                            <div class="flex justify-between">
+                                                <span>Cash Bon:</span>
+                                                <span>Rp {{ number_format($penggajian->cash_bon, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @if (($penggajian->keterlambatan ?? 0) > 0)
+                                            <div class="flex justify-between">
+                                                <span>Keterlambatan:</span>
+                                                <span>Rp
+                                                    {{ number_format($penggajian->keterlambatan, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @if ($penggajian->potongan > 0)
+                                            <div class="flex justify-between">
+                                                <span>Potongan Lainnya:</span>
+                                                <span>Rp {{ number_format($penggajian->potongan, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endif
+                                        @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                                            <div class="flex justify-between">
+                                                <span>{{ $komponen->nama_komponen }}:</span>
+                                                <span>Rp {{ number_format($komponen->nilai, 0, ',', '.') }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Total Salary Card -->
                 <div
                     class="bg-white dark:bg-gray-800 shadow-sm rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
