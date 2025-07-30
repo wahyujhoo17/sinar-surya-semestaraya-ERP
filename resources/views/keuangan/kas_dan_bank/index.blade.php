@@ -308,16 +308,7 @@
                                                 </svg>
                                                 {{-- Edit --}}
                                             </button>
-                                            {{-- <button onclick="event.preventDefault(); event.stopPropagation();"
-                                                class="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-400 dark:hover:bg-red-900/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition">
-                                                <svg class="w-4 h-4 mr-1" xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                    stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                </svg>
-                                                Hapus
-                                            </button> --}}
+
                                         </div>
                                     </div>
                                 </div>
@@ -838,14 +829,29 @@
                                         {{-- Progress Bar --}}
                                         <div class="mb-4">
                                             <div class="flex justify-between text-sm mb-1">
-                                                <span class="text-gray-500 dark:text-gray-400">Progress Budget</span>
+                                                <span class="text-gray-500 dark:text-gray-400">Progress
+                                                    Penggunaan</span>
                                                 <span
-                                                    class="text-gray-700 dark:text-gray-300">{{ $project->persentase_penggunaan }}%</span>
+                                                    class="text-gray-700 dark:text-gray-300">{{ $project->persentase_penggunaan ?? 0 }}%</span>
                                             </div>
                                             <div class="w-full bg-gray-200 rounded-full h-2">
-                                                <div class="bg-primary-600 h-2 rounded-full"
-                                                    style="width: {{ min($project->persentase_penggunaan, 100) }}%">
+                                                @php
+                                                    $persentase = $project->persentase_penggunaan ?? 0;
+                                                    $color =
+                                                        $persentase > 80
+                                                            ? '#ef4444'
+                                                            : ($persentase > 60
+                                                                ? '#f59e0b'
+                                                                : '#10b981');
+                                                @endphp
+                                                <div class="h-2 rounded-full"
+                                                    style="width: {{ min($persentase, 100) }}%; background-color: {{ $color }}">
                                                 </div>
+                                            </div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Penggunaan dari total alokasi
+                                                ({{ number_format($project->total_penggunaan ?? 0, 0, ',', '.') }} /
+                                                {{ number_format($project->total_alokasi ?? 0, 0, ',', '.') }})
                                             </div>
                                         </div>
 

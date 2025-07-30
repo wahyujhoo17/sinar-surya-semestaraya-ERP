@@ -85,7 +85,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'alokasi')
-            ->sum('jumlah');
+            ->sum('nominal');
     }
 
     /**
@@ -95,7 +95,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'penggunaan')
-            ->sum('jumlah');
+            ->sum('nominal');
     }
 
     /**
@@ -105,7 +105,7 @@ class Project extends Model
     {
         return $this->transaksi()
             ->where('jenis', 'pengembalian')
-            ->sum('jumlah');
+            ->sum('nominal');
     }
 
     /**

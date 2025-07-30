@@ -246,7 +246,7 @@ aria-modal="true">
                                             <span x-show="trx.rekening_bank" x-text="trx.rekening_bank?.nama_bank + ' - ' + trx.rekening_bank?.nomor_rekening"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <span :class="trx.jenis === 'penggunaan' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'" x-text="formatRupiah(trx.jumlah)"></span>
+                                            <span :class="trx.jenis === 'penggunaan' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'" x-text="formatRupiah(trx.nominal)"></span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="trx.user?.name"></td>
                                     </tr>

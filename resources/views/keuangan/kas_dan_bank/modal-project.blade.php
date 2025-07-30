@@ -89,41 +89,6 @@
                             x-text="errors.budget"></p>
                     </div>
 
-                    <!-- Customer -->
-                    <div>
-                        <label for="project_customer"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Customer
-                        </label>
-                        <select id="project_customer" x-model="form.customer_id"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm">
-                            <option value="">Pilih Customer (Optional)</option>
-                            @foreach (App\Models\Customer::orderBy('nama')->get() as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->nama }}</option>
-                            @endforeach
-                        </select>
-                        <p x-show="errors.customer_id" class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            x-text="errors.customer_id"></p>
-                    </div>
-
-                    <!-- Sales Order -->
-                    <div>
-                        <label for="project_sales_order"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Sales Order
-                        </label>
-                        <select id="project_sales_order" x-model="form.sales_order_id"
-                            class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm">
-                            <option value="">Pilih Sales Order (Optional)</option>
-                            @foreach (App\Models\SalesOrder::with('customer')->orderBy('created_at', 'desc')->get() as $so)
-                                <option value="{{ $so->id }}">{{ $so->nomor }} -
-                                    {{ $so->customer->nama ?? 'No Customer' }}</option>
-                            @endforeach
-                        </select>
-                        <p x-show="errors.sales_order_id" class="mt-1 text-sm text-red-600 dark:text-red-400"
-                            x-text="errors.sales_order_id"></p>
-                    </div>
-
                     <!-- Tanggal Mulai -->
                     <div>
                         <label for="project_tanggal_mulai"
@@ -218,8 +183,6 @@
                     nama: '',
                     kode: '',
                     budget: '',
-                    customer_id: '',
-                    sales_order_id: '',
                     tanggal_mulai: '',
                     tanggal_selesai: '',
                     status: 'aktif',
@@ -246,14 +209,33 @@
 
                     if (this.mode === 'edit' && data.project) {
                         this.projectId = data.project.id;
+
+                        // Format dates properly for HTML5 date inputs
+                        let tanggalMulai = '';
+                        let tanggalSelesai = '';
+
+                        if (data.project.tanggal_mulai) {
+                            // Handle both date objects and string dates
+                            const startDate = new Date(data.project.tanggal_mulai);
+                            if (!isNaN(startDate.getTime())) {
+                                tanggalMulai = startDate.toISOString().split('T')[0];
+                            }
+                        }
+
+                        if (data.project.tanggal_selesai) {
+                            // Handle both date objects and string dates
+                            const endDate = new Date(data.project.tanggal_selesai);
+                            if (!isNaN(endDate.getTime())) {
+                                tanggalSelesai = endDate.toISOString().split('T')[0];
+                            }
+                        }
+
                         this.form = {
                             nama: data.project.nama || '',
                             kode: data.project.kode || '',
                             budget: data.project.budget || '',
-                            customer_id: data.project.customer_id || '',
-                            sales_order_id: data.project.sales_order_id || '',
-                            tanggal_mulai: data.project.tanggal_mulai || '',
-                            tanggal_selesai: data.project.tanggal_selesai || '',
+                            tanggal_mulai: tanggalMulai,
+                            tanggal_selesai: tanggalSelesai,
                             status: data.project.status || 'aktif',
                             deskripsi: data.project.deskripsi || ''
                         };
@@ -273,8 +255,6 @@
                         nama: '',
                         kode: '',
                         budget: '',
-                        customer_id: '',
-                        sales_order_id: '',
                         tanggal_mulai: '',
                         tanggal_selesai: '',
                         status: 'aktif',

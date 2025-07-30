@@ -43,26 +43,26 @@ class KasDanBankController extends Controller
             ->get();
 
         // Data project untuk tab manajemen project
-        $projects = \App\Models\Project::with(['customer', 'salesOrder', 'transaksi'])
+        $projects = \App\Models\Project::with(['transaksi'])
             ->aktif()
             ->get()
             ->map(function ($project) {
                 $project->total_alokasi = $project->transaksi()
                     ->where('jenis', 'alokasi')
-                    ->sum('jumlah');
+                    ->sum('nominal');
                 $project->total_penggunaan = $project->transaksi()
                     ->where('jenis', 'penggunaan')
-                    ->sum('jumlah');
+                    ->sum('nominal');
                 $project->total_pengembalian = $project->transaksi()
                     ->where('jenis', 'pengembalian')
-                    ->sum('jumlah');
+                    ->sum('nominal');
 
                 // Hitung saldo project
                 $project->saldo = $project->total_alokasi - $project->total_penggunaan + $project->total_pengembalian;
 
-                // Hitung persentase penggunaan budget
-                $project->persentase_penggunaan = $project->budget > 0
-                    ? round(($project->total_penggunaan / $project->budget) * 100, 2)
+                // Hitung persentase penggunaan budget (gunakan saldo/total_alokasi, bukan penggunaan vs budget)
+                $project->persentase_penggunaan = $project->total_alokasi > 0
+                    ? round(($project->total_penggunaan / $project->total_alokasi) * 100, 2)
                     : 0;
 
                 return $project;

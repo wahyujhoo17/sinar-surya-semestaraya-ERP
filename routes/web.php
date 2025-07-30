@@ -734,8 +734,6 @@ Route::middleware(['auth'])->group(function () {
         Route::resource('uang-muka-penjualan', \App\Http\Controllers\Keuangan\UangMukaPenjualanController::class);
 
         // Project Management Routes
-        Route::get('projects/customers', [ProjectController::class, 'getCustomers'])->name('projects.customers');
-        Route::get('projects/sales-orders/{customer_id?}', [ProjectController::class, 'getSalesOrders'])->name('projects.sales-orders');
         Route::resource('projects', ProjectController::class);
 
         // Transaksi Project Routes

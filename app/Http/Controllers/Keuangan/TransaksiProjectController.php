@@ -112,14 +112,14 @@ class TransaksiProjectController extends Controller
                 'project_id' => $request->project_id,
                 'tanggal' => $request->tanggal,
                 'jenis' => $request->jenis,
-                'jumlah' => $request->jumlah,
+                'nominal' => $request->jumlah,
                 'keterangan' => $request->keterangan,
                 'no_bukti' => $request->no_bukti,
                 'sumber_dana_type' => $request->sumber_dana_type,
-                'kas_id' => $request->kas_id,
-                'rekening_bank_id' => $request->rekening_bank_id,
+                'sumber_kas_id' => $request->kas_id,
+                'sumber_bank_id' => $request->rekening_bank_id,
                 'kategori_penggunaan' => $request->kategori_penggunaan,
-                'user_id' => Auth::id()
+                'created_by' => Auth::id()
             ]);
 
             // Buat transaksi kas/bank terkait
@@ -269,9 +269,9 @@ class TransaksiProjectController extends Controller
         }])->findOrFail($projectId);
 
         $summary = [
-            'total_alokasi' => $project->transaksi()->where('jenis', 'alokasi')->sum('jumlah'),
-            'total_penggunaan' => $project->transaksi()->where('jenis', 'penggunaan')->sum('jumlah'),
-            'total_pengembalian' => $project->transaksi()->where('jenis', 'pengembalian')->sum('jumlah'),
+            'total_alokasi' => $project->transaksi()->where('jenis', 'alokasi')->sum('nominal'),
+            'total_penggunaan' => $project->transaksi()->where('jenis', 'penggunaan')->sum('nominal'),
+            'total_pengembalian' => $project->transaksi()->where('jenis', 'pengembalian')->sum('nominal'),
             'saldo_aktual' => $project->saldo,
             'recent_transactions' => $project->transaksi()->with(['user', 'kas', 'rekeningBank'])->take(10)->get()
         ];

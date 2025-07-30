@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
-use App\Models\Customer;
-use App\Models\SalesOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -14,7 +12,7 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::with(['customer', 'salesOrder', 'transaksi'])
+        $projects = Project::with(['transaksi'])
             ->aktif()
             ->orderBy('created_at', 'desc')
             ->get();
@@ -42,8 +40,6 @@ class ProjectController extends Controller
             'budget' => 'required|numeric|min:0',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
-            'customer_id' => 'nullable|exists:customer,id',
-            'sales_order_id' => 'nullable|exists:sales_order,id',
             'pic_internal' => 'nullable|string|max:255',
             'pic_customer' => 'nullable|string|max:255',
             'status' => 'required|in:draft,aktif,selesai,ditunda',
@@ -77,8 +73,6 @@ class ProjectController extends Controller
                 'budget' => $request->budget,
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
-                'customer_id' => $request->customer_id,
-                'sales_order_id' => $request->sales_order_id,
                 'pic_internal' => $request->pic_internal,
                 'pic_customer' => $request->pic_customer,
                 'status' => $request->status,
@@ -122,8 +116,6 @@ class ProjectController extends Controller
             'budget' => 'required|numeric|min:0',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'nullable|date|after_or_equal:tanggal_mulai',
-            'customer_id' => 'nullable|exists:customer,id',
-            'sales_order_id' => 'nullable|exists:sales_order,id',
             'pic_internal' => 'nullable|string|max:255',
             'pic_customer' => 'nullable|string|max:255',
             'status' => 'required|in:draft,aktif,selesai,ditunda',
@@ -146,8 +138,6 @@ class ProjectController extends Controller
                 'budget' => $request->budget,
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
-                'customer_id' => $request->customer_id,
-                'sales_order_id' => $request->sales_order_id,
                 'pic_internal' => $request->pic_internal,
                 'pic_customer' => $request->pic_customer,
                 'status' => $request->status
@@ -158,7 +148,7 @@ class ProjectController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Project berhasil diupdate',
-                'data' => $project->load(['customer', 'salesOrder'])
+                'data' => $project
             ]);
         } catch (\Exception $e) {
             DB::rollback();
@@ -194,35 +184,5 @@ class ProjectController extends Controller
                 'message' => 'Gagal menghapus project: ' . $e->getMessage()
             ], 500);
         }
-    }
-
-    public function getCustomers()
-    {
-        $customers = Customer::select('id', 'nama', 'kode')
-            ->where('is_aktif', true)
-            ->orderBy('nama')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $customers
-        ]);
-    }
-
-    public function getSalesOrders($customerId = null)
-    {
-        $query = SalesOrder::select('id', 'nomor', 'tanggal', 'customer_id', 'total')
-            ->with('customer:id,nama');
-
-        if ($customerId) {
-            $query->where('customer_id', $customerId);
-        }
-
-        $salesOrders = $query->orderBy('tanggal', 'desc')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $salesOrders
-        ]);
     }
 }
