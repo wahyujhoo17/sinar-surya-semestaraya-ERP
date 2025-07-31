@@ -125,8 +125,9 @@ class TransaksiProject extends Model
         $totalPenggunaan = $project->transaksi()->where('jenis', 'penggunaan')->sum('nominal');
         $totalPengembalian = $project->transaksi()->where('jenis', 'pengembalian')->sum('nominal');
 
-        // Saldo = alokasi - penggunaan + pengembalian
-        $saldoBaru = $totalAlokasi - $totalPenggunaan + $totalPengembalian;
+        // Saldo = alokasi - penggunaan - pengembalian
+        // Pengembalian mengurangi saldo project karena dana kembali ke kas/bank
+        $saldoBaru = $totalAlokasi - $totalPenggunaan - $totalPengembalian;
 
         $project->update(['saldo' => $saldoBaru]);
     }

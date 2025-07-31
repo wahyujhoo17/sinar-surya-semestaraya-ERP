@@ -59,10 +59,27 @@ class TransaksiProjectController extends Controller
             'jumlah' => 'required|numeric|min:0',
             'keterangan' => 'required|string',
             'no_bukti' => 'nullable|string|max:255',
-            'sumber_dana_type' => 'required|in:kas,bank',
+            'sumber_dana_type' => 'required_if:jenis,alokasi,pengembalian|in:kas,bank',
             'kas_id' => 'required_if:sumber_dana_type,kas|nullable|exists:kas,id',
             'rekening_bank_id' => 'required_if:sumber_dana_type,bank|nullable|exists:rekening_bank,id',
-            'kategori_penggunaan' => 'nullable|string|max:255',
+            'kategori_penggunaan' => 'required_if:jenis,penggunaan|nullable|string|max:255',
+        ], [
+            'project_id.required' => 'Project harus dipilih',
+            'project_id.exists' => 'Project tidak valid',
+            'tanggal.required' => 'Tanggal harus diisi',
+            'tanggal.date' => 'Format tanggal tidak valid',
+            'jenis.required' => 'Jenis transaksi harus dipilih',
+            'jenis.in' => 'Jenis transaksi tidak valid',
+            'jumlah.required' => 'Jumlah harus diisi',
+            'jumlah.numeric' => 'Jumlah harus berupa angka',
+            'jumlah.min' => 'Jumlah minimal 0',
+            'keterangan.required' => 'Keterangan harus diisi',
+            'sumber_dana_type.required_if' => 'Sumber dana harus dipilih untuk transaksi alokasi/pengembalian',
+            'kas_id.required_if' => 'Kas harus dipilih jika sumber dana adalah kas',
+            'kas_id.exists' => 'Kas tidak valid',
+            'rekening_bank_id.required_if' => 'Rekening bank harus dipilih jika sumber dana adalah bank',
+            'rekening_bank_id.exists' => 'Rekening bank tidak valid',
+            'kategori_penggunaan.required_if' => 'Kategori penggunaan harus dipilih untuk transaksi penggunaan',
         ]);
 
         if ($validator->fails()) {
@@ -76,13 +93,21 @@ class TransaksiProjectController extends Controller
         try {
             DB::beginTransaction();
 
+            // Get project for validation
+            $project = Project::findOrFail($request->project_id);
+
             // Validasi saldo untuk transaksi penggunaan
             if ($request->jenis === 'penggunaan') {
-                $project = Project::findOrFail($request->project_id);
-                if ($project->saldo < $request->jumlah) {
+                // Hitung saldo project saat ini
+                $totalAlokasi = $project->transaksi()->where('jenis', 'alokasi')->sum('nominal');
+                $totalPenggunaan = $project->transaksi()->where('jenis', 'penggunaan')->sum('nominal');
+                $totalPengembalian = $project->transaksi()->where('jenis', 'pengembalian')->sum('nominal');
+                $saldoProject = $totalAlokasi - $totalPenggunaan + $totalPengembalian;
+
+                if ($saldoProject < $request->jumlah) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Saldo project tidak mencukupi'
+                        'message' => 'Saldo project tidak mencukupi. Saldo tersedia: Rp ' . number_format($saldoProject, 0, ',', '.')
                     ], 422);
                 }
             }
@@ -94,7 +119,7 @@ class TransaksiProjectController extends Controller
                     if ($kas->saldo < $request->jumlah) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Saldo kas tidak mencukupi'
+                            'message' => 'Saldo kas tidak mencukupi. Saldo tersedia: Rp ' . number_format($kas->saldo, 0, ',', '.')
                         ], 422);
                     }
                 } else {
@@ -102,10 +127,17 @@ class TransaksiProjectController extends Controller
                     if ($rekening->saldo < $request->jumlah) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Saldo rekening bank tidak mencukupi'
+                            'message' => 'Saldo rekening bank tidak mencukupi. Saldo tersedia: Rp ' . number_format($rekening->saldo, 0, ',', '.')
                         ], 422);
                     }
                 }
+            }
+
+            // Generate nomor bukti jika kosong
+            $noBukti = $request->no_bukti;
+            if (empty($noBukti)) {
+                $prefix = 'TRP-' . strtoupper(substr($request->jenis, 0, 3));
+                $noBukti = $prefix . '-' . date('Ymd') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             }
 
             $transaksi = TransaksiProject::create([
@@ -114,7 +146,7 @@ class TransaksiProjectController extends Controller
                 'jenis' => $request->jenis,
                 'nominal' => $request->jumlah,
                 'keterangan' => $request->keterangan,
-                'no_bukti' => $request->no_bukti,
+                'no_bukti' => $noBukti,
                 'sumber_dana_type' => $request->sumber_dana_type,
                 'sumber_kas_id' => $request->kas_id,
                 'sumber_bank_id' => $request->rekening_bank_id,
@@ -299,11 +331,9 @@ class TransaksiProjectController extends Controller
                     'tanggal' => $request->tanggal,
                     'jenis' => $jenis,
                     'jumlah' => $request->jumlah,
-                    'keterangan' => "Transaksi Project: {$request->keterangan}",
-                    'no_bukti' => $request->no_bukti,
+                    'keterangan' => "Transaksi Project ({$request->jenis}): {$request->keterangan}",
+                    'no_bukti' => $transaksiProject->no_bukti,
                     'user_id' => Auth::id(),
-                    'related_type' => 'App\\Models\\TransaksiProject',
-                    'related_id' => $transaksiProject->id
                 ]);
 
                 // Update saldo kas
@@ -318,15 +348,13 @@ class TransaksiProjectController extends Controller
                 $jenis = $request->jenis === 'alokasi' ? 'keluar' : 'masuk';
 
                 TransaksiBank::create([
-                    'rekening_bank_id' => $request->rekening_bank_id,
+                    'rekening_id' => $request->rekening_bank_id,
                     'tanggal' => $request->tanggal,
                     'jenis' => $jenis,
                     'jumlah' => $request->jumlah,
-                    'keterangan' => "Transaksi Project: {$request->keterangan}",
-                    'no_bukti' => $request->no_bukti,
+                    'keterangan' => "Transaksi Project ({$request->jenis}): {$request->keterangan}",
+                    'no_referensi' => $transaksiProject->no_bukti,
                     'user_id' => Auth::id(),
-                    'related_type' => 'App\\Models\\TransaksiProject',
-                    'related_id' => $transaksiProject->id
                 ]);
 
                 // Update saldo rekening bank

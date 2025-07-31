@@ -822,7 +822,7 @@
                                             <div class="flex justify-between text-sm">
                                                 <span class="text-gray-500 dark:text-gray-400">Saldo</span>
                                                 <span class="font-medium text-gray-900 dark:text-white">Rp
-                                                    {{ number_format($project->saldo, 0, ',', '.') }}</span>
+                                                    {{ number_format($project->saldo_display ?? $project->saldo, 0, ',', '.') }}</span>
                                             </div>
                                         </div>
 
@@ -832,11 +832,17 @@
                                                 <span class="text-gray-500 dark:text-gray-400">Progress
                                                     Penggunaan</span>
                                                 <span
-                                                    class="text-gray-700 dark:text-gray-300">{{ $project->persentase_penggunaan ?? 0 }}%</span>
+                                                    class="text-gray-700 dark:text-gray-300">
+                                                        {{ $project->total_alokasi > 0 ? round(($project->total_penggunaan / $project->total_alokasi) * 100) : 0 }}%
+                                                    </span>
                                             </div>
                                             <div class="w-full bg-gray-200 rounded-full h-2">
                                                 @php
-                                                    $persentase = $project->persentase_penggunaan ?? 0;
+                                                    $persentase =
+                                                        $project->total_alokasi > 0
+                                                            ? ($project->total_penggunaan / $project->total_alokasi) *
+                                                                100
+                                                            : 0;
                                                     $color =
                                                         $persentase > 80
                                                             ? '#ef4444'
@@ -917,8 +923,36 @@
     @include('keuangan.kas_dan_bank.modal-transaksi-project')
     @include('keuangan.kas_dan_bank.modal-detail-transaksi-project')
 
-    {{-- Toast Notifications --}}
-    @include('components.toast')
+    {{-- Handle Session Flash Messages --}}
+    @if (session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.notify === 'function') {
+                    window.notify('{{ session('success') }}', 'success');
+                }
+            });
+        </script>
+    @endif
+
+    @if (session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.notify === 'function') {
+                    window.notify('{{ session('error') }}', 'error');
+                }
+            });
+        </script>
+    @endif
+
+    @if (session('warning'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.notify === 'function') {
+                    window.notify('{{ session('warning') }}', 'warning');
+                }
+            });
+        </script>
+    @endif
 
     {{-- Initialize Transaction Modal --}}
     <script>

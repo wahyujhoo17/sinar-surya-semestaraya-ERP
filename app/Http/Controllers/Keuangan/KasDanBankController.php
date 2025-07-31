@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class KasDanBankController extends Controller
 {
@@ -57,13 +58,30 @@ class KasDanBankController extends Controller
                     ->where('jenis', 'pengembalian')
                     ->sum('nominal');
 
-                // Hitung saldo project
-                $project->saldo = $project->total_alokasi - $project->total_penggunaan + $project->total_pengembalian;
+                // Hitung saldo project (saldo aktual dari transaksi)
+                // Formula: Alokasi - Penggunaan - Pengembalian
+                // Pengembalian mengurangi saldo project karena dana kembali ke kas/bank
+                $saldoCalculated = $project->total_alokasi - $project->total_penggunaan - $project->total_pengembalian;
 
-                // Hitung persentase penggunaan budget (gunakan saldo/total_alokasi, bukan penggunaan vs budget)
-                $project->persentase_penggunaan = $project->total_alokasi > 0
-                    ? round(($project->total_penggunaan / $project->total_alokasi) * 100, 2)
-                    : 0;
+                // Set saldo untuk display
+                $project->saldo_display = $saldoCalculated;
+
+                // Hitung persentase penggunaan budget (gunakan total alokasi sebagai basis)
+                if ($project->total_alokasi > 0) {
+                    $percentage = ($project->total_penggunaan / $project->total_alokasi) * 100;
+                    $project->persentase_penggunaan = round($percentage, 2);
+
+                    // Debug logging for troubleshooting
+                    \Log::info('Project calculation debug', [
+                        'project_name' => $project->nama,
+                        'total_alokasi' => $project->total_alokasi,
+                        'total_penggunaan' => $project->total_penggunaan,
+                        'raw_percentage' => $percentage,
+                        'rounded_percentage' => $project->persentase_penggunaan
+                    ]);
+                } else {
+                    $project->persentase_penggunaan = 0;
+                }
 
                 return $project;
             });

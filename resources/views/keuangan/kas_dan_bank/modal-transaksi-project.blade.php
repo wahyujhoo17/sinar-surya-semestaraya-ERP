@@ -153,11 +153,15 @@
                             Kategori Penggunaan <span class="text-red-500">*</span>
                         </label>
                         <select id="kategori_penggunaan" x-model="form.kategori_penggunaan"
+                            :required="form.jenis === 'penggunaan'"
                             class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm">
                             <option value="">Pilih Kategori</option>
                             <option value="material">Material</option>
                             <option value="tenaga_kerja">Tenaga Kerja</option>
                             <option value="operasional">Operasional</option>
+                            <option value="transportasi">Transportasi</option>
+                            <option value="konsumsi">Konsumsi</option>
+                            <option value="alat_kerja">Alat Kerja</option>
                             <option value="lainnya">Lainnya</option>
                         </select>
                         <p x-show="errors.kategori_penggunaan" class="mt-1 text-sm text-red-600 dark:text-red-400"
@@ -365,6 +369,9 @@
                     } else {
                         this.form.kategori_penggunaan = '';
                     }
+
+                    // Clear related errors
+                    this.errors = {};
                 },
 
                 formatCurrency(value) {
@@ -382,8 +389,61 @@
                 async submitForm() {
                     if (this.isLoading) return;
 
-                    this.isLoading = true;
+                    // Client-side validation
                     this.resetErrors();
+                    let hasErrors = false;
+
+                    if (!this.form.project_id) {
+                        this.errors.project_id = 'Project harus dipilih';
+                        hasErrors = true;
+                    }
+
+                    if (!this.form.jenis) {
+                        this.errors.jenis = 'Jenis transaksi harus dipilih';
+                        hasErrors = true;
+                    }
+
+                    if (!this.form.jumlah || this.form.jumlah <= 0) {
+                        this.errors.jumlah = 'Jumlah harus diisi dan lebih dari 0';
+                        hasErrors = true;
+                    }
+
+                    if (!this.form.keterangan) {
+                        this.errors.keterangan = 'Keterangan harus diisi';
+                        hasErrors = true;
+                    }
+
+                    // Validation based on transaction type
+                    if (this.form.jenis === 'penggunaan') {
+                        if (!this.form.kategori_penggunaan) {
+                            this.errors.kategori_penggunaan = 'Kategori penggunaan harus dipilih';
+                            hasErrors = true;
+                        }
+                        if (this.form.jumlah > this.projectInfo.saldo && this.projectInfo.saldo > 0) {
+                            this.errors.jumlah = 'Jumlah melebihi saldo project yang tersedia';
+                            hasErrors = true;
+                        }
+                    } else if (this.form.jenis === 'alokasi' || this.form.jenis === 'pengembalian') {
+                        if (!this.form.sumber_dana_type) {
+                            this.errors.sumber_dana_type = 'Sumber dana harus dipilih';
+                            hasErrors = true;
+                        }
+                        if (this.form.sumber_dana_type === 'kas' && !this.form.kas_id) {
+                            this.errors.kas_id = 'Kas harus dipilih';
+                            hasErrors = true;
+                        }
+                        if (this.form.sumber_dana_type === 'bank' && !this.form.rekening_bank_id) {
+                            this.errors.rekening_bank_id = 'Rekening bank harus dipilih';
+                            hasErrors = true;
+                        }
+                    }
+
+                    if (hasErrors) {
+                        this.showNotification('Mohon periksa form dan lengkapi data yang diperlukan', 'error');
+                        return;
+                    }
+
+                    this.isLoading = true;
 
                     try {
                         const formData = new FormData();

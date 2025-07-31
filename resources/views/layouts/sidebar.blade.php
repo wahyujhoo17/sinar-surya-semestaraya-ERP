@@ -3,10 +3,10 @@
     class="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-[#fdfdfd] dark:bg-gray-800 sidebar-shadow dark:sidebar-glow w-64">
     <!-- Logo -->
     <div
-        class="flex items-center justify-start h-[77px] flex-shrink-0 px-4 border-b border-gray-200 dark:border-gray-700">
+        class="flex items-center justify-center h-[77px] flex-shrink-0 px-4 border-b border-gray-200 dark:border-gray-700">
         <a href="{{ route('dashboard') }}" class="flex items-center">
             <div class="flex items-center">
-                <img src="{{ asset('img/Logo_nama.png') }}" alt="Logo PT Sinar Surya Semestaraya" class="h-auto w-auto">
+                <img src="{{ asset('img/SemestaPro.png') }}" alt="Logo PT Sinar Surya Semestaraya" class="h-20 w-30">
             </div>
         </a>
     </div>

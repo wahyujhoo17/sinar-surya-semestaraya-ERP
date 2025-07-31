@@ -128,10 +128,10 @@ if (darkMode) {
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/Logo.png') }}">
-    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('img/Logo.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/Logo.png') }}">
-    <meta name="msapplication-TileImage" content="{{ asset('img/Logo.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('img/SemestaPro.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('img/SemestaPro.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('img/SemestaPro.png') }}">
+    <meta name="msapplication-TileImage" content="{{ asset('img/SemestaPro.png') }}">
     <meta name="msapplication-TileColor" content="#4a6fa5">
     <meta name="theme-color" content="#4a6fa5">
 

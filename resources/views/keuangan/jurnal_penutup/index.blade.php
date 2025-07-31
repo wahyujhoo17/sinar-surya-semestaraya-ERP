@@ -431,7 +431,7 @@
                         case 'thisMonth':
                             startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
                             endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[
-                            0];
+                                0];
                             break;
                         case 'thisYear':
                             startDate = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];

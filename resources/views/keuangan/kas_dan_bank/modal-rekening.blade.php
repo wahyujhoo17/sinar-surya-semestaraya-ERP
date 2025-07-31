@@ -229,16 +229,35 @@
                     })
                     .then(data => {
                         this.loading = false;
-                        notify(data.message, 'success');
-                        window.location.reload();
+                        console.log('Success response:', data); // Debug log
+
+                        // Use the global notify function
+                        if (typeof window.notify === 'function') {
+                            window.notify(data.message || 'Rekening bank berhasil disimpan', 'success');
+                        } else if (typeof window.showSuccess === 'function') {
+                            window.showSuccess(data.message || 'Rekening bank berhasil disimpan');
+                        } else {
+                            alert(data.message || 'Rekening bank berhasil disimpan');
+                        }
+
                         this.closeModal();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     })
                     .catch(error => {
                         this.loading = false;
+                        console.error('Error response:', error); // Debug log
                         if (error.errors) {
                             this.errors = error.errors;
                         } else {
-                            notify(error.message || 'Terjadi kesalahan saat memproses data', 'error');
+                            if (typeof window.notify === 'function') {
+                                window.notify(error.message || 'Terjadi kesalahan saat memproses data', 'error');
+                            } else if (typeof window.showError === 'function') {
+                                window.showError(error.message || 'Terjadi kesalahan saat memproses data');
+                            } else {
+                                alert('Error: ' + (error.message || 'Terjadi kesalahan saat memproses data'));
+                            }
                         }
                     });
             }

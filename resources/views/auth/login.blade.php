@@ -7,9 +7,11 @@
             <div class="p-12 flex flex-col justify-between relative z-10 h-full">
                 <div>
                     <div class="flex items-center">
-                        <!-- Logo di sebelah kiri, ukuran disesuaikan -->
-                        <img src="{{ asset('img/Logo.png') }}" alt="Logo"
-                            class="h-12 w-12 object-contain flex-shrink-0">
+                        <!-- Card putih di belakang logo -->
+                        <div class="bg-white rounded-xl shadow-lg p-2 flex items-center justify-center h-16 w-16">
+                            <img src="{{ asset('img/SemestaPro.png') }}" alt="Logo"
+                                class="h-12 w-12 object-contain flex-shrink-0">
+                        </div>
                         <div class="ml-4">
                             <!-- Nama perusahaan -->
                             <h1 class="text-white text-2xl font-bold leading-tight">Sinar Surya Semestaraya</h1>
@@ -118,9 +120,8 @@
                                 <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                                     <button type="button" @click="showPassword = !showPassword"
                                         class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none">
-                                        <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg"
-                                            class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                                            stroke="currentColor">
+                                        <svg x-show="!showPassword" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

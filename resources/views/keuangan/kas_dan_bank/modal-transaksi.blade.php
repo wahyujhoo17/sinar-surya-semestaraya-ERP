@@ -328,21 +328,50 @@
                     if (response.ok && result.success) {
                         this.showAlert('success', result.message || 'Transaksi berhasil disimpan');
 
-                        // Show success toast notification
-                        this.showSuccessToast(result.message || 'Transaksi berhasil disimpan', result.data);
+                        // Show success toast notification using global function
+                        let toastMessage = result.message || 'Transaksi berhasil disimpan';
+                        if (result.data) {
+                            toastMessage += ` (No. Ref: ${result.data.no_referensi || '-'})`;
+                        }
+
+                        if (typeof window.notify === 'function') {
+                            window.notify(toastMessage, 'success');
+                        } else if (typeof window.showSuccess === 'function') {
+                            window.showSuccess(toastMessage);
+                        } else {
+                            alert(toastMessage);
+                        }
 
                         // Close modal and refresh the page after showing success
                         setTimeout(() => {
                             this.closeModal();
                             window.location.reload();
-                        }, 2500);
+                        }, 2000);
                     } else {
                         this.showAlert('error', result.message || 'Terjadi kesalahan saat menyimpan transaksi');
+
+                        if (typeof window.notify === 'function') {
+                            window.notify(result.message || 'Terjadi kesalahan saat menyimpan transaksi',
+                                'error');
+                        } else if (typeof window.showError === 'function') {
+                            window.showError(result.message || 'Terjadi kesalahan saat menyimpan transaksi');
+                        } else {
+                            alert('Error: ' + (result.message || 'Terjadi kesalahan saat menyimpan transaksi'));
+                        }
+
                         this.errors = result.errors || {};
                     }
                 } catch (error) {
                     console.error('Error submitting form:', error);
                     this.showAlert('error', 'Terjadi kesalahan jaringan. Silakan coba lagi.');
+
+                    if (typeof window.notify === 'function') {
+                        window.notify('Terjadi kesalahan jaringan. Silakan coba lagi.', 'error');
+                    } else if (typeof window.showError === 'function') {
+                        window.showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
+                    } else {
+                        alert('Error: Terjadi kesalahan jaringan. Silakan coba lagi.');
+                    }
                 } finally {
                     this.loading = false;
                 }
@@ -360,55 +389,8 @@
                 this.alert.show = false;
             },
 
-            showSuccessToast(message, data = null) {
-                // Create success toast element
-                const toast = document.createElement('div');
-                toast.className =
-                    'fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg flex items-center space-x-3 transform transition-all duration-300 ease-in-out translate-x-full';
-
-                let toastContent = `
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        <div>
-                            <div class="font-medium">${message}</div>`;
-
-                if (data) {
-                    toastContent += `<div class="text-sm text-green-100 mt-1">
-                        No. Referensi: ${data.no_referensi || '-'}<br>
-                        Saldo Baru: Rp ${this.formatNumber(data.saldo_baru || 0)}
-                    </div>`;
-                }
-
-                toastContent += `
-                        </div>
-                        <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 ml-4">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                        </button>
-                    </div>
-                `;
-
-                toast.innerHTML = toastContent;
-                document.body.appendChild(toast);
-
-                // Animate in
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-full');
-                }, 100);
-
-                // Auto remove after 5 seconds
-                setTimeout(() => {
-                    toast.classList.add('translate-x-full');
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }, 5000);
-            },
+            // Deprecated: Using global showToast functions instead
+            // showSuccessToast(message, data = null) { ... }
 
             closeModal() {
                 this.isOpen = false;
