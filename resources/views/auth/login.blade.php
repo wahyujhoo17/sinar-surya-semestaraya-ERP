@@ -9,7 +9,7 @@
                     <div class="flex items-center">
                         <!-- Card putih di belakang logo -->
                         <div class="bg-white rounded-xl shadow-lg p-2 flex items-center justify-center h-16 w-16">
-                            <img src="{{ asset('img/SemestaPro.png') }}" alt="Logo"
+                            <img src="{{ asset('img/SemestaPro.PNG') }}" alt="Logo"
                                 class="h-12 w-12 object-contain flex-shrink-0">
                         </div>
                         <div class="ml-4">
