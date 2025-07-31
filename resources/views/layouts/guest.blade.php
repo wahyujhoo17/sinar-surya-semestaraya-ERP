@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>ERP Sinar Surya Semestaraya</title>
+    <title>SemestaPro</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{{ asset('img/Logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('img/Logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('img/SemestaPro.PNG') }}">
+    <link rel="apple-touch-icon" href="{{ asset('img/SemestaPro.PNG') }}">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
