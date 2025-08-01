@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransaksiProjectController extends Controller
 {
@@ -477,6 +478,49 @@ class TransaksiProjectController extends Controller
                     ], $request->no_bukti ?: 'PROJ-' . $transaksiProject->id, $description, $request->tanggal, $transaksiProject);
                 }
                 break;
+        }
+    }
+
+    /**
+     * Generate PDF report for project transactions
+     */
+    public function generatePDF(Project $project)
+    {
+        try {
+            // Get all transactions for the project
+            $transaksi = TransaksiProject::with(['project', 'user', 'kas', 'rekeningBank'])
+                ->where('project_id', $project->id)
+                ->orderBy('tanggal', 'desc')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Calculate summary data
+            $totalAlokasi = $transaksi->where('jenis', 'alokasi')->sum('nominal');
+            $totalPenggunaan = $transaksi->where('jenis', 'penggunaan')->sum('nominal');
+            $totalPengembalian = $transaksi->where('jenis', 'pengembalian')->sum('nominal');
+            $saldoTersisa = $totalAlokasi - $totalPenggunaan + $totalPengembalian;
+
+            $data = [
+                'project' => $project,
+                'transaksi' => $transaksi,
+                'summary' => [
+                    'total_alokasi' => $totalAlokasi,
+                    'total_penggunaan' => $totalPenggunaan,
+                    'total_pengembalian' => $totalPengembalian,
+                    'saldo_tersisa' => $saldoTersisa,
+                ],
+                'tanggal_cetak' => now()->format('d/m/Y H:i:s'),
+                'dicetak_oleh' => Auth::user()->name
+            ];
+
+            $pdf = Pdf::loadView('keuangan.transaksi-project.pdf', $data);
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = 'Laporan_Transaksi_Project_' . str_replace(' ', '_', $project->nama) . '_' . now()->format('Y-m-d') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menggenerate PDF: ' . $e->getMessage());
         }
     }
 }

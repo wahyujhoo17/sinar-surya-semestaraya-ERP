@@ -741,6 +741,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('transaksi-project/kas-accounts', [TransaksiProjectController::class, 'getKasAccounts'])->name('transaksi-project.kas-accounts');
         Route::get('transaksi-project/bank-accounts', [TransaksiProjectController::class, 'getBankAccounts'])->name('transaksi-project.bank-accounts');
         Route::get('transaksi-project/project-summary/{project_id}', [TransaksiProjectController::class, 'getProjectSummary'])->name('transaksi-project.project-summary');
+        Route::get('transaksi-project/{project}/pdf', [TransaksiProjectController::class, 'generatePDF'])->name('transaksi-project.pdf');
         Route::resource('transaksi-project', TransaksiProjectController::class);
     });
 

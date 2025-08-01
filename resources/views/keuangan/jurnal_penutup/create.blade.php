@@ -300,10 +300,7 @@
                         </div>
                     </div>
 
-                    @if (
-                        $mode === 'auto' &&
-                            isset($autoClosingData) &&
-                            (count($autoClosingData['income_accounts'] ?? []) > 0 || count($autoClosingData['expense_accounts'] ?? []) > 0))
+                    @if ($mode === 'auto')
                         {{-- Auto Closing Summary --}}
                         <div
                             class="mt-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
@@ -557,7 +554,9 @@
                 const response = await fetch(url, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute(
+                            'content') || ''
                     }
                 });
 
@@ -579,6 +578,12 @@
 
             } catch (error) {
                 console.error('Error:', error);
+
+                // Check if it's a network error
+                if (error instanceof TypeError && error.message.includes('fetch')) {
+                    error.message = 'Koneksi gagal. Periksa koneksi internet Anda.';
+                }
+
                 document.getElementById('autoClosingPreview').innerHTML = `
                     <div class="text-center py-12">
                         <div class="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
@@ -590,6 +595,7 @@
                         <p class="text-gray-600 dark:text-gray-400 mb-4">
                             ${error.message.includes('404') ? 'Periode tidak ditemukan' : 
                               error.message.includes('500') ? 'Terjadi kesalahan server' : 
+                              error.message.includes('Koneksi gagal') ? error.message :
                               'Error memuat data jurnal penutup'}
                         </p>
                         <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-4 max-w-md mx-auto mb-6">
@@ -614,6 +620,15 @@
                     </div>
                 `;
                 document.getElementById('submitBtn').disabled = true;
+
+                // Reset summary values
+                updateAutoClosingSummary({
+                    summary: {
+                        total_pendapatan: 0,
+                        total_beban: 0,
+                        net_income: 0
+                    }
+                });
             }
         }
 
@@ -775,16 +790,16 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 w-10 h-10">
                                     <div class="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-800 dark:to-purple-800 rounded-lg flex items-center justify-center shadow-sm">
-                                        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">${entry.akun_code.substring(0, 2)}</span>
+                                        <span class="text-sm font-bold text-indigo-600 dark:text-indigo-400">${(entry.akun_code || '').substring(0, 2)}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        ${entry.akun_code} - ${entry.akun_name}
+                                        ${entry.akun_code || ''} - ${entry.akun_name || ''}
                                     </div>
                                     <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-1">
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-800 dark:text-indigo-200">
-                                            ${entry.akun_jenis}
+                                            ${entry.akun_jenis || 'Lainnya'}
                                         </span>
                                     </div>
                                 </div>
@@ -792,32 +807,32 @@
                         </td>
                         <td class="px-6 py-4">
                             <div class="text-sm text-gray-900 dark:text-gray-100 leading-relaxed">
-                                ${entry.keterangan}
+                                ${entry.keterangan || ''}
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
-                            ${entry.debit > 0 ? `
-                                    <div class="text-sm font-semibold text-green-600 dark:text-green-400">
-                                        Rp ${entry.debit.toLocaleString('id-ID')}
-                                    </div>
-                                    <div class="text-xs text-green-500 dark:text-green-400">
-                                        ${(entry.debit / 1000000).toFixed(1)}M
-                                    </div>
-                                ` : `
-                                    <div class="text-sm text-gray-400 dark:text-gray-600">-</div>
-                                `}
+                            ${(entry.debit || 0) > 0 ? `
+                                        <div class="text-sm font-semibold text-green-600 dark:text-green-400">
+                                            Rp ${(entry.debit || 0).toLocaleString('id-ID')}
+                                        </div>
+                                        <div class="text-xs text-green-500 dark:text-green-400">
+                                            ${((entry.debit || 0) / 1000000).toFixed(1)}M
+                                        </div>
+                                    ` : `
+                                        <div class="text-sm text-gray-400 dark:text-gray-600">-</div>
+                                    `}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right">
-                            ${entry.kredit > 0 ? `
-                                    <div class="text-sm font-semibold text-red-600 dark:text-red-400">
-                                        Rp ${entry.kredit.toLocaleString('id-ID')}
-                                    </div>
-                                    <div class="text-xs text-red-500 dark:text-red-400">
-                                        ${(entry.kredit / 1000000).toFixed(1)}M
-                                    </div>
-                                ` : `
-                                    <div class="text-sm text-gray-400 dark:text-gray-600">-</div>
-                                `}
+                            ${(entry.kredit || 0) > 0 ? `
+                                        <div class="text-sm font-semibold text-red-600 dark:text-red-400">
+                                            Rp ${(entry.kredit || 0).toLocaleString('id-ID')}
+                                        </div>
+                                        <div class="text-xs text-red-500 dark:text-red-400">
+                                            ${((entry.kredit || 0) / 1000000).toFixed(1)}M
+                                        </div>
+                                    ` : `
+                                        <div class="text-sm text-gray-400 dark:text-gray-600">-</div>
+                                    `}
                         </td>
                     </tr>
                 `;
@@ -842,7 +857,7 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm font-medium text-green-600 dark:text-green-400">Total Debit</p>
-                                <p class="text-lg font-bold text-green-900 dark:text-green-100">Rp ${data.total_debit.toLocaleString('id-ID')}</p>
+                                <p class="text-lg font-bold text-green-900 dark:text-green-100">Rp ${(data.total_debit || 0).toLocaleString('id-ID')}</p>
                             </div>
                         </div>
                     </div>
@@ -858,7 +873,7 @@
                             </div>
                             <div class="ml-3">
                                 <p class="text-sm font-medium text-red-600 dark:text-red-400">Total Kredit</p>
-                                <p class="text-lg font-bold text-red-900 dark:text-red-100">Rp ${data.total_kredit.toLocaleString('id-ID')}</p>
+                                <p class="text-lg font-bold text-red-900 dark:text-red-100">Rp ${(data.total_kredit || 0).toLocaleString('id-ID')}</p>
                             </div>
                         </div>
                     </div>
@@ -906,14 +921,28 @@
         }
 
         function updateAutoClosingSummary(data) {
-            if (data.summary) {
-                document.getElementById('totalPendapatan').textContent = 'Rp ' + data.summary.total_pendapatan
-                    .toLocaleString('id-ID');
-                document.getElementById('totalBeban').textContent = 'Rp ' + data.summary.total_beban.toLocaleString(
-                    'id-ID');
+            // Default values in case data.summary is missing
+            const summary = data.summary || {
+                total_pendapatan: 0,
+                total_beban: 0,
+                net_income: 0
+            };
 
-                const netIncome = data.summary.net_income;
-                const netIncomeEl = document.getElementById('netIncome');
+            // Check if elements exist before updating
+            const totalPendapatanEl = document.getElementById('totalPendapatan');
+            const totalBebanEl = document.getElementById('totalBeban');
+            const netIncomeEl = document.getElementById('netIncome');
+
+            if (totalPendapatanEl) {
+                totalPendapatanEl.textContent = 'Rp ' + (summary.total_pendapatan || 0).toLocaleString('id-ID');
+            }
+
+            if (totalBebanEl) {
+                totalBebanEl.textContent = 'Rp ' + (summary.total_beban || 0).toLocaleString('id-ID');
+            }
+
+            if (netIncomeEl) {
+                const netIncome = summary.net_income || 0;
                 netIncomeEl.textContent = 'Rp ' + Math.abs(netIncome).toLocaleString('id-ID');
 
                 if (netIncome > 0) {
