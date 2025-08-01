@@ -14,12 +14,15 @@ class PeriodeAkuntansi extends Model
 
     protected $fillable = [
         'nama',
+        'tahun',
+        'bulan',
         'tanggal_mulai',
         'tanggal_akhir',
         'status',
         'tanggal_tutup',
         'closed_by',
         'catatan_penutupan',
+        'keterangan',
         'is_year_end'
     ];
 
@@ -294,5 +297,96 @@ class PeriodeAkuntansi extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Auto check and create periods for upcoming months
+     */
+    public static function autoCreateUpcomingPeriods($monthsAhead = 3)
+    {
+        $created = [];
+        $currentDate = Carbon::now();
+
+        for ($i = 0; $i <= $monthsAhead; $i++) {
+            $targetDate = $currentDate->copy()->addMonths($i);
+            $year = $targetDate->year;
+            $month = $targetDate->month;
+
+            // Check if period already exists
+            $existing = static::where('tahun', $year)
+                ->where('bulan', $month)
+                ->first();
+
+            if (!$existing) {
+                $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+                $endDate = $startDate->copy()->endOfMonth();
+
+                $period = static::create([
+                    'nama' => $startDate->format('F Y'),
+                    'tahun' => $year,
+                    'bulan' => $month,
+                    'tanggal_mulai' => $startDate,
+                    'tanggal_akhir' => $endDate,
+                    'status' => 'open',
+                    'keterangan' => 'Auto-created by system',
+                    'is_year_end' => $month === 12
+                ]);
+
+                $created[] = $period;
+            }
+        }
+
+        return $created;
+    }
+
+    /**
+     * Check if periods exist for a specific year
+     */
+    public static function yearHasAllPeriods($year)
+    {
+        $existingCount = static::where('tahun', $year)->count();
+        return $existingCount >= 12;
+    }
+
+    /**
+     * Get missing months for a specific year
+     */
+    public static function getMissingMonthsForYear($year)
+    {
+        $existingMonths = static::where('tahun', $year)
+            ->pluck('bulan')
+            ->toArray();
+
+        $allMonths = range(1, 12);
+        return array_diff($allMonths, $existingMonths);
+    }
+
+    /**
+     * Auto create missing periods for a specific year
+     */
+    public static function autoCreateMissingPeriodsForYear($year)
+    {
+        $missingMonths = static::getMissingMonthsForYear($year);
+        $created = [];
+
+        foreach ($missingMonths as $month) {
+            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+
+            $period = static::create([
+                'nama' => $startDate->format('F Y'),
+                'tahun' => $year,
+                'bulan' => $month,
+                'tanggal_mulai' => $startDate,
+                'tanggal_akhir' => $endDate,
+                'status' => 'open',
+                'keterangan' => 'Auto-created by system',
+                'is_year_end' => $month === 12
+            ]);
+
+            $created[] = $period;
+        }
+
+        return $created;
     }
 }
