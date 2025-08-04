@@ -66,12 +66,16 @@
                                 <span class="text-red-500">*</span></label>
                             <select id="sales_order_id" name="sales_order_id" required
                                 {{ $perencanaan->status != 'draft' ? 'disabled' : '' }}
-                                class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md select2-sales-order">
                                 <option value="">-- Pilih Sales Order --</option>
                                 @foreach ($salesOrders as $so)
                                     <option value="{{ $so->id }}"
-                                        {{ old('sales_order_id', $perencanaan->sales_order_id) == $so->id ? 'selected' : '' }}>
-                                        {{ $so->nomor }} - {{ $so->customer->nama ?? 'Customer tidak ditemukan' }}
+                                        {{ old('sales_order_id', $perencanaan->sales_order_id) == $so->id ? 'selected' : '' }}
+                                        data-company="{{ $so->customer->company ?? ($so->customer->nama ?? 'Customer tidak ditemukan') }}"
+                                        data-tanggal="{{ $so->tanggal ? $so->tanggal->format('d/m/Y') : '-' }}"
+                                        data-total="{{ number_format($so->total ?? 0, 0, ',', '.') }}">
+                                        {{ $so->nomor }} -
+                                        {{ $so->customer->company ?? ($so->customer->nama ?? 'Customer tidak ditemukan') }}
                                     </option>
                                 @endforeach
                             </select>
@@ -229,4 +233,48 @@
             @endif
         </form>
     </div>
+
+    @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @endpush
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Select2 for Sales Order
+            $('.select2-sales-order').select2({
+                placeholder: '-- Pilih Sales Order --',
+                allowClear: true,
+                width: '100%',
+                disabled: {{ $perencanaan->status != 'draft' ? 'true' : 'false' }},
+                templateResult: formatSalesOrder,
+                templateSelection: formatSalesOrderSelection
+            });
+
+            function formatSalesOrder(option) {
+                if (!option.id) {
+                    return option.text;
+                }
+
+                var $option = $(option.element);
+                var company = $option.data('company');
+
+                // Check if dark mode is active
+                var isDarkMode = document.documentElement.classList.contains('dark');
+                var textColor = isDarkMode ? 'text-white' : 'text-gray-900';
+
+                var $result = $(
+                    '<div class="select2-result">' +
+                    '<div class="font-medium ' + textColor + '">' + option.text + '</div>' +
+                    '</div>'
+                );
+
+                return $result;
+            }
+
+            function formatSalesOrderSelection(option) {
+                return option.text || '-- Pilih Sales Order --';
+            }
+        });
+    </script>
 </x-app-layout>

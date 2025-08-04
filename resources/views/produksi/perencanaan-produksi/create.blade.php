@@ -4,6 +4,7 @@
     ['label' => 'Buat Baru'],
 ]" :currentPage="'Buat Perencanaan Produksi'">
 
+
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
@@ -62,13 +63,16 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sales Order
                                 <span class="text-red-500">*</span></label>
                             <select id="sales_order_id" name="sales_order_id" required
-                                class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md select2-sales-order">
                                 <option value="">-- Pilih Sales Order --</option>
                                 @foreach ($salesOrders as $so)
                                     <option value="{{ $so->id }}"
-                                        {{ old('sales_order_id') == $so->id ? 'selected' : '' }}>
+                                        {{ old('sales_order_id') == $so->id ? 'selected' : '' }}
+                                        data-company="{{ $so->customer->company ?? ($so->customer->nama ?? 'Customer tidak ditemukan') }}"
+                                        data-tanggal="{{ $so->tanggal ? $so->tanggal->format('d/m/Y') : '-' }}"
+                                        data-total="{{ number_format($so->total ?? 0, 0, ',', '.') }}">
                                         {{ $so->nomor }} -
-                                        {{ $so->customer->nama ?? ($so->customer->company ?? 'Customer tidak ditemukan') }}
+                                        {{ $so->customer->company ?? ($so->customer->nama ?? 'Customer tidak ditemukan') }}
                                     </option>
                                 @endforeach
                             </select>
@@ -183,13 +187,52 @@
         </form>
     </div>
 
+    @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @endpush
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Select2 for Sales Order
+            $('.select2-sales-order').select2({
+                placeholder: '-- Pilih Sales Order --',
+                allowClear: true,
+                width: '100%',
+                templateResult: formatSalesOrder,
+                templateSelection: formatSalesOrderSelection
+            });
+
+            function formatSalesOrder(option) {
+                if (!option.id) {
+                    return option.text;
+                }
+
+                var $option = $(option.element);
+                var company = $option.data('company');
+
+                // Check if dark mode is active
+                var isDarkMode = document.documentElement.classList.contains('dark');
+                var textColor = isDarkMode ? 'text-white' : 'text-gray-900';
+
+                var $result = $(
+                    '<div class="select2-result">' +
+                    '<div class="font-medium ' + textColor + '">' + option.text + '</div>' +
+                    '</div>'
+                );
+
+                return $result;
+            }
+
+            function formatSalesOrderSelection(option) {
+                return option.text || '-- Pilih Sales Order --';
+            }
+
             // Log untuk debugging
             console.log('DOM loaded');
 
             // Event saat sales order dipilih
-            document.getElementById('sales_order_id').addEventListener('change', function() {
+            $('#sales_order_id').on('change', function() {
                 console.log('Sales Order changed');
                 const soId = this.value;
                 const gudangId = document.getElementById('gudang_id').value;
@@ -205,7 +248,7 @@
             // Event saat gudang dipilih
             document.getElementById('gudang_id').addEventListener('change', function() {
                 console.log('Gudang changed');
-                const soId = document.getElementById('sales_order_id').value;
+                const soId = $('#sales_order_id').val();
                 const gudangId = this.value;
 
                 if (soId && gudangId) {
@@ -301,7 +344,7 @@
             // Validasi form sebelum submit
             document.getElementById('form-perencanaan').addEventListener('submit', function(e) {
                 console.log('Form submitted');
-                const soId = document.getElementById('sales_order_id').value;
+                const soId = $('#sales_order_id').val();
                 const gudangId = document.getElementById('gudang_id').value;
 
                 if (!soId) {
@@ -331,7 +374,7 @@
             });
 
             // Inisialisasi - cek apakah keduanya sudah terpilih saat halaman dimuat
-            const initialSoId = document.getElementById('sales_order_id').value;
+            const initialSoId = $('#sales_order_id').val();
             const initialGudangId = document.getElementById('gudang_id').value;
             if (initialSoId && initialGudangId) {
                 console.log('Initial load with values');

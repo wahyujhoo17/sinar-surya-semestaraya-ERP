@@ -37,6 +37,14 @@ class SalesOrder extends Model
     ];
 
     /**
+     * The attributes that should be cast.
+     */
+    protected $casts = [
+        'tanggal' => 'datetime',
+        'tanggal_kirim' => 'datetime',
+    ];
+
+    /**
      * Relasi ke Customer
      */
     public function customer()

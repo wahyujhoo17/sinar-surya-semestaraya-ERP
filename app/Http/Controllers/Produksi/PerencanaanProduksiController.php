@@ -98,7 +98,8 @@ class PerencanaanProduksiController extends Controller
      */
     public function create()
     {
-        $salesOrders = SalesOrder::where('status_pengiriman', '!=', 'dikirim')
+        $salesOrders = SalesOrder::with('customer')
+            ->where('status_pengiriman', '!=', 'dikirim')
             ->orderBy('tanggal', 'desc')
             ->get();
         $gudangs = Gudang::orderBy('nama')->get();
@@ -492,7 +493,8 @@ class PerencanaanProduksiController extends Controller
         }
 
         // Get salesOrders and gudangs for the form
-        $salesOrders = SalesOrder::where('status_pengiriman', '!=', 'dikirim')
+        $salesOrders = SalesOrder::with('customer')
+            ->where('status_pengiriman', '!=', 'dikirim')
             ->orderBy('tanggal', 'desc')
             ->get();
         $gudangs = Gudang::orderBy('nama')->get();
@@ -531,7 +533,7 @@ class PerencanaanProduksiController extends Controller
 
         $lastPerencanaan = DB::table('perencanaan_produksi')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';

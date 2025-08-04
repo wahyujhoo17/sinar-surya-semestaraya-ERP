@@ -125,7 +125,7 @@ if (darkMode) {
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>
-        @yield('title', 'SemestaPro') - 
+        @yield('title', 'SemestaPro') -
         {{ ucfirst(collect(request()->segments())->last()) }}
     </title>
 
@@ -196,6 +196,72 @@ if (darkMode) {
             background: currentColor;
             border-radius: 0 0.25rem 0.25rem 0;
             opacity: 0.7;
+        }
+    </style>
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: calc(2.25rem + 2px);
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            background-color: white;
+        }
+
+        .dark .select2-container--default .select2-selection--single {
+            background-color: #374151;
+            border-color: #4b5563;
+            color: white;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 1.5rem;
+            color: #374151;
+        }
+
+        .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+            color: white;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: calc(2.25rem);
+        }
+
+        .select2-dropdown {
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+
+        .dark .select2-dropdown {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+
+        .dark .select2-results__option {
+            background-color: #374151;
+            color: white;
+        }
+
+        .dark .select2-results__option--highlighted {
+            background-color: #4f46e5 !important;
+            color: white !important;
+        }
+
+        .dark .select2-results__option--selected {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .dark .select2-search__field {
+            background-color: #4b5563;
+            border-color: #6b7280;
+            color: white;
+        }
+
+        .dark .select2-search__field::placeholder {
+            color: #9ca3af;
         }
     </style>
 </head>
