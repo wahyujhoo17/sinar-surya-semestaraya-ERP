@@ -243,7 +243,7 @@
             </div>
 
             {{-- Table Container with Loading State --}}
-            <div class="relative px-1 sm:px-3 pb-6">
+            <div class="relative pb-6">
                 <div x-show="loading"
                     class="absolute inset-0 bg-white/70 dark:bg-gray-800/70 flex items-center justify-center z-30 backdrop-blur-sm">
                     <div class="flex flex-col items-center">
@@ -262,29 +262,75 @@
                     </div>
                 </div>
 
-                <div class="min-w-full align-middle">
-                    <div id="table-content">
-                        <div x-show="!tableHtml">
-                            @if (!request()->ajax())
-                                @include('pembelian.retur_pembelian._table')
-                            @endif
+                {{-- Responsive Table Container --}}
+                <div
+                    class="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-800">
+                    <div class="min-w-full align-middle">
+                        <div id="table-content">
+                            <div x-show="!tableHtml">
+                                @if (!request()->ajax())
+                                    @include('pembelian.retur_pembelian._table')
+                                @endif
+                            </div>
+                            <div x-html="tableHtml" x-show="tableHtml"></div>
                         </div>
-                        <div x-html="tableHtml" x-show="tableHtml"></div>
                     </div>
+                </div>
 
-                    <div id="retur-pagination-container" @click="handlePaginationEvent($event)" class="mt-6 px-5">
-                        <div x-show="!paginationHtml">
-                            @if (!request()->ajax())
-                                {{ $returPembelian->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
-                            @endif
-                        </div>
-                        <div x-html="paginationHtml" x-show="paginationHtml"></div>
+                <div id="retur-pagination-container" @click="handlePaginationEvent($event)" class="mt-6 px-5">
+                    <div x-show="!paginationHtml">
+                        @if (!request()->ajax())
+                            {{ $returPembelian->appends(request()->except('page'))->links('vendor.pagination.tailwind-custom') }}
+                        @endif
                     </div>
+                    <div x-html="paginationHtml" x-show="paginationHtml"></div>
                 </div>
             </div>
         </div>
 
         @push('scripts')
+            <style>
+                /* Custom scrollbar styles */
+                .scrollbar-thin {
+                    scrollbar-width: thin;
+                    scrollbar-color: #d1d5db #f3f4f6;
+                }
+
+                .dark .scrollbar-thin {
+                    scrollbar-color: #6b7280 #1f2937;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar {
+                    height: 8px;
+                    width: 8px;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-track {
+                    background: #f3f4f6;
+                    border-radius: 4px;
+                }
+
+                .dark .scrollbar-thin::-webkit-scrollbar-track {
+                    background: #1f2937;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background: #d1d5db;
+                    border-radius: 4px;
+                }
+
+                .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+                    background: #6b7280;
+                }
+
+                .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                    background: #9ca3af;
+                }
+
+                .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+                    background: #9ca3af;
+                }
+            </style>
             <script>
                 function returPembelianTableManager() {
                     return {

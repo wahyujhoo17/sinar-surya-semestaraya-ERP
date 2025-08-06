@@ -49,6 +49,12 @@
     </tr>
 
     @foreach ($dataPembelian as $index => $item)
+        @php
+            // Ensure numeric values are properly handled
+            $total = is_numeric($item->total) ? (float) $item->total : 0;
+            $totalBayar = is_numeric($item->total_bayar) ? (float) $item->total_bayar : 0;
+            $sisa = $total - $totalBayar;
+        @endphp
         <tr>
             <td style="border: 1px solid #000000; text-align: center;">{{ $index + 1 }}</td>
             <td style="border: 1px solid #000000;">{{ $item->nomor_faktur }}</td>
@@ -64,24 +70,18 @@
                     BELUM BAYAR
                 @endif
             </td>
-            <td style="border: 1px solid #000000; text-align: right;">{{ number_format($item->total, 0, ',', '.') }}
-            </td>
-            <td style="border: 1px solid #000000; text-align: right;">
-                {{ number_format($item->total_bayar, 0, ',', '.') }}</td>
-            <td style="border: 1px solid #000000; text-align: right;">
-                {{ number_format($item->total - $item->total_bayar, 0, ',', '.') }}</td>
+            <td style="border: 1px solid #000000; text-align: right;">{{ $total }}</td>
+            <td style="border: 1px solid #000000; text-align: right;">{{ $totalBayar }}</td>
+            <td style="border: 1px solid #000000; text-align: right;">{{ $sisa }}</td>
             <td style="border: 1px solid #000000;">{{ $item->nama_petugas }}</td>
             <td style="border: 1px solid #000000;">{{ $item->keterangan }}</td>
         </tr>
     @endforeach
     <tr>
         <td colspan="5" style="border: 1px solid #000000; text-align: right; font-weight: bold;">TOTAL</td>
-        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ number_format($totalPembelian, 0, ',', '.') }}</td>
-        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ number_format($totalDibayar, 0, ',', '.') }}</td>
-        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ number_format($sisaPembayaran, 0, ',', '.') }}</td>
+        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">{{ (float) $totalPembelian }}</td>
+        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">{{ (float) $totalDibayar }}</td>
+        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">{{ (float) $sisaPembayaran }}</td>
         <td colspan="2" style="border: 1px solid #000000;"></td>
     </tr>
 </table>

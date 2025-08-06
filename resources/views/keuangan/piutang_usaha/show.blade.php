@@ -1,8 +1,8 @@
 <x-app-layout>
-    <div class="w-full max-w-none py-6 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-none py-4 sm:py-6 px-3 sm:px-4 lg:px-6 xl:px-8">
         <div class="w-full max-w-none mx-auto">
             {{-- Header Section --}}
-            <div class="mb-8">
+            <div class="mb-4 sm:mb-6 lg:mb-8">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center space-x-4">
                         <div
@@ -30,13 +30,13 @@
             </div>
 
             {{-- Main Content Grid --}}
-            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 lg:gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 {{-- Left Column - Invoice Details --}}
-                <div class="xl:col-span-3 space-y-6">
+                <div class="lg:col-span-2 lg:order-1 order-2 space-y-4 sm:space-y-6">
                     {{-- Invoice Information Card --}}
                     <div
                         class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+                        <div class="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                                 <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
@@ -47,8 +47,8 @@
                                 Informasi Invoice
                             </h3>
                         </div>
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        <div class="p-4 sm:p-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                                 <div class="space-y-4">
                                     <div>
                                         <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nomor
@@ -524,13 +524,14 @@
                 </div>
 
                 {{-- Right Column - Financial Summary --}}
-                <div class="xl:col-span-1 space-y-6">
+                <div class="lg:col-span-1 lg:order-2 order-1 space-y-4 sm:space-y-6">
                     {{-- Financial Summary Card --}}
                     <div
                         class="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-800 dark:to-gray-700 rounded-2xl shadow-lg border border-blue-200 dark:border-gray-600 overflow-hidden">
                         <div
-                            class="px-6 py-4 bg-white/50 dark:bg-gray-800/50 border-b border-blue-200 dark:border-gray-600">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            class="px-4 sm:px-6 py-4 bg-white/50 dark:bg-gray-800/50 border-b border-blue-200 dark:border-gray-600">
+                            <h3
+                                class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                                 <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -540,7 +541,7 @@
                                 Ringkasan Keuangan
                             </h3>
                         </div>
-                        <div class="p-6 space-y-6">
+                        <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
                             {{-- Total Invoice --}}
                             <div
                                 class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
@@ -548,7 +549,8 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Invoice
                                         </p>
-                                        <p class="text-2xl font-bold text-gray-900 dark:text-white font-mono">
+                                        <p
+                                            class="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white font-mono">
                                             Rp {{ number_format($invoice->total, 0, ',', '.') }}
                                         </p>
                                     </div>

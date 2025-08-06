@@ -77,7 +77,7 @@ class LaporanPembelianController extends Controller
                     'purchase_order.status_pembayaran as status',
                     'purchase_order.total',
                     DB::raw('COALESCE(
-                    (SELECT SUM(jumlah) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
                     0
                 ) as total_bayar'),
                     'purchase_order.catatan as keterangan',
@@ -126,6 +126,13 @@ class LaporanPembelianController extends Controller
                 ->skip($skip)
                 ->take($perPage)
                 ->get();
+
+            // Transform data to ensure proper numeric values
+            $dataPembelian = $dataPembelian->map(function ($item) {
+                $item->total = (float) $item->total;
+                $item->total_bayar = (float) $item->total_bayar;
+                return $item;
+            });
 
             // Debug results
             \Log::info('Purchase data results', [
@@ -229,7 +236,7 @@ class LaporanPembelianController extends Controller
                 'purchase_order.status_pembayaran as status',
                 'purchase_order.total',
                 DB::raw('COALESCE(
-                    (SELECT SUM(jumlah) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
                     0
                 ) as total_bayar'),
                 'purchase_order.catatan as keterangan',
@@ -263,6 +270,13 @@ class LaporanPembelianController extends Controller
         }
 
         $dataPembelian = $query->orderBy('purchase_order.tanggal', 'desc')->get();
+
+        // Transform data to ensure proper numeric values
+        $dataPembelian = $dataPembelian->map(function ($item) {
+            $item->total = (float) $item->total;
+            $item->total_bayar = (float) $item->total_bayar;
+            return $item;
+        });
 
         // Hitung total pembelian, total dibayar, dan sisa pembayaran
         $totalPembelian = $dataPembelian->sum('total');

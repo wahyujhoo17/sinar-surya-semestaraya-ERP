@@ -9,10 +9,13 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use Illuminate\Support\Facades\DB;
 
-class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithColumnWidths, WithCustomStartCell
+class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithColumnWidths, WithCustomStartCell, WithEvents
 {
     protected $filters;
 
@@ -42,7 +45,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
                 'purchase_order.status_pembayaran as status',
                 'purchase_order.total',
                 DB::raw('COALESCE(
-                    (SELECT SUM(jumlah) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
                     0
                 ) as total_bayar'),
                 'purchase_order.catatan as keterangan',
@@ -75,6 +78,13 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         }
 
         $dataPembelian = $query->orderBy('purchase_order.tanggal', 'desc')->get();
+
+        // Transform data to ensure proper numeric formatting
+        $dataPembelian = $dataPembelian->map(function ($item) {
+            $item->total = (float) $item->total;
+            $item->total_bayar = (float) $item->total_bayar;
+            return $item;
+        });
 
         // Hitung total pembelian, total dibayar, dan sisa pembayaran
         $totalPembelian = $dataPembelian->sum('total');
@@ -180,5 +190,26 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
     public function startCell(): string
     {
         return 'A5';
+    }
+
+    /**
+     * @return array
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestRow = $sheet->getHighestRow();
+
+                // Set number format for currency columns (F, G, H) to show numbers with thousand separators
+                $sheet->getStyle('F6:F' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+
+                // Also apply to total row
+                $sheet->getStyle('F' . $highestRow . ':H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+            },
+        ];
     }
 }

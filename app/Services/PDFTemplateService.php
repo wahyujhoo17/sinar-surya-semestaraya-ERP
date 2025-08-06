@@ -15,15 +15,11 @@ class PDFTemplateService
     {
 
         // Tambahkan parameter opsional untuk menonaktifkan template background
-        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Surat-Jalan.pdf');
 
-        // Set custom paper size: 16.5 x 21.2 cm (165 x 212 mm)
         $customWidth = 165;
         $customHeight = 212;
-
-        // $customWidth = 176;
-        // $customHeight = 250;
 
         try {
             // Create FPDI instance
