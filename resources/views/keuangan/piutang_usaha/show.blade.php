@@ -9,8 +9,9 @@
                             class="flex-shrink-0 bg-gradient-to-br from-violet-500 to-indigo-600 h-12 w-1.5 rounded-full mr-4">
                         </div>
                         <div>
-                            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Detail Piutang Usaha</h1>
-                            <p class="mt-1 text-lg text-gray-600 dark:text-gray-400">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Detail Piutang Usaha
+                            </h1>
+                            <p class="mt-1 text-base sm:text-lg text-gray-600 dark:text-gray-400">
                                 Invoice: <span
                                     class="font-semibold text-blue-600 dark:text-blue-400">{{ $invoice->nomor }}</span>
                             </p>
@@ -573,7 +574,8 @@
                                     <div>
                                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total
                                             Pembayaran</p>
-                                        <p class="text-2xl font-bold text-green-600 dark:text-green-400 font-mono">
+                                        <p
+                                            class="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 font-mono">
                                             Rp {{ number_format($totalPaymentsForInvoice, 0, ',', '.') }}
                                         </p>
                                     </div>
@@ -597,7 +599,8 @@
                                         <div>
                                             <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Uang Muka
                                                 Diterapkan</p>
-                                            <p class="text-2xl font-bold text-blue-600 dark:text-blue-400 font-mono">
+                                            <p
+                                                class="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 font-mono">
                                                 Rp {{ number_format($totalUangMukaApplied, 0, ',', '.') }}
                                             </p>
                                         </div>
@@ -648,7 +651,7 @@
                                         <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Sisa Piutang
                                         </p>
                                         <p
-                                            class="text-3xl font-bold {{ $invoice->sisa_piutang > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }} font-mono">
+                                            class="text-2xl sm:text-3xl font-bold {{ $invoice->sisa_piutang > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }} font-mono">
                                             Rp {{ number_format($invoice->sisa_piutang, 0, ',', '.') }}
                                         </p>
                                     </div>
@@ -739,8 +742,9 @@
 
                     {{-- Quick Stats --}}
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
-                        <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Statistik Singkat</h4>
+                        class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-4 sm:p-6">
+                        <h4 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4">Statistik
+                            Singkat</h4>
                         <div class="space-y-4">
                             <div class="flex justify-between items-center">
                                 <span class="text-sm text-gray-500 dark:text-gray-400">Persentase Terbayar</span>
