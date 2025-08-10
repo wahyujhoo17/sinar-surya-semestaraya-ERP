@@ -61,7 +61,6 @@
                                     data-gaji-pokok="{{ $k->gaji_pokok }}" data-nama="{{ $k->nama_lengkap }}"
                                     data-nip="{{ $k->nip }}" data-department="{{ $k->department->nama ?? 'N/A' }}"
                                     data-jabatan="{{ $k->jabatan->nama ?? 'N/A' }}"
-                                    data-tunjangan-btn="{{ $k->tunjangan_btn ?? 0 }}"
                                     data-tunjangan-keluarga="{{ $k->tunjangan_keluarga ?? 0 }}"
                                     data-tunjangan-jabatan="{{ $k->tunjangan_jabatan ?? 0 }}"
                                     data-tunjangan-transport="{{ $k->tunjangan_transport ?? 0 }}"
@@ -189,22 +188,7 @@
                         @enderror
                     </div>
 
-                    {{-- Tunjangan BTN --}}
-                    <div>
-                        <label for="tunjangan_btn"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tunjangan BTN
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">Rp</span>
-                            </div>
-                            <input type="number" name="tunjangan_btn" id="tunjangan_btn" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_btn" @input="calculateTotal()"
-                                value="{{ old('tunjangan_btn', $salaryComponents['tunjangan_btn'] ?? 0) }}"
-                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
-                        </div>
-                    </div>
+
 
                     {{-- Tunjangan Keluarga --}}
                     <div>
@@ -575,11 +559,6 @@
                                         x-text="formatRupiah(salaryComponents.gaji_pokok)"></span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan BTN:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_btn)"></span>
-                                </div>
-                                <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Tunjangan Keluarga:</span>
                                     <span class="font-medium"
                                         x-text="formatRupiah(salaryComponents.tunjangan_keluarga)"></span>
@@ -756,7 +735,6 @@
 
                     salaryComponents: {
                         gaji_pokok: {{ old('gaji_pokok', $gajiPokok) }},
-                        tunjangan_btn: {{ old('tunjangan_btn', $salaryComponents['tunjangan_btn'] ?? 0) }},
                         tunjangan_keluarga: {{ old('tunjangan_keluarga', $salaryComponents['tunjangan_keluarga'] ?? 0) }},
                         tunjangan_jabatan: {{ old('tunjangan_jabatan', $salaryComponents['tunjangan_jabatan'] ?? 0) }},
                         tunjangan_transport: {{ old('tunjangan_transport', $salaryComponents['tunjangan_transport'] ?? 0) }},
@@ -792,9 +770,8 @@
 
                         if (selectedOption && selectedOption.value) {
                             this.salaryComponents.gaji_pokok = parseFloat(selectedOption.dataset.gajiPokok) || 0;
-                            this.salaryComponents.tunjangan_btn = parseFloat(selectedOption.dataset.tunjanganBtn) || 0;
                             this.salaryComponents.tunjangan_keluarga = parseFloat(selectedOption.dataset.tunjanganKeluarga) ||
-                            0;
+                                0;
                             this.salaryComponents.tunjangan_jabatan = parseFloat(selectedOption.dataset.tunjanganJabatan) || 0;
                             this.salaryComponents.tunjangan_transport = parseFloat(selectedOption.dataset.tunjanganTransport) ||
                                 0;
@@ -813,7 +790,6 @@
 
                             // Update form inputs
                             document.getElementById('gaji_pokok').value = this.salaryComponents.gaji_pokok;
-                            document.getElementById('tunjangan_btn').value = this.salaryComponents.tunjangan_btn;
                             document.getElementById('tunjangan_keluarga').value = this.salaryComponents.tunjangan_keluarga;
                             document.getElementById('tunjangan_jabatan').value = this.salaryComponents.tunjangan_jabatan;
                             document.getElementById('tunjangan_transport').value = this.salaryComponents.tunjangan_transport;
@@ -885,7 +861,6 @@
                     calculateTotal() {
                         // Hitung total pendapatan
                         const income = parseFloat(this.salaryComponents.gaji_pokok || 0) +
-                            parseFloat(this.salaryComponents.tunjangan_btn || 0) +
                             parseFloat(this.salaryComponents.tunjangan_keluarga || 0) +
                             parseFloat(this.salaryComponents.tunjangan_jabatan || 0) +
                             parseFloat(this.salaryComponents.tunjangan_transport || 0) +
@@ -923,7 +898,6 @@
                             this.selectedEmployee = '';
                             this.salaryComponents = {
                                 gaji_pokok: 0,
-                                tunjangan_btn: 0,
                                 tunjangan_keluarga: 0,
                                 tunjangan_jabatan: 0,
                                 tunjangan_transport: 0,

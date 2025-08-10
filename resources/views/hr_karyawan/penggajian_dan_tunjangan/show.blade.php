@@ -208,20 +208,6 @@
                                     </tr>
 
                                     <!-- Employee Salary Components from Karyawan -->
-                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
-                                        <tr>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                                Tunjangan BTN
-                                            </td>
-                                            <td
-                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 0, ',', '.') }}
-                                            </td>
-                                        </tr>
-                                    @endif
-
                                     @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
                                         <tr>
                                             <td
@@ -947,7 +933,6 @@
                         @php
                             // Calculate totals
                             $totalPendapatan = $penggajian->gaji_pokok;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_btn ?? 0;
                             $totalPendapatan += $penggajian->karyawan->tunjangan_keluarga ?? 0;
                             $totalPendapatan += $penggajian->karyawan->tunjangan_jabatan ?? 0;
                             $totalPendapatan += $penggajian->karyawan->tunjangan_transport ?? 0;
@@ -979,13 +964,6 @@
                                         <span>Gaji Pokok:</span>
                                         <span>Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}</span>
                                     </div>
-                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
-                                        <div class="flex justify-between">
-                                            <span>Tunjangan BTN:</span>
-                                            <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 0, ',', '.') }}</span>
-                                        </div>
-                                    @endif
                                     @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Keluarga:</span>

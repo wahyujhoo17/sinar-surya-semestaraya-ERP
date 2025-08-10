@@ -175,6 +175,102 @@
             </div>
 
             <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+                <!-- Multi-Template PDF Export Dropdown -->
+                <div class="relative" x-data="{ pdfDropdownOpen: false }" x-cloak>
+                    <button @click="pdfDropdownOpen = !pdfDropdownOpen" type="button"
+                        class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Cetak PDF
+                        <svg class="ml-2 -mr-0.5 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+
+                    <div x-show="pdfDropdownOpen" @click.away="pdfDropdownOpen = false"
+                        class="origin-top-right absolute right-0 mt-2 w-72 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-20"
+                        style="display: none; z-index: 50; max-height: 300px; overflow-y: auto;">
+
+                        <div class="py-1">
+                            <span
+                                class="block px-4 py-2 text-xs text-gray-500 dark:text-gray-400 uppercase font-medium">
+                                Pilih Template Surat Jalan
+                            </span>
+                        </div>
+
+                        <div class="py-1">
+                            <!-- PT Sinar Surya Template -->
+                            <a href="{{ route('penjualan.delivery-order.export-pdf', ['id' => $deliveryOrder->id, 'template' => 'sinar-surya']) }}"
+                                class="group block px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            PT Sinar Surya Semestaraya
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- PT Indo Atsaka Template -->
+                            <a href="{{ route('penjualan.delivery-order.export-pdf', ['id' => $deliveryOrder->id, 'template' => 'atsaka']) }}"
+                                class="group block px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            PT Indo Atsaka Industri
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+
+                            <!-- PT Hidayah Cahaya Berkah Template -->
+                            <a href="{{ route('penjualan.delivery-order.export-pdf', ['id' => $deliveryOrder->id, 'template' => 'hidayah']) }}"
+                                class="group block px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0">
+                                        <div
+                                            class="w-8 h-8 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center">
+                                            <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                            PT Hidayah Cahaya Berkah
+                                        </p>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Print Template Button -->
                 <a href="{{ route('penjualan.delivery-order.print-template', $deliveryOrder->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
@@ -183,7 +279,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    Cetak
+                    Cetak Tamplate
                 </a>
 
 
@@ -1054,6 +1150,7 @@
                 // Delivery Order Status Management 
                 Alpine.data('deliveryOrderActions', () => ({
                     statusDropdownOpen: false,
+                    pdfDropdownOpen: false,
                     confirmModal: false,
                     showModal: false,
                     actionType: null,

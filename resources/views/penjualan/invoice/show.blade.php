@@ -123,14 +123,14 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
-                <a href="{{ route('penjualan.invoice.print', $invoice->id) }}" target="_blank"
+                {{-- <a href="{{ route('penjualan.invoice.print', $invoice->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     Cetak
-                </a>
+                </a> --}}
                 <a href="{{ route('penjualan.invoice.print-template', $invoice->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,6 +139,48 @@
                     </svg>
                     Cetak Tamplate
                 </a>
+
+                <!-- Multi-Template PDF Export Dropdown -->
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open" type="button"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                        <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="open" @click.outside="open = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute right-0 z-50 mt-1 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
+                        <div class="py-1">
+                            <a href="{{ route('penjualan.invoice.print', $invoice->id) }}?template=sinar-surya"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                PT Sinar Surya Semestaraya
+                            </a>
+                            <a href="{{ route('penjualan.invoice.export-pdf', $invoice->id) }}?template=atsaka"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                PT Indo Atsaka Industri
+                            </a>
+                            <a href="{{ route('penjualan.invoice.export-pdf', $invoice->id) }}?template=hidayah"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                PT Hidayah Cahaya Berkah
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
                 @if (auth()->user()->hasPermission('invoice.edit') && $invoice->status !== 'lunas')
                     <a href="{{ route('penjualan.invoice.edit', $invoice->id) }}"

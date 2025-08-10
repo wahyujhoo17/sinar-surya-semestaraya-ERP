@@ -988,18 +988,76 @@ class SalesOrderController extends Controller
     /**
      * Generate PDF for a sales order
      */
-    public function exportPdf($id)
+    public function exportPdf($id, $template = 'default')
     {
-        $salesOrder = SalesOrder::with(['customer', 'user', 'details.produk', 'details.satuan'])
-            ->findOrFail($id);
+        try {
+            // Increase memory limit and execution time for PDF generation
+            ini_set('memory_limit', '256M');
+            ini_set('max_execution_time', 60);
 
-        // Load the PDF view
-        $pdf = Pdf::loadView('penjualan.sales-order.pdf', ['salesOrder' => $salesOrder]);
+            // Log PDF generation start for debugging
+            Log::info("PDF generation started for sales order ID: {$id}, template: {$template}");
 
-        // Set paper size and orientation
-        $pdf->setPaper('a4', 'portrait');
+            $salesOrder = SalesOrder::with(['customer', 'user', 'details.produk', 'details.satuan'])
+                ->findOrFail($id);
 
-        // Download the PDF with a specific filename
-        return $pdf->download('SalesOrder-' . $salesOrder->nomor . '.pdf');
+            // Define available templates and their configurations
+            $templates = [
+                'default' => [
+                    'view' => 'penjualan.sales-order.pdf',
+                    'company_name' => 'PT. SINAR SURYA SEMESTARAYA',
+                    'filename_prefix' => 'SalesOrder-SS'
+                ],
+                'indo-atsaka' => [
+                    'view' => 'penjualan.sales-order.pdf-indo-atsaka',
+                    'company_name' => 'PT INDO ATSAKA INDUSTRI',
+                    'filename_prefix' => 'SalesOrder-IAI'
+                ],
+                'hidayah-cahaya' => [
+                    'view' => 'penjualan.sales-order.pdf-hidayah-cahaya',
+                    'company_name' => 'PT HIDAYAH CAHAYA BERKAH',
+                    'filename_prefix' => 'SalesOrder-HCB'
+                ]
+            ];
+
+            // Validate template
+            if (!array_key_exists($template, $templates)) {
+                $template = 'default';
+            }
+
+            $templateConfig = $templates[$template];
+
+            // Load the PDF view with optimized settings
+            $pdf = Pdf::loadView($templateConfig['view'], [
+                'salesOrder' => $salesOrder,
+                'template_config' => $templateConfig
+            ]);
+
+            // Set paper size and orientation with optimization
+            $pdf->setPaper('a4', 'portrait');
+
+            // Set optimized options for better performance
+            $pdf->setOptions([
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont' => 'Arial',
+                'dpi' => 96,
+                'debugKeepTemp' => false,
+                'chroot' => public_path(),
+                'logOutputFile' => storage_path('logs/dompdf.log'),
+            ]);
+
+            // Generate filename
+            $filename = $templateConfig['filename_prefix'] . '-' . $salesOrder->nomor . '.pdf';
+
+            // Stream the PDF for better performance
+            return $pdf->download($filename);
+            
+        } catch (\Exception $e) {
+            Log::error('Error generating PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+        }
     }
 }

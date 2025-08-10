@@ -300,6 +300,7 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:quotation.export_pdf')->group(function () {
             Route::get('quotation/{id}/pdf', [QuotationController::class, 'exportPdf'])->name('quotation.pdf');
+            Route::get('quotation/{id}/pdf/{template}', [QuotationController::class, 'exportPdf'])->name('quotation.pdf.template');
         });
         Route::middleware('permission:quotation.view')->group(function () {
             Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
@@ -311,7 +312,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('sales-order/{sales_order}/change-status', [SalesOrderController::class, 'changeStatus'])->name('sales-order.changeStatus');
         });
 
-        Route::get('sales-order/{id}/pdf', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
+        Route::get('sales-order/{id}/pdf/{template?}', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
 
         Route::middleware('permission:sales_order.view')->group(function () {
             Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
@@ -330,6 +331,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
         });
         Route::get('invoice/{id}/print-template', [InvoiceController::class, 'printTemplate'])->name('invoice.print-template');
+        Route::get('invoice/{id}/export-pdf', [InvoiceController::class, 'exportPdf'])->name('invoice.export-pdf');
         Route::resource('invoice', InvoiceController::class);
 
         // Delivery Order routes
@@ -350,6 +352,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('delivery-order/{id}/print', [DeliveryOrderController::class, 'print'])->name('delivery-order.print');
             Route::get('delivery-order/{id}/print-template', [DeliveryOrderController::class, 'printTemplate'])->name('delivery-order.print-template');
             Route::get('delivery-order/{id}/download-template', [DeliveryOrderController::class, 'downloadTemplate'])->name('delivery-order.download-template');
+            Route::get('delivery-order/{id}/export-pdf', [DeliveryOrderController::class, 'exportPdf'])->name('delivery-order.export-pdf');
             Route::get('delivery-order/{id}/test-coordinates', [DeliveryOrderController::class, 'testTemplateCoordinates'])->name('delivery-order.test-coordinates');
             Route::get('delivery-order/{id}/custom-coordinates', [DeliveryOrderController::class, 'generateWithCustomCoordinates'])->name('delivery-order.custom-coordinates');
             Route::get('delivery-order/coordinates-helper', [DeliveryOrderController::class, 'getTemplateCoordinates'])->name('delivery-order.coordinates-helper');

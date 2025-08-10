@@ -143,23 +143,6 @@
                         @enderror
                     </div>
 
-                    {{-- Tunjangan BTN --}}
-                    <div>
-                        <label for="tunjangan_btn"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tunjangan BTN
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">Rp</span>
-                            </div>
-                            <input type="number" name="tunjangan_btn" id="tunjangan_btn" min="0" step="1000"
-                                x-model="salaryComponents.tunjangan_btn" @input="calculateTotal()"
-                                value="{{ old('tunjangan_btn', $penggajian->karyawan->tunjangan_btn ?? 0) }}"
-                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
-                        </div>
-                    </div>
-
                     {{-- Tunjangan Keluarga --}}
                     <div>
                         <label for="tunjangan_keluarga"
@@ -171,8 +154,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_keluarga"
-                                @input="calculateTotal()"
+                                step="1000" x-model="salaryComponents.tunjangan_keluarga" @input="calculateTotal()"
                                 value="{{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
@@ -613,8 +595,7 @@
             function payrollCalculator() {
                 return {
                     salaryComponents: {
-                        gaji_pokok: {{ old('gaji_pokok', $penggajian->gaji_pokok) }},
-                        tunjangan_btn: {{ old('tunjangan_btn', $penggajian->karyawan->tunjangan_btn ?? 0) }},
+                        gaji_pokok: {{ old('gaji_pokok', $penggajian->gaji_pokok ?? 0) }},
                         tunjangan_keluarga: {{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }},
                         tunjangan_jabatan: {{ old('tunjangan_jabatan', $penggajian->karyawan->tunjangan_jabatan ?? 0) }},
                         tunjangan_transport: {{ old('tunjangan_transport', $penggajian->karyawan->tunjangan_transport ?? 0) }},
@@ -639,7 +620,6 @@
                     calculateTotal() {
                         // Calculate income from form inputs
                         const income = parseFloat(this.salaryComponents.gaji_pokok || 0) +
-                            parseFloat(this.salaryComponents.tunjangan_btn || 0) +
                             parseFloat(this.salaryComponents.tunjangan_keluarga || 0) +
                             parseFloat(this.salaryComponents.tunjangan_jabatan || 0) +
                             parseFloat(this.salaryComponents.tunjangan_transport || 0) +

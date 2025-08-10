@@ -690,30 +690,72 @@ class QuotationController extends Controller
     /**
      * Generate PDF for a quotation
      */
-    public function exportPdf($id)
+    public function exportPdf($id, $template = 'default')
     {
         try {
-            // Increase execution time limit for this request
-            ini_set('max_execution_time', 120); // Set to 2 minutes
+            // Increase memory limit and execution time for PDF generation
+            ini_set('memory_limit', '256M');
+            ini_set('max_execution_time', 60);
+
+            // Log PDF generation start for debugging
+            Log::info("PDF generation started for quotation ID: {$id}, template: {$template}");
 
             $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan'])
                 ->findOrFail($id);
 
-            // Load the PDF view
-            $pdf = Pdf::loadView('penjualan.quotation.pdf', ['quotation' => $quotation]);
+            // Define available templates and their configurations
+            $templates = [
+                'default' => [
+                    'view' => 'penjualan.quotation.pdf',
+                    'company_name' => 'PT. SINAR SURYA SEMESTARAYA',
+                    'filename_prefix' => 'Quotation-SS'
+                ],
+                'indo-atsaka' => [
+                    'view' => 'penjualan.quotation.pdf-indo-atsaka',
+                    'company_name' => 'PT INDO ATSAKA INDUSTRI',
+                    'filename_prefix' => 'Quotation-IAI'
+                ],
+                'hidayah-cahaya' => [
+                    'view' => 'penjualan.quotation.pdf-hidayah-cahaya',
+                    'company_name' => 'PT HIDAYAH CAHAYA BERKAH',
+                    'filename_prefix' => 'Quotation-HCB'
+                ]
+            ];
 
-            // Set paper size and orientation
-            $pdf->setPaper('a4', 'portrait');
-
-            // Set lower memory usage options if available
-            if (method_exists($pdf, 'setOption')) {
-                $pdf->setOption('isRemoteEnabled', true);
-                $pdf->setOption('isHtml5ParserEnabled', true);
-                $pdf->setOption('isPhpEnabled', false);
+            // Validate template
+            if (!array_key_exists($template, $templates)) {
+                $template = 'default';
             }
 
-            // Stream the PDF instead of downloading for better performance
-            return $pdf->download('Quotation-' . $quotation->nomor . '.pdf');
+            $templateConfig = $templates[$template];
+
+            // Load the PDF view with optimized settings
+            $pdf = Pdf::loadView($templateConfig['view'], [
+                'quotation' => $quotation,
+                'template_config' => $templateConfig
+            ]);
+
+            // Set paper size and orientation with optimization
+            $pdf->setPaper('a5', 'portrait');
+
+            // Set optimized options for better performance
+            $pdf->setOptions([
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont' => 'Arial',
+                'dpi' => 96,
+                'debugKeepTemp' => false,
+                'chroot' => public_path(),
+                'logOutputFile' => storage_path('logs/dompdf.log'),
+            ]);
+
+            // Generate filename
+            $filename = $templateConfig['filename_prefix'] . '-' . $quotation->nomor . '.pdf';
+
+            // Stream the PDF for better performance
+            return $pdf->download($filename);
         } catch (\Exception $e) {
             Log::error('Error generating PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');

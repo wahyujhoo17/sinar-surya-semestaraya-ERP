@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quotation - {{ $quotation->nomor }}</title>
+    <title>Quotation - {{ $quotation->nomor }} - PT Hidayah Cahaya Berkah</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,7 +26,7 @@
             opacity: 0.07;
             font-size: 70px;
             font-weight: bold;
-            color: #4a6fa5;
+            color: #27ae60;
             transform: translate(-50%, -50%) rotate(-25deg);
             pointer-events: none;
             user-select: none;
@@ -42,7 +42,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #4a6fa5;
+            border-bottom: 2px solid #27ae60;
             margin-bottom: 20px;
         }
 
@@ -72,15 +72,15 @@
         }
 
         .items-table th {
-            background-color: #e8f0fa;
+            background-color: #e8f5e8;
             color: #2c3e50;
         }
 
         .section-title {
-            background-color: #e8f0fa;
+            background-color: #e8f5e8;
             padding: 5px;
             font-weight: bold;
-            border-left: 3px solid #4a6fa5;
+            border-left: 3px solid #27ae60;
             color: #2c3e50;
         }
 
@@ -97,7 +97,7 @@
 
         .total-row {
             font-weight: bold;
-            border-top: 1px solid #4a6fa5;
+            border-top: 1px solid #27ae60;
             color: #2c3e50;
         }
 
@@ -149,13 +149,13 @@
 </head>
 
 <body>
-    <div class="watermark-bg">{{ strtoupper(setting('company_name', 'SINAR SURYA SEMESTARAYA')) }}</div>
+    <div class="watermark-bg">{{ strtoupper('PT HIDAYAH CAHAYA BERKAH') }}</div>
     <!-- Header Section -->
     <table class="header-table">
         <tr style="margin-bottom: 10px;">
             <td style="width: 50%; vertical-align: middle;">
                 @php
-                    $logoPath = public_path('img/logo_nama3.png');
+                    $logoPath = public_path('img/LogoHCB-0.jpeg');
                     $logoExists = file_exists($logoPath);
                     $logoBase64 = '';
                     if ($logoExists) {
@@ -165,22 +165,22 @@
                 @endphp
 
                 @if ($logoExists && $logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Sinar Surya Logo"
+                    <img src="{{ $logoBase64 }}" alt="Hidayah Cahaya Berkah Logo"
                         style="height: 50px; max-width: 200px; object-fit: contain;">
                 @else
                     <div
-                        style="height: 50px; width: 200px; border: 1px dashed #4a6fa5; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #4a6fa5; background-color: #f0f4f8;">
-                        PT SINAR SURYA SEMESTARAYA
+                        style="height: 50px; width: 200px; border: 1px dashed #16a085; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #16a085; background-color: #f0fff4;">
+                        PT HIDAYAH CAHAYA BERKAH
                     </div>
                 @endif
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">QUOTATION</h2>
+                <h2 style="color: #27ae60; margin: 0 0 5px 0;">QUOTATION</h2>
                 <div>
                     <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
                     <strong>Status:</strong> <span
-                        style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
+                        style="text-transform: uppercase; color: #27ae60;">{{ $quotation->status }}</span>
                     <p></p>
                 </div>
             </td>
@@ -194,17 +194,13 @@
             <td>
                 <div class="section-title">Info Perusahaan</div>
                 <div style="padding: 5px;">
-                    <strong>{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</strong><br>
-                    {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }}<br>
-                    {{ setting('company_city', 'Jakarta Timur') }} {{ setting('company_postal_code', '13530') }}<br>
-                    Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
-                    E-mail: {{ setting('company_email', 'admin@kliksinarsurya.com') }}<br>
-                    @if (setting('company_email_2'))
-                        {{ setting('company_email_2') }}<br>
-                    @endif
-                    @if (setting('company_email_3'))
-                        {{ setting('company_email_3') }}
-                    @endif
+                    <strong>PT HIDAYAH CAHAYA BERKAH</strong><br>
+                    Jl. Raya Bekasi No. 88, Cakung<br>
+                    Jakarta Timur 13910, Indonesia<br>
+                    Telp. (021) 4608-7890 - (021) 4608-7891<br>
+                    E-mail: info@hidayahcahaya.com<br>
+                    sales@hidayahcahaya.com<br>
+                    Website: www.hidayahcahayaberkah.com
                 </div>
             </td>
             <td>
@@ -314,14 +310,14 @@
     <!-- Notes Section -->
     @if ($quotation->catatan)
         <div
-            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+            style="margin-bottom: 15px; border-left: 3px solid #27ae60; padding-left: 10px; background-color: #f8fafc;">
             <strong style="color: #2c3e50;">Catatan:</strong>
             <p>{{ $quotation->catatan }}</p>
         </div>
     @endif
 
     <!-- Terms and Conditions -->
-    <div style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
+    <div style="margin-bottom: 15px; border-left: 3px solid #27ae60; padding-left: 10px; background-color: #f8fafc;">
         <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
         @if ($quotation->syarat_ketentuan)
             <div style="margin-top: 5px;">{{ $quotation->syarat_ketentuan }}</div>
@@ -354,15 +350,9 @@
 
     <!-- Footer -->
     <div class="footer">
-        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-            <img src="{{ public_path('img/atsaka.webp') }}" alt="Atsaka Logo" style="height: 55px; margin: 0 30px;">
-            <img src="{{ public_path('img/polylab.webp') }}" alt="Polylab Logo" style="height: 35px; margin: 0 25px;">
-            <img src="{{ public_path('img/sumbunesia.webp') }}" alt="Sumbunesia Logo"
-                style="height: 55px; margin: 0 30px;">
-        </div>
         <div class="footer-text">
             <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB |
-                {{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</p>
+                PT HIDAYAH CAHAYA BERKAH</p>
         </div>
     </div>
 </body>

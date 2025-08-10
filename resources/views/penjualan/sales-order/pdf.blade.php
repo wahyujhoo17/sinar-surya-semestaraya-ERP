@@ -7,7 +7,7 @@
     <title>Sales Order {{ $salesOrder->nomor }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333;
@@ -186,6 +186,13 @@
             size: A4;
             margin: 1cm;
         }
+
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 
@@ -196,8 +203,22 @@
     <table class="header-table">
         <tr style="margin-bottom: 10px;">
             <td style="width: 50%; vertical-align: middle;">
-                <img src="{{ public_path('img/logo_nama3.png') }}" alt="Sinar Surya Logo"
-                    onerror="this.src='{{ public_path('img/logo-default.png') }}';" style="height: 60px;">
+                @php
+                    $logoPath = public_path('img/logo_nama3.png');
+                    $logoData = '';
+
+                    if (file_exists($logoPath)) {
+                        $logoData = 'data:image/png;base64,' . base64_encode(file_get_contents($logoPath));
+                    } else {
+                        // Fallback placeholder
+                        $logoData =
+                            'data:image/svg+xml;base64,' .
+                            base64_encode(
+                                '<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="60" fill="#4a6fa5"/><text x="100" y="35" font-family="Arial" font-size="14" fill="white" text-anchor="middle">SINAR SURYA</text></svg>',
+                            );
+                    }
+                @endphp
+                <img src="{{ $logoData }}" alt="Sinar Surya Logo" style="height: 60px;">
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
                 <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">SALES ORDER</h2>

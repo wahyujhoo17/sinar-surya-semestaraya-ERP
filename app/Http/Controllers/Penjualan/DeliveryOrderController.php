@@ -850,7 +850,7 @@ class DeliveryOrderController extends Controller
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
 
         } catch (\Exception $e) {
-            \Log::error('Error printing delivery order template: ' . $e->getMessage());
+            Log::error('Error printing delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
         }
     }
@@ -889,8 +889,108 @@ class DeliveryOrderController extends Controller
             return $pdf->Output($filename, 'D'); // 'D' for download
 
         } catch (\Exception $e) {
-            \Log::error('Error downloading delivery order template: ' . $e->getMessage());
+            Log::error('Error downloading delivery order template: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengunduh surat jalan: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export delivery order to PDF with template selection
+     */
+    public function exportPdf($id, Request $request)
+    {
+        try {
+            // Load delivery order dengan relasi yang diperlukan
+            $deliveryOrder = DeliveryOrder::with([
+                'salesOrder',
+                'customer',
+                'gudang',
+                'user',
+                'details.produk.satuan'
+            ])->findOrFail($id);            // Template configuration
+            $templates = [
+                'sinar-surya' => [
+                    'name' => 'PT Sinar Surya Semestaraya',
+                    'view' => 'penjualan.delivery-order.pdf.sinar-surya',
+                    'logo' => public_path('img/logo-sinar-surya.png')
+                ],
+                'atsaka' => [
+                    'name' => 'PT Indo Atsaka Industri',
+                    'view' => 'penjualan.delivery-order.pdf.atsaka',
+                    'logo' => public_path('img/PTIndoatsakaindustri-2.jpeg')
+                ],
+                'hidayah' => [
+                    'name' => 'PT Hidayah Cahaya Berkah',
+                    'view' => 'penjualan.delivery-order.pdf.hidayah',
+                    'logo' => public_path('img/LogoHCB-0.jpeg')
+                ]
+            ];
+
+            // Get template from request, default to sinar-surya
+            $template = $request->get('template', 'sinar-surya');
+
+            // Validate template
+            if (!array_key_exists($template, $templates)) {
+                $template = 'sinar-surya';
+            }
+
+            $templateConfig = $templates[$template];
+
+            // Convert logo to base64 untuk menghindari masalah path
+            $logoBase64 = '';
+            if (file_exists($templateConfig['logo'])) {
+                $logoData = file_get_contents($templateConfig['logo']);
+                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+            }
+
+            // Prepare data untuk view
+            $data = [
+                'deliveryOrder' => $deliveryOrder,
+                'template' => $templateConfig,
+                'logoBase64' => $logoBase64,
+                'currentDate' => now()->format('d F Y'),
+                'currentTime' => now()->format('H:i:s')
+            ];
+
+            // Generate PDF dengan pengaturan optimal
+            $pdf = Pdf::loadView($templateConfig['view'], $data);
+
+            // Set custom paper size (165x212mm)
+            $pdf->setPaper([0, 0, 467.72, 600.945], 'portrait'); // 165x212mm dalam points
+
+            // Optimasi PDF untuk performa
+            $pdf->setOptions([
+                'dpi' => 96,
+                'defaultFont' => 'sans-serif',
+                'isRemoteEnabled' => false,
+                'isJavascriptEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'fontSubsetting' => true,
+                'tempDir' => sys_get_temp_dir(),
+                'chroot' => public_path(),
+                'logOutputFile' => storage_path('logs/dompdf.log'),
+                'defaultMediaType' => 'print',
+                'isFontSubsettingEnabled' => true,
+            ]);
+
+            // Set memory limit dan execution time untuk PDF besar
+            ini_set('memory_limit', '512M');
+            ini_set('max_execution_time', 300);
+
+            $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '-' . $templateConfig['name'] . '.pdf';
+
+            // Log aktivitas
+            $this->logUserAktivitas(
+                'export delivery order pdf',
+                'delivery_order',
+                $deliveryOrder->id,
+                'Export surat jalan ke PDF menggunakan template: ' . $templateConfig['name']
+            );
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Error exporting delivery order PDF: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mengexport surat jalan ke PDF: ' . $e->getMessage());
         }
     }
 

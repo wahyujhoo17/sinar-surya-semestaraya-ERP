@@ -4,7 +4,27 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quotation - {{ $quotation->nomor }}</title>
+    <title>Quotation <td style="width: 50%; vertical-align: middle;">
+            @php
+                $logoPath = public_path('img/PTIndoatsakaindustri-2.jpeg');
+                $logoExists = file_exists($logoPath);
+                $logoBase64 = '';
+                if ($logoExists) {
+                    $logoData = file_get_contents($logoPath);
+                    $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                }
+            @endphp
+
+            @if ($logoExists && $logoBase64)
+                <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo"
+                    style="height: 50px; max-width: 200px; object-fit: contain;">
+            @else
+                <div
+                    style="height: 50px; width: 200px; border: 1px dashed #2E86AB; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #2E86AB; background-color: #f0f8ff;">
+                    PT INDO ATSAKA INDUSTRI
+                </div>
+            @endif
+        </td>{ $quotation->nomor }} - PT Indo Atsaka Industri</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,7 +35,7 @@
             padding: 0;
         }
 
-        /* Watermark background */
+        /* Watermark background - simplified */
         .watermark-bg {
             position: fixed;
             top: 50%;
@@ -23,14 +43,13 @@
             width: 100%;
             text-align: center;
             z-index: 0;
-            opacity: 0.07;
-            font-size: 70px;
+            opacity: 0.05;
+            font-size: 60px;
             font-weight: bold;
-            color: #4a6fa5;
+            color: #2E86AB;
             transform: translate(-50%, -50%) rotate(-25deg);
             pointer-events: none;
             user-select: none;
-            white-space: nowrap;
         }
 
         /* Simple table-based layout for better printing support */
@@ -42,7 +61,7 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #4a6fa5;
+            border-bottom: 2px solid #2E86AB;
             margin-bottom: 20px;
         }
 
@@ -66,22 +85,23 @@
 
         .items-table th,
         .items-table td {
-            border: 1px solid #b8c4d6;
-            padding: 6px;
+            border: 1px solid #ddd;
+            padding: 4px;
             text-align: left;
         }
 
         .items-table th {
-            background-color: #e8f0fa;
-            color: #2c3e50;
+            background-color: #f0f8ff;
+            color: #1565C0;
+            font-weight: bold;
         }
 
         .section-title {
-            background-color: #e8f0fa;
-            padding: 5px;
+            background-color: #f0f8ff;
+            padding: 4px;
             font-weight: bold;
-            border-left: 3px solid #4a6fa5;
-            color: #2c3e50;
+            border-left: 2px solid #2E86AB;
+            color: #1565C0;
         }
 
         .summary-table {
@@ -92,13 +112,15 @@
         }
 
         .summary-table td {
-            padding: 5px;
+            padding: 3px;
+            border-bottom: 1px solid #eee;
         }
 
         .total-row {
             font-weight: bold;
-            border-top: 1px solid #4a6fa5;
-            color: #2c3e50;
+            border-top: 1px solid #D32F2F;
+            background-color: #ffe8e8;
+            color: #C62828;
         }
 
         .signature-table {
@@ -114,25 +136,24 @@
         }
 
         .signature-line {
-            border-top: 1px solid #b8c4d6;
-            width: 80%;
-            margin: 50px auto 10px auto;
+            border-top: 1px solid #2E86AB;
+            width: 70%;
+            margin: 30px auto 8px auto;
         }
 
         .footer {
             text-align: center;
-            margin-top: 45px;
-            border-top: 1.5px solid #e0e6ed;
-            padding-top: 22px;
-            background-color: #f9fafb;
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
+            margin-top: 30px;
+            border-top: 1px solid #2E86AB;
+            padding-top: 15px;
+            background-color: #f8fbff;
         }
 
         .footer-text {
-            font-size: 9.5px;
-            color: #6b7280;
-            margin-top: 15px;
-            padding-bottom: 12px;
+            font-size: 9px;
+            color: #1565C0;
+            margin-top: 10px;
+            padding-bottom: 8px;
         }
 
         /* Simple utility classes */
@@ -140,47 +161,41 @@
             text-align: right;
         }
 
-        /* Print-specific styling */
+        /* Print optimization */
         @page {
             size: A4;
-            margin: 1cm;
+            margin: 0.8cm;
+        }
+
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+            }
+
+            .watermark-bg {
+                display: none;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="watermark-bg">{{ strtoupper(setting('company_name', 'SINAR SURYA SEMESTARAYA')) }}</div>
+    <div class="watermark-bg">{{ strtoupper('PT INDO ATSAKA INDUSTRI') }}</div>
     <!-- Header Section -->
     <table class="header-table">
         <tr style="margin-bottom: 10px;">
             <td style="width: 50%; vertical-align: middle;">
-                @php
-                    $logoPath = public_path('img/logo_nama3.png');
-                    $logoExists = file_exists($logoPath);
-                    $logoBase64 = '';
-                    if ($logoExists) {
-                        $logoData = file_get_contents($logoPath);
-                        $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-                    }
-                @endphp
-
-                @if ($logoExists && $logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Sinar Surya Logo"
-                        style="height: 50px; max-width: 200px; object-fit: contain;">
-                @else
-                    <div
-                        style="height: 50px; width: 200px; border: 1px dashed #4a6fa5; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #4a6fa5; background-color: #f0f4f8;">
-                        PT SINAR SURYA SEMESTARAYA
-                    </div>
-                @endif
+                <img src="{{ public_path('img/PT Indo atsaka industri-26.png') }}" alt="Indo Atsaka Logo"
+                    onerror="this.src='{{ public_path('img/logo-default.png') }}';"
+                    style="height: 50px; max-width: 200px; object-fit: contain;">
             </td>
             <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #4a6fa5; margin: 0 0 5px 0;">QUOTATION</h2>
+                <h2 style="color: #2E86AB; margin: 0 0 5px 0;">QUOTATION</h2>
                 <div>
                     <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
                     <strong>Status:</strong> <span
-                        style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
+                        style="text-transform: uppercase; color: #D32F2F;">{{ $quotation->status }}</span>
                     <p></p>
                 </div>
             </td>
@@ -194,17 +209,13 @@
             <td>
                 <div class="section-title">Info Perusahaan</div>
                 <div style="padding: 5px;">
-                    <strong>{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</strong><br>
-                    {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }}<br>
-                    {{ setting('company_city', 'Jakarta Timur') }} {{ setting('company_postal_code', '13530') }}<br>
-                    Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}<br>
-                    E-mail: {{ setting('company_email', 'admin@kliksinarsurya.com') }}<br>
-                    @if (setting('company_email_2'))
-                        {{ setting('company_email_2') }}<br>
-                    @endif
-                    @if (setting('company_email_3'))
-                        {{ setting('company_email_3') }}
-                    @endif
+                    <strong>PT INDO ATSAKA INDUSTRI</strong><br>
+                    Jl. Raya Condet No. 15A, Balekambang<br>
+                    Jakarta Timur 13530, Indonesia<br>
+                    Telp. (021) 8087-6625 - (021) 8087-6626<br>
+                    E-mail: info@indoatsaka.com<br>
+                    sales@indoatsaka.com<br>
+                    Website: www.indoatsaka.com
                 </div>
             </td>
             <td>
@@ -231,8 +242,8 @@
     </table>
 
     @if ($quotation->periode_start && $quotation->periode_end)
-        <div style="border: 1px dashed #b8c4d6; padding: 8px; margin-bottom: 15px; background-color: #f8fafc;">
-            <strong>Periode Penawaran:</strong>
+        <div style="border: 1px dashed #2E86AB; padding: 6px; margin-bottom: 12px; background-color: #f8fbff;">
+            <strong style="color: #1565C0;">Periode Penawaran:</strong>
             {{ \Carbon\Carbon::parse($quotation->periode_start)->format('d/m/Y') }} s/d
             {{ \Carbon\Carbon::parse($quotation->periode_end)->format('d/m/Y') }}
         </div>
@@ -313,20 +324,19 @@
 
     <!-- Notes Section -->
     @if ($quotation->catatan)
-        <div
-            style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-            <strong style="color: #2c3e50;">Catatan:</strong>
-            <p>{{ $quotation->catatan }}</p>
+        <div style="margin-bottom: 12px; border-left: 2px solid #2E86AB; padding-left: 8px; background-color: #f8fbff;">
+            <strong style="color: #1565C0;">Catatan:</strong>
+            <p style="margin: 3px 0;">{{ $quotation->catatan }}</p>
         </div>
     @endif
 
     <!-- Terms and Conditions -->
-    <div style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-        <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
+    <div style="margin-bottom: 12px; border-left: 2px solid #2E86AB; padding-left: 8px; background-color: #f8fbff;">
+        <strong style="color: #1565C0;">Syarat & Ketentuan:</strong>
         @if ($quotation->syarat_ketentuan)
-            <div style="margin-top: 5px;">{{ $quotation->syarat_ketentuan }}</div>
+            <div style="margin-top: 3px;">{{ $quotation->syarat_ketentuan }}</div>
         @else
-            <ol style="margin-top: 5px; padding-left: 20px;">
+            <ol style="margin: 3px 0; padding-left: 18px; font-size: 11px;">
                 <li>Penawaran ini berlaku selama periode yang tertera di atas</li>
                 <li>Harga belum termasuk pajak dan ongkos kirim, kecuali disebutkan secara eksplisit</li>
                 <li>Pembayaran dilakukan sesuai kesepakatan kedua belah pihak</li>
@@ -341,28 +351,22 @@
         <tr>
             <td>
                 <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">{{ $quotation->user->name ?? 'Sales' }}</strong></div>
-                <div style="color: #7f8c8d;">Sales</div>
+                <div><strong style="color: #1565C0;">{{ $quotation->user->name ?? 'Sales' }}</strong></div>
+                <div style="color: #2E86AB;">Sales</div>
             </td>
             <td>
                 <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">Mengetahui</strong></div>
-                <div style="color: #7f8c8d;">Direktur</div>
+                <div><strong style="color: #1565C0;">Mengetahui</strong></div>
+                <div style="color: #2E86AB;">Direktur</div>
             </td>
         </tr>
     </table>
 
     <!-- Footer -->
     <div class="footer">
-        <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 15px;">
-            <img src="{{ public_path('img/atsaka.webp') }}" alt="Atsaka Logo" style="height: 55px; margin: 0 30px;">
-            <img src="{{ public_path('img/polylab.webp') }}" alt="Polylab Logo" style="height: 35px; margin: 0 25px;">
-            <img src="{{ public_path('img/sumbunesia.webp') }}" alt="Sumbunesia Logo"
-                style="height: 55px; margin: 0 30px;">
-        </div>
         <div class="footer-text">
             <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB |
-                {{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</p>
+                PT INDO ATSAKA INDUSTRI</p>
         </div>
     </div>
 </body>
