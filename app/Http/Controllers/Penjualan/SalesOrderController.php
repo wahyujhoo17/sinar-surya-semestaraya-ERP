@@ -1042,7 +1042,7 @@ class SalesOrderController extends Controller
                 'isHtml5ParserEnabled' => true,
                 'isPhpEnabled' => false,
                 'isFontSubsettingEnabled' => true,
-                'defaultFont' => 'Arial',
+                'defaultFont' => 'DejaVu Sans',
                 'dpi' => 96,
                 'debugKeepTemp' => false,
                 'chroot' => public_path(),
@@ -1052,9 +1052,8 @@ class SalesOrderController extends Controller
             // Generate filename
             $filename = $templateConfig['filename_prefix'] . '-' . $salesOrder->nomor . '.pdf';
 
-            // Stream the PDF for better performance
-            return $pdf->download($filename);
-            
+            // Stream the PDF instead of download
+            return $pdf->stream($filename);
         } catch (\Exception $e) {
             Log::error('Error generating PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');

@@ -166,13 +166,12 @@
 
         /* Header Section */
         .header-section {
-            width: calc(100% - 60px);
+            width: 100%;
             background-color: #1F2A44;
             color: white;
             padding: 15px 20px;
-            margin: 0 10px 15px 10px;
+            margin: 0;
             position: relative;
-            box-sizing: border-box;
         }
 
         .header-content {
@@ -188,19 +187,13 @@
             float: right;
             width: 30%;
             text-align: right;
-            padding-right: 8px;
         }
 
         .company-logo {
             float: left;
             margin-right: 15px;
             max-height: 50px;
-            max-width: 50px;
-            background-color: white;
-            border-radius: 50%;
-            padding: 10px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-width: 80px;
         }
 
         .company-name {
@@ -242,9 +235,9 @@
 
         /* Invoice Details Section */
         .invoice-details {
-            width: calc(100% - 60px);
-            margin: 0 10px 15px 10px;
-            padding: 15px 20px;
+            width: 100%;
+            margin: 15px 0;
+            padding: 0 20px;
         }
 
         .invoice-to {
@@ -294,9 +287,9 @@
 
         /* Table Styles */
         .invoice-table {
-            width: calc(100% - 20px);
+            width: calc(100% - 40px);
             border-collapse: collapse;
-            margin: 10px 10px;
+            margin: 10px 20px;
             font-size: 10px;
         }
 
@@ -374,127 +367,120 @@
 
         /* Total Summary */
         .total-summary {
-            width: calc(100% - 60px);
-            margin: 20px 30px;
-            padding: 0;
+            width: 100%;
+            margin: 15px 0;
+            padding: 0 20px;
             page-break-inside: avoid;
+        }
+
+        .total-due-section {
+            float: left;
+            width: 55%;
         }
 
         .summary-section {
             float: right;
             width: 40%;
-            padding: 0;
+        }
+
+        .total-due-label {
+            color: #475569;
+            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .total-due-line {
+            height: 2px;
+            background-color: #E74C3C;
+            width: 200px;
+            margin: 8px 0;
+        }
+
+        .total-due-amount {
+            font-size: 22px;
+            font-weight: bold;
+            color: #E74C3C;
+            margin: 10px 0;
+            letter-spacing: 0.5px;
         }
 
         .summary-item {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-size: 11px;
+            overflow: hidden;
             clear: both;
-            box-sizing: border-box;
-            padding: 2px 0;
-            display: table;
-            table-layout: fixed;
         }
 
         .summary-item .label {
-            display: table-cell;
-            width: 65%;
+            float: left;
+            width: 58%;
             line-height: 1.4;
-            color: #475569 !important;
-            font-weight: normal;
-            vertical-align: top;
         }
 
         .summary-item .amount {
-            display: table-cell;
+            float: right;
             font-weight: bold;
             text-align: right;
-            width: 35%;
+            width: 40%;
             line-height: 1.4;
-            color: #0f172a !important;
-            vertical-align: top;
         }
 
         .summary-highlight {
-            background-color: rgba(239, 68, 68, 0.1);
-            padding: 4px 6px;
-            margin: 2px -6px;
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 6px 8px;
+            margin: 4px 0;
             border-radius: 3px;
         }
 
-        .summary-highlight .label {
-            color: #dc2626 !important;
-            font-weight: 500;
-        }
-
-        .summary-highlight .amount {
-            color: #dc2626 !important;
+        .summary-total {
+            background-color: #E74C3C;
+            color: white;
+            padding: 12px 10px;
+            margin-top: 10px;
             font-weight: bold;
-        }
-
-        /* Total at bottom */
-        .total-final {
-            width: 100%;
-            margin-top: 15px;
-            padding: 12px 0;
-            border-top: 2px solid #E74C3C;
-            font-size: 14px;
-            font-weight: bold;
-            color: #1F2A44;
+            font-size: 13px;
+            overflow: hidden;
             clear: both;
-            display: table;
-            table-layout: fixed;
+            border-radius: 4px;
+            page-break-inside: avoid;
+            box-sizing: border-box;
+            width: 100%;
         }
 
-        .total-final .label {
-            display: table-cell;
-            width: 65%;
-            vertical-align: top;
+        .summary-total .label {
+            float: left;
+            width: 58%;
+            line-height: 1.4;
         }
 
-        .total-final .amount {
-            display: table-cell;
+        .summary-total .amount {
+            float: right;
             text-align: right;
-            width: 55%;
-            color: #E74C3C;
-            vertical-align: top;
+            width: 40%;
+            line-height: 1.4;
+            font-weight: bold;
         }
 
         /* Terms and Signature */
         .terms-signature {
-            width: calc(100% - 60px);
-            margin: 25px 30px;
-            padding: 0;
+            width: 100%;
+            margin: 15px 0;
+            padding: 0 20px;
             font-size: 10px;
             page-break-inside: avoid;
         }
 
         .terms-section {
             float: left;
-            width: 100%;
-            margin-bottom: 30px;
+            width: 60%;
         }
 
         .signature-section {
-            width: 100%;
-            margin-top: 20px;
-            clear: both;
-        }
-
-        .signature-row {
-            width: 100%;
-            display: table;
-            table-layout: fixed;
-            margin-top: 15px;
-        }
-
-        .signature-item {
-            display: table-cell;
-            width: 45%;
-            text-align: center;
-            vertical-align: top;
-            padding: 0 10px;
+            float: right;
+            width: 35%;
+            text-align: right;
         }
 
         .terms-title {
@@ -525,10 +511,7 @@
 
         /* Thank you message - now as footer */
         .footer-thank-you {
-            position: fixed;
-            bottom: 30px;
-            left: 0;
-            right: 0;
+            margin: 20px 0 10px 0;
             font-size: 13px;
             color: #334155;
             text-align: center;
@@ -540,12 +523,10 @@
 
         /* Footer decoration - simplified for PDF */
         .footer-decoration {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            width: 100%;
             height: 25px;
             background-color: #1F2A44;
+            margin: 0;
         }
 
         /* Additional spacing optimizations */
@@ -600,7 +581,7 @@
                 <div class="header-content clearfix">
                     <div class="company-info">
                         @php
-                            $logoPath = public_path('img/atsaka.webp');
+                            $logoPath = public_path('img/atsaka.PNG');
                             $logoExists = file_exists($logoPath);
                             $logoBase64 = '';
                             if ($logoExists) {
@@ -613,12 +594,7 @@
                             <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo" class="company-logo">
                         @else
                             <div class="company-logo"
-                                style="width: 80px; height: 80px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); border: 2px solid rgba(255, 255, 255, 0.1);">
-                                <div
-                                    style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: white; font-weight: bold; font-size: 18px;">IA</span>
-                                </div>
-                            </div>
+                                style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%;"></div>
                         @endif
 
                         <div style="margin-left: 100px;">
@@ -670,12 +646,14 @@
                         <p>Jl. Raya Bekasi Km. 28 No. 1A</p>
                         <p>Bekasi Timur 17141</p>
                         <p>Telp: (021) 8250-8851</p>
+                        <p>Email: info@indoatsaka.com</p>
                     </div>
                 </div>
             </div>
 
             @if ($quotation->periode_start && $quotation->periode_end)
-                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
+                <div
+                    style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 20px; background-color: #fff5f5; border-radius: 4px;">
                     <strong style="color: #E74C3C; font-size: 12px;">Periode Penawaran:</strong>
                     <span style="font-weight: bold; color: #1F2A44;">
                         {{ \Carbon\Carbon::parse($quotation->periode_start)->format('d/m/Y') }} s/d
@@ -717,6 +695,9 @@
                                     @if ($detail->diskon_persen > 0)
                                         {{ number_format($detail->diskon_persen, 1) }}%
                                     @endif
+                                    @if ($detail->diskon_nominal > 0)
+                                        Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
+                                    @endif
                                 </td>
                                 <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                             </tr>
@@ -727,6 +708,11 @@
 
             <!-- Totals -->
             <div class="total-summary clearfix">
+                <div class="total-due-section">
+                    <p class="total-due-label">Total Penawaran</p>
+                    <div class="total-due-line"></div>
+                    <p class="total-due-amount">Rp {{ number_format($quotation->total, 0, ',', '.') }}</p>
+                </div>
                 <div class="summary-section">
                     <div class="summary-item clearfix">
                         <span class="label">Subtotal:</span>
@@ -735,8 +721,7 @@
                     @if ($quotation->diskon_nominal > 0)
                         <div class="summary-item summary-highlight clearfix">
                             <span class="label">Diskon ({{ number_format($quotation->diskon_persen, 1) }}%):</span>
-                            <span class="amount">-Rp
-                                {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}</span>
+                            <span class="amount">Rp {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}</span>
                         </div>
                     @endif
                     @if ($quotation->ppn > 0)
@@ -752,8 +737,8 @@
                             <span class="amount">Rp {{ number_format($quotation->ongkos_kirim, 0, ',', '.') }}</span>
                         </div>
                     @endif
-                    <div class="total-final clearfix">
-                        <span class="label">TOTAL:</span>
+                    <div class="summary-total clearfix">
+                        <span class="label">Total:</span>
                         <span class="amount">Rp {{ number_format($quotation->total, 0, ',', '.') }}</span>
                     </div>
                 </div>
@@ -762,7 +747,7 @@
             <!-- Notes Section -->
             @if ($quotation->catatan)
                 <div
-                    style="margin: 10px 10px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                    style="margin: 10px 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
                     <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
                     <p style="font-size: 9px; margin: 2px 0;">{{ $quotation->catatan }}</p>
                 </div>
@@ -776,30 +761,19 @@
                         @if ($quotation->syarat_ketentuan)
                             {{ $quotation->syarat_ketentuan }}
                         @else
-                            <div style="font-size: 9px; line-height: 1.4;">
+                            <div style="font-size: 8px;">
                                 1. Penawaran berlaku sesuai periode yang tertera<br>
                                 2. Harga belum termasuk pajak dan ongkos kirim<br>
                                 3. Pembayaran sesuai kesepakatan kedua belah pihak<br>
-                                4. Pengiriman setelah pembayaran diterima<br>
-                                5. Barang yang sudah dibeli tidak dapat dikembalikan
+                                4. Pengiriman setelah pembayaran diterima
                             </div>
                         @endif
                     </div>
                 </div>
-
                 <div class="signature-section">
-                    <div class="signature-row">
-                        <div class="signature-item">
-                            <div class="signature-line"></div>
-                            <p class="signature-label">{{ $quotation->user->name ?? 'Sales' }}</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
-                        </div>
-                        <div class="signature-item">
-                            <div class="signature-line"></div>
-                            <p class="signature-label">Direktur</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">PT Indo Atsaka Industri</p>
-                        </div>
-                    </div>
+                    <div class="signature-line"></div>
+                    <p class="signature-label">{{ $quotation->user->name ?? 'Sales' }}</p>
+                    <p style="font-size: 8px; margin: 0;">Sales Representative</p>
                 </div>
             </div>
         </div>

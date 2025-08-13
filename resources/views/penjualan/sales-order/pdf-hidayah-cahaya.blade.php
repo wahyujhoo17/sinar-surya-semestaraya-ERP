@@ -6,379 +6,506 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sales Order - {{ $salesOrder->nomor }} - PT Hidayah Cahaya Berkah</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
-            margin: 0;
-            padding: 0;
+        :root {
+            --hcb-blue: #002147;
+            --hcb-green: #27ae60;
+            --hcb-orange: #FF6E00;
         }
 
-        /* Watermark background */
+        body {
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            background-color: #ffffff;
+            font-size: 11px;
+            line-height: 1.3;
+            color: #1f2937;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .quotation-container {
+            max-width: 100%;
+            margin: 0;
+            background-color: #ffffff;
+            padding: 8mm 5mm;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 120px;
+        }
+
+        @page {
+            size: A4;
+            margin: 8mm 5mm;
+        }
+
         .watermark-bg {
             position: fixed;
             top: 50%;
             left: 50%;
             width: 100%;
             text-align: center;
-            z-index: 0;
-            opacity: 0.05;
-            font-size: 60px;
+            z-index: 1000;
+            opacity: 0.07;
+            font-size: 50px;
             font-weight: bold;
-            color: #16a085;
+            color: var(--hcb-green);
             transform: translate(-50%, -50%) rotate(-25deg);
             pointer-events: none;
             user-select: none;
+            white-space: nowrap;
         }
 
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-bottom: 2px solid #16a085;
-            margin-bottom: 20px;
-        }
-
-        .info-table {
+        .custom-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 15px;
+            font-size: 10px;
         }
 
-        .info-table td {
-            vertical-align: top;
-            padding: 5px;
-            width: 50%;
-        }
-
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-
-        .items-table th,
-        .items-table td {
-            border: 1px solid #ddd;
-            padding: 4px;
+        .custom-table th,
+        .custom-table td {
+            border: 1px solid #d1d5db;
+            padding: 8px;
             text-align: left;
+            vertical-align: top;
         }
 
-        .items-table th {
-            background-color: #f0fff4;
-            color: #16a085;
-            font-weight: bold;
+        .custom-table th {
+            background-color: var(--hcb-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-size: 10px;
+            padding: 10px 8px;
         }
 
-        .section-title {
-            background-color: #f0fff4;
-            padding: 4px;
-            font-weight: bold;
-            border-left: 2px solid #16a085;
-            color: #16a085;
+        .custom-table tr:nth-child(even) {
+            background-color: #f8fafc;
         }
 
-        .summary-table {
-            border-collapse: collapse;
-            width: 40%;
-            margin-left: 60%;
-            margin-bottom: 15px;
+        .total-summary {
+            width: calc(100% - 60px);
+            margin: 20px 30px;
+            padding: 0;
+            page-break-inside: avoid;
         }
 
-        .summary-table td {
-            padding: 3px;
-            border-bottom: 1px solid #eee;
-        }
-
-        .total-row {
-            font-weight: bold;
-            border-top: 1px solid #16a085;
-            background-color: #f0fff4;
-            color: #16a085;
-        }
-
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-        }
-
-        .signature-table td {
+        .summary-section {
+            float: right;
             width: 50%;
-            vertical-align: bottom;
-            text-align: center;
+            padding: 0;
+            min-width: 300px;
         }
 
-        .signature-line {
-            border-top: 1px solid #16a085;
-            width: 70%;
-            margin: 30px auto 8px auto;
+        .summary-item {
+            width: 100%;
+            margin-bottom: 6px;
+            font-size: 11px;
+            clear: both;
+            box-sizing: border-box;
+            padding: 2px 0;
+            display: table;
+            table-layout: fixed;
         }
 
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            border-top: 1px solid #16a085;
-            padding-top: 15px;
-            background-color: #f0fff4;
+        .summary-item .label {
+            display: table-cell;
+            width: 55%;
+            line-height: 1.4;
+            color: #4b5563 !important;
+            font-weight: normal;
+            vertical-align: top;
         }
 
-        .footer-text {
-            font-size: 9px;
-            color: #16a085;
-            margin-top: 10px;
-            padding-bottom: 8px;
-        }
-
-        .text-right {
+        .summary-item .amount {
+            display: table-cell;
+            font-weight: bold;
             text-align: right;
+            width: 45%;
+            line-height: 1.4;
+            color: #111827 !important;
+            vertical-align: top;
+            white-space: nowrap;
         }
 
-        @page {
-            size: A4;
-            margin: 0.8cm;
+        .summary-highlight {
+            background-color: rgba(239, 68, 68, 0.1);
+            padding: 4px 6px;
+            margin: 2px -6px;
+            border-radius: 3px;
         }
 
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-            }
+        .summary-highlight .label {
+            color: #dc2626 !important;
+            font-weight: 500;
+        }
 
-            .watermark-bg {
-                display: none;
-            }
+        .summary-highlight .amount {
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
+
+        .total-final {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 0;
+            border-top: 2px solid var(--hcb-blue);
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--hcb-blue);
+            clear: both;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .total-final .label {
+            display: table-cell;
+            width: 55%;
+            vertical-align: top;
+        }
+
+        .total-final .amount {
+            display: table-cell;
+            text-align: right;
+            width: 45%;
+            color: var(--hcb-orange);
+            font-weight: bold;
+            vertical-align: top;
+            white-space: nowrap;
+        }
+
+        .signature-section {
+            margin-top: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            display: table;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            page-break-inside: avoid;
+        }
+
+        .footer-fixed {
+            position: fixed;
+            bottom: 5mm;
+            left: 5mm;
+            right: 5mm;
+            text-align: center;
+            padding: 10px 0;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f8fafc;
         }
     </style>
 </head>
 
 <body>
     <div class="watermark-bg">{{ strtoupper('PT HIDAYAH CAHAYA BERKAH') }}</div>
-    <!-- Header Section -->
-    <table class="header-table">
-        <tr style="margin-bottom: 10px;">
-            <td style="width: 50%; vertical-align: middle;">
-                @php
-                    $logoPath = public_path('img/LogoHCB-0.jpeg');
-                    $logoExists = file_exists($logoPath);
-                    $logoBase64 = '';
-                    if ($logoExists) {
-                        $logoData = file_get_contents($logoPath);
-                        $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-                    }
-                @endphp
+    <div class="quotation-container relative z-10">
+        <!-- Header Section -->
+        <div style="display: table; width: 100%; margin-bottom: 0px; border-collapse: separate; border-spacing: 0;">
+            <div style="display: table-row;">
+                <!-- Logo and Company Info -->
+                <div style="display: table-cell; vertical-align: middle; width: 65%; padding-right: 8px;">
+                    <div style="display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; min-height: 48px;">
+                        @php
+                            $logoPath = public_path('img/LogoHCB-0.jpeg');
+                            $logoExists = file_exists($logoPath);
+                            $logoBase64 = '';
+                            if ($logoExists) {
+                                $logoData = file_get_contents($logoPath);
+                                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                            }
+                        @endphp
 
-                @if ($logoExists && $logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Hidayah Cahaya Berkah Logo"
-                        style="height: 50px; max-width: 200px; object-fit: contain;">
-                @else
-                    <div
-                        style="height: 50px; width: 200px; border: 1px dashed #16a085; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #16a085; background-color: #f0fff4;">
-                        PT HIDAYAH CAHAYA BERKAH
+                        @if ($logoExists && $logoBase64)
+                            <img src="{{ $logoBase64 }}" alt="HCB Logo"
+                                style="height: 38px; width: auto; max-width: 60px; object-fit: contain; border-radius: 4px; flex-shrink: 0; vertical-align: middle; background-color: white; padding: 3px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+                        @else
+                            <div
+                                style="height: 38px; width: 60px; border: 2px dashed var(--hcb-green); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--hcb-green); background-color: #f0fdf4; border-radius: 4px; font-weight: 600; flex-shrink: 0;">
+                                HCB
+                            </div>
+                        @endif
+                        <span
+                            style="font-size: 13px; font-weight: 800; color: var(--hcb-blue); letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; line-height: 1; vertical-align: middle;">
+                            PT HIDAYAH CAHAYA BERKAH
+                        </span>
                     </div>
-                @endif
-            </td>
-            <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #16a085; margin: 0 0 5px 0;">SALES ORDER</h2>
-                <div>
-                    <strong>Nomor:</strong> {{ $salesOrder->nomor }}<br>
-                    @if ($salesOrder->nomor_po)
-                        <strong>No. PO:</strong> {{ $salesOrder->nomor_po }}<br>
-                    @endif
-                    <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}<br>
-                    <strong>Status Pembayaran:</strong> <span
-                        style="text-transform: uppercase; color: #e74c3c;">{{ $salesOrder->status_pembayaran }}</span><br>
-                    <strong>Status Pengiriman:</strong> <span
-                        style="text-transform: uppercase; color: #e74c3c;">{{ $salesOrder->status_pengiriman }}</span>
-                    <p></p>
                 </div>
-            </td>
-        </tr>
-    </table>
 
-    <!-- Company and Customer Info Section -->
-    <table class="info-table">
-        <tr>
-            <td>
-                <div class="section-title">Info Perusahaan</div>
-                <div style="padding: 5px;">
-                    <strong>PT HIDAYAH CAHAYA BERKAH</strong><br>
-                    Jl. Raya Serpong KM 8 No. 10<br>
-                    Pakulonan, Serpong Utara<br>
-                    Tangerang Selatan 15326, Indonesia<br>
-                    Telp. (021) 537-8888<br>
-                    E-mail: info@hidayahcahaya.com<br>
-                    Website: www.hidayahcahaya.com
+                <!-- Sales Order Info -->
+                <div style="display: table-cell; vertical-align: middle; width: 35%; text-align: right;">
+                    <div
+                        style="background-color: #f8fafc; padding: 8px; border-radius: 5px; border-left: 4px solid var(--hcb-orange); min-height: 48px;">
+                        <div
+                            style="font-size: 16px; font-weight: 700; color: var(--hcb-orange); margin-bottom: 4px; letter-spacing: 1px;">
+                            SALES ORDER
+                        </div>
+                        <div style="font-size: 10px; line-height: 1.3; color: #374151;">
+                            <div style="margin-bottom: 2px;">
+                                <span style="font-weight: 600; color: #1f2937;">No:</span>
+                                <span style="color: var(--hcb-blue); font-weight: 600;">{{ $salesOrder->nomor }}</span>
+                            </div>
+                            @if ($salesOrder->nomor_po)
+                                <div style="margin-bottom: 2px;">
+                                    <span style="font-weight: 600; color: #1f2937;">No. PO:</span>
+                                    <span
+                                        style="color: var(--hcb-blue); font-weight: 600;">{{ $salesOrder->nomor_po }}</span>
+                                </div>
+                            @endif
+                            <div style="margin-bottom: 2px;">
+                                <span style="font-weight: 600; color: #1f2937;">Tanggal:</span>
+                                <span
+                                    style="color: #374151;">{{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}</span>
+                            </div>
+                            <div style="margin-bottom: 2px;">
+                                <span style="font-weight: 600; color: #1f2937;">Status Pembayaran:</span>
+                                <span
+                                    style="color: var(--hcb-green); font-weight: 700; text-transform: uppercase; background-color: #f0fdf4; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $salesOrder->status_pembayaran }}</span>
+                            </div>
+                            <div>
+                                <span style="font-weight: 600; color: #1f2937;">Status Pengiriman:</span>
+                                <span
+                                    style="color: var(--hcb-orange); font-weight: 700; text-transform: uppercase; background-color: #fff7ed; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $salesOrder->status_pengiriman }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </td>
-            <td>
-                <div class="section-title">Customer</div>
-                <div style="padding: 5px;">
-                    <strong>{{ $salesOrder->customer->company ?? $salesOrder->customer->nama }}</strong><br>
-                    {{ $salesOrder->customer->alamat ?? '-' }}<br>
-                    @if ($salesOrder->customer->telepon)
-                        Telp: {{ $salesOrder->customer->telepon }}<br>
-                    @endif
-                    @if ($salesOrder->customer->email)
-                        Email: {{ $salesOrder->customer->email }}<br>
-                    @endif
-                    @if ($salesOrder->customer->kontak_person)
-                        Kontak: {{ $salesOrder->customer->kontak_person }}
-                        @if ($salesOrder->customer->no_hp_kontak)
-                            ({{ $salesOrder->customer->no_hp_kontak }})
-                        @endif
-                        <br>
-                    @endif
-                    @if ($salesOrder->alamat_pengiriman)
-                        <br><strong>Alamat Pengiriman:</strong><br>
-                        {{ $salesOrder->alamat_pengiriman }}
-                    @endif
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    @if ($salesOrder->tanggal_kirim)
-        <div style="border: 1px dashed #16a085; padding: 6px; margin-bottom: 12px; background-color: #f0fff4;">
-            <strong style="color: #16a085;">Tanggal Pengiriman:</strong>
-            {{ \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('d/m/Y') }}
-        </div>
-    @endif
-
-    @if ($salesOrder->quotation_id)
-        <div style="border: 1px dashed #16a085; padding: 6px; margin-bottom: 12px; background-color: #f0fff4;">
-            <strong style="color: #16a085;">Referensi Quotation:</strong>
-            {{ $salesOrder->quotation->nomor ?? '-' }}
-        </div>
-    @endif
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th width="5%">No</th>
-                <th width="30%">Produk</th>
-                <th width="10%">Qty</th>
-                <th width="10%">Satuan</th>
-                <th width="15%">Harga</th>
-                <th width="10%">Diskon</th>
-                <th width="20%">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $no = 1; @endphp
-            @foreach ($salesOrder->details as $detail)
-                <tr>
-                    <td>{{ $no++ }}</td>
-                    <td>
-                        <strong>{{ $detail->produk->nama ?? 'Produk' }}</strong>
-                        @if ($detail->deskripsi)
-                            <br><span style="font-size: 10px;">{{ $detail->deskripsi }}</span>
-                        @endif
-                    </td>
-                    <td>{{ number_format($detail->quantity, 0) }}</td>
-                    <td>{{ $detail->satuan->nama ?? '-' }}</td>
-                    <td>Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                    <td>
-                        @if ($detail->diskon_persen > 0)
-                            {{ number_format($detail->diskon_persen, 1) }}%
-                        @endif
-                        @if ($detail->diskon_nominal > 0)
-                            Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
-                        @endif
-                    </td>
-                    <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
-    <!-- Summary Table -->
-    <table class="summary-table">
-        <tr>
-            <td>Subtotal</td>
-            <td class="text-right">Rp {{ number_format($salesOrder->subtotal, 0, ',', '.') }}</td>
-        </tr>
-        @if ($salesOrder->diskon_nominal > 0)
-            <tr>
-                <td>Diskon ({{ number_format($salesOrder->diskon_persen, 1) }}%)</td>
-                <td class="text-right">Rp {{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</td>
-            </tr>
-        @endif
-        @if ($salesOrder->ppn > 0)
-            <tr>
-                <td>PPN ({{ $salesOrder->ppn }}%)</td>
-                <td class="text-right">Rp
-                    {{ number_format($salesOrder->subtotal * ($salesOrder->ppn / 100), 0, ',', '.') }}</td>
-            </tr>
-        @endif
-        @if ($salesOrder->ongkos_kirim > 0)
-            <tr>
-                <td>Ongkos Kirim</td>
-                <td class="text-right">Rp {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</td>
-            </tr>
-        @endif
-        <tr class="total-row">
-            <td><strong>Total</strong></td>
-            <td class="text-right"><strong>Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</strong></td>
-        </tr>
-    </table>
-
-    <!-- Notes Section -->
-    @if ($salesOrder->catatan)
-        <div style="margin-bottom: 12px; border-left: 2px solid #16a085; padding-left: 8px; background-color: #f0fff4;">
-            <strong style="color: #16a085;">Catatan:</strong>
-            <p style="margin: 3px 0;">{{ $salesOrder->catatan }}</p>
-        </div>
-    @endif
-
-    <!-- Terms and Conditions -->
-    <div style="margin-bottom: 12px; border-left: 2px solid #16a085; padding-left: 8px; background-color: #f0fff4;">
-        <strong style="color: #16a085;">Syarat & Ketentuan:</strong>
-        @if ($salesOrder->syarat_ketentuan)
-            <div style="margin-top: 3px;">{{ $salesOrder->syarat_ketentuan }}</div>
-        @else
-            <ol style="margin: 3px 0; padding-left: 18px; font-size: 11px;">
-                <li>Sales Order ini berlaku sesuai tanggal yang tertera</li>
-                <li>Harga belum termasuk pajak dan ongkos kirim, kecuali disebutkan secara eksplisit</li>
-                <li>Pembayaran dilakukan sesuai kesepakatan kedua belah pihak</li>
-                <li>Pengiriman dilakukan sesuai jadwal yang disepakati</li>
-            </ol>
-        @endif
-    </div>
-
-    @if ($salesOrder->terms_pembayaran)
-        <div style="margin-bottom: 12px; border-left: 2px solid #16a085; padding-left: 8px; background-color: #f0fff4;">
-            <strong style="color: #16a085;">Terms Pembayaran:</strong>
-            <div style="margin-top: 3px;">
-                {{ $salesOrder->terms_pembayaran }}
-                @if ($salesOrder->terms_pembayaran_hari)
-                    ({{ $salesOrder->terms_pembayaran_hari }} hari)
-                @endif
             </div>
         </div>
-    @endif
 
-    <!-- Signatures -->
-    <table class="signature-table">
-        <tr>
-            <td>
-                <div class="signature-line"></div>
-                <div><strong style="color: #16a085;">{{ $salesOrder->user->name ?? 'Sales' }}</strong></div>
-                <div style="color: #16a085;">Sales</div>
-            </td>
-            <td>
-                <div class="signature-line"></div>
-                <div><strong style="color: #16a085;">Mengetahui</strong></div>
-                <div style="color: #16a085;">Direktur</div>
-            </td>
-        </tr>
-    </table>
+        <div
+            style="height: 3px; background: linear-gradient(to right, var(--hcb-blue) 0%, var(--hcb-green) 50%, var(--hcb-orange) 100%); margin: 15px 0; border-radius: 2px;">
+        </div>
 
-    <!-- Footer -->
-    <div class="footer">
-        <div class="footer-text">
-            <p>Dokumen ini dicetak secara digital pada {{ now()->format('d M Y, H:i') }} WIB |
-                PT HIDAYAH CAHAYA BERKAH</p>
+        <!-- Company and Customer Info Section -->
+        <div style="display: table; width: 100%; margin-bottom: 20px; border-collapse: separate; border-spacing: 0;">
+            <div style="display: table-row;">
+                <!-- DARI Section -->
+                <div style="display: table-cell; vertical-align: top; width: 48%; padding-right: 30px;">
+                    <div
+                        style="font-size: 12px; font-weight: 700; color: var(--hcb-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--hcb-blue);">
+                        DARI:
+                    </div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">
+                        PT HIDAYAH CAHAYA BERKAH
+                    </div>
+                    <div style="font-size: 11px; line-height: 1.4; color: #374151;">
+                        Jl. Raya Bekasi No. 88, Cakung<br>
+                        Jakarta Timur 13910, Indonesia<br>
+                        Telp: (021) 4608-7890 - (021) 4608-7891<br>
+                    </div>
+                </div>
+                <!-- UNTUK Section -->
+                <div style="display: table-cell; vertical-align: top; width: 52%;">
+                    <div
+                        style="font-size: 12px; font-weight: 700; color: var(--hcb-orange); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--hcb-orange);">
+                        UNTUK:
+                    </div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">
+                        {{ $salesOrder->customer->company ?? $salesOrder->customer->nama }}
+                    </div>
+                    <div style="font-size: 11px; line-height: 1.4; color: #374151;">
+                        {{ $salesOrder->customer->alamat ?? '-' }}<br>
+                        @if ($salesOrder->customer->telepon)
+                            Telp: {{ $salesOrder->customer->telepon }}<br>
+                        @endif
+                        @if ($salesOrder->customer->email)
+                            Email: {{ $salesOrder->customer->email }}<br>
+                        @endif
+                        @if ($salesOrder->customer->kontak_person)
+                            Kontak: {{ $salesOrder->customer->kontak_person }}
+                            @if ($salesOrder->customer->no_hp_kontak)
+                                ({{ $salesOrder->customer->no_hp_kontak }})
+                            @endif
+                        @endif
+                        @if ($salesOrder->alamat_pengiriman)
+                            <br><strong>Alamat Pengiriman:</strong><br>
+                            {{ $salesOrder->alamat_pengiriman }}
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if ($salesOrder->tanggal_kirim)
+            <div
+                style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; font-size: 10px;">
+                <svg style="height: 14px; width: 14px; color: #3b82f6; margin-right: 0.5rem;" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <strong style="color: #1d4ed8; margin-right: 0.5rem;">Tanggal Pengiriman:</strong>
+                <span
+                    style="color: #2563eb;">{{ \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('d/m/Y') }}</span>
+            </div>
+        @endif
+
+        @if ($salesOrder->quotation_id)
+            <div
+                style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; font-size: 10px;">
+                <svg style="height: 14px; width: 14px; color: #3b82f6; margin-right: 0.5rem;" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                    </path>
+                </svg>
+                <strong style="color: #1d4ed8; margin-right: 0.5rem;">Referensi Quotation:</strong>
+                <span style="color: #2563eb;">{{ $salesOrder->quotation->nomor ?? '-' }}</span>
+            </div>
+        @endif
+
+        <!-- Items Table -->
+        <div
+            style="font-size: 10px; font-weight: 600; color: var(--hcb-blue); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            Detail Pesanan:</div>
+        <div
+            style="overflow-x: auto; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-radius: 0.25rem; margin-bottom: 1rem;">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%; text-align: center;">No</th>
+                        <th style="width: 40%;">Produk</th>
+                        <th style="width: 8%; text-align: center;">Qty</th>
+                        <th style="width: 10%; text-align: center;">Satuan</th>
+                        <th style="width: 15%; text-align: right;">Harga</th>
+                        <th style="width: 10%; text-align: center;">Diskon</th>
+                        <th style="width: 19%; text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $no = 1; @endphp
+                    @foreach ($salesOrder->details as $detail)
+                        <tr>
+                            <td style="text-align: center; font-weight: 600;">{{ $no++ }}</td>
+                            <td>
+                                <div style="font-weight: 500; color: #111827; margin-bottom: 2px;">
+                                    {{ $detail->produk->nama ?? 'Produk' }}</div>
+                                @if ($detail->deskripsi)
+                                    <div style="color: #6b7280; font-size: 9px; line-height: 1.2;">
+                                        {{ $detail->deskripsi }}</div>
+                                @endif
+                            </td>
+                            <td style="text-align: center;">{{ number_format($detail->quantity, 0) }}</td>
+                            <td style="text-align: center;">{{ $detail->satuan->nama ?? '-' }}</td>
+                            <td style="text-align: right;">{{ number_format($detail->harga, 0, ',', '.') }}</td>
+                            <td style="text-align: center; font-size: 9px;">
+                                @if ($detail->diskon_persen > 0)
+                                    {{ number_format($detail->diskon_persen, 1) }}%
+                                @endif
+                            </td>
+                            <td style="text-align: right; font-weight: 600;">Rp
+                                {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="total-summary clearfix">
+            <div class="summary-section">
+                <div class="summary-item clearfix">
+                    <span class="label">Subtotal:</span>
+                    <span class="amount">Rp {{ number_format($salesOrder->subtotal, 0, ',', '.') }}</span>
+                </div>
+                @if ($salesOrder->diskon_nominal > 0)
+                    <div class="summary-item summary-highlight clearfix">
+                        <span class="label">Diskon ({{ number_format($salesOrder->diskon_persen, 1) }}%):</span>
+                        <span class="amount">-Rp {{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</span>
+                    </div>
+                @endif
+                @if ($salesOrder->ppn > 0)
+                    <div class="summary-item clearfix">
+                        <span class="label">PPN ({{ $salesOrder->ppn }}%):</span>
+                        <span class="amount">Rp
+                            {{ number_format($salesOrder->subtotal * ($salesOrder->ppn / 100), 0, ',', '.') }}</span>
+                    </div>
+                @endif
+                @if ($salesOrder->ongkos_kirim > 0)
+                    <div class="summary-item clearfix">
+                        <span class="label">Ongkos Kirim:</span>
+                        <span class="amount">Rp {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</span>
+                    </div>
+                @endif
+                <div class="total-final clearfix">
+                    <span class="label">TOTAL:</span>
+                    <span class="amount">Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clear float untuk memastikan layout yang benar -->
+        <div style="clear: both;"></div>
+
+        <!-- Notes Section -->
+        @if ($salesOrder->catatan)
+            <div
+                style="margin: 15px 0 1rem 0; background-color: #fef3c7; border-left: 3px solid #f59e0b; padding: 0.75rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
+                <div style="display: flex; align-items: flex-start;">
+                    <svg style="height: 14px; width: 14px; color: #d97706; margin-right: 0.5rem; margin-top: 1px; flex-shrink: 0;"
+                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                        </path>
+                    </svg>
+                    <div>
+                        <div style="font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 0.25rem;">
+                            Catatan:</div>
+                        <div style="color: #b45309; font-size: 10px; line-height: 1.4;">{{ $salesOrder->catatan }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        @if ($salesOrder->terms_pembayaran)
+            <div
+                style="margin-bottom: 1rem; background-color: #f0fff4; border-left: 3px solid var(--hcb-green); padding: 0.75rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
+                <div style="font-weight: 600; color: var(--hcb-green); font-size: 10px; margin-bottom: 0.25rem;">Terms
+                    Pembayaran:</div>
+                <div style="color: #27ae60; font-size: 10px; line-height: 1.4;">
+                    {{ $salesOrder->terms_pembayaran }}
+                    @if ($salesOrder->terms_pembayaran_hari)
+                        ({{ $salesOrder->terms_pembayaran_hari }} hari)
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        <!-- Signatures -->
+        <div class="signature-section"
+            style="clear: both; margin-top: {{ $salesOrder->catatan || $salesOrder->terms_pembayaran ? '8px' : '5px' }};">
+            <div style="display: table-row;">
+                <div
+                    style="display: table-cell; vertical-align: top; width: 50%; padding-right: 30px; text-align: center;">
+                    <div style="height: 60px; margin-bottom: 8px;"></div>
+                    <div
+                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                    </div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
+                        {{ $salesOrder->user->name ?? 'Sales Representative' }}</div>
+                    <div style="font-size: 10px; color: #6b7280;">Sales Representative</div>
+                </div>
+                <div style="display: table-cell; vertical-align: top; width: 50%; text-align: center;">
+                    <div style="height: 60px; margin-bottom: 8px;"></div>
+                    <div
+                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                    </div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
+                        Direktur</div>
+                    <div style="font-size: 10px; color: #6b7280;">PT Hidayah Cahaya Berkah</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-fixed">
+            <div style="font-size: 8px;">Dokumen dicetak digital {{ now()->format('d/m/Y H:i') }} WIB • <span
+                    style="font-weight: 600; color: var(--hcb-blue);">SemestaPro</span></div>
         </div>
     </div>
 </body>

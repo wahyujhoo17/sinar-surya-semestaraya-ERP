@@ -736,26 +736,39 @@ class QuotationController extends Controller
             ]);
 
             // Set paper size and orientation with optimization
-            $pdf->setPaper('a5', 'portrait');
+            $pdf->setPaper('a4', 'portrait');
 
-            // Set optimized options for better performance
+            // Set optimized options for better performance and rendering
             $pdf->setOptions([
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
                 'isPhpEnabled' => false,
                 'isFontSubsettingEnabled' => true,
-                'defaultFont' => 'Arial',
+                'defaultFont' => 'DejaVu Sans',
                 'dpi' => 96,
                 'debugKeepTemp' => false,
                 'chroot' => public_path(),
                 'logOutputFile' => storage_path('logs/dompdf.log'),
+                'debugCss' => false,
+                'debugLayout' => false,
+                'debugLayoutLines' => false,
+                'debugLayoutBlocks' => false,
+                'debugLayoutInline' => false,
+                'debugLayoutPaddingBox' => false,
+                'enable_css_float' => true,
+                'enable_remote' => true,
+                'fontHeightRatio' => 1.1,
             ]);
 
             // Generate filename
             $filename = $templateConfig['filename_prefix'] . '-' . $quotation->nomor . '.pdf';
 
-            // Stream the PDF for better performance
-            return $pdf->download($filename);
+            // Stream PDF with headers to open in new tab
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
+                ->header('Cache-Control', 'private, max-age=0, must-revalidate')
+                ->header('Pragma', 'public');
         } catch (\Exception $e) {
             Log::error('Error generating PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Template PDF</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .test-section h3 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .problems-list {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .solutions-list {
+            background-color: #e8f5e8;
+            border-left: 4px solid #4caf50;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 PDF Template Debugging Tool</h1>
+
+        <div class="info-box">
+            <h4>📋 Status Analisis Template PDF</h4>
+            <p>Template PDF Anda telah dioptimalkan untuk mengatasi masalah rendering DomPDF. Berikut adalah ringkasan
+                perubahan yang telah dilakukan:</p>
+        </div>
+
+        <div class="test-section">
+            <h3>🚨 Masalah yang Ditemukan:</h3>
+            <div class="problems-list">
+                <ul>
+                    <li><strong>CSS Grid & Flexbox:</strong> DomPDF tidak mendukung CSS Grid dan Flexbox dengan baik
+                    </li>
+                    <li><strong>Google Fonts:</strong> Font eksternal mungkin tidak ter-load dalam PDF</li>
+                    <li><strong>CSS Properties:</strong> clip-path, transform, box-shadow tidak didukung</li>
+                    <li><strong>Complex Layout:</strong> Layout kompleks menyebabkan tampilan berantakan</li>
+                    <li><strong>Float Issues:</strong> Masalah dengan CSS float properties</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📐 Optimasi Margin & Layout yang Diterapkan:</h3>
+            <div class="solutions-list">
+                <ul>
+                    <li><strong>Page Margins:</strong> Dikurangi dari 15mm menjadi 6-8mm</li>
+                    <li><strong>Font Size:</strong> Dikurangi dari 12px menjadi 9-10px untuk efisiensi ruang</li>
+                    <li><strong>Padding Sections:</strong> Dikurangi dari 20px menjadi 12-15px</li>
+                    <li><strong>Line Height:</strong> Dioptimalkan dari 1.4 menjadi 1.2</li>
+                    <li><strong>Table Spacing:</strong> Margin tabel dioptimalkan untuk mengisi halaman</li>
+                    <li><strong>Footer Height:</strong> Dikurangi dari 50px menjadi 30px</li>
+                    <li><strong>Layout Structure:</strong> Menggunakan main-content wrapper untuk distribution yang
+                        lebih baik</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🎯 Hasil Optimasi:</h3>
+            <div class="info-box">
+                <ul>
+                    <li>✅ Margin halaman lebih kecil untuk area cetak maksimal</li>
+                    <li>✅ Font size disesuaikan untuk lebih banyak konten per halaman</li>
+                    <li>✅ Spacing antar elemen dikurangi tanpa mengorbankan readability</li>
+                    <li>✅ Layout lebih compact dan professional</li>
+                    <li>✅ Mengurangi white space yang tidak perlu</li>
+                    <li>✅ Full page utilization untuk A4 paper</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Test Template:</h3>
+            <p>Gunakan link berikut untuk menguji template PDF yang telah dioptimalkan:</p>
+
+            <!-- Ganti dengan ID quotation yang valid -->
+            <a href="/quotation/1/pdf/indo-atsaka" class="btn" target="_blank">
+                📄 Test PDF Template Indo Atsaka
+            </a>
+
+            <a href="/quotation/1/pdf/default" class="btn btn-warning" target="_blank">
+                📄 Test PDF Template Default
+            </a>
+        </div>
+
+        <div class="test-section">
+            <h3>⚙️ Konfigurasi Tambahan:</h3>
+            <p>File konfigurasi DomPDF telah dibuat di: <code>config/dompdf.php</code></p>
+            <p>Pengaturan yang dioptimalkan:</p>
+            <ul>
+                <li>Font directory: <code>storage/fonts/</code></li>
+                <li>Unicode support: Enabled</li>
+                <li>CSS Float: Enabled</li>
+                <li>HTML5 Parser: Enabled</li>
+                <li>Default Font: DejaVu Sans</li>
+                <li>DPI: 96</li>
+            </ul>
+        </div>
+
+        <div class="test-section">
+            <h3>📝 Rekomendasi Lebih Lanjut:</h3>
+            <div class="info-box">
+                <ol>
+                    <li><strong>Cache Clear:</strong> Jalankan <code>php artisan config:cache</code> setelah mengubah
+                        konfigurasi</li>
+                    <li><strong>Font Installation:</strong> Install font tambahan jika diperlukan di folder
+                        <code>storage/fonts/</code>
+                    </li>
+                    <li><strong>Testing:</strong> Test dengan data yang beragam untuk memastikan layout konsisten</li>
+                    <li><strong>Performance:</strong> Monitor performa PDF generation untuk dokumen besar</li>
+                    <li><strong>Alternative:</strong> Pertimbangkan menggunakan wkhtmltopdf jika masalah masih terjadi
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔄 Jika Masalah Masih Terjadi:</h3>
+            <p>Jalankan command berikut untuk debugging:</p>
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 5px;">
+# Clear cache
+php artisan config:cache
+php artisan view:cache
+
+# Check logs
+tail -f storage/logs/dompdf.log
+tail -f storage/logs/laravel.log
+            </pre>
+        </div>
+    </div>
+</body>
+
+</html>

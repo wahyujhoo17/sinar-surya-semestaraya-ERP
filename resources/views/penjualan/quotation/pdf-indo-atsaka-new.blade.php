@@ -25,7 +25,7 @@
 
         @page {
             size: A4;
-            margin: 8mm 5mm;
+            margin: 8mm 6mm;
         }
 
         /* Content layout */
@@ -44,11 +44,11 @@
 
         /* Header Section */
         .header-section {
-            width: calc(100% - 20px);
+            width: calc(100% - 10px);
             background-color: #1F2A44;
             color: white;
-            padding: 15px 10px;
-            margin: 0 10px 15px 10px;
+            padding: 15px 5px;
+            margin: 0 5px 15px 5px;
             position: relative;
         }
 
@@ -99,9 +99,9 @@
 
         /* Invoice Details */
         .invoice-details {
-            width: calc(100% - 20px);
-            margin: 0 10px 15px 10px;
-            padding: 15px;
+            width: calc(100% - 10px);
+            margin: 0 5px 15px 5px;
+            padding: 12px;
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
         }
@@ -138,165 +138,11 @@
             font-size: 10px;
         }
 
-        .payment-info p {
-            margin: 2px 0;
-            color: #475569;
-            font-size: 10px;
-        }
-
-        .payment-table {
-            width: 100%;
-            margin-top: 5px;
-        }
-
-        .payment-table td {
-            padding: 2px 0;
-            font-size: 10px;
-            margin: 3px 0;
-        }
-
-        .payment-table .label {
-            width: 50%;
-        }
-
-        .payment-table .value {
-            text-align: right;
-            font-weight: bold;
-        }
-
-        /* Header Section */
-        .header-section {
-            width: calc(100% - 60px);
-            background-color: #1F2A44;
-            color: white;
-            padding: 15px 20px;
-            margin: 0 10px 15px 10px;
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        .header-content {
-            width: 100%;
-        }
-
-        .company-info {
-            float: left;
-            width: 65%;
-        }
-
-        .invoice-info {
-            float: right;
-            width: 30%;
-            text-align: right;
-            padding-right: 8px;
-        }
-
-        .company-logo {
-            float: left;
-            margin-right: 15px;
-            max-height: 50px;
-            max-width: 50px;
-            background-color: white;
-            border-radius: 50%;
-            padding: 10px;
-            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .company-name {
-            font-weight: bold;
-            font-size: 16px;
-            margin: 5px 0 2px 0;
-            color: white;
-        }
-
-        .company-tagline {
-            font-size: 11px;
-            margin: 0;
-            opacity: 0.9;
-            color: #94a3b8;
-        }
-
-        .invoice-title {
-            color: #E74C3C;
-            font-weight: bold;
-            font-size: 22px;
-            margin: 0 0 8px 0;
-            letter-spacing: 1.5px;
-        }
-
-        .invoice-meta {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-
-        .invoice-meta div {
-            margin-bottom: 2px;
-        }
-
-        .clearfix::after {
-            content: "";
-            display: table;
-            clear: both;
-        }
-
-        /* Invoice Details Section */
-        .invoice-details {
-            width: calc(100% - 60px);
-            margin: 0 10px 15px 10px;
-            padding: 15px 20px;
-        }
-
-        .invoice-to {
-            float: left;
-            width: 60%;
-        }
-
-        .payment-method {
-            float: right;
-            width: 35%;
-        }
-
-        .section-title {
-            color: #E74C3C;
-            font-weight: bold;
-            margin-bottom: 5px;
-            font-size: 12px;
-            border-bottom: 1px solid #E74C3C;
-            padding-bottom: 2px;
-        }
-
-        .customer-name {
-            font-weight: bold;
-            color: #0f172a;
-            margin: 5px 0;
-            font-size: 13px;
-        }
-
-        .customer-details {
-            color: #475569;
-            line-height: 1.4;
-            font-size: 11px;
-        }
-
-        .customer-details p {
-            margin: 3px 0;
-        }
-
-        .payment-table .label {
-            width: 50%;
-        }
-
-        .payment-table .value {
-            text-align: right;
-            font-weight: bold;
-        }
-
         /* Table Styles */
         .invoice-table {
-            width: calc(100% - 20px);
+            width: calc(100% - 10px);
             border-collapse: collapse;
-            margin: 10px 10px;
+            margin: 10px 5px;
             font-size: 10px;
         }
 
@@ -307,7 +153,7 @@
         }
 
         .table-header th {
-            padding: 10px 8px;
+            padding: 10px 6px;
             text-align: left;
             border: none;
         }
@@ -331,37 +177,20 @@
             text-align: center;
         }
 
-        .table-header .total-col {
-            width: 16%;
-            text-align: right;
+        .table-header .disc-col {
+            width: 12%;
+            text-align: center;
         }
 
-        .red-header {
-            background-color: #E74C3C !important;
-            position: relative;
+        .table-header .total-col {
+            width: 16%;
+            text-align: center;
         }
 
         .table-row td {
-            padding: 8px;
+            padding: 8px 6px;
             border-bottom: 1px solid #e2e8f0;
             vertical-align: top;
-        }
-
-        .table-row:nth-child(even) {
-            background-color: #f8fafc;
-        }
-
-        .product-name {
-            font-weight: bold;
-            margin-bottom: 2px;
-            font-size: 10px;
-        }
-
-        .product-desc {
-            font-size: 9px;
-            color: #475569;
-            margin: 0;
-            line-height: 1.3;
         }
 
         .text-center {
@@ -372,129 +201,137 @@
             text-align: right;
         }
 
-        /* Total Summary */
+        .product-name {
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+
+        .product-desc {
+            font-size: 9px;
+            color: #64748b;
+            line-height: 1.2;
+        }
+
+        /* Total Summary Section */
         .total-summary {
-            width: calc(100% - 60px);
-            margin: 20px 30px;
-            padding: 0;
+            width: calc(100% - 10px);
+            margin: 15px 5px 10px 5px;
             page-break-inside: avoid;
+            overflow: hidden;
+            clear: both;
+        }
+
+        .total-due-section {
+            float: left;
+            width: 53%;
+            padding-right: 10px;
         }
 
         .summary-section {
             float: right;
-            width: 40%;
-            padding: 0;
+            width: 44%;
+            padding-left: 10px;
+        }
+
+        .total-due-label {
+            color: #475569;
+            font-size: 13px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .total-due-line {
+            height: 2px;
+            background-color: #E74C3C;
+            width: 180px;
+            margin: 8px 0;
+        }
+
+        .total-due-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #E74C3C;
+            margin: 10px 0;
+            letter-spacing: 0.5px;
         }
 
         .summary-item {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-size: 11px;
+            overflow: hidden;
             clear: both;
-            box-sizing: border-box;
-            padding: 2px 0;
-            display: table;
-            table-layout: fixed;
         }
 
         .summary-item .label {
-            display: table-cell;
-            width: 65%;
+            float: left;
+            width: 55%;
             line-height: 1.4;
-            color: #475569 !important;
-            font-weight: normal;
-            vertical-align: top;
         }
 
         .summary-item .amount {
-            display: table-cell;
+            float: right;
             font-weight: bold;
             text-align: right;
-            width: 35%;
+            width: 43%;
             line-height: 1.4;
-            color: #0f172a !important;
-            vertical-align: top;
         }
 
         .summary-highlight {
-            background-color: rgba(239, 68, 68, 0.1);
-            padding: 4px 6px;
-            margin: 2px -6px;
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 6px 8px;
+            margin: 4px 0;
             border-radius: 3px;
         }
 
-        .summary-highlight .label {
-            color: #dc2626 !important;
-            font-weight: 500;
-        }
-
-        .summary-highlight .amount {
-            color: #dc2626 !important;
+        .summary-total {
+            background-color: #E74C3C;
+            color: white;
+            padding: 12px 10px;
+            margin-top: 10px;
             font-weight: bold;
-        }
-
-        /* Total at bottom */
-        .total-final {
-            width: 100%;
-            margin-top: 15px;
-            padding: 12px 0;
-            border-top: 2px solid #E74C3C;
-            font-size: 14px;
-            font-weight: bold;
-            color: #1F2A44;
+            font-size: 13px;
+            overflow: hidden;
             clear: both;
-            display: table;
-            table-layout: fixed;
+            border-radius: 4px;
+            page-break-inside: avoid;
+            box-sizing: border-box;
+            width: 100%;
         }
 
-        .total-final .label {
-            display: table-cell;
-            width: 65%;
-            vertical-align: top;
-        }
-
-        .total-final .amount {
-            display: table-cell;
-            text-align: right;
+        .summary-total .label {
+            float: left;
             width: 55%;
-            color: #E74C3C;
-            vertical-align: top;
+            line-height: 1.4;
+        }
+
+        .summary-total .amount {
+            float: right;
+            text-align: right;
+            width: 43%;
+            line-height: 1.4;
+            font-weight: bold;
         }
 
         /* Terms and Signature */
         .terms-signature {
-            width: calc(100% - 60px);
-            margin: 25px 30px;
-            padding: 0;
+            width: calc(100% - 10px);
+            margin: 15px 5px;
+            padding: 0 10px;
             font-size: 10px;
             page-break-inside: avoid;
         }
 
         .terms-section {
             float: left;
-            width: 100%;
-            margin-bottom: 30px;
+            width: 60%;
         }
 
         .signature-section {
-            width: 100%;
-            margin-top: 20px;
-            clear: both;
-        }
-
-        .signature-row {
-            width: 100%;
-            display: table;
-            table-layout: fixed;
-            margin-top: 15px;
-        }
-
-        .signature-item {
-            display: table-cell;
-            width: 45%;
-            text-align: center;
-            vertical-align: top;
-            padding: 0 10px;
+            float: right;
+            width: 35%;
+            text-align: right;
         }
 
         .terms-title {
@@ -523,12 +360,9 @@
             font-weight: bold;
         }
 
-        /* Thank you message - now as footer */
+        /* Footer with Thank You */
         .footer-thank-you {
-            position: fixed;
-            bottom: 30px;
-            left: 0;
-            right: 0;
+            margin: 20px 5px 10px 5px;
             font-size: 13px;
             color: #334155;
             text-align: center;
@@ -538,14 +372,12 @@
             border-top: 2px solid #E74C3C;
         }
 
-        /* Footer decoration - simplified for PDF */
+        /* Footer decoration */
         .footer-decoration {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            width: 100%;
             height: 25px;
             background-color: #1F2A44;
+            margin: 0;
         }
 
         /* Additional spacing optimizations */
@@ -561,64 +393,39 @@
         h6 {
             margin: 5px 0;
         }
-
-        /* Reduce excessive whitespace */
-        * {
-            box-sizing: border-box;
-        }
-
-        .table-row:last-child td {
-            border-bottom: 2px solid #1F2A44;
-        }
-
-        /* Watermark background */
-        .watermark-bg {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            text-align: center;
-            z-index: 0;
-            opacity: 0.05;
-            font-size: 50px;
-            font-weight: bold;
-            color: #1F2A44;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            pointer-events: none;
-            user-select: none;
-            white-space: nowrap;
-        }
     </style>
 </head>
 
 <body>
     <div class="sheet">
-        <div class="watermark-bg">{{ strtoupper($template_config['company_name'] ?? 'PT INDO ATSAKA INDUSTRI') }}</div>
         <div class="main-content">
-            <!-- Header -->
+            @php
+                // Logo configuration
+                $logoPath = public_path('img/atsaka.PNG');
+                $logoExists = file_exists($logoPath);
+                $logoBase64 = null;
+
+                if ($logoExists) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoBase64 = 'data:image/png;base64,' . $logoData;
+                }
+
+                // Template configuration
+                $template_config = [
+                    'company_name' => 'PT INDO ATSAKA INDUSTRI',
+                    'company_tagline' => 'INDUSTRIAL SUPPLIER',
+                ];
+            @endphp
+
+            <!-- Header Section -->
             <div class="header-section">
                 <div class="header-content clearfix">
                     <div class="company-info">
-                        @php
-                            $logoPath = public_path('img/atsaka.webp');
-                            $logoExists = file_exists($logoPath);
-                            $logoBase64 = '';
-                            if ($logoExists) {
-                                $logoData = file_get_contents($logoPath);
-                                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-                            }
-                        @endphp
-
                         @if ($logoExists && $logoBase64)
                             <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo" class="company-logo">
                         @else
                             <div class="company-logo"
-                                style="width: 80px; height: 80px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); border: 2px solid rgba(255, 255, 255, 0.1);">
-                                <div
-                                    style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: white; font-weight: bold; font-size: 18px;">IA</span>
-                                </div>
-                            </div>
+                                style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%;"></div>
                         @endif
 
                         <div style="margin-left: 100px;">
@@ -670,12 +477,14 @@
                         <p>Jl. Raya Bekasi Km. 28 No. 1A</p>
                         <p>Bekasi Timur 17141</p>
                         <p>Telp: (021) 8250-8851</p>
+                        <p>Email: info@indoatsaka.com</p>
                     </div>
                 </div>
             </div>
 
             @if ($quotation->periode_start && $quotation->periode_end)
-                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
+                <div
+                    style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 5px; background-color: #fff5f5; border-radius: 4px;">
                     <strong style="color: #E74C3C; font-size: 12px;">Periode Penawaran:</strong>
                     <span style="font-weight: bold; color: #1F2A44;">
                         {{ \Carbon\Carbon::parse($quotation->periode_start)->format('d/m/Y') }} s/d
@@ -685,48 +494,54 @@
             @endif
 
             <!-- Table Section -->
-            <div class="table-section">
-                <table class="invoice-table">
-                    <thead class="table-header">
-                        <tr>
-                            <th class="no-col text-center">No</th>
-                            <th class="desc-col red-header">Nama Produk</th>
-                            <th class="qty-col text-center">Qty</th>
-                            <th class="price-col text-center">Satuan</th>
-                            <th class="price-col text-center">Harga</th>
-                            <th class="price-col text-center">Diskon</th>
-                            <th class="total-col text-right">Total</th>
+            <table class="invoice-table">
+                <thead class="table-header">
+                    <tr>
+                        <th class="no-col text-center">No</th>
+                        <th class="desc-col">Nama Produk</th>
+                        <th class="qty-col text-center">Qty</th>
+                        <th class="price-col text-center">Satuan</th>
+                        <th class="price-col text-center">Harga</th>
+                        <th class="disc-col text-center">Diskon</th>
+                        <th class="total-col text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $no = 1; @endphp
+                    @foreach ($quotation->details as $detail)
+                        <tr class="table-row">
+                            <td class="text-center">{{ $no++ }}</td>
+                            <td>
+                                <div class="product-name">
+                                    {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
+                                @if ($detail->deskripsi)
+                                    <p class="product-desc">{{ $detail->deskripsi }}</p>
+                                @endif
+                            </td>
+                            <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
+                            <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
+                            <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
+                            <td class="text-center">
+                                @if ($detail->diskon_persen > 0)
+                                    {{ number_format($detail->diskon_persen, 1) }}%
+                                @endif
+                                @if ($detail->diskon_nominal > 0)
+                                    Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
+                                @endif
+                            </td>
+                            <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        @php $no = 1; @endphp
-                        @foreach ($quotation->details as $detail)
-                            <tr class="table-row">
-                                <td class="text-center">{{ $no++ }}</td>
-                                <td>
-                                    <div class="product-name">
-                                        {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
-                                    @if ($detail->deskripsi)
-                                        <p class="product-desc">{{ $detail->deskripsi }}</p>
-                                    @endif
-                                </td>
-                                <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
-                                <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
-                                <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                                <td class="text-center">
-                                    @if ($detail->diskon_persen > 0)
-                                        {{ number_format($detail->diskon_persen, 1) }}%
-                                    @endif
-                                </td>
-                                <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                    @endforeach
+                </tbody>
+            </table>
 
             <!-- Totals -->
             <div class="total-summary clearfix">
+                <div class="total-due-section">
+                    <p class="total-due-label">Total Penawaran</p>
+                    <div class="total-due-line"></div>
+                    <p class="total-due-amount">Rp {{ number_format($quotation->total, 0, ',', '.') }}</p>
+                </div>
                 <div class="summary-section">
                     <div class="summary-item clearfix">
                         <span class="label">Subtotal:</span>
@@ -735,8 +550,7 @@
                     @if ($quotation->diskon_nominal > 0)
                         <div class="summary-item summary-highlight clearfix">
                             <span class="label">Diskon ({{ number_format($quotation->diskon_persen, 1) }}%):</span>
-                            <span class="amount">-Rp
-                                {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}</span>
+                            <span class="amount">Rp {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}</span>
                         </div>
                     @endif
                     @if ($quotation->ppn > 0)
@@ -752,8 +566,8 @@
                             <span class="amount">Rp {{ number_format($quotation->ongkos_kirim, 0, ',', '.') }}</span>
                         </div>
                     @endif
-                    <div class="total-final clearfix">
-                        <span class="label">TOTAL:</span>
+                    <div class="summary-total clearfix">
+                        <span class="label">Total:</span>
                         <span class="amount">Rp {{ number_format($quotation->total, 0, ',', '.') }}</span>
                     </div>
                 </div>
@@ -762,7 +576,7 @@
             <!-- Notes Section -->
             @if ($quotation->catatan)
                 <div
-                    style="margin: 10px 10px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                    style="margin: 10px 5px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
                     <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
                     <p style="font-size: 9px; margin: 2px 0;">{{ $quotation->catatan }}</p>
                 </div>
@@ -776,30 +590,19 @@
                         @if ($quotation->syarat_ketentuan)
                             {{ $quotation->syarat_ketentuan }}
                         @else
-                            <div style="font-size: 9px; line-height: 1.4;">
+                            <div style="font-size: 8px;">
                                 1. Penawaran berlaku sesuai periode yang tertera<br>
                                 2. Harga belum termasuk pajak dan ongkos kirim<br>
                                 3. Pembayaran sesuai kesepakatan kedua belah pihak<br>
-                                4. Pengiriman setelah pembayaran diterima<br>
-                                5. Barang yang sudah dibeli tidak dapat dikembalikan
+                                4. Pengiriman setelah pembayaran diterima
                             </div>
                         @endif
                     </div>
                 </div>
-
                 <div class="signature-section">
-                    <div class="signature-row">
-                        <div class="signature-item">
-                            <div class="signature-line"></div>
-                            <p class="signature-label">{{ $quotation->user->name ?? 'Sales' }}</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
-                        </div>
-                        <div class="signature-item">
-                            <div class="signature-line"></div>
-                            <p class="signature-label">Direktur</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">PT Indo Atsaka Industri</p>
-                        </div>
-                    </div>
+                    <div class="signature-line"></div>
+                    <p class="signature-label">{{ $quotation->user->name ?? 'Sales' }}</p>
+                    <p style="font-size: 8px; margin: 0;">Sales Representative</p>
                 </div>
             </div>
         </div>

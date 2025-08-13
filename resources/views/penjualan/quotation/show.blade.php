@@ -54,7 +54,7 @@
 
                             <!-- Template Sinar Surya (Default) -->
                             <div class="py-1">
-                                <a href="{{ route('penjualan.quotation.pdf', $quotation->id) }}"
+                                <a href="{{ route('penjualan.quotation.pdf', $quotation->id) }}" target="_blank"
                                     class="group flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <div
                                         class="flex-shrink-0 w-8 h-8 bg-blue-100 dark:bg-blue-900/20 rounded-full flex items-center justify-center mr-3">
@@ -74,6 +74,7 @@
                             <!-- Template Indo Atsaka -->
                             <div class="py-1">
                                 <a href="{{ route('penjualan.quotation.pdf.template', [$quotation->id, 'indo-atsaka']) }}"
+                                    target="_blank"
                                     class="group flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <div
                                         class="flex-shrink-0 w-8 h-8 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mr-3">
@@ -93,6 +94,7 @@
                             <!-- Template Hidayah Cahaya -->
                             <div class="py-1">
                                 <a href="{{ route('penjualan.quotation.pdf.template', [$quotation->id, 'hidayah-cahaya']) }}"
+                                    target="_blank"
                                     class="group flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                     <div
                                         class="flex-shrink-0 w-8 h-8 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mr-3">
