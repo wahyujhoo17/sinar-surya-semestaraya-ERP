@@ -4,25 +4,172 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Surat Jalan {{ $deliveryOrder->nomor }} - PT Hidayah Cahaya Berkah</title>
+    <title>Surat Jalan - {{ $deliveryOrder->nomor }} - PT Hidayah Cahaya Berkah</title>
     <style>
+        :root {
+            --hcb-blue: #002147;
+            --hcb-green: #27ae60;
+            --hcb-orange: #FF6E00;
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            background-color: #ffffff;
             font-size: 11px;
             line-height: 1.3;
-            color: #333;
+            color: #1f2937;
             margin: 0;
-            padding: 10px;
-            background-color: white;
+            padding: 0;
+            min-height: 100vh;
         }
 
-        /* Page setup for 165x212mm */
+        .container {
+            max-width: 100%;
+            margin: 0;
+            background-color: #ffffff;
+            padding: 8mm 5mm;
+            min-height: 100vh;
+            position: relative;
+            padding-bottom: 120px;
+        }
+
         @page {
             size: 165mm 212mm;
-            margin: 10mm;
+            margin: 8mm 5mm;
         }
 
-        /* Watermark background */
+        @media print {
+            body {
+                background-color: #fff;
+                font-size: 11px;
+            }
+
+            .container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                max-width: none;
+                min-height: 100vh;
+            }
+
+            .footer-fixed {
+                position: fixed;
+                bottom: 5mm;
+                left: 5mm;
+                right: 5mm;
+            }
+
+            .watermark-bg {
+                display: block !important;
+                z-index: 1000 !important;
+                position: fixed !important;
+                opacity: 0.07 !important;
+                pointer-events: none;
+            }
+        }
+
+        .custom-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 10px;
+        }
+
+        .custom-table th,
+        .custom-table td {
+            border: 1px solid #d1d5db;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .custom-table th {
+            background-color: var(--hcb-blue);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-size: 10px;
+            padding: 10px 8px;
+        }
+
+        .custom-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .footer-fixed {
+            position: fixed;
+            bottom: 5mm;
+            left: 5mm;
+            right: 5mm;
+            text-align: center;
+            padding: 10px 0;
+            border-top: 1px solid #e5e7eb;
+            background-color: #f8fafc;
+        }
+
+        .signature-section {
+            width: 100%;
+            position: fixed;
+            left: 0;
+            bottom: 100px;
+            padding: 0 12px;
+            font-size: 10px;
+            background: #fff;
+            z-index: 10;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .signature-row {
+            width: 95%;
+            display: table;
+            table-layout: fixed;
+            margin-top: 15px;
+        }
+
+        .signature-item {
+            display: table-cell;
+            width: 45%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 10px;
+        }
+
+        .signature-line {
+            height: 40px;
+            border-bottom: 1px solid #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .signature-label {
+            color: #334155;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .footer-thank-you {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            font-size: 13px;
+            color: #334155;
+            text-align: center;
+            padding: 15px 20px;
+            font-weight: bold;
+            background-color: #f8fafc;
+            border-top: 2px solid var(--hcb-orange);
+        }
+
+        .footer-decoration {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background-color: var(--hcb-blue);
+        }
+
         .watermark-bg {
             position: fixed;
             top: 50%;
@@ -31,504 +178,185 @@
             text-align: center;
             z-index: 0;
             opacity: 0.05;
-            font-size: 48px;
+            font-size: 50px;
             font-weight: bold;
-            color: #059669;
+            color: var(--hcb-blue);
             transform: translate(-50%, -50%) rotate(-25deg);
             pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
         }
 
-        .content-wrapper {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Islamic decorative border */
-        .islamic-border {
-            position: relative;
-        }
-
-        .islamic-border::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: repeating-linear-gradient(90deg,
-                    #059669 0px,
-                    #059669 10px,
-                    #10B981 10px,
-                    #10B981 20px);
-        }
-
-        .islamic-border::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: repeating-linear-gradient(90deg,
-                    #059669 0px,
-                    #059669 10px,
-                    #10B981 10px,
-                    #10B981 20px);
-        }
-
-        /* Header styles */
-        .header {
-            width: 100%;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #059669;
-            padding: 10px 0;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border-radius: 4px 4px 0 0;
-        }
-
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .header-table td {
-            vertical-align: top;
-            padding: 5px;
-        }
-
-        .company-info {
-            width: 60%;
-        }
-
-        .company-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: #059669;
-            margin-bottom: 5px;
-            text-shadow: 0 1px 2px rgba(5, 150, 105, 0.1);
-        }
-
-        .company-details {
-            font-size: 9px;
-            color: #065f46;
-            line-height: 1.4;
-        }
-
-        .logo-container {
-            width: 40%;
-            text-align: right;
-        }
-
-        .logo-container img {
-            max-height: 45px;
-            max-width: 120px;
-            object-fit: contain;
-        }
-
-        .logo-placeholder {
-            height: 45px;
-            width: 120px;
-            border: 1px dashed #059669;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            color: #059669;
-            background-color: #f0fdf4;
-            margin-left: auto;
-            border-radius: 4px;
-        }
-
-        /* Islamic greeting */
-        .islamic-greeting {
-            text-align: center;
-            margin: 10px 0;
-            padding: 5px;
-            background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
-            border-radius: 20px;
-            border: 1px solid #059669;
-        }
-
-        .bismillah {
-            font-size: 12px;
-            color: #059669;
-            font-weight: bold;
-            font-style: italic;
-        }
-
-        /* Document title */
-        .document-title {
-            text-align: center;
-            margin: 15px 0;
-        }
-
-        .document-title h1 {
-            font-size: 18px;
-            font-weight: bold;
-            color: #059669;
-            margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            text-shadow: 0 2px 4px rgba(5, 150, 105, 0.1);
-        }
-
-        /* Document info */
-        .document-info {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .info-table td {
-            padding: 4px 8px;
-            font-size: 10px;
-            vertical-align: top;
-        }
-
-        .info-label {
-            width: 25%;
-            font-weight: bold;
-            color: #065f46;
-        }
-
-        .info-separator {
-            width: 5%;
-            text-align: center;
-            color: #059669;
-        }
-
-        .info-value {
-            width: 70%;
-            color: #1F2937;
-        }
-
-        /* Customer info box */
-        .customer-box {
-            border: 2px solid #059669;
-            border-radius: 8px;
-            padding: 8px;
-            margin-bottom: 15px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            position: relative;
-        }
-
-        .customer-box::before {
-            content: '🕌';
-            position: absolute;
-            top: -5px;
-            right: 10px;
-            font-size: 16px;
-            background: white;
-            padding: 0 5px;
-        }
-
-        .customer-title {
-            font-weight: bold;
-            color: #059669;
-            font-size: 11px;
-            margin-bottom: 5px;
-        }
-
-        /* Items table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-            font-size: 10px;
-        }
-
-        .items-table th,
-        .items-table td {
-            border: 1px solid #d1d5db;
-            padding: 6px 4px;
-            text-align: left;
-        }
-
-        .items-table th {
-            background: linear-gradient(135deg, #059669 0%, #10B981 100%);
-            color: black;
-            font-weight: bold;
-            text-align: center;
-            font-size: 9px;
-            text-shadow: none;
-        }
-
-        .items-table td {
-            font-size: 9px;
-        }
-
-        .items-table tbody tr:nth-child(even) {
-            background-color: #f0fdf4;
-        }
-
-        .items-table tbody tr:hover {
-            background-color: #dcfce7;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 20px;
-            font-size: 9px;
-        }
-
-        .signature-section {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .signature-table td {
-            width: 33.33%;
-            text-align: center;
-            vertical-align: top;
-            padding: 5px;
-        }
-
-        .signature-box {
-            border: 1px solid #059669;
-            height: 60px;
-            margin-bottom: 5px;
-            position: relative;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-            border-radius: 4px;
-        }
-
-        .signature-label {
-            font-size: 9px;
-            font-weight: bold;
-            color: #065f46;
-        }
-
-        /* Notes section */
-        .notes-section {
-            margin-top: 15px;
-            padding: 8px;
-            border: 2px solid #059669;
-            border-radius: 8px;
-            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        }
-
-        .notes-title {
-            font-weight: bold;
-            font-size: 10px;
-            color: #065f46;
-            margin-bottom: 5px;
-        }
-
-        .notes-content {
-            font-size: 9px;
-            color: #047857;
-            min-height: 20px;
-        }
-
-        /* Islamic closing */
-        .islamic-closing {
-            text-align: center;
-            margin-top: 15px;
-            padding: 8px;
-            background: linear-gradient(90deg, #f0fdf4 0%, #dcfce7 50%, #f0fdf4 100%);
-            border-radius: 20px;
-            border: 1px solid #059669;
-        }
-
-        .closing-text {
-            font-size: 9px;
-            color: #059669;
-            font-style: italic;
-        }
-
-        /* Print optimizations */
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-        }
-
-        /* Decorative elements */
         .decorative-line {
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #059669 20%, #10B981 50%, #059669 80%, transparent 100%);
-            margin: 8px 0;
+            height: 3px;
+            background: linear-gradient(to right, var(--hcb-blue) 0%, var(--hcb-green) 50%, var(--hcb-orange) 100%);
+            margin: 15px 0;
+            border-radius: 2px;
         }
     </style>
 </head>
 
 <body>
-    <!-- Watermark -->
-    <div class="watermark-bg">BERKAH</div>
-
-    <div class="content-wrapper islamic-border">
-        <!-- Header -->
-        <div class="header">
-            <table class="header-table">
-                <tr>
-                    <td class="company-info">
-                        <div class="company-name">PT HIDAYAH CAHAYA BERKAH</div>
-                        <div class="company-details">
-                            Jl. Raya Keberkahan No. 789, Komplek Islami<br>
-                            Jakarta Selatan 12560, Indonesia<br>
-                            Telp: (021) 7890-1234 | Fax: (021) 7890-1235<br>
-                            Email: info@hidayahcahaya.co.id | www.hidayahcahaya.co.id
-                        </div>
-                    </td>
-                    <td class="logo-container">
-                        @if (!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Hidayah Cahaya Logo">
+    <div class="container">
+        <div class="watermark-bg">{{ strtoupper('PT HIDAYAH CAHAYA BERKAH') }}</div>
+        <!-- Header Section -->
+        <div style="display: table; width: 100%; margin-bottom: 0px; border-collapse: separate; border-spacing: 0;">
+            <div style="display: table-row;">
+                <!-- Logo and Company Info -->
+                <div style="display: table-cell; vertical-align: middle; width: 65%; padding-right: 8px;">
+                    <div style="display: flex; align-items: center; flex-wrap: nowrap; gap: 8px; min-height: 48px;">
+                        @php
+                            $logoPath = public_path('img/LogoHCB-0.jpeg');
+                            $logoExists = file_exists($logoPath);
+                            $logoBase64 = '';
+                            if ($logoExists) {
+                                $logoData = file_get_contents($logoPath);
+                                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                            }
+                        @endphp
+                        @if ($logoExists && $logoBase64)
+                            <img src="{{ $logoBase64 }}" alt="HCB Logo"
+                                style="height: 38px; width: auto; max-width: 60px; object-fit: contain; border-radius: 4px; flex-shrink: 0; vertical-align: middle; background-color: white; padding: 3px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
                         @else
-                            <div class="logo-placeholder">
-                                LOGO HIDAYAH CAHAYA
-                            </div>
+                            <div
+                                style="height: 38px; width: 60px; border: 2px dashed var(--hcb-green); display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--hcb-green); background-color: #f0fdf4; border-radius: 4px; font-weight: 600; flex-shrink: 0;">
+                                HCB</div>
                         @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Decorative Line -->
-        <div class="decorative-line"></div>
-
-        <!-- Document Title -->
-        <div class="document-title">
-            <h1>Surat Jalan</h1>
-        </div>
-
-        <!-- Document Information -->
-        <div class="document-info">
-            <table class="info-table">
-                <tr>
-                    <td class="info-label">Nomor</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->nomor }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Tanggal</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d F Y') }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Sales Order</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->salesOrder ? $deliveryOrder->salesOrder->nomor : '-' }}
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Customer Information -->
-        <div class="customer-box">
-            <table class="info-table">
-                <tr>
-                    <td class="info-label">Nama</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">
-                        <strong>{{ $deliveryOrder->customer->company ?? ($deliveryOrder->customer->nama ?? 'Customer tidak ditemukan') }}</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="info-label">Alamat</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->alamat_pengiriman }}</td>
-                </tr>
-                @if ($deliveryOrder->customer && $deliveryOrder->customer->telepon)
-                    <tr>
-                        <td class="info-label">Telepon</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-value">{{ $deliveryOrder->customer->telepon }}</td>
-                    </tr>
-                @endif
-            </table>
-        </div>
-
-        <!-- Items Table -->
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="5%">No</th>
-                    <th width="15%">Kode</th>
-                    <th width="40%">Nama Produk</th>
-                    <th width="10%">Qty</th>
-                    <th width="10%">Satuan</th>
-                    <th width="20%">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($deliveryOrder->details as $index => $detail)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $detail->produk->kode ?? '-' }}</td>
-                        <td>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</td>
-                        <td class="text-right">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
-                        <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
-                        <td>{{ $detail->keterangan ?: '-' }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 20px;">
-                            Tidak ada item untuk dikirim
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        <!-- Notes Section -->
-        <div class="notes-section">
-            <div class="notes-title">KETERANGAN:</div>
-            <div class="notes-content">
-                {{ $deliveryOrder->keterangan ?:
-                    'Barang dikirim dalam kondisi baik dan sesuai dengan pesanan. Terima kasih atas kepercayaan Anda kepada PT HIDAYAH CAHAYA BERKAH.' }}
+                        <span
+                            style="font-size: 13px; font-weight: 800; color: var(--hcb-blue); letter-spacing: 0.5px; white-space: nowrap; flex-shrink: 0; line-height: 1; vertical-align: middle;">PT
+                            HIDAYAH CAHAYA BERKAH</span>
+                    </div>
+                </div>
+                <!-- Surat Jalan Info -->
+                <div style="display: table-cell; vertical-align: middle; width: 35%; text-align: right;">
+                    <div
+                        style="background-color: #f8fafc; padding: 8px; border-radius: 5px; border-left: 4px solid var(--hcb-orange); min-height: 48px;">
+                        <div
+                            style="font-size: 16px; font-weight: 700; color: var(--hcb-orange); margin-bottom: 4px; letter-spacing: 1px;">
+                            SURAT JALAN</div>
+                        <div style="font-size: 10px; line-height: 1.3; color: #374151;">
+                            <div style="margin-bottom: 2px;"><span style="font-weight: 600; color: #1f2937;">No:</span>
+                                <span
+                                    style="color: var(--hcb-blue); font-weight: 600;">{{ $deliveryOrder->nomor }}</span>
+                            </div>
+                            <div style="margin-bottom: 2px;"><span
+                                    style="font-weight: 600; color: #1f2937;">Tanggal:</span> <span
+                                    style="color: #374151;">{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d/m/Y') }}</span>
+                            </div>
+                            @if ($deliveryOrder->salesOrder)
+                                <div style="margin-bottom: 2px;"><span style="font-weight: 600; color: #1f2937;">SO:
+                                    </span> <span
+                                        style="color: var(--hcb-blue); font-weight: 600;">{{ $deliveryOrder->salesOrder->nomor }}</span>
+                                </div>
+                            @endif
+                            <div><span style="font-weight: 600; color: #1f2937;">Status:</span><span
+                                    style="color: var(--hcb-green); font-weight: 700; text-transform: uppercase; background-color: #f0fdf4; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $deliveryOrder->status }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <table class="signature-table">
-                <tr>
-                    <td>
-                        <div class="signature-label">Dibuat Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">{{ $deliveryOrder->user->name ?? 'Staff' }}</div>
-                    </td>
-                    <td>
-                        <div class="signature-label">Dikirim Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">Driver</div>
-                    </td>
-                    <td>
-                        <div class="signature-label">Diterima Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">Customer</div>
-                    </td>
-                </tr>
+        <div class="decorative-line"></div>
+        <!-- Company and Customer Info Section -->
+        <div style="display: table; width: 100%; margin-bottom: 20px; border-collapse: separate; border-spacing: 0;">
+            <div style="display: table-row;">
+                <!-- DARI Section -->
+                <div style="display: table-cell; vertical-align: top; width: 48%; padding-right: 30px;">
+                    <div
+                        style="font-size: 12px; font-weight: 700; color: var(--hcb-blue) ; letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--hcb-blue);">
+                        Dari:</div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">PT
+                        HIDAYAH CAHAYA BERKAH</div>
+                    <div style="font-size: 11px; line-height: 1.4; color: #374151;">Jl. Raya Keberkahan No. 789, Komplek
+                        Islami<br>Jakarta Selatan 12560, Indonesia<br>Telp: (021) 7890-1234 | Fax: (021)
+                        7890-1235</div>
+                </div>
+                <!-- DIKIRIM KEPADA Section -->
+                <div style="display: table-cell; vertical-align: top; width: 52%;">
+                    <div
+                        style="font-size: 12px; font-weight: 700; color: var(--hcb-orange); letter-spacing: 1px; margin-bottom: 8px; padding-bottom: 4px; border-bottom: 2px solid var(--hcb-orange);">
+                        Dikirim Kepada:</div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">
+                        {{ $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama }}</div>
+                    <div style="font-size: 11px; line-height: 1.4; color: #374151;">
+                        {{ $deliveryOrder->alamat_pengiriman ?? ($deliveryOrder->customer->alamat ?? '-') }}<br>
+                        @if ($deliveryOrder->customer->telepon)
+                            Telp: {{ $deliveryOrder->customer->telepon }}
+                            <br>
+                        @endif
+                        @if ($deliveryOrder->customer->email)
+                            Email: {{ $deliveryOrder->customer->email }}<br>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Items Table -->
+        <div
+            style="font-size: 10px; font-weight: 600; color: var(--hcb-blue); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">
+            Detail Pengiriman:</div>
+        <div
+            style="overflow-x: auto; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border-radius: 0.25rem; margin-bottom: 1rem;">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%; text-align: center;">No</th>
+                        <th style="width: 40%;">Produk</th>
+                        <th style="width: 8%; text-align: center;">Qty</th>
+                        <th style="width: 10%; text-align: center;">Satuan</th>
+                        <th style="width: 15%; text-align: right;">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php $no = 1; @endphp
+                    @forelse ($deliveryOrder->details as $detail)
+                        <tr>
+                            <td style="text-align: center; font-weight: 600;">{{ $no++ }}</td>
+                            <td>
+                                <div style="font-weight: 500; color: #111827; margin-bottom: 2px;">
+                                    {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</div>
+                                @if ($detail->produk->deskripsi)
+                                    <div style="color: #6b7280; font-size: 9px; line-height: 1.2;">
+                                        {{ $detail->produk->deskripsi }}</div>
+                                @endif
+                            </td>
+                            <td style="text-align: center;">{{ number_format($detail->quantity, 0) }}</td>
+                            <td style="text-align: center;">{{ $detail->produk->satuan->nama ?? '-' }}</td>
+                            <td style="text-align: right;">{{ $detail->keterangan ?: '-' }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 20px;">Tidak ada item untuk dikirim
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
             </table>
         </div>
-
-        <!-- Decorative Line -->
-        <div class="decorative-line"></div>
-
-        <!-- Footer Information -->
-        <div class="footer">
-            <p style="text-align: center; color: #047857; font-size: 8px; margin-top: 10px;">
-                Dokumen ini dicetak secara otomatis pada {{ $currentDate }} pukul {{ $currentTime }}<br>
-                PT Hidayah Cahaya Berkah - Berbagi Berkah untuk Semua
-            </p>
+        <!-- Signature Section -->
+        <div class="signature-section clearfix">
+            <div class="signature-row">
+                <div class="signature-item">
+                    <div class="signature-line"></div>
+                    <p class="signature-label">{{ $deliveryOrder->user->name ?? 'Sales' }}</p>
+                    <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
+                </div>
+                <div class="signature-item">
+                    <div class="signature-line"></div>
+                    <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Penerima Barang</p>
+                    <div style="height:18px; border-bottom:1px dashed #cbd5e1; margin:6px 0 2px 0;"></div>
+                    <p style="font-size:8px; color:#64748b; margin:0;">(Nama penerima)</p>
+                </div>
+            </div>
+        </div>
+        <!-- Footer -->
+        <div class="footer-thank-you"
+            style="position: fixed; bottom: 30px; left: 0; right: 0; font-size: 13px; color: #334155; text-align: center; padding: 15px 20px; font-weight: bold; background-color: #f8fafc; border-top: 2px solid var(--hcb-orange);">
+            Terima kasih atas kepercayaan Anda
+        </div>
+        <div class="footer-decoration"
+            style="position: fixed; bottom: 0; left: 0; right: 0; height: 25px; background-color: var(--hcb-blue);">
         </div>
     </div>
 </body>

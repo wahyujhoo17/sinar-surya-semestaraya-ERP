@@ -783,7 +783,16 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', compact(
+        // Get template parameter from request
+        $template = request()->get('template', 'sinar-surya');
+
+        // Determine the view based on template
+        $viewName = 'pembelian.purchase_order.pdf';
+        if (in_array($template, ['sinar-surya', 'atsaka', 'hidayah'])) {
+            $viewName = "pembelian.purchase_order.pdf.{$template}";
+        }
+
+        $pdf = Pdf::loadView($viewName, compact(
             'purchaseOrder',
             'total',
             'createdBy',
@@ -795,9 +804,23 @@ class PurchasingOrderController extends Controller
 
         // Set paper size and orientation
         $pdf->setPaper('a4', 'portrait');
+        // Optimasi PDF untuk performa
+        $pdf->setOptions([
+            'dpi' => 96,
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isJavascriptEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'fontSubsetting' => true,
+            'tempDir' => sys_get_temp_dir(),
+            'chroot' => public_path(),
+            'logOutputFile' => storage_path('logs/dompdf.log'),
+            'defaultMediaType' => 'print',
+            'isFontSubsettingEnabled' => true,
+        ]);
 
         // Download the PDF with a specific filename
-        return $pdf->download('PO-' . $purchaseOrder->nomor . '.pdf');
+        return $pdf->stream('PO-' . $purchaseOrder->nomor . '.pdf');
     }
 
     /**
@@ -851,7 +874,16 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        $pdf = Pdf::loadView('pembelian.purchase_order.pdf', compact(
+        // Get template parameter from request
+        $template = request()->get('template', 'sinar-surya');
+
+        // Determine the view based on template
+        $viewName = 'pembelian.purchase_order.pdf';
+        if (in_array($template, ['sinar-surya', 'atsaka', 'hidayah'])) {
+            $viewName = "pembelian.purchase_order.pdf.{$template}";
+        }
+
+        $pdf = Pdf::loadView($viewName, compact(
             'purchaseOrder',
             'total',
             'createdBy',

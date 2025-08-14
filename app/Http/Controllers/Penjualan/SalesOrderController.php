@@ -1052,8 +1052,12 @@ class SalesOrderController extends Controller
             // Generate filename
             $filename = $templateConfig['filename_prefix'] . '-' . $salesOrder->nomor . '.pdf';
 
-            // Stream the PDF instead of download
-            return $pdf->stream($filename);
+            // Stream the PDF with custom headers to open in new tab
+            return response($pdf->output())
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
+                ->header('Content-Transfer-Encoding', 'binary')
+                ->header('Accept-Ranges', 'bytes');
         } catch (\Exception $e) {
             Log::error('Error generating PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');

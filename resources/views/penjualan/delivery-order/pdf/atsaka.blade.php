@@ -4,223 +4,250 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Surat Jalan {{ $deliveryOrder->nomor }} - PT Indo Atsaka Industri</title>
+    <title>Surat Jalan - {{ $deliveryOrder->nomor }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            background: #ffffff;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
             font-size: 11px;
             line-height: 1.3;
-            color: #333;
-            margin: 0;
-            padding: 10px;
-            background-color: white;
         }
 
-        /* Page setup for 165x212mm */
         @page {
             size: 165mm 212mm;
-            margin: 10mm;
+            margin: 8mm 5mm;
         }
 
-        /* Watermark background */
-        .watermark-bg {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            width: 100%;
-            text-align: center;
-            z-index: 0;
-            opacity: 0.05;
-            font-size: 48px;
-            font-weight: bold;
-            color: #2E86AB;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            pointer-events: none;
+        .sheet {
+            max-width: 100%;
+            margin: 0;
+            background: #ffffff;
+            padding: 0;
+            min-height: 100vh;
         }
 
-        .content-wrapper {
+        @page {
+            size: 165mm 212mm;
+            margin: 0;
+        }
+
+        .main-content {
+            min-height: calc(100vh - 60px);
+            width: calc(100% - 20px);
+            max-width: 100%;
+            margin: 10px 10px;
+        }
+
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .header-section {
+            width: calc(100% - 32px);
+            background-color: #1F2A44;
+            color: white;
+            padding: 8px 12px 8px 12px;
+            padding: 8px 16px 8px 16px;
+            margin: 0 0 8px 0;
             position: relative;
-            z-index: 1;
         }
 
-        /* Header styles with blue-red gradient */
-        .header {
+        .header-content {
             width: 100%;
-            margin-bottom: 15px;
-            border-bottom: 3px solid transparent;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            background-clip: border-box;
-            padding-bottom: 10px;
-            position: relative;
-        }
-
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-        }
-
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .header-table td {
-            vertical-align: top;
-            padding: 5px;
         }
 
         .company-info {
-            width: 60%;
+            float: left;
+            width: 65%;
+            margin-top: 5%;
         }
 
-        .company-name {
-            font-size: 16px;
-            font-weight: bold;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 5px;
-        }
-
-        .company-details {
-            font-size: 9px;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .logo-container {
-            width: 40%;
+        .delivery-info {
+            float: right;
+            width: 30%;
             text-align: right;
         }
 
-        .logo-container img {
-            max-height: 45px;
-            max-width: 120px;
-            object-fit: contain;
+        .company-logo {
+            float: left;
+            margin-right: 12px;
+            max-height: 36px;
+            max-width: 50px;
+            background-color: white;
+            border-radius: 50%;
+            padding: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.1);
         }
 
-        .logo-placeholder {
-            height: 45px;
-            width: 120px;
-            border: 1px dashed #2E86AB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            color: #2E86AB;
-            background: linear-gradient(45deg, #f0f8ff 0%, #fff5f5 100%);
-            margin-left: auto;
-        }
-
-        /* Document title */
-        .document-title {
-            text-align: center;
-            margin: 15px 0;
-        }
-
-        .document-title h1 {
-            font-size: 18px;
+        .company-name {
             font-weight: bold;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 13px;
+            margin: 3px 0 1px 0;
+            color: white;
+        }
+
+        .company-tagline {
+            font-size: 9px;
             margin: 0;
-            text-transform: uppercase;
+            opacity: 0.9;
+            color: #94a3b8;
+        }
+
+        .delivery-title {
+            color: #E74C3C;
+            font-weight: bold;
+            font-size: 16px;
+            margin: 0 0 2px 0;
             letter-spacing: 1px;
         }
 
-        /* Document info */
-        .document-info {
-            width: 100%;
-            margin-bottom: 15px;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .info-table td {
-            padding: 4px 8px;
-            font-size: 10px;
-            vertical-align: top;
-        }
-
-        .info-label {
-            width: 25%;
-            font-weight: bold;
-            color: #2E86AB;
-        }
-
-        .info-separator {
-            width: 5%;
-            text-align: center;
-            color: #DC2626;
-        }
-
-        .info-value {
-            width: 70%;
-            color: #1F2937;
-        }
-
-        /* Customer info box */
-        .customer-box {
-            border: 2px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                linear-gradient(90deg, #2E86AB 0%, #DC2626 100%) border-box;
-            border-radius: 4px;
-            padding: 8px;
-            margin-bottom: 15px;
-            background-color: #f8fafc;
-        }
-
-        .customer-title {
-            font-weight: bold;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .delivery-meta {
             font-size: 11px;
-            margin-bottom: 5px;
+            color: #94a3b8;
         }
 
-        /* Items table */
+        .delivery-meta div {
+            margin-bottom: 2px;
+        }
+
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .info-section {
+            width: 95.8%;
+            margin: 0 0 12px 0;
+            padding: 12px 12px 12px 12px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            font-size: 9px;
+        }
+
+        .info-to {
+            float: left;
+            width: 60%;
+        }
+
+        .info-company {
+            float: right;
+            width: 35%;
+        }
+
+        .section-title {
+            color: #E74C3C;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 12px;
+            border-bottom: 1px solid #E74C3C;
+            padding-bottom: 2px;
+        }
+
+        .customer-name {
+            font-weight: bold;
+            color: #0f172a;
+            margin: 5px 0;
+            font-size: 10px;
+        }
+
+        .customer-details {
+            color: #475569;
+            line-height: 1.4;
+            font-size: 9px;
+        }
+
+        .customer-details p {
+            margin: 3px 0;
+        }
+
+        .company-details {
+            color: #475569;
+            line-height: 1.4;
+            font-size: 9px;
+        }
+
+        .company-details p {
+            margin: 3px 0;
+        }
+
+        .items-section {
+            margin: 0 0 10px 0;
+        }
+
         .items-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin: 0;
             font-size: 10px;
         }
 
-        .items-table th,
-        .items-table td {
-            border: 1px solid #d1d5db;
-            padding: 6px 4px;
-            text-align: left;
-        }
-
-        .items-table th {
-            background: linear-gradient(135deg, #059669 0%, #10B981 100%);
-            color: black;
+        .table-header {
+            background-color: #1F2A44;
+            color: white;
             font-weight: bold;
+        }
+
+        .table-header th {
+            padding: 10px 8px;
+            text-align: left;
+            border: none;
+        }
+
+        .table-header .no-col {
+            width: 6%;
             text-align: center;
-            font-size: 9px;
-            text-shadow: none;
         }
 
-        .items-table td {
-            font-size: 9px;
+        .table-header .desc-col {
+            width: 30%;
         }
 
-        .items-table tbody tr:nth-child(even) {
+        .table-header .qty-col {
+            width: 8%;
+            text-align: center;
+        }
+
+        .table-header .satuan-col {
+            width: 10%;
+            text-align: center;
+        }
+
+        .table-header .ket-col {
+            width: 30%;
+        }
+
+        .red-header {
+            background-color: #E74C3C !important;
+            position: relative;
+        }
+
+        .table-row td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .table-row:nth-child(even) {
             background-color: #f8fafc;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
+
+        .product-desc {
+            font-size: 9px;
+            color: #475569;
+            margin: 0;
+            line-height: 1.3;
         }
 
         .text-center {
@@ -231,245 +258,236 @@
             text-align: right;
         }
 
-        /* Footer */
-        .footer {
-            margin-top: 20px;
-            font-size: 9px;
+        .notes-section {
+            margin: 10px 0;
+            border-left: 3px solid #E74C3C;
+            padding-left: 10px;
+            background-color: #f8fafc;
+        }
+
+        .notes-title {
+            color: #2c3e50;
+            font-size: 10px;
+            font-weight: bold;
         }
 
         .signature-section {
             width: 100%;
-            margin-top: 20px;
+            position: fixed;
+            left: 0;
+            bottom: 100px;
+            padding: 0 12px;
+            font-size: 10px;
+            background: #fff;
+            z-index: 10;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
         }
 
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
+        .signature-row {
+            width: 95%;
+            display: table;
+            table-layout: fixed;
+            margin-top: 15px;
         }
 
-        .signature-table td {
-            width: 33.33%;
+        .signature-item {
+            display: table-cell;
+            width: 45%;
             text-align: center;
             vertical-align: top;
-            padding: 5px;
+            padding: 0 10px;
         }
 
-        .signature-box {
-            border: 1px solid #2E86AB;
-            height: 60px;
-            margin-bottom: 5px;
-            position: relative;
-            background: linear-gradient(45deg, transparent 0%, rgba(46, 134, 171, 0.05) 100%);
+        .signature-line {
+            height: 40px;
+            border-bottom: 1px solid #cbd5e1;
+            margin-bottom: 8px;
         }
 
         .signature-label {
-            font-size: 9px;
-            font-weight: bold;
-            color: #2E86AB;
-        }
-
-        /* Notes section */
-        .notes-section {
-            margin-top: 15px;
-            padding: 8px;
-            border: 2px solid transparent;
-            background: linear-gradient(white, white) padding-box,
-                linear-gradient(90deg, #2E86AB 0%, #DC2626 100%) border-box;
-            border-radius: 4px;
-            background-color: #f9fafb;
-        }
-
-        .notes-title {
-            font-weight: bold;
+            color: #334155;
             font-size: 10px;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 5px;
+            font-weight: bold;
         }
 
-        .notes-content {
-            font-size: 9px;
-            color: #6b7280;
-            min-height: 20px;
+        .footer-thank-you {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            font-size: 13px;
+            color: #334155;
+            text-align: center;
+            padding: 15px 20px;
+            font-weight: bold;
+            background-color: #f8fafc;
+            border-top: 2px solid #E74C3C;
         }
 
-        /* Print optimizations */
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+        .footer-decoration {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background-color: #1F2A44;
         }
 
-        /* Accent elements */
-        .accent-line {
-            height: 2px;
-            background: linear-gradient(90deg, #2E86AB 0%, #DC2626 100%);
-            margin: 10px 0;
+        .watermark-bg {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            text-align: center;
+            z-index: 0;
+            opacity: 0.05;
+            font-size: 50px;
+            font-weight: bold;
+            color: #1F2A44;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
         }
     </style>
 </head>
 
 <body>
-    <!-- Watermark -->
-    <div class="watermark-bg">INDO ATSAKA</div>
-
-    <div class="content-wrapper">
-        <!-- Header -->
-        <div class="header">
-            <table class="header-table">
-                <tr>
-                    <td class="company-info">
-                        <div class="company-name">PT INDO ATSAKA INDUSTRI</div>
-                        <div class="company-details">
-                            Jl. Industri Raya No. 456, Kawasan Industri Pulogadung<br>
-                            Jakarta Timur 13260, Indonesia<br>
-                            Telp: (021) 4681-2345 | Fax: (021) 4681-2346<br>
-                            Email: info@indoatsaka.co.id | www.indoatsaka.co.id
-                        </div>
-                    </td>
-                    <td class="logo-container">
-                        @if (!empty($logoBase64))
-                            <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo">
+    <div class="sheet">
+        <div class="watermark-bg">{{ strtoupper('PT INDO ATSAKA INDUSTRI') }}</div>
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="header-content clearfix">
+                    <div class="company-info">
+                        @php
+                            $logoPath = public_path('img/atsaka.webp');
+                            $logoExists = file_exists($logoPath);
+                            $logoBase64 = '';
+                            if ($logoExists) {
+                                $logoData = file_get_contents($logoPath);
+                                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                            }
+                        @endphp
+                        @if ($logoExists && $logoBase64)
+                            <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo" class="company-logo">
                         @else
-                            <div class="logo-placeholder">
-                                LOGO INDO ATSAKA
+                            <div class="company-logo"
+                                style="width: 80px; height: 80px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); border: 2px solid rgba(255, 255, 255, 0.1);">
+                                <div
+                                    style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: white; font-weight: bold; font-size: 18px;">IA</span>
+                                </div>
                             </div>
                         @endif
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Accent Line -->
-        <div class="accent-line"></div>
-
-        <!-- Document Title -->
-        <div class="document-title">
-            <h1>Surat Jalan</h1>
-        </div>
-
-        <!-- Document Information -->
-        <div class="document-info">
-            <table class="info-table">
-                <tr>
-                    <td class="info-label">Nomor</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->nomor }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Tanggal</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d F Y') }}</td>
-                </tr>
-                <tr>
-                    <td class="info-label">Sales Order</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->salesOrder ? $deliveryOrder->salesOrder->nomor : '-' }}
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <!-- Customer Information -->
-        <div class="customer-box">
-            <div class="customer-title">KIRIM KEPADA:</div>
-            <table class="info-table">
-                <tr>
-                    <td class="info-label">Nama</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">
-                        <strong>{{ $deliveryOrder->customer->company ?? ($deliveryOrder->customer->nama ?? 'Customer tidak ditemukan') }}</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="info-label">Alamat</td>
-                    <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->alamat_pengiriman }}</td>
-                </tr>
-                @if ($deliveryOrder->customer && $deliveryOrder->customer->telepon)
-                    <tr>
-                        <td class="info-label">Telepon</td>
-                        <td class="info-separator">:</td>
-                        <td class="info-value">{{ $deliveryOrder->customer->telepon }}</td>
-                    </tr>
-                @endif
-            </table>
-        </div>
-
-        <!-- Items Table -->
-        <table class="items-table">
-            <thead>
-                <tr>
-                    <th width="5%">No</th>
-                    <th width="15%">Kode</th>
-                    <th width="40%">Nama Produk</th>
-                    <th width="10%">Qty</th>
-                    <th width="10%">Satuan</th>
-                    <th width="20%">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($deliveryOrder->details as $index => $detail)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $detail->produk->kode ?? '-' }}</td>
-                        <td>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</td>
-                        <td class="text-right">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
-                        <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
-                        <td>{{ $detail->keterangan ?: '-' }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 20px;">
-                            Tidak ada item untuk dikirim
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-
-        <!-- Notes Section -->
-        <div class="notes-section">
-            <div class="notes-title">KETERANGAN:</div>
-            <div class="notes-content">
-                {{ $deliveryOrder->keterangan ?: 'Barang dikirim dalam kondisi baik dan sesuai dengan pesanan. Terima kasih atas kepercayaan Anda kepada PT Indo Atsaka Industri.' }}
+                        <div style="margin-left: 60px;">
+                            <p class="company-name">PT INDO ATSAKA INDUSTRI</p>
+                            <p class="company-tagline">INDUSTRIAL SUPPLIER</p>
+                        </div>
+                    </div>
+                    <div class="delivery-info">
+                        <p class="delivery-title">SURAT JALAN</p>
+                        <div class="delivery-meta">
+                            <div>No: <strong>{{ $deliveryOrder->nomor }}</strong></div>
+                            <div>Tanggal:
+                                <strong>{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d/m/Y') }}</strong>
+                            </div>
+                            @if ($deliveryOrder->salesOrder)
+                                <div>SO: <strong>{{ $deliveryOrder->salesOrder->nomor }}</strong></div>
+                            @endif
+                            <div>Status: <strong
+                                    style="text-transform: uppercase;">{{ $deliveryOrder->status }}</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Info Section -->
+            <div class="info-section clearfix">
+                <div class="info-to">
+                    <p class="section-title">Dikirim Kepada:</p>
+                    <p class="customer-name">{{ $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama }}
+                    </p>
+                    <div class="customer-details">
+                        <p>{{ $deliveryOrder->alamat_pengiriman ?? ($deliveryOrder->customer->alamat ?? '-') }}</p>
+                        @if ($deliveryOrder->customer->telepon)
+                            <p>Telp: {{ $deliveryOrder->customer->telepon }}</p>
+                        @endif
+                        @if ($deliveryOrder->customer->email)
+                            <p>Email: {{ $deliveryOrder->customer->email }}</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="info-company">
+                    <p class="section-title">Info Perusahaan</p>
+                    <div class="company-details">
+                        <p><strong>PT INDO ATSAKA INDUSTRI</strong></p>
+                        <p>Jl. Raya Bekasi Km. 28 No. 1A</p>
+                        <p>Bekasi Timur 17141</p>
+                        <p>Telp: (021) 8250-8851</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Table Section -->
+            <div class="items-section">
+                <table class="items-table">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="no-col text-center">No</th>
+                            <th class="desc-col red-header">Nama Produk</th>
+                            <th class="qty-col text-center">Qty</th>
+                            <th class="satuan-col text-center">Satuan</th>
+                            <th class="ket-col">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach ($deliveryOrder->details as $detail)
+                            <tr class="table-row">
+                                <td class="text-center">{{ $no++ }}</td>
+                                <td>
+                                    <div class="product-name">{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}
+                                    </div>
+                                    @if ($detail->produk->deskripsi)
+                                        <p class="product-desc">{{ $detail->produk->deskripsi }}</p>
+                                    @endif
+                                </td>
+                                <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
+                                <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
+                                <td>{{ $detail->keterangan ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <!-- Notes Section -->
+            @if ($deliveryOrder->keterangan)
+                <div class="notes-section">
+                    <strong class="notes-title">Catatan:</strong>
+                    <p style="font-size: 9px; margin: 2px 0;">{{ $deliveryOrder->keterangan }}</p>
+                </div>
+            @endif
+            <!-- Signature Section -->
+            <div class="signature-section clearfix">
+                <div class="signature-row">
+                    <div class="signature-item">
+                        <div class="signature-line"></div>
+                        <p class="signature-label">{{ $deliveryOrder->user->name ?? 'Sales' }}</p>
+                        <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
+                    </div>
+                    <div class="signature-item">
+                        <div class="signature-line"></div>
+                        <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Penerima Barang</p>
+                        <div style="height:18px; border-bottom:1px dashed #cbd5e1; margin:6px 0 2px 0;"></div>
+                        <p style="font-size:8px; color:#64748b; margin:0;">(Nama penerima)</p>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <!-- Signature Section -->
-        <div class="signature-section">
-            <table class="signature-table">
-                <tr>
-                    <td>
-                        <div class="signature-label">Dibuat Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">{{ $deliveryOrder->user->name ?? 'Staff' }}</div>
-                    </td>
-                    <td>
-                        <div class="signature-label">Dikirim Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">Driver</div>
-                    </td>
-                    <td>
-                        <div class="signature-label">Diterima Oleh</div>
-                        <div class="signature-box"></div>
-                        <div class="signature-label">Customer</div>
-                    </td>
-                </tr>
-            </table>
+        <!-- Footer with Thank You -->
+        <div class="footer-thank-you">
+            Terima kasih atas kepercayaan Anda
         </div>
-
-        <!-- Footer Information -->
-        <div class="footer">
-            <div class="accent-line"></div>
-            <p style="text-align: center; color: #6b7280; font-size: 8px; margin-top: 10px;">
-                Dokumen ini dicetak secara otomatis pada {{ $currentDate }} pukul {{ $currentTime }}<br>
-                PT Indo Atsaka Industri - Solusi Industri Terdepan
-            </p>
-        </div>
+        <div class="footer-decoration"></div>
     </div>
 </body>
 

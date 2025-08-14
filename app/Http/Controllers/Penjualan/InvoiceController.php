@@ -906,7 +906,7 @@ class InvoiceController extends Controller
             // Optimasi PDF untuk performa
             $pdf->setOptions([
                 'dpi' => 96,
-                'defaultFont' => 'sans-serif',
+                'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => false,
                 'isJavascriptEnabled' => false,
                 'isHtml5ParserEnabled' => true,
@@ -932,7 +932,7 @@ class InvoiceController extends Controller
                 'Export invoice ke PDF menggunakan template: ' . $templateConfig['name']
             );
 
-            return $pdf->download($filename);
+            return $pdf->stream($filename);
         } catch (\Exception $e) {
             Log::error('Error exporting invoice PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengexport invoice ke PDF: ' . $e->getMessage());

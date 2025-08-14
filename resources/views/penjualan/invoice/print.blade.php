@@ -378,7 +378,7 @@
             <div><strong
                     style="color: #2c3e50;">{{ $namaDirektur = trim($namaDirektur) !== '' ? $namaDirektur : 'Ir. Arief Rahman Hamid' }}</strong>
             </div>
-            {{-- <div style="color: #7f8c8d;">{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</div> --}}
+            <div style="color: #7f8c8d;">{{ setting('company_name', 'PT. SINAR SURYA SEMESTARAYA') }}</div>
         </div>
         <div style="clear: both;"></div>
     </div>

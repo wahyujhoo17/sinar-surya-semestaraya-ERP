@@ -2,20 +2,392 @@
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Invoice {{ $invoice->nomor }} - PT Indo Atsaka Industri</title>
+    <title>Invoice - {{ $invoice->nomor }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #333;
+            background: #ffffff;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
             margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.3;
+        }
+
+        .sheet {
+            max-width: 100%;
+            margin: 0;
+            background: #ffffff;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        @page {
+            size: A4;
+            margin: 8mm 5mm;
+        }
+
+        .main-content {
+            min-height: calc(100vh - 60px);
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .clearfix:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .header-section {
+            width: calc(100% - 60px);
+            background-color: #1F2A44;
+            color: white;
+            padding: 15px 20px;
+            margin: 0 10px 15px 10px;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .header-content {
+            width: 100%;
+        }
+
+        .company-info {
+            float: left;
+            width: 65%;
+            margin-top: 4%;
+        }
+
+        .invoice-info {
+            float: right;
+            width: 30%;
+            text-align: right;
+            padding-right: 8px;
+        }
+
+        .company-logo {
+            float: left;
+            margin-right: 15px;
+            max-height: 50px;
+            max-width: 50px;
+            background-color: white;
+            border-radius: 50%;
+            padding: 10px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .company-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin: 5px 0 2px 0;
+            color: white;
+        }
+
+        .company-tagline {
+            font-size: 11px;
+            margin: 0;
+            opacity: 0.9;
+            color: #94a3b8;
+        }
+
+        .invoice-title {
+            color: #E74C3C;
+            font-weight: bold;
+            font-size: 22px;
+            margin: 0 0 8px 0;
+            letter-spacing: 1.5px;
+        }
+
+        .invoice-meta {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .invoice-meta div {
+            margin-bottom: 2px;
+        }
+
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .invoice-details {
+            width: calc(100% - 60px);
+            margin: 0 10px 15px 10px;
+            padding: 15px 20px;
+        }
+
+        .invoice-to {
+            float: left;
+            width: 60%;
+        }
+
+        .payment-method {
+            float: right;
+            width: 35%;
+        }
+
+        .section-title {
+            color: #E74C3C;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 12px;
+            border-bottom: 1px solid #E74C3C;
+            padding-bottom: 2px;
+        }
+
+        .customer-name {
+            font-weight: bold;
+            color: #0f172a;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .customer-details {
+            color: #475569;
+            line-height: 1.4;
+            font-size: 11px;
+        }
+
+        .customer-details p {
+            margin: 3px 0;
+        }
+
+        .invoice-table {
+            width: calc(100% - 20px);
+            border-collapse: collapse;
+            margin: 10px 10px;
+            font-size: 10px;
+        }
+
+        .table-header {
+            background-color: #1F2A44;
+            color: white;
+            font-weight: bold;
+        }
+
+        .table-header th {
+            padding: 10px 8px;
+            text-align: left;
+            border: none;
+        }
+
+        .table-header .no-col {
+            width: 6%;
+            text-align: center;
+        }
+
+        .table-header .desc-col {
+            width: 30%;
+        }
+
+        .table-header .qty-col {
+            width: 8%;
+            text-align: center;
+        }
+
+        .table-header .price-col {
+            width: 14%;
+            text-align: center;
+        }
+
+        .table-header .total-col {
+            width: 16%;
+            text-align: right;
+        }
+
+        .red-header {
+            background-color: #E74C3C !important;
+            position: relative;
+        }
+
+        .table-row td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .table-row:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
+
+        .product-desc {
+            font-size: 9px;
+            color: #475569;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .total-summary {
+            width: calc(100% - 60px);
+            margin: 20px 30px;
+            padding: 0;
+            page-break-inside: avoid;
+        }
+
+        .summary-section {
+            float: right;
+            width: 40%;
             padding: 0;
         }
 
-        /* Watermark background */
+        .summary-item {
+            width: 100%;
+            margin-bottom: 6px;
+            font-size: 11px;
+            clear: both;
+            box-sizing: border-box;
+            padding: 2px 0;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .summary-item .label {
+            display: table-cell;
+            width: 65%;
+            line-height: 1.4;
+            color: #475569 !important;
+            font-weight: normal;
+            vertical-align: top;
+        }
+
+        .summary-item .amount {
+            display: table-cell;
+            font-weight: bold;
+            text-align: right;
+            width: 35%;
+            line-height: 1.4;
+            color: #0f172a !important;
+            vertical-align: top;
+        }
+
+        .summary-highlight {
+            background-color: rgba(239, 68, 68, 0.1);
+            padding: 4px 6px;
+            margin: 2px -6px;
+            border-radius: 3px;
+        }
+
+        .summary-highlight .label {
+            color: #dc2626 !important;
+            font-weight: 500;
+        }
+
+        .summary-highlight .amount {
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
+
+        .total-final {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 0;
+            border-top: 2px solid #E74C3C;
+            font-size: 14px;
+            font-weight: bold;
+            color: #1F2A44;
+            clear: both;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .total-final .label {
+            display: table-cell;
+            width: 65%;
+            vertical-align: top;
+        }
+
+        .total-final .amount {
+            display: table-cell;
+            text-align: right;
+            width: 55%;
+            color: #E74C3C;
+            vertical-align: top;
+        }
+
+        .terms-signature {
+            width: calc(100% - 60px);
+            margin: 25px 30px;
+            padding: 0;
+            font-size: 10px;
+            page-break-inside: avoid;
+        }
+
+        .signature-section {
+            width: 100%;
+            margin-top: 20px;
+            clear: both;
+        }
+
+        .signature-row {
+            width: 100%;
+            display: table;
+            table-layout: fixed;
+            margin-top: 15px;
+        }
+
+        .signature-item {
+            display: table-cell;
+            width: 45%;
+            text-align: center;
+            vertical-align: top;
+            padding: 0 10px;
+        }
+
+        .signature-line {
+            height: 40px;
+            border-bottom: 1px solid #cbd5e1;
+            margin-bottom: 8px;
+        }
+
+        .signature-label {
+            color: #334155;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .footer-thank-you {
+            position: fixed;
+            bottom: 30px;
+            left: 0;
+            right: 0;
+            font-size: 13px;
+            color: #334155;
+            text-align: center;
+            padding: 15px 20px;
+            font-weight: bold;
+            background-color: #f8fafc;
+            border-top: 2px solid #E74C3C;
+        }
+
+        .footer-decoration {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 25px;
+            background-color: #1F2A44;
+        }
+
         .watermark-bg {
             position: fixed;
             top: 50%;
@@ -23,361 +395,287 @@
             width: 100%;
             text-align: center;
             z-index: 0;
-            opacity: 0.07;
-            font-size: 70px;
+            opacity: 0.05;
+            font-size: 50px;
             font-weight: bold;
-            color: #dc2626;
+            color: #1F2A44;
             transform: translate(-50%, -50%) rotate(-25deg);
             pointer-events: none;
             user-select: none;
             white-space: nowrap;
         }
 
-        .page-break {
-            page-break-after: always;
-        }
-
-        /* Simple table-based layout for better printing support */
-        .main-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .header-table {
-            width: 100%;
-            border-collapse: collapse;
-            border-bottom: 2px solid #dc2626;
-            margin-bottom: 20px;
-        }
-
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-
-        .info-table td {
-            vertical-align: top;
-            padding: 5px;
-            width: 50%;
-        }
-
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 15px;
-        }
-
-        .items-table th,
-        .items-table td {
-            border: 1px solid #1d4ed8;
-            padding: 6px;
-            text-align: left;
-        }
-
-        .items-table th {
-            background-color: #dbeafe;
-            color: #2c3e50;
-        }
-
-        .section-title {
-            background-color: #dbeafe;
-            padding: 5px;
+        .status-belum-bayar {
+            color: #dc2626;
             font-weight: bold;
-            border-left: 3px solid #dc2626;
-            color: #2c3e50;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .summary-table {
-            border-collapse: collapse;
-            width: 40%;
-            margin-left: 60%;
-            margin-bottom: 15px;
-        }
-
-        .summary-table td {
-            padding: 5px;
-        }
-
-        .total-row {
-            font-weight: bold;
-            border-top: 1px solid #dc2626;
-            color: #2c3e50;
-        }
-
-        .signature-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 30px;
-        }
-
-        .signature-table td {
-            width: 50%;
-            vertical-align: bottom;
-            text-align: center;
-        }
-
-        .signature-line {
-            border-top: 1px solid #1d4ed8;
-            width: 80%;
-            margin: 50px auto 10px auto;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status-belum_bayar,
-        .status-belum_dikirim {
-            background-color: #FEE2E2;
-            color: #B91C1C;
         }
 
         .status-sebagian {
-            background-color: #FEF3C7;
-            color: #D97706;
+            color: #d97706;
+            font-weight: bold;
         }
 
-        .status-lunas,
-        .status-dikirim {
-            background-color: #DBEAFE;
-            color: #1D4ED8;
+        .status-lunas {
+            color: #16a34a;
+            font-weight: bold;
         }
 
-        .text-amount {
-            text-transform: uppercase;
-            font-style: italic;
-            font-size: 11px;
-            margin-top: 5px;
-            color: #dc2626;
-        }
-
-        .footer {
-            text-align: center;
-            margin-top: 45px;
-            border-top: 1.5px solid #dbeafe;
-            padding-top: 22px;
-            background-color: #f9fafb;
-            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.03);
-        }
-
-        .footer {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            margin: 0;
-            box-shadow: none;
-            background: #f9fafb;
-        }
-
-        .footer-text {
-            font-size: 9.5px;
+        .status-default {
             color: #6b7280;
-            margin-top: 15px;
-            padding-bottom: 12px;
-        }
-
-        /* Print-specific styling */
-        @page {
-            size: A4;
-            margin: 1cm;
+            font-weight: bold;
         }
     </style>
 </head>
 
 <body>
-    <div class="watermark-bg">PT INDO ATSAKA INDUSTRI</div>
-
-    <!-- Header Section -->
-    <table class="header-table">
-        <tr style="margin-bottom: 10px;">
-            <td style="width: 50%; vertical-align: middle;">
-                @if ($logoBase64)
-                    <img src="{{ $logoBase64 }}" alt="Logo Atsaka" style="height: 60px;">
-                @endif
-            </td>
-            <td style="width: 50%; text-align: right; vertical-align: middle;">
-                <h2 style="color: #dc2626; margin: 0 0 5px 0;">INVOICE #{{ $invoice->nomor }}</h2>
-                <div>
-                    <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}<br>
-                    <strong>Jatuh Tempo:</strong>
-                    {{ \Carbon\Carbon::parse($invoice->jatuh_tempo)->format('d/m/Y') }}<br>
-                    @if ($invoice->salesOrder && $invoice->salesOrder->nomor_po)
-                        <strong>No. PO:</strong> {{ $invoice->salesOrder->nomor_po }}
-                    @endif
-                    @if ($invoice->salesOrder)
-                        <strong>No. Sales Order:</strong> {{ $invoice->salesOrder->nomor }}
-                    @endif
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- Company and Customer Info Section -->
-    <table class="info-table">
-        <tr>
-            <td>
-                <div class="section-title">Info Perusahaan</div>
-                <div style="padding: 5px;">
-                    <strong>PT INDO ATSAKA INDUSTRI</strong><br>
-                    Jl. Industri Raya No. 88, Kawasan Industri<br>
-                    Bekasi 17520<br>
-                    Telp: (021) 8888-9999 | Fax: (021) 8888-1111<br>
-                    Email: info@indoatsaka.co.id
-                </div>
-            </td>
-            <td>
-                <div class="section-title">Customer</div>
-                <div style="padding: 5px;">
-                    <strong>{{ $invoice->customer->company ?? $invoice->customer->nama }}</strong><br>
-                    {{ $invoice->customer->alamat ?? '-' }}<br>
-                    @if ($invoice->customer->telepon)
-                        Telp: {{ $invoice->customer->telepon }}<br>
-                    @endif
-                    @if ($invoice->customer->email)
-                        Email: {{ $invoice->customer->email }}<br>
-                    @endif
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th width="5%">No</th>
-                <th width="30%">Produk</th>
-                <th width="10%">Qty</th>
-                <th width="10%">Satuan</th>
-                <th width="15%">Harga</th>
-                <th width="10%">Diskon</th>
-                <th width="20%">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($invoice->details as $index => $detail)
-                <tr>
-                    <td class="text-center">{{ $index + 1 }}</td>
-                    <td>
-                        <strong>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</strong>
-                        <div style="font-size: 10px;">{{ $detail->produk->kode ?? '' }}</div>
-                        @if ($detail->deskripsi)
-                            <div style="font-size: 10px; margin-top: 3px;">{{ $detail->deskripsi }}</div>
-                        @endif
-                    </td>
-                    <td class="text-center">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
-                    <td class="text-center">{{ $detail->satuan->nama ?? ($detail->produk->satuan->nama ?? '') }}</td>
-                    <td class="text-right">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                    <td class="text-center">
-                        @if ($detail->diskon_nominal > 0)
-                            Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
+    <div class="sheet">
+        <div class="watermark-bg">{{ strtoupper($template_config['company_name'] ?? 'PT INDO ATSAKA INDUSTRI') }}</div>
+        <div class="main-content">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="header-content clearfix">
+                    <div class="company-info">
+                        @php
+                            $logoPath = public_path('img/atsaka.webp');
+                            $logoExists = file_exists($logoPath);
+                            $logoBase64 = '';
+                            if ($logoExists) {
+                                $logoData = file_get_contents($logoPath);
+                                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                            }
+                        @endphp
+                        @if ($logoExists && $logoBase64)
+                            <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo" class="company-logo">
                         @else
-                            -
+                            <div class="company-logo"
+                                style="width: 80px; height: 80px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); border: 2px solid rgba(255, 255, 255, 0.1);">
+                                <div
+                                    style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: white; font-weight: bold; font-size: 18px;">IA</span>
+                                </div>
+                            </div>
                         @endif
-                    </td>
-                    <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+                        <div style="margin-left: 100px;">
+                            <p class="company-name">{{ $template_config['company_name'] ?? 'PT INDO ATSAKA INDUSTRI' }}
+                            </p>
+                            <p class="company-tagline">INDUSTRIAL SUPPLIER</p>
+                        </div>
+                    </div>
+                    <div class="invoice-info">
+                        <p class="invoice-title">INVOICE</p>
+                        <div class="invoice-meta">
+                            <div>Nomor: <strong>{{ $invoice->nomor }}</strong></div>
+                            @if ($invoice->nomor_so)
+                                <div>No. SO: <strong>{{ $invoice->nomor_so }}</strong></div>
+                            @endif
+                            <div>Tanggal:
+                                <strong>{{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}</strong>
+                            </div>
+                            @if ($invoice->salesOrder)
+                                <div>No. Sales Order: <strong>{{ $invoice->salesOrder->nomor }}</strong></div>
+                            @endif
+                            @if ($invoice->status)
+                                <div>Status Pembayaran:
+                                    @php
+                                        $statusClass = 'status-default';
+                                        $statusLabel = ucfirst(str_replace('_', ' ', $invoice->status));
 
-    <div style="display: flex; justify-content: space-between;">
-        <div class="text-amount">
-            <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $invoice->total)) }} Rupiah
-        </div>
-        <!-- Summary Table -->
-        <table class="summary-table">
-            <tr>
-                <td>Subtotal</td>
-                <td class="text-right">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</td>
-            </tr>
-            @if ($invoice->diskon_nominal > 0)
-                <tr>
-                    <td>Diskon</td>
-                    <td class="text-right">Rp {{ number_format($invoice->diskon_nominal, 0, ',', '.') }}</td>
-                </tr>
-            @endif
-            @if ($invoice->ppn > 0)
-                <tr>
-                    <td>PPN (11%)</td>
-                    <td class="text-right">Rp {{ number_format($invoice->ppn, 0, ',', '.') }}</td>
-                </tr>
-            @endif
-            @if ($invoice->ongkos_kirim > 0)
-                <tr>
-                    <td>Ongkos Kirim</td>
-                    <td class="text-right">Rp {{ number_format($invoice->ongkos_kirim, 0, ',', '.') }}</td>
-                </tr>
-            @endif
-            <tr class="total-row">
-                <td><strong>Total</strong></td>
-                <td class="text-right"><strong>Rp {{ number_format($invoice->total, 0, ',', '.') }}</strong></td>
-            </tr>
-        </table>
-
-        <div style="width: 60%;">
-            @if ($invoice->catatan)
-                <div
-                    style="margin-bottom: 15px; border-left: 3px solid #dc2626; padding-left: 10px; background-color: #f8fafc;">
-                    <strong style="color: #2c3e50;">Catatan:</strong>
-                    <p>{{ $invoice->catatan }}</p>
+                                        switch ($invoice->status) {
+                                            case 'belum_bayar':
+                                                $statusClass = 'status-belum-bayar';
+                                                $statusLabel = 'Belum Bayar';
+                                                break;
+                                            case 'sebagian':
+                                                $statusClass = 'status-sebagian';
+                                                $statusLabel = 'Sebagian';
+                                                break;
+                                            case 'lunas':
+                                                $statusClass = 'status-lunas';
+                                                $statusLabel = 'Lunas';
+                                                break;
+                                        }
+                                    @endphp
+                                    <strong class="{{ $statusClass }}">{{ $statusLabel }}</strong>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Invoice Details -->
+            <div class="invoice-details clearfix">
+                <div class="invoice-to">
+                    <p class="section-title">KEPADA YTH:</p>
+                    <p class="customer-name">{{ $invoice->customer->company ?? $invoice->customer->nama }}</p>
+                    <div class="customer-details">
+                        <p>{{ $invoice->customer->alamat ?? '-' }}</p>
+                        @if ($invoice->customer->telepon)
+                            <p>Telp: {{ $invoice->customer->telepon }}</p>
+                        @endif
+                        @if ($invoice->customer->email)
+                            <p>Email: {{ $invoice->customer->email }}</p>
+                        @endif
+                        @if ($invoice->customer->kontak_person)
+                            <p>Kontak: {{ $invoice->customer->kontak_person }}
+                                @if ($invoice->customer->no_hp_kontak)
+                                    ({{ $invoice->customer->no_hp_kontak }})
+                                @endif
+                            </p>
+                        @endif
+                    </div>
+                </div>
+                <div class="payment-method">
+                    <p class="section-title">Info Perusahaan</p>
+                    <div class="customer-details">
+                        <strong>PT INDO ATSAKA INDUSTRI</strong><br>
+                        {{ setting('company_address', 'Jl. Condet Raya No. 6 Balekambang') }}<br>
+                        Telp. {{ setting('company_phone', '(021) 80876624 - 80876642') }}
+                    </div>
+                </div>
+            </div>
+            @if ($invoice->tanggal_jatuh_tempo)
+                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
+                    <strong style="color: #E74C3C; font-size: 12px;">Jatuh Tempo:</strong>
+                    <span style="font-weight: bold; color: #1F2A44;">
+                        {{ \Carbon\Carbon::parse($invoice->tanggal_jatuh_tempo)->format('d/m/Y') }}
+                    </span>
                 </div>
             @endif
-
-            @if ($invoice->syarat_ketentuan)
-                <div
-                    style="margin-bottom: 15px; border-left: 3px solid #dc2626; padding-left: 10px; background-color: #f8fafc;">
-                    <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
-                    <div style="margin-top: 5px; white-space: pre-line;">{{ $invoice->syarat_ketentuan }}</div>
+            @if ($invoice->alamat_pengiriman)
+                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
+                    <strong style="color: #E74C3C; font-size: 12px;">Alamat Pengiriman:</strong><br>
+                    <span style="font-weight: bold; color: #1F2A44;">{{ $invoice->alamat_pengiriman }}</span>
                 </div>
             @endif
+            <!-- Table Section -->
+            <div class="table-section">
+                <table class="invoice-table">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="no-col text-center">No</th>
+                            <th class="desc-col red-header">Nama Produk</th>
+                            <th class="qty-col text-center">Qty</th>
+                            <th class="price-col text-center">Satuan</th>
+                            <th class="price-col text-center">Harga</th>
+                            <th class="price-col text-center">Diskon</th>
+                            <th class="total-col text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach ($invoice->details as $detail)
+                            <tr class="table-row">
+                                <td class="text-center">{{ $no++ }}</td>
+                                <td>
+                                    <div class="product-name">{{ $detail->produk->nama ?? 'Produk' }}</div>
+                                    @if ($detail->deskripsi)
+                                        <p class="product-desc">{{ $detail->deskripsi }}</p>
+                                    @endif
+                                </td>
+                                <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
+                                <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
+                                <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
+                                <td class="text-center">
+                                    @if ($detail->diskon_persen > 0)
+                                        {{ number_format($detail->diskon_persen, 1) }}%
+                                    @endif
+                                </td>
+                                <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-            <div
-                style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
-                <strong style="color: #2c3e50;">Informasi Pembayaran:</strong>
-                <div style="margin-top: 5px;">
-                    Pembayaran Giro, Cek atau Transfer <br>
-                    Bank: {{ setting('company_bank_name', 'Mandiri') }}<br>
-                    No. Rekening: {{ setting('company_bank_account', '006.000.301.9563') }}<br>
-                    Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
+
+
+            <!-- Totals -->
+            <div class="total-summary clearfix">
+                <div class="summary-section">
+                    <div class="summary-item clearfix">
+                        <span class="label">Subtotal:</span>
+                        <span class="amount">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
+                    </div>
+                    @if ($invoice->diskon_nominal > 0)
+                        <div class="summary-item summary-highlight clearfix">
+                            <span class="label">Diskon ({{ number_format($invoice->diskon_persen, 1) }}%):</span>
+                            <span class="amount">-Rp {{ number_format($invoice->diskon_nominal, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    @if ($invoice->ppn > 0)
+                        <div class="summary-item clearfix">
+                            <span class="label">PPN 11% :</span>
+                            <span class="amount">Rp
+                                {{ number_format($invoice->ppn, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    @if ($invoice->ongkos_kirim > 0)
+                        <div class="summary-item clearfix">
+                            <span class="label">Ongkos Kirim:</span>
+                            <span class="amount">Rp {{ number_format($invoice->ongkos_kirim, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    <div class="total-final clearfix">
+                        <span class="label">TOTAL:</span>
+                        <span class="amount">Rp {{ number_format($invoice->total, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Text Terbilang -->
+            <div style="margin: 15px 10px; color: #1F2A44; font-size: 11px; font-style: italic;">
+                <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $invoice->total)) }} Rupiah
+            </div>
+            <!-- Notes and Terms Section -->
+            <div style="display: table; width: calc(100% - 20px); margin: 10px 10px;">
+                <div style="display: table-cell; width: 60%; vertical-align: top; padding-right: 20px;">
+                    @if ($invoice->catatan)
+                        <div
+                            style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
+                            <p style="font-size: 9px; margin: 2px 0;">{{ $invoice->catatan }}</p>
+                        </div>
+                    @endif
+
+                    @if ($invoice->syarat_ketentuan)
+                        <div
+                            style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Syarat & Ketentuan:</strong>
+                            <div style="font-size: 9px; margin-top: 5px; white-space: pre-line;">
+                                {{ $invoice->syarat_ketentuan }}</div>
+                        </div>
+                    @endif
+
+                    <div
+                        style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                        <strong style="color: #2c3e50; font-size: 10px;">Informasi Pembayaran:</strong>
+                        <div style="font-size: 9px; margin-top: 5px;">
+                            Pembayaran Giro, Cek atau Transfer <br>
+                            Bank: {{ setting('company_bank_name', 'Mandiri') }}<br>
+                            No. Rekening: {{ setting('company_bank_account', '006.000.301.9563') }}<br>
+                            Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signature Section -->
+                <div style="display: table-cell; width: 40%; vertical-align: top; text-align: center;">
+                    <div
+                        style="margin-top: 30px; margin-bottom: 45px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                        Hormat Kami,
+                    </div>
+                    <div style="height: 60px; margin-bottom: 10px;"></div>
+                    <div style="border-top: 1px solid #cbd5e1; width: 80%; margin: 0 auto 10px auto;"></div>
+                    <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
+                        Ir. Arief Rahman Hamid
+                    </div>
+                    <div style="font-size: 8px; color: #64748b;">PT Indo Atsaka Industri</div>
                 </div>
             </div>
         </div>
+        <!-- Footer with Thank You -->
+        <div class="footer-thank-you">Terima kasih atas kepercayaan Anda</div>
+        <div class="footer-decoration"></div>
     </div>
-
-    <!-- Signatures -->
-    <div style="width: 100%; margin-top: 30px;">
-        <div style="width: 40%; float: right; text-align: center;">
-            <div style="margin-bottom: 35px; font-weight: bold; color: #2c3e50;">Hormat Kami,</div>
-            <div class="signature-line" style="margin: 50px auto 10px auto; width: 80%;"></div>
-            <div><strong style="color: #2c3e50;">{{ $invoice->user->name ?? 'Management' }}</strong></div>
-        </div>
-        <div style="clear: both;"></div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-        <div class="footer-text">
-            <p>Dokumen ini dicetak secara digital pada {{ $currentDate }} {{ $currentTime }} WIB |
-                PT Indo Atsaka Industri</p>
-        </div>
-    </div>
-
 </body>
 
 </html>

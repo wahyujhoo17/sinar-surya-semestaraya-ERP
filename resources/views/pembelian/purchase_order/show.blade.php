@@ -131,16 +131,51 @@
                 </p>
             </div>
 
-            <div class="flex flex-wrap gap-2 mt-4 md:mt-0" x-data="{ statusDropdownOpen: false, confirmModal: false, newStatus: '', currentStatus: '{{ $purchaseOrder->status }}' }">
-                <a href="{{ route('pembelian.purchasing-order.pdf', $purchaseOrder->id) }}" target="_blank"
-                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Cetak
-                </a>
+            <div class="flex flex-wrap gap-2 mt-4 md:mt-0" x-data="{ statusDropdownOpen: false, confirmModal: false, newStatus: '', currentStatus: '{{ $purchaseOrder->status }}', pdfDropdownOpen: false }">
+                <!-- Multi-Template PDF Export Dropdown -->
+                <div class="relative">
+                    <button @click="pdfDropdownOpen = !pdfDropdownOpen" type="button"
+                        class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                        <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Export PDF
+                        <svg class="ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div x-show="pdfDropdownOpen" @click.outside="pdfDropdownOpen = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="transform opacity-0 scale-95"
+                        x-transition:enter-end="transform opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="transform opacity-100 scale-100"
+                        x-transition:leave-end="transform opacity-0 scale-95"
+                        class="absolute right-0 z-50 mt-1 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
+                        <div class="py-1">
+                            <a href="{{ route('pembelian.purchasing-order.pdf', $purchaseOrder->id) }}?template=sinar-surya"
+                                target="_blank"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
+                                PT Sinar Surya Semestaraya
+                            </a>
+                            <a href="{{ route('pembelian.purchasing-order.pdf', $purchaseOrder->id) }}?template=atsaka"
+                                target="_blank"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20">
+                                <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                                PT Indo Atsaka Industri
+                            </a>
+                            <a href="{{ route('pembelian.purchasing-order.pdf', $purchaseOrder->id) }}?template=hidayah"
+                                target="_blank"
+                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20">
+                                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
+                                PT Hidayah Cahaya Berkah
+                            </a>
+                        </div>
+                    </div>
+                </div>
 
                 @if (auth()->user()->hasPermission('purchase_order.edit') && $purchaseOrder->status == 'draft')
                     <a href="{{ route('pembelian.purchasing-order.edit', $purchaseOrder->id) }}"
@@ -655,16 +690,19 @@
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {{ number_format($detail->harga, 0, ',', '.') }}
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                             @if ($detail->diskon_persen > 0 || $detail->diskon_nominal > 0)
                                                 <div class="flex flex-wrap gap-1 items-center">
                                                     @if ($detail->diskon_persen > 0)
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-200">
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-xs font-semibold text-blue-700 dark:text-blue-200">
                                                             {{ rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') }}%
                                                         </span>
                                                     @endif
                                                     @if ($detail->diskon_nominal > 0)
-                                                        <span class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/30 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
                                                             {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
                                                         </span>
                                                     @endif

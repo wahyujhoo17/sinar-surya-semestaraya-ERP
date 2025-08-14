@@ -907,7 +907,9 @@ class DeliveryOrderController extends Controller
                 'gudang',
                 'user',
                 'details.produk.satuan'
-            ])->findOrFail($id);            // Template configuration
+            ])->findOrFail($id);
+
+            // Template configuration
             $templates = [
                 'sinar-surya' => [
                     'name' => 'PT Sinar Surya Semestaraya',
@@ -961,7 +963,7 @@ class DeliveryOrderController extends Controller
             // Optimasi PDF untuk performa
             $pdf->setOptions([
                 'dpi' => 96,
-                'defaultFont' => 'sans-serif',
+                'defaultFont' => 'DejaVu Sans',
                 'isRemoteEnabled' => false,
                 'isJavascriptEnabled' => false,
                 'isHtml5ParserEnabled' => true,
@@ -987,7 +989,14 @@ class DeliveryOrderController extends Controller
                 'Export surat jalan ke PDF menggunakan template: ' . $templateConfig['name']
             );
 
-            return $pdf->download($filename);
+            // Stream PDF untuk preview di browser dengan membuka di tab baru
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Cache-Control' => 'private, max-age=0, must-revalidate',
+                'Pragma' => 'public',
+                'X-Frame-Options' => 'SAMEORIGIN'
+            ]);
         } catch (\Exception $e) {
             Log::error('Error exporting delivery order PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal mengexport surat jalan ke PDF: ' . $e->getMessage());
