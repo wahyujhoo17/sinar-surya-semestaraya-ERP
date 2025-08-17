@@ -421,20 +421,34 @@
                 <div class="p-6">
                     {{-- Commission Rules Info --}}
                     <div
-                        class="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Aturan Komisi:</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-blue-800 dark:text-blue-200">
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
-                                <span>Margin ≤ 30%: 5.5% komisi</span>
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Informasi Sistem Komisi:
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-800 dark:text-blue-200">
+                            <div>
+                                <p class="font-medium mb-2">Basis Perhitungan:</p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Komisi dihitung berdasarkan tanggal pembayaran invoice</li>
+                                    <li>• Menggunakan margin % = (Harga Jual - Harga Beli) / Harga Beli × 100</li>
+                                    <li>• Rate komisi mengikuti tier system (1% - 30%)</li>
+                                </ul>
                             </div>
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
-                                <span>Margin 30-50%: 7% komisi</span>
-                            </div>
-                            <div class="flex items-center">
-                                <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
-                                <span>Margin > 100%: 11.5% komisi</span>
+                            <div>
+                                <p class="font-medium mb-2">Contoh Tier:</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                                        <span>Margin 18-20%: 1% komisi</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                        <span>Margin 45.5-50%: 2.5% komisi</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                                        <span>Margin 451-500%: 10% komisi</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -456,7 +470,82 @@
                     </div>
 
                     {{-- Commission Details --}}
-                    <div x-show="!commissionLoading && commissionData.orders.length > 0" class="space-y-4">
+                    <div x-show="!commissionLoading && commissionData.orders.length > 0" class="space-y-6">
+                        {{-- Commission Summary Card --}}
+                        <div
+                            class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
+                            <h4
+                                class="text-lg font-semibold text-green-900 dark:text-green-100 mb-4 flex items-center">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 00-2 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                Ringkasan Perhitungan Komisi
+                            </h4>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                {{-- Total Sales Orders --}}
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">Total Sales Order</div>
+                                    <div class="text-2xl font-bold text-green-600 dark:text-green-400"
+                                        x-text="commissionData.orders.length"></div>
+                                </div>
+
+                                {{-- Total Revenue --}}
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">Total Penjualan</div>
+                                    <div class="text-lg font-bold text-blue-600 dark:text-blue-400"
+                                        x-text="formatRupiah(commissionData.total_sales || 0)"></div>
+                                </div>
+
+                                {{-- Average Margin --}}
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">Rata-rata Margin</div>
+                                    <div class="text-lg font-bold"
+                                        :class="{
+                                            'text-red-600 dark:text-red-400': (commissionData.average_margin || 0) <=
+                                                30,
+                                            'text-yellow-600 dark:text-yellow-400': (commissionData.average_margin ||
+                                                0) > 30 && (commissionData.average_margin || 0) <= 50,
+                                            'text-green-600 dark:text-green-400': (commissionData.average_margin || 0) >
+                                                50
+                                        }"
+                                        x-text="(commissionData.average_margin || 0).toFixed(2) + '%'"></div>
+                                </div>
+
+                                {{-- Total Commission --}}
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">Total Komisi</div>
+                                    <div class="text-lg font-bold text-green-600 dark:text-green-400"
+                                        x-text="formatRupiah(commissionData.total_commission)"></div>
+                                </div>
+                            </div>
+
+                            {{-- Commission Rate Breakdown --}}
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-green-200 dark:border-green-700">
+                                <h5 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Breakdown Rate
+                                    Komisi</h5>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                    <template x-for="tier in commissionData.commission_tiers" :key="tier.range">
+                                        <div
+                                            class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                            <span class="text-gray-600 dark:text-gray-400" x-text="tier.range"></span>
+                                            <span class="font-medium" x-text="tier.rate + '%'"></span>
+                                            <span class="text-green-600 dark:text-green-400 font-medium"
+                                                x-text="formatRupiah(tier.amount || 0)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Detailed Commission Table --}}
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                                 <thead class="bg-gray-50 dark:bg-gray-700">
@@ -471,11 +560,19 @@
                                         </th>
                                         <th
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Total SO
+                                            Nilai Jual
                                         </th>
                                         <th
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                            Margin Avg
+                                            Nilai Beli
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Margin %
+                                        </th>
+                                        <th
+                                            class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                            Rate Komisi
                                         </th>
                                         <th
                                             class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -493,27 +590,33 @@
                                                 x-text="order.customer">
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"
-                                                x-text="formatRupiah(order.total)">
+                                                x-text="formatRupiah(order.harga_jual)">
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"
+                                                x-text="formatRupiah(order.harga_beli)">
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right">
-                                                <span x-text="order.average_margin + '%'"
+                                                <span x-text="order.margin_persen + '%'"
                                                     :class="{
-                                                        'text-red-600 dark:text-red-400': order.average_margin <= 30,
-                                                        'text-yellow-600 dark:text-yellow-400': order.average_margin >
-                                                            30 && order.average_margin <= 50,
-                                                        'text-green-600 dark:text-green-400': order.average_margin > 100
+                                                        'text-red-600 dark:text-red-400': order.margin_persen <= 30,
+                                                        'text-yellow-600 dark:text-yellow-400': order.margin_persen >
+                                                            30 && order.margin_persen <= 50,
+                                                        'text-green-600 dark:text-green-400': order.margin_persen > 50
                                                     }"></span>
                                             </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"
+                                                x-text="(order.commission_rate || 0) + '%'">
+                                            </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right"
-                                                x-text="formatRupiah(order.commission)">
+                                                x-text="formatRupiah(order.komisi)">
                                             </td>
                                         </tr>
                                     </template>
                                 </tbody>
                                 <tfoot class="bg-gray-50 dark:bg-gray-700">
                                     <tr>
-                                        <td colspan="4"
+                                        <td colspan="6"
                                             class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white text-right">
                                             Total Komisi:
                                         </td>
@@ -750,6 +853,9 @@
 
                     commissionData: {
                         total_commission: 0,
+                        total_sales: 0,
+                        average_margin: 0,
+                        commission_tiers: [],
                         orders: []
                     },
 
@@ -808,6 +914,9 @@
                         if (!this.selectedEmployee || !this.selectedMonth || !this.selectedYear) {
                             this.commissionData = {
                                 total_commission: 0,
+                                total_sales: 0,
+                                average_margin: 0,
+                                commission_tiers: [],
                                 orders: []
                             };
                             this.calculateTotal();
@@ -834,14 +943,45 @@
                             const data = await response.json();
 
                             if (data.success) {
+                                const salesDetails = data.sales_details || [];
+
+                                // Calculate total sales and average margin
+                                let totalSales = 0;
+                                let totalMargin = 0;
+                                let commissionTiers = {};
+
+                                salesDetails.forEach(order => {
+                                    totalSales += parseFloat(order.harga_jual || 0);
+                                    totalMargin += parseFloat(order.margin_persen || 0);
+
+                                    // Group by commission rate
+                                    const rate = parseFloat(order.commission_rate || 0);
+                                    if (!commissionTiers[rate]) {
+                                        commissionTiers[rate] = {
+                                            range: this.getMarginRangeForRate(rate),
+                                            rate: rate,
+                                            amount: 0
+                                        };
+                                    }
+                                    commissionTiers[rate].amount += parseFloat(order.komisi || 0);
+                                });
+
+                                const averageMargin = salesDetails.length > 0 ? totalMargin / salesDetails.length : 0;
+
                                 this.commissionData = {
                                     total_commission: data.komisi || 0,
-                                    orders: data.salesOrderDetails || []
+                                    total_sales: totalSales,
+                                    average_margin: averageMargin,
+                                    commission_tiers: Object.values(commissionTiers),
+                                    orders: salesDetails
                                 };
                                 console.log(data);
                             } else {
                                 this.commissionData = {
                                     total_commission: 0,
+                                    total_sales: 0,
+                                    average_margin: 0,
+                                    commission_tiers: [],
                                     orders: []
                                 };
                                 console.error('Commission calculation failed:', data.message);
@@ -850,12 +990,55 @@
                             console.error('Error calculating commission:', error);
                             this.commissionData = {
                                 total_commission: 0,
+                                total_sales: 0,
+                                average_margin: 0,
+                                commission_tiers: [],
                                 orders: []
                             };
                         } finally {
                             this.commissionLoading = false;
                             this.calculateTotal();
                         }
+                    },
+
+                    getMarginRangeForRate(rate) {
+                        // Map commission rates to margin ranges based on the tier system
+                        const tierMap = {
+                            1.00: '18-20%',
+                            1.25: '20.5-25%',
+                            1.50: '25.5-30%',
+                            1.75: '30.5-35%',
+                            2.00: '35.5-40%',
+                            2.25: '40.5-45%',
+                            2.50: '45.5-50%',
+                            2.75: '50.5-55%',
+                            3.00: '55.5-60%',
+                            3.25: '60.5-65%',
+                            3.50: '65.5-70%',
+                            3.75: '70.5-75%',
+                            4.00: '75.5-80%',
+                            4.25: '80.5-85%',
+                            4.50: '85.5-90%',
+                            4.75: '90.5-95%',
+                            5.00: '95.5-100%',
+                            5.25: '101-110%',
+                            5.50: '111-125%',
+                            5.75: '126-140%',
+                            6.00: '141-160%',
+                            6.25: '161-180%',
+                            6.50: '181-200%',
+                            7.00: '201-225%',
+                            7.25: '226-250%',
+                            7.50: '251-275%',
+                            8.00: '276-300%',
+                            8.25: '301-325%',
+                            8.50: '326-350%',
+                            9.00: '351-400%',
+                            9.50: '401-450%',
+                            10.00: '451-500%'
+                        };
+
+                        return tierMap[rate] || `${rate}%`;
                     },
 
                     calculateTotal() {

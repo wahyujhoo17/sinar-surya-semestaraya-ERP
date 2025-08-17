@@ -419,12 +419,17 @@ class PenerimaanBarangController extends Controller
         // Jika selesai terima dan sudah bayar, maka PO selesai
         if ($po->status_penerimaan == 'diterima' && $po->status_pembayaran == 'lunas') {
             $po->status = 'selesai';
+            $po->save();
+
+            // Update harga beli rata-rata ketika PO selesai melalui penerimaan barang
+            \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
         } else if ($po->status != 'dibatalkan') {
             // Jika bukan dibatalkan, maka status jadi approved (proses)
             $po->status = 'dikirim';
+            $po->save();
+        } else {
+            $po->save();
         }
-
-        $po->save();
     }
 
     /**

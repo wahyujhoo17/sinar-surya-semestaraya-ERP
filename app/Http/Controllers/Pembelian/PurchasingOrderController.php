@@ -42,6 +42,123 @@ class PurchasingOrderController extends Controller
     }
 
     /**
+     * Helper untuk menghitung dan update harga beli rata-rata produk
+     * Hanya dipanggil ketika status PO = selesai
+     */
+    private function updateHargaBeliRataRata($produk_id, $harga_beli_baru, $quantity_baru = 1, $po_id_saat_ini = null)
+    {
+        $produk = Produk::find($produk_id);
+        if (!$produk) return;
+
+        // Ambil history pembelian produk ini dari PO yang sudah selesai
+        // TERMASUK PO yang sedang diproses saat ini
+        $historyPembelian = DB::table('purchase_order_detail')
+            ->join('purchase_order', 'purchase_order_detail.po_id', '=', 'purchase_order.id')
+            ->where('purchase_order_detail.produk_id', $produk_id)
+            ->where('purchase_order.status', 'selesai')
+            ->whereNotNull('purchase_order_detail.harga')
+            ->where('purchase_order_detail.harga', '>', 0)
+            ->select('purchase_order_detail.harga', 'purchase_order_detail.quantity')
+            ->get();
+
+        // Cek apakah produk belum pernah punya harga beli (produk baru)
+        $isProdukBaru = is_null($produk->harga_beli) || $produk->harga_beli <= 0;
+
+        if ($historyPembelian->isEmpty()) {
+            // Kasus 1: Belum ada history PO selesai ATAU produk baru
+            if ($isProdukBaru) {
+                // Produk baru: langsung gunakan harga beli dari PO pertama
+                $produk->update(['harga_beli' => $harga_beli_baru]);
+                $this->logUserAktivitas(
+                    'Set Harga Beli Produk Baru',
+                    'Purchase Order',
+                    $produk->id,
+                    "Produk: {$produk->nama_produk}, Harga Beli Pertama: " . number_format($harga_beli_baru, 2)
+                );
+            } else {
+                // Produk sudah ada harga: hitung rata-rata dengan harga existing
+                $harga_existing = $produk->harga_beli;
+
+                // Asumsi quantity existing = 1 untuk simplifikasi
+                // Bisa disesuaikan dengan kebutuhan bisnis
+                $quantity_existing = 1;
+
+                $totalNilai = ($harga_existing * $quantity_existing) + ($harga_beli_baru * $quantity_baru);
+                $totalQuantity = $quantity_existing + $quantity_baru;
+                $hargaBeliRataRata = $totalNilai / $totalQuantity;
+
+                $produk->update(['harga_beli' => round($hargaBeliRataRata, 2)]);
+                $this->logUserAktivitas(
+                    'Update Harga Beli Rata-rata (Existing)',
+                    'Purchase Order',
+                    $produk->id,
+                    "Produk: {$produk->nama_produk}, Harga Lama: " . number_format($harga_existing, 2) .
+                        ", Harga Baru: " . number_format($hargaBeliRataRata, 2)
+                );
+            }
+            return;
+        }
+
+        // Kasus 2: Ada history PO selesai - hitung rata-rata tertimbang
+        $totalNilai = 0;
+        $totalQuantity = 0;
+
+        foreach ($historyPembelian as $history) {
+            $totalNilai += ($history->harga * $history->quantity);
+            $totalQuantity += $history->quantity;
+        }
+
+        // Tambahkan pembelian baru yang sedang diselesaikan
+        $totalNilai += ($harga_beli_baru * $quantity_baru);
+        $totalQuantity += $quantity_baru;
+
+        $hargaBeliRataRata = $totalQuantity > 0 ? $totalNilai / $totalQuantity : $harga_beli_baru;
+
+        // Update harga beli produk dengan rata-rata baru
+        $harga_lama = $produk->harga_beli;
+        $produk->update([
+            'harga_beli' => round($hargaBeliRataRata, 2)
+        ]);
+
+        // Log perubahan harga beli
+        $this->logUserAktivitas(
+            'Update Harga Beli Rata-rata',
+            'Purchase Order',
+            $produk->id,
+            "Produk: {$produk->nama_produk}, Harga Lama: " . number_format($harga_lama, 2) .
+                ", Harga Baru: " . number_format($hargaBeliRataRata, 2) .
+                ", Total PO: " . ($historyPembelian->count() + 1)
+        );
+    }
+
+    /**
+     * Static method untuk dipanggil dari controller lain
+     * Mengupdate harga beli rata-rata untuk semua produk dalam PO yang selesai
+     */
+    public static function updateHargaBeliRataRataFromExternalController($purchaseOrderId)
+    {
+        $po = PurchaseOrder::with('details')->find($purchaseOrderId);
+        if (!$po || $po->status !== 'selesai') {
+            return false;
+        }
+
+        $instance = new static();
+
+        foreach ($po->details as $detail) {
+            if ($detail->produk_id) {
+                $instance->updateHargaBeliRataRata(
+                    $detail->produk_id,
+                    $detail->harga,
+                    $detail->quantity,
+                    $po->id
+                );
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
@@ -329,18 +446,14 @@ class PurchasingOrderController extends Controller
                     'quantity' => $qty,
                     'quantity_diterima' => 0,
                     'satuan_id' => $item['satuan_id'],
-                    'harga' => $harga,
+                    'harga' => $harga, // Ini adalah harga beli
                     'diskon_persen' => $item['diskon_persen'] ?? 0,
                     'diskon_nominal' => $diskon_item,
                     'subtotal' => $item_subtotal,
                 ]);
 
-                // Update harga_beli di model Produk agar selalu relevan
-                $produk = Produk::find($item['produk_id']);
-                if ($produk) {
-                    $produk->harga_beli = $harga;
-                    $produk->save();
-                }
+                // TIDAK update harga_beli produk saat draft/approval
+                // Harga beli akan diupdate saat status = selesai menggunakan rata-rata
 
                 // Tambahkan ke supplier_produks jika belum ada
                 $exists = SupplierProduk::where('supplier_id', $purchaseOrder->supplier_id)
@@ -536,18 +649,14 @@ class PurchasingOrderController extends Controller
                             'deskripsi' => $item['deskripsi'] ?? null,
                             'quantity' => $qty,
                             'satuan_id' => $item['satuan_id'],
-                            'harga' => $harga,
+                            'harga' => $harga, // Ini adalah harga beli
                             'diskon_persen' => $item['diskon_persen'] ?? 0,
                             'diskon_nominal' => $diskon_item,
                             'subtotal' => $item_subtotal,
                         ]);
 
-                    // Update harga_beli di model Produk agar selalu relevan
-                    $produk = Produk::find($item['produk_id']);
-                    if ($produk) {
-                        $produk->harga_beli = $harga;
-                        $produk->save();
-                    }
+                    // TIDAK update harga_beli produk saat edit (kecuali status = selesai)
+                    // Harga beli akan diupdate saat status = selesai menggunakan rata-rata
                 } else {
                     // Create new detail
                     PurchaseOrderDetail::create([
@@ -558,18 +667,14 @@ class PurchasingOrderController extends Controller
                         'quantity' => $qty,
                         'quantity_diterima' => 0,
                         'satuan_id' => $item['satuan_id'],
-                        'harga' => $harga,
+                        'harga' => $harga, // Ini adalah harga beli
                         'diskon_persen' => $item['diskon_persen'] ?? 0,
                         'diskon_nominal' => $diskon_item,
                         'subtotal' => $item_subtotal,
                     ]);
 
-                    // Update harga_beli di model Produk agar selalu relevan
-                    $produk = Produk::find($item['produk_id']);
-                    if ($produk) {
-                        $produk->harga_beli = $harga;
-                        $produk->save();
-                    }
+                    // TIDAK update harga_beli produk saat edit (kecuali status = selesai)
+                    // Harga beli akan diupdate saat status = selesai menggunakan rata-rata
 
                     // Tambahkan ke supplier_produks jika belum ada
                     $exists = SupplierProduk::where('supplier_id', $purchaseOrder->supplier_id)
@@ -580,6 +685,20 @@ class PurchasingOrderController extends Controller
                             'supplier_id' => $purchaseOrder->supplier_id,
                             'produk_id' => $item['produk_id'],
                         ]);
+                    }
+                }
+            }
+
+            // Jika status berubah menjadi "selesai", update harga beli rata-rata
+            if ($validated['status'] === 'selesai') {
+                foreach ($purchaseOrder->details as $detail) {
+                    if ($detail->produk_id) {
+                        $this->updateHargaBeliRataRata(
+                            $detail->produk_id,
+                            $detail->harga,
+                            $detail->quantity,
+                            $purchaseOrder->id
+                        );
                     }
                 }
             }
@@ -663,6 +782,20 @@ class PurchasingOrderController extends Controller
         // Update the status
         $purchaseOrder->status = $newStatus;
         $purchaseOrder->save();
+
+        // Jika status berubah menjadi "selesai", update harga beli rata-rata
+        if ($newStatus === 'selesai') {
+            foreach ($purchaseOrder->details as $detail) {
+                if ($detail->produk_id) {
+                    $this->updateHargaBeliRataRata(
+                        $detail->produk_id,
+                        $detail->harga,
+                        $detail->quantity,
+                        $purchaseOrder->id
+                    );
+                }
+            }
+        }
 
         $this->logUserAktivitas('ubah_status', 'purchase_order', $purchaseOrder->id, 'Ubah status dari ' . $oldStatus . ' ke ' . $newStatus . ' untuk PO: ' . $purchaseOrder->nomor);
 

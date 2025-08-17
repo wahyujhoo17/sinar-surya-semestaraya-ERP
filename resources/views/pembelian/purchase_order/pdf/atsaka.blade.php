@@ -25,11 +25,11 @@
 
         @page {
             size: A4;
-            margin: 4mm 2mm;
+            margin: 8mm 5mm;
         }
 
         .main-content {
-            min-height: calc(100vh - 30px);
+            min-height: calc(100vh - 60px);
             width: 100%;
             max-width: 100%;
         }
@@ -44,8 +44,8 @@
             width: calc(100% - 60px);
             background-color: #1F2A44;
             color: white;
-            padding: 4px 8px;
-            margin: 0 6px 4px 6px;
+            padding: 8px 20px;
+            margin: 0 10px 10px 10px;
             position: relative;
             box-sizing: border-box;
         }
@@ -57,7 +57,7 @@
         .company-info {
             float: left;
             width: 65%;
-            margin-top: 4%;
+            margin-top: 2.5%;
         }
 
         .po-info {
@@ -70,24 +70,24 @@
         .company-logo {
             float: left;
             margin-right: 10px;
-            max-height: 32px;
-            max-width: 32px;
+            max-height: 35px;
+            max-width: 35px;
             background-color: white;
             border-radius: 50%;
-            padding: 5px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            padding: 6px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .company-name {
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             margin: 2px 0 1px 0;
             color: white;
         }
 
         .company-tagline {
-            font-size: 11px;
+            font-size: 10px;
             margin: 0;
             opacity: 0.9;
             color: #94a3b8;
@@ -96,61 +96,232 @@
         .po-title {
             color: #E74C3C;
             font-weight: bold;
-            font-size: 22px;
-            margin: 0 0 8px 0;
-            letter-spacing: 1.5px;
+            font-size: 18px;
+            margin: 0 0 4px 0;
+            letter-spacing: 1px;
         }
 
-        .po-details {
-            font-size: 11px;
-            line-height: 1.4;
+        .po-meta {
+            font-size: 10px;
+            color: #94a3b8;
+            line-height: 1.2;
+        }
+
+        .po-meta div {
+            margin-bottom: 1px;
         }
 
         .address-section {
-            width: calc(100% - 24px);
-            padding: 6px 8px;
-            margin: 0 4px 4px 4px;
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
+            width: calc(100% - 60px);
+            margin: 0 10px 10px 10px;
+            padding: 10px 20px;
         }
 
         .from-address {
             float: left;
-            width: 48%;
+            width: 60%;
         }
 
         .to-address {
             float: right;
-            width: 48%;
+            width: 35%;
         }
 
-        .address-title {
-            background-color: #1F2A44;
-            color: white;
-            padding: 4px 8px;
-            margin: -8px -12px 6px -12px;
+        .section-title {
+            color: #E74C3C;
             font-weight: bold;
-            font-size: 10px;
-            text-transform: uppercase;
+            margin-bottom: 5px;
+            font-size: 12px;
+            border-bottom: 1px solid #E74C3C;
+            padding-bottom: 2px;
+        }
+
+        .supplier-name {
+            font-weight: bold;
+            color: #0f172a;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .supplier-details {
+            color: #475569;
+            line-height: 1.4;
+            font-size: 11px;
+        }
+
+        .supplier-details p {
+            margin: 3px 0;
         }
 
         .items-table {
-            width: calc(100% - 24px);
-            margin: 4px 12px;
+            width: calc(100% - 20px);
             border-collapse: collapse;
+            margin: 10px 10px;
             font-size: 10px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .items-table th {
+        .table-header {
             background-color: #1F2A44;
             color: white;
             font-weight: bold;
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        }
+
+        .table-header th {
             padding: 10px 8px;
+            text-align: left;
             border: none;
+        }
+
+        .table-header .no-col {
+            width: 6%;
+            text-align: center;
+        }
+
+        .table-header .desc-col {
+            width: 30%;
+        }
+
+        .table-header .qty-col {
+            width: 8%;
+            text-align: center;
+        }
+
+        .table-header .price-col {
+            width: 14%;
+            text-align: center;
+        }
+
+        .table-header .total-col {
+            width: 16%;
+            text-align: right;
+        }
+
+        .red-header {
+            background-color: #E74C3C !important;
+            position: relative;
+        }
+
+        .table-row td {
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .table-row:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-size: 10px;
+        }
+
+        .product-desc {
+            font-size: 9px;
+            color: #475569;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .total-summary {
+            width: calc(100% - 60px);
+            margin: 20px 30px;
+            padding: 0;
+            page-break-inside: avoid;
+        }
+
+        .summary-section {
+            float: right;
+            width: 40%;
+            padding: 0;
+        }
+
+        .summary-item {
+            width: 100%;
+            margin-bottom: 6px;
+            font-size: 11px;
+            clear: both;
+            box-sizing: border-box;
+            padding: 2px 0;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .summary-item .label {
+            display: table-cell;
+            width: 65%;
+            line-height: 1.4;
+            color: #475569 !important;
+            font-weight: normal;
+            vertical-align: top;
+        }
+
+        .summary-item .amount {
+            display: table-cell;
+            font-weight: bold;
+            text-align: right;
+            width: 35%;
+            line-height: 1.4;
+            color: #0f172a !important;
+            vertical-align: top;
+        }
+
+        .summary-highlight {
+            background-color: rgba(239, 68, 68, 0.1);
+            padding: 4px 6px;
+            margin: 2px -6px;
+            border-radius: 3px;
+        }
+
+        .summary-highlight .label {
+            color: #dc2626 !important;
+            font-weight: 500;
+        }
+
+        .summary-highlight .amount {
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
+
+        .total-final {
+            width: 100%;
+            margin-top: 15px;
+            padding: 12px 0;
+            border-top: 2px solid #E74C3C;
+            font-size: 14px;
+            font-weight: bold;
+            color: #1F2A44;
+            clear: both;
+            display: table;
+            table-layout: fixed;
+        }
+
+        .total-final .label {
+            display: table-cell;
+            width: 65%;
+            vertical-align: top;
+        }
+
+        .total-final .amount {
+            display: table-cell;
+            text-align: right;
+            width: 55%;
+            color: #E74C3C;
+            vertical-align: top;
+        }
+
+        letter-spacing: 0.5px;
+        padding: 10px 8px;
+        border: none;
         }
 
         .items-table th.red-header {
@@ -367,58 +538,60 @@
                             <img src="{{ $logoBase64 }}" alt="Indo Atsaka Logo" class="company-logo">
                         @else
                             <div class="company-logo"
-                                style="width: 80px; height: 80px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2); border: 2px solid rgba(255, 255, 255, 0.1);">
+                                style="width: 50px; height: 50px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); border: 1px solid rgba(255, 255, 255, 0.1);">
                                 <div
-                                    style="width: 50px; height: 50px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                                    <span style="color: white; font-weight: bold; font-size: 18px;">IA</span>
+                                    style="width: 32px; height: 32px; background-color: #E74C3C; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                    <span style="color: white; font-weight: bold; font-size: 14px;">IA</span>
                                 </div>
                             </div>
                         @endif
-                        <div style="margin-left: 54px;">
+                        <div style="margin-left: 60px;">
                             <p class="company-name">PT INDO ATSAKA INDUSTRI</p>
                             <p class="company-tagline">INDUSTRIAL SUPPLIER</p>
                         </div>
                     </div>
                     <div class="po-info">
-                        <div class="po-title" style="white-space: nowrap;">PURCHASE ORDER</div>
-                        <div class="po-details">
-                            <strong>No:</strong> {{ $purchaseOrder->nomor }}<br>
-                            <strong>Tanggal:</strong>
-                            {{ \Carbon\Carbon::parse($purchaseOrder->tanggal)->format('d/m/Y') }}<br>
-                            <strong>Status:</strong>
-                            @php
-                                $statusClass = 'status-default';
-                                $statusLabel = ucfirst(str_replace('_', ' ', $purchaseOrder->status));
+                        <div class="po-meta" style="text-align: right;">
+                            <div
+                                style="font-size: 18px; font-weight: bold; color: #E74C3C; margin-bottom: 4px; letter-spacing: 1px;">
+                                PURCHASE ORDER</div>
+                            <div>Nomor: <strong>{{ $purchaseOrder->nomor }}</strong> | Tanggal:
+                                <strong>{{ \Carbon\Carbon::parse($purchaseOrder->tanggal)->format('d/m/Y') }}</strong>
+                            </div>
+                            @if ($purchaseOrder->status)
+                                <div>Status:
+                                    @php
+                                        $statusClass = 'status-default';
+                                        $statusLabel = ucfirst(str_replace('_', ' ', $purchaseOrder->status));
 
-                                switch ($purchaseOrder->status) {
-                                    case 'draft':
-                                        $statusClass = 'status-belum-bayar';
-                                        $statusLabel = 'Draft';
-                                        break;
-                                    case 'diproses':
-                                        $statusClass = 'status-sebagian';
-                                        $statusLabel = 'Diproses';
-                                        break;
-                                    case 'selesai':
-                                        $statusClass = 'status-lunas';
-                                        $statusLabel = 'Selesai';
-                                        break;
-                                }
-                            @endphp
-                            <span class="{{ $statusClass }}">{{ $statusLabel }}</span>
+                                        switch ($purchaseOrder->status) {
+                                            case 'draft':
+                                                $statusClass = 'status-belum-bayar';
+                                                $statusLabel = 'Draft';
+                                                break;
+                                            case 'diproses':
+                                                $statusClass = 'status-sebagian';
+                                                $statusLabel = 'Diproses';
+                                                break;
+                                            case 'selesai':
+                                                $statusClass = 'status-lunas';
+                                                $statusLabel = 'Selesai';
+                                                break;
+                                        }
+                                    @endphp
+                                    <strong class="{{ $statusClass }}">{{ $statusLabel }}</strong>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Address Section -->
-            <div class="invoice-details clearfix"
-                style="width: calc(100% - 60px); margin: 0 10px 5px 10px; padding: 15px 20px;">
-                <div class="payment-method" style="float: left; width: 35%;">
-                    <p class="section-title"
-                        style="color: #E74C3C; font-weight: bold; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #E74C3C; padding-bottom: 2px;">
-                        DARI : </p>
-                    <div class="customer-details" style="color: #475569; line-height: 1.4; font-size: 11px;">
+            <!-- Purchase Order Details -->
+            <div class="address-section clearfix">
+                <div class="from-address">
+                    <p class="section-title">DARI:</p>
+                    <div class="supplier-details">
                         <strong>PT INDO ATSAKA INDUSTRI</strong><br>
                         Jl. Industri Raya No. 123<br>
                         Jakarta Utara 14350, Indonesia<br>
@@ -426,23 +599,19 @@
                         Email: info@indoatsaka.com
                     </div>
                 </div>
-                <div class="invoice-to" style="float: right; width: 60%;">
-                    <p class="section-title"
-                        style="color: #E74C3C; font-weight: bold; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #E74C3C; padding-bottom: 2px;">
-                        KEPADA :</p>
-                    <p class="customer-name" style="font-weight: bold; color: #0f172a; margin: 5px 0; font-size: 13px;">
-                        {{ $purchaseOrder->supplier->nama }}</p>
-                    <div class="customer-details"
-                        style="color: #475569; line-height: 1.1; font-size: 11px; margin-bottom: 0;">
-                        <p style="margin: 0 0 2px 0;">{{ $purchaseOrder->supplier->alamat ?? '-' }}</p>
+                <div class="to-address">
+                    <p class="section-title">KEPADA YTH:</p>
+                    <p class="supplier-name">{{ $purchaseOrder->supplier->nama }}</p>
+                    <div class="supplier-details">
+                        <p>{{ $purchaseOrder->supplier->alamat ?? '-' }}</p>
                         @if ($purchaseOrder->supplier->telepon)
-                            <p style="margin: 0 0 2px 0;">Telp: {{ $purchaseOrder->supplier->telepon }}</p>
+                            <p>Telp: {{ $purchaseOrder->supplier->telepon }}</p>
                         @endif
                         @if ($purchaseOrder->supplier->email)
-                            <p style="margin: 0 0 2px 0;">Email: {{ $purchaseOrder->supplier->email }}</p>
+                            <p>Email: {{ $purchaseOrder->supplier->email }}</p>
                         @endif
                         @if ($purchaseOrder->supplier->nama_kontak)
-                            <p style="margin: 0 0 2px 0;">Kontak: {{ $purchaseOrder->supplier->nama_kontak }}
+                            <p>Kontak: {{ $purchaseOrder->supplier->nama_kontak }}
                                 @if ($purchaseOrder->supplier->no_hp)
                                     ({{ $purchaseOrder->supplier->no_hp }})
                                 @endif
@@ -450,231 +619,149 @@
                         @endif
                     </div>
                 </div>
-
             </div>
 
-            <!-- Shipping Info if available -->
-            @if ($purchaseOrder->alamat_pengiriman)
-                <div
-                    style="width: calc(100% - 60px); margin: 0 30px 15px 30px; padding: 10px; background-color: #fff3cd; border: 1px solid #ffeaa7; border-left: 4px solid #fdcb6e;">
-                    <strong>Alamat Pengiriman:</strong> {{ $purchaseOrder->alamat_pengiriman }}
-                    @if ($purchaseOrder->tanggal_pengiriman)
-                        <br><strong>Tanggal Pengiriman:</strong>
+            @if ($purchaseOrder->tanggal_pengiriman)
+                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
+                    <strong style="color: #E74C3C; font-size: 12px;">Tanggal Pengiriman:</strong>
+                    <span style="font-weight: bold; color: #1F2A44;">
                         {{ \Carbon\Carbon::parse($purchaseOrder->tanggal_pengiriman)->format('d/m/Y') }}
-                    @endif
+                    </span>
                 </div>
             @endif
 
-            <!-- Items Table -->
-            <table class="items-table">
-                <thead>
-                    <tr>
-                        <th style="width: 5%; text-align: center;">No</th>
-                        <th class="red-header" style="width: 35%;">Produk</th>
-                        <th style="width: 8%; text-align: center;">Qty</th>
-                        <th style="width: 10%; text-align: center;">Satuan</th>
-                        <th style="width: 15%; text-align: right;">Harga</th>
-                        <th style="width: 10%; text-align: center;">Diskon</th>
-                        <th style="width: 17%; text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php $no = 1; @endphp
-                    @foreach ($purchaseOrder->details as $detail)
+            <!-- Table Section -->
+            <div class="table-section">
+                <table class="items-table">
+                    <thead class="table-header">
                         <tr>
-                            <td style="text-align: center; font-weight: bold;">{{ $no++ }}</td>
-                            <td>
-                                <div style="font-weight: 500; color: #1F2A44;">
-                                    {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}
-                                </div>
-                            </td>
-                            <td style="text-align: center;">{{ number_format($detail->quantity, 0) }}</td>
-                            <td style="text-align: center;">{{ $detail->satuan->nama ?? '-' }}</td>
-                            <td style="text-align: right;">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                            <td style="text-align: center; font-size: 9px;">
-                                @if ($detail->diskon_persen > 0)
-                                    {{ number_format($detail->diskon_persen, 1) }}%
-                                @endif
-                                @if ($detail->diskon_nominal > 0)
-                                    <br>Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
-                                @endif
-                            </td>
-                            <td style="text-align: right; font-weight: bold;">Rp
-                                {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            <th class="no-col text-center">No</th>
+                            <th class="desc-col red-header">Nama Produk</th>
+                            <th class="qty-col text-center">Qty</th>
+                            <th class="price-col text-center">Satuan</th>
+                            <th class="price-col text-center">Harga</th>
+                            <th class="price-col text-center">Diskon</th>
+                            <th class="total-col text-right">Total</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @php $no = 1; @endphp
+                        @foreach ($purchaseOrder->details as $detail)
+                            <tr class="table-row">
+                                <td class="text-center">{{ $no++ }}</td>
+                                <td>
+                                    <div class="product-name">
+                                        {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
+                                    @if ($detail->deskripsi)
+                                        <p class="product-desc">{{ $detail->deskripsi }}</p>
+                                    @endif
+                                </td>
+                                <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
+                                <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
+                                <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
+                                <td class="text-center">
+                                    @if ($detail->diskon_persen > 0)
+                                        {{ number_format($detail->diskon_persen, 1) }}%
+                                    @endif
+                                </td>
+                                <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
 
-            <!-- Summary Section -->
-            <div class="total-summary clearfix"
-                style="width: calc(100% - 60px); margin: 20px 30px; padding: 0; page-break-inside: avoid;">
-                <div class="summary-section" style="float: right; width: 40%; padding: 0;">
-                    <div class="summary-item clearfix"
-                        style="width: 100%; margin-bottom: 6px; font-size: 11px; clear: both; box-sizing: border-box; padding: 2px 0; display: table; table-layout: fixed;">
-                        <span class="label"
-                            style="display: table-cell; width: 65%; line-height: 1.4; color: #475569; font-weight: normal; vertical-align: top;">Subtotal:</span>
-                        <span class="amount"
-                            style="display: table-cell; font-weight: bold; text-align: right; width: 35%; line-height: 1.4; color: #0f172a; vertical-align: top;">Rp
-                            {{ number_format($purchaseOrder->subtotal, 0, ',', '.') }}</span>
+            <!-- Totals -->
+            <div class="total-summary clearfix">
+                <div class="summary-section">
+                    <div class="summary-item clearfix">
+                        <span class="label">Subtotal:</span>
+                        <span class="amount">Rp {{ number_format($purchaseOrder->subtotal, 0, ',', '.') }}</span>
                     </div>
                     @if ($purchaseOrder->diskon_nominal > 0)
-                        <div class="summary-item summary-highlight clearfix"
-                            style="background-color: rgba(239, 68, 68, 0.1); padding: 4px 6px; margin: 2px -6px; border-radius: 3px; width: 100%; margin-bottom: 6px; font-size: 11px; clear: both; box-sizing: border-box; display: table; table-layout: fixed;">
-                            <span class="label"
-                                style="display: table-cell; width: 65%; line-height: 1.4; color: #dc2626; font-weight: 500; vertical-align: top;">Diskon
+                        <div class="summary-item summary-highlight clearfix">
+                            <span class="label">Diskon
                                 ({{ number_format($purchaseOrder->diskon_persen, 1) }}%):</span>
-                            <span class="amount"
-                                style="display: table-cell; font-weight: bold; text-align: right; width: 35%; line-height: 1.4; color: #dc2626; vertical-align: top;">-Rp
+                            <span class="amount">-Rp
                                 {{ number_format($purchaseOrder->diskon_nominal, 0, ',', '.') }}</span>
                         </div>
                     @endif
                     @if ($purchaseOrder->ppn > 0)
-                        <div class="summary-item clearfix"
-                            style="width: 100%; margin-bottom: 6px; font-size: 11px; clear: both; box-sizing: border-box; padding: 2px 0; display: table; table-layout: fixed;">
-                            <span class="label"
-                                style="display: table-cell; width: 65%; line-height: 1.4; color: #475569; font-weight: normal; vertical-align: top;">PPN
-                                ({{ $purchaseOrder->ppn }}%):</span>
-                            <span class="amount"
-                                style="display: table-cell; font-weight: bold; text-align: right; width: 35%; line-height: 1.4; color: #0f172a; vertical-align: top;">Rp
+                        <div class="summary-item clearfix">
+                            <span class="label">PPN 11%:</span>
+                            <span class="amount">Rp
                                 {{ number_format($purchaseOrder->subtotal * ($purchaseOrder->ppn / 100), 0, ',', '.') }}</span>
                         </div>
                     @endif
                     @if ($purchaseOrder->ongkos_kirim > 0)
-                        <div class="summary-item clearfix"
-                            style="width: 100%; margin-bottom: 6px; font-size: 11px; clear: both; box-sizing: border-box; padding: 2px 0; display: table; table-layout: fixed;">
-                            <span class="label"
-                                style="display: table-cell; width: 65%; line-height: 1.4; color: #475569; font-weight: normal; vertical-align: top;">Ongkos
-                                Kirim:</span>
-                            <span class="amount"
-                                style="display: table-cell; font-weight: bold; text-align: right; width: 35%; line-height: 1.4; color: #0f172a; vertical-align: top;">Rp
+                        <div class="summary-item clearfix">
+                            <span class="label">Ongkos Kirim:</span>
+                            <span class="amount">Rp
                                 {{ number_format($purchaseOrder->ongkos_kirim, 0, ',', '.') }}</span>
                         </div>
                     @endif
-                    <div class="total-final clearfix"
-                        style="width: 100%; margin-top: 15px; padding: 12px 0; border-top: 2px solid #E74C3C; font-size: 14px; font-weight: bold; color: #1F2A44; clear: both; display: table; table-layout: fixed; background: none;">
-                        <span class="label"
-                            style="display: table-cell; width: 65%; vertical-align: top; color: #1F2A44; font-weight: 500;">TOTAL:</span>
-                        <span class="amount"
-                            style="display: table-cell; text-align: right; width: 35%; color: #E74C3C; vertical-align: top; font-weight: bold;">Rp
-                            {{ number_format($purchaseOrder->total, 0, ',', '.') }}</span>
+                    <div class="total-final clearfix">
+                        <span class="label">TOTAL:</span>
+                        <span class="amount">Rp {{ number_format($purchaseOrder->total, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>
 
-            <div style="clear: both;"></div>
-
-            <!-- Notes Section -->
-            <div class="notes-section">
-                @if ($purchaseOrder->catatan)
-                    <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
-                    <p style="font-size: 9px; margin: 2px 0;">{{ $purchaseOrder->catatan }}</p>
-                @endif
-                <strong style="color: #2c3e50; font-size: 10px;">Syarat & Ketentuan:</strong>
-                @if ($purchaseOrder->syarat_ketentuan)
-                    <div style="font-size: 9px; margin-top: 5px; white-space: pre-line;">
-                        {{ $purchaseOrder->syarat_ketentuan }}</div>
-                @else
-                    <ol style="margin-top: 5px; padding-left: 20px;">
-                        <li>Barang harus sesuai dengan spesifikasi yang tercantum dalam PO</li>
-                        <li>Pembayaran akan dilakukan setelah barang diterima dengan kondisi baik</li>
-                        <li>Pengiriman harap disertai dengan surat jalan dan invoice</li>
-                    </ol>
-                @endif
+            <!-- Text Terbilang -->
+            <div style="margin: 15px 10px; color: #1F2A44; font-size: 11px; font-style: italic;">
+                <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $purchaseOrder->total)) }} Rupiah
             </div>
 
-            <!-- Signature Section with QR Codes -->
-            <table class="signature-table">
-                <tr>
-                    <td>
-                        <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44;">Dibuat oleh:</div>
-
-                        {{-- QR Code for Creator --}}
-                        @if (isset($qrCodes['created_qr']) && $qrCodes['created_qr'])
-                            <div class="qr-signature">
-                                <div class="qr-label">Tanda Tangan Digital</div>
-                                <img src="{{ $qrCodes['created_qr'] }}" alt="Creator QR Code" class="qr-code-small">
-                            </div>
-                        @endif
-
-                        <div class="signature-line"></div>
-                        <div style="font-weight: bold; color: #1F2A44;">
-                            {{ $purchaseOrder->user->name ?? 'Purchasing Manager' }}</div>
-                        <div style="font-size: 10px; color: #6c757d;">PT Indo Atsaka Industri</div>
-                        <div style="font-size:10px;">
-                            {{ \Carbon\Carbon::parse($purchaseOrder->created_at)->format('d/m/Y H:i') }}
+            <!-- Notes and Terms Section -->
+            <div style="display: table; width: calc(100% - 20px); margin: 10px 10px;">
+                <div style="display: table-cell; width: 60%; vertical-align: top; padding-right: 20px;">
+                    @if ($purchaseOrder->catatan)
+                        <div
+                            style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
+                            <p style="font-size: 9px; margin: 2px 0;">{{ $purchaseOrder->catatan }}</p>
                         </div>
-                        <div style="font-size:10px; color: #666;">
-                            {{ $purchaseOrder->user->email ?? '' }}
-                        </div>
-                    </td>
-
-                    @if ($isProcessed && $processedBy)
-                        <td>
-                            <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44;">Diproses oleh:</div>
-
-                            {{-- QR Code for Processor --}}
-                            @if (isset($qrCodes['processed_qr']) && $qrCodes['processed_qr'])
-                                <div class="qr-signature">
-                                    <div class="qr-label">Tanda Tangan Digital</div>
-                                    <img src="{{ $qrCodes['processed_qr'] }}" alt="Processor QR Code"
-                                        class="qr-code-small">
-                                </div>
-                            @endif
-
-                            <div class="signature-line"></div>
-                            <div style="font-weight: bold; color: #1F2A44;">{{ $processedBy->name }}</div>
-                            <div style="font-size: 10px; color: #6c757d;">Manager/Supervisor</div>
-                            <div style="font-size:10px;">
-                                {{ $processedAt ? $processedAt->format('d/m/Y H:i') : '' }}
-                            </div>
-                            <div style="font-size:10px; color: #666;">
-                                {{ $processedBy->email ?? '' }}
-                            </div>
-                        </td>
-                    @else
-                        <td>
-                            <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44;">Menyetujui:</div>
-
-                            <div class="qr-signature">
-                                <div class="qr-label">Menunggu Tanda Tangan</div>
-                                <div
-                                    style="width: 60px; height: 60px; border: 1px dashed #ccc; display: inline-block; line-height: 60px; font-size: 10px; color: #999;">
-                                    QR
-                                </div>
-                            </div>
-
-                            <div class="signature-line"></div>
-                            <div style="font-weight: bold; color: #1F2A44;">Menunggu Persetujuan</div>
-                            <div style="font-size: 10px; color: #6c757d;">PT Indo Atsaka Industri</div>
-                            <div style="font-size:10px;">Tanggal: ___/___/______</div>
-                        </td>
                     @endif
-                </tr>
-            </table>
 
-            {{-- Status Box --}}
-            @if (isset($isProcessed) && $isProcessed)
-                <div
-                    style="margin-top: 20px; padding: 10px; border-radius: 5px; background-color: #f0f9ff; border: 1px solid #0ea5e9; color: #0369a1; page-break-inside: avoid;">
-                    <h4 style="margin: 0 0 5px 0; font-size: 14px;"><strong>Status: TELAH DIPROSES</strong></h4>
-                    <p style="margin: 0; font-size: 11px;">
-                        Purchase Order ini telah diproses pada
-                        {{ isset($processedAt) && $processedAt ? $processedAt->format('d F Y \p\u\k\u\l H:i') : $purchaseOrder->updated_at->format('d F Y \p\u\k\u\l H:i') }}
-                        oleh {{ isset($processedBy) && $processedBy ? $processedBy->name : 'Sistem' }}.
-                    </p>
+                    @if ($purchaseOrder->syarat_ketentuan)
+                        <div
+                            style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Syarat & Ketentuan:</strong>
+                            <div style="font-size: 9px; margin-top: 5px; white-space: pre-line;">
+                                {{ $purchaseOrder->syarat_ketentuan }}</div>
+                        </div>
+                    @else
+                        <div
+                            style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Syarat & Ketentuan:</strong>
+                            <ol style="margin-top: 5px; padding-left: 20px; font-size: 9px;">
+                                <li>Barang harus sesuai dengan spesifikasi yang tercantum dalam PO</li>
+                                <li>Pembayaran akan dilakukan setelah barang diterima dengan kondisi baik</li>
+                                <li>Pengiriman harap disertai dengan surat jalan dan invoice</li>
+                            </ol>
+                        </div>
+                    @endif
                 </div>
-            @elseif ($purchaseOrder->status === 'draft')
-                <div
-                    style="margin-top: 12px; padding: 6px 12px; border-radius: 3px; border: 1px solid #f59e0b; color: #d97706; font-size: 11px; background: none; page-break-inside: avoid;">
-                    <strong>Status: DRAFT</strong> &mdash; Dokumen ini masih dalam status draft dan belum diproses.
-                </div>
-            @endif
 
-            <!-- Footer -->
-            <div class="footer-thank-you">Terima kasih atas kepercayaan Anda</div>
-            <div class="footer-decoration"></div>
+                <!-- Signature Section -->
+                <div style="display: table-cell; width: 40%; vertical-align: top; text-align: center;">
+                    <div
+                        style="margin-top: 30px; margin-bottom: 45px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                        Hormat Kami,
+                    </div>
+                    <div style="height: 60px; margin-bottom: 10px;"></div>
+                    <div style="border-top: 1px solid #cbd5e1; width: 80%; margin: 0 auto 10px auto;"></div>
+                    <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
+                        {{ $purchaseOrder->user->name ?? 'Purchasing Manager' }}
+                    </div>
+                    <div style="font-size: 8px; color: #64748b;">PT Indo Atsaka Industri</div>
+                </div>
+            </div>
         </div>
+
+        <!-- Footer with Thank You -->
+        <div class="footer-thank-you">Terima kasih atas kepercayaan Anda</div>
+        <div class="footer-decoration"></div>
     </div>
 </body>
 

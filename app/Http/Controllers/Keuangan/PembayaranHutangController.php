@@ -186,15 +186,26 @@ class PembayaranHutangController extends Controller
                 // Kelebihan bayar situation
                 $po->status_pembayaran = 'kelebihan_bayar';
                 $po->kelebihan_bayar = abs($sisaHutang);
+                $po->save();
             } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
                 $po->kelebihan_bayar = 0;
+                
+                // Cek apakah juga sudah diterima, jika ya maka PO selesai
+                if ($po->status_penerimaan == 'diterima') {
+                    $po->status = 'selesai';
+                    $po->save();
+                    
+                    // Update harga beli rata-rata ketika PO selesai melalui pembayaran
+                    \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
+                } else {
+                    $po->save();
+                }
             } else {
                 $po->status_pembayaran = 'sebagian';
                 $po->kelebihan_bayar = 0;
+                $po->save();
             }
-
-            $po->save();
 
             DB::commit();
 
@@ -327,15 +338,26 @@ class PembayaranHutangController extends Controller
                 // Kelebihan bayar situation
                 $po->status_pembayaran = 'kelebihan_bayar';
                 $po->kelebihan_bayar = abs($sisaHutang);
+                $po->save();
             } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
                 $po->kelebihan_bayar = 0;
+                
+                // Cek apakah juga sudah diterima, jika ya maka PO selesai
+                if ($po->status_penerimaan == 'diterima') {
+                    $po->status = 'selesai';
+                    $po->save();
+                    
+                    // Update harga beli rata-rata ketika PO selesai melalui pembayaran
+                    \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
+                } else {
+                    $po->save();
+                }
             } else {
                 $po->status_pembayaran = 'sebagian';
                 $po->kelebihan_bayar = 0;
+                $po->save();
             }
-
-            $po->save();
 
             DB::commit();
 

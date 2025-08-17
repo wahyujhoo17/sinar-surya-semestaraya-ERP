@@ -1050,8 +1050,9 @@ class PenggajianController extends Controller
                     }
                 }
 
-                // Calculate margin percentage
+                // Calculate margin percentage and commission rate for this order
                 $marginPersen = ($totalHargaBeli > 0) ? ($totalMargin / $totalHargaBeli) * 100 : 0;
+                $commissionRate = $this->getKomisiRateByMargin($marginPersen);
 
                 $salesOrderDetails[] = [
                     'id' => $order->id,
@@ -1063,6 +1064,7 @@ class PenggajianController extends Controller
                     'harga_beli' => $totalHargaBeli,
                     'margin' => $totalMargin,
                     'margin_persen' => round($marginPersen, 2),
+                    'commission_rate' => $commissionRate,
                     'komisi' => $totalKomisi
                 ];
             }
