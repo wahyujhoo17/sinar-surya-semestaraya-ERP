@@ -419,9 +419,23 @@
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
                                             Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                                        <td
-                                            class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
-                                            {{ $detail->diskon > 0 ? 'Rp ' . number_format($detail->diskon, 0, ',', '.') : '-' }}
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
+                                            @if ($detail->diskon_persen > 0 || $detail->diskon_nominal > 0)
+                                                <div class="flex flex-col items-end gap-1">
+                                                    @if ($detail->diskon_persen > 0)
+                                                        <span class="inline-block px-2 py-0.5 text-xs bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-full font-semibold">
+                                                            {{ number_format($detail->diskon_persen, 1, ',', '.') }}%
+                                                        </span>
+                                                    @endif
+                                                    @if ($detail->diskon_nominal > 0)
+                                                        <span class="inline-block text-xs text-red-600 dark:text-red-400 font-medium">
+                                                            Rp {{ number_format($detail->diskon_nominal, 0, ',', '.') }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500">-</span>
+                                            @endif
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600 dark:text-green-400">

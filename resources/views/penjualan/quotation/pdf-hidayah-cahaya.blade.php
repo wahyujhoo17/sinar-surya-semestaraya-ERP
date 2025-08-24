@@ -449,30 +449,139 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @php $no = 1; @endphp
-                    @foreach ($quotation->details as $detail)
-                        <tr>
-                            <td style="text-align: center; font-weight: 600;">{{ $no++ }}</td>
-                            <td>
-                                <div style="font-weight: 500; color: #111827; margin-bottom: 2px;">
-                                    {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}
-                                </div>
-                                @if ($detail->deskripsi)
-                                    <div style="color: #6b7280; font-size: 9px; line-height: 1.2;">
-                                        {{ $detail->deskripsi }}</div>
-                                @endif
-                            </td>
-                            <td style="text-align: center;">{{ number_format($detail->quantity, 0) }}</td>
-                            <td style="text-align: center;">{{ $detail->satuan->nama ?? '-' }}</td>
-                            <td style="text-align: right;">{{ number_format($detail->harga, 0, ',', '.') }}</td>
-                            <td style="text-align: center; font-size: 9px;">
-                                @if ($detail->diskon_persen > 0)
-                                    {{ number_format($detail->diskon_persen, 1) }}%
-                                @endif
-                            </td>
-                            <td style="text-align: right; font-weight: 600;">Rp
-                                {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                        </tr>
+                    @php
+                        $displayIndex = 1;
+                        $processedBundles = [];
+                    @endphp
+
+                    @foreach ($quotation->details as $index => $detail)
+                        @if ($detail->bundle_id && !in_array($detail->bundle_id, $processedBundles))
+                            @php
+                                $processedBundles[] = $detail->bundle_id;
+                                // Find bundle header (the main bundle item)
+                                $bundleHeader = $quotation->details
+                                    ->where('bundle_id', $detail->bundle_id)
+                                    ->where('is_bundle_item', '!=', true)
+                                    ->first();
+                                // Find all bundle items
+                                $bundleItems = $quotation->details
+                                    ->where('bundle_id', $detail->bundle_id)
+                                    ->where('is_bundle_item', true);
+
+                                // Use first item if no clear header found
+                                if (!$bundleHeader) {
+                                    $bundleHeader = $quotation->details
+                                        ->where('bundle_id', $detail->bundle_id)
+                                        ->first();
+                                }
+                            @endphp
+
+                            {{-- Bundle Header --}}
+                            <tr style="background-color: #f8fafc; border-left: 3px solid #1a2e05;">
+                                <td style="text-align: center; font-weight: 600;">{{ $displayIndex++ }}</td>
+                                <td>
+                                    <div style="font-weight: 600; color: #1a2e05; margin-bottom: 2px;">
+                                        PAKET:
+                                        @if ($bundleHeader->bundle && $bundleHeader->bundle->nama)
+                                            {{ $bundleHeader->bundle->nama }}
+                                        @elseif (str_contains($bundleHeader->deskripsi ?? '', 'Bundle:'))
+                                            {{ str_replace('Bundle: ', '', $bundleHeader->deskripsi) }}
+                                        @else
+                                            Paket Bundle #{{ $detail->bundle_id }}
+                                        @endif
+                                    </div>
+                                    @if ($bundleHeader->bundle && $bundleHeader->bundle->kode)
+                                        <div style="font-size: 10px; color: #666;">Kode:
+                                            {{ $bundleHeader->bundle->kode }}</div>
+                                    @endif
+
+                                    {{-- Bundle Items Details in same row --}}
+                                    <div
+                                        style="margin-top: 5px; padding: 5px; background-color: #f9f9f9; border-radius: 3px;">
+                                        <div style="font-size: 10px; color: #555; font-weight: bold;">Isi Paket:</div>
+                                        @foreach ($bundleItems as $bundleItem)
+                                            <div style="font-size: 10px; color: #666; margin-left: 10px;">
+                                                •
+                                                @if ($bundleItem->produk && $bundleItem->produk->nama)
+                                                    {{ $bundleItem->produk->nama }}
+                                                @elseif ($bundleItem->deskripsi)
+                                                    {{ preg_replace('/^└─\s*/', '', preg_replace('/\s*\(dari bundle.*\)$/', '', $bundleItem->deskripsi)) }}
+                                                @else
+                                                    Item Bundle
+                                                @endif
+                                                (@if (floor($bundleItem->quantity) == $bundleItem->quantity)
+                                                    {{ number_format($bundleItem->quantity, 0, ',', '.') }}@else{{ number_format($bundleItem->quantity, 2, ',', '.') }}
+                                                @endif
+                                                @if ($bundleItem->satuan && $bundleItem->satuan->nama)
+                                                    {{ $bundleItem->satuan->nama }}
+                                                @else
+                                                    pcs
+                                                @endif)
+                                                @if ($bundleItem->produk && $bundleItem->produk->kode)
+                                                    - {{ $bundleItem->produk->kode }}
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td style="text-align: center;">
+                                    @if (floor($bundleHeader->quantity) == $bundleHeader->quantity)
+                                        {{ number_format($bundleHeader->quantity, 0, ',', '.') }}
+                                    @else
+                                        {{ number_format($bundleHeader->quantity, 2, ',', '.') }}
+                                    @endif
+                                </td>
+                                <td style="text-align: center;">Paket</td>
+                                <td style="text-align: right;">
+                                    {{ number_format($bundleHeader->bundle->harga_bundle ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td style="text-align: center; font-size: 9px;">-</td>
+                                <td style="text-align: right; font-weight: 600;">Rp
+                                    {{ number_format(($bundleHeader->bundle->harga_bundle ?? 0) * $bundleHeader->quantity, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @elseif (!$detail->bundle_id)
+                            {{-- Regular Product (not part of any bundle) --}}
+                            <tr>
+                                <td style="text-align: center; font-weight: 600;">{{ $displayIndex++ }}</td>
+                                <td>
+                                    <div style="font-weight: 500; color: #111827; margin-bottom: 2px;">
+                                        @if ($detail->produk && $detail->produk->nama)
+                                            {{ $detail->produk->nama }}
+                                        @elseif ($detail->deskripsi)
+                                            {{ $detail->deskripsi }}
+                                        @else
+                                            Produk tidak ditemukan
+                                        @endif
+                                    </div>
+                                    @if ($detail->produk && $detail->produk->kode)
+                                        <div style="font-size: 10px;">{{ $detail->produk->kode }}</div>
+                                    @endif
+                                    @if ($detail->deskripsi && $detail->produk && $detail->produk->nama != $detail->deskripsi)
+                                        <div style="color: #6b7280; font-size: 9px; line-height: 1.2;">
+                                            {{ $detail->deskripsi }}</div>
+                                    @endif
+                                </td>
+                                <td style="text-align: center;">
+                                    @if (floor($detail->quantity) == $detail->quantity)
+                                        {{ number_format($detail->quantity, 0, ',', '.') }}
+                                    @else
+                                        {{ number_format($detail->quantity, 2, ',', '.') }}
+                                    @endif
+                                </td>
+                                <td style="text-align: center;">{{ $detail->satuan->nama ?? 'pcs' }}</td>
+                                <td style="text-align: right;">{{ number_format($detail->harga, 0, ',', '.') }}</td>
+                                <td style="text-align: center; font-size: 9px;">
+                                    @if ($detail->diskon_persen > 0)
+                                        {{ number_format($detail->diskon_persen, 1, ',', '.') }}%
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td style="text-align: right; font-weight: 600;">Rp
+                                    {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                            </tr>
+                        @endif
                     @endforeach
                 </tbody>
             </table>
@@ -526,9 +635,11 @@
                         </path>
                     </svg>
                     <div>
-                        <div style="font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 0.25rem;">Catatan:
+                        <div style="font-weight: 600; color: #92400e; font-size: 10px; margin-bottom: 0.25rem;">
+                            Catatan:
                         </div>
-                        <div style="color: #b45309; font-size: 10px; line-height: 1.4;">{{ $quotation->catatan }}</div>
+                        <div style="color: #b45309; font-size: 10px; line-height: 1.4;">{{ $quotation->catatan }}
+                        </div>
                     </div>
                 </div>
             </div>

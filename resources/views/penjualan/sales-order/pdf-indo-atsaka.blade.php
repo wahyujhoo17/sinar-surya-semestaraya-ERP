@@ -59,6 +59,7 @@
         .company-info {
             float: left;
             width: 65%;
+            margin-top: 5%;
         }
 
         .invoice-info {
@@ -179,10 +180,6 @@
             width: 100%;
         }
 
-        .company-info {
-            float: left;
-            width: 65%;
-        }
 
         .invoice-info {
             float: right;
@@ -702,26 +699,105 @@
                     </thead>
                     <tbody>
                         @php $no = 1; @endphp
+                        @php
+                            $no = 1;
+                            $processedBundles = [];
+                        @endphp
                         @foreach ($salesOrder->details as $detail)
-                            <tr class="table-row">
-                                <td class="text-center">{{ $no++ }}</td>
-                                <td>
-                                    <div class="product-name">
-                                        {{ $detail->produk->nama ?? 'Produk' }}</div>
-                                    @if ($detail->deskripsi)
-                                        <p class="product-desc">{{ $detail->deskripsi }}</p>
-                                    @endif
-                                </td>
-                                <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>
-                                <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
-                                <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
-                                <td class="text-center">
-                                    @if ($detail->diskon_persen > 0)
-                                        {{ number_format($detail->diskon_persen, 1) }}%
-                                    @endif
-                                </td>
-                                <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
-                            </tr>
+                            @if ($detail->bundle_id && !in_array($detail->bundle_id, $processedBundles))
+                                @php
+                                    $processedBundles[] = $detail->bundle_id;
+                                    $bundleHeader = $salesOrder->details
+                                        ->where('bundle_id', $detail->bundle_id)
+                                        ->where('is_bundle_item', '!=', true)
+                                        ->first();
+                                    $bundleItems = $salesOrder->details
+                                        ->where('bundle_id', $detail->bundle_id)
+                                        ->where('is_bundle_item', true);
+                                    if (!$bundleHeader) {
+                                        $bundleHeader = $salesOrder->details
+                                            ->where('bundle_id', $detail->bundle_id)
+                                            ->first();
+                                    }
+                                @endphp
+                                <tr class="table-row">
+                                    <td class="text-center">{{ $no++ }}</td>
+                                    <td>
+                                        <div class="product-name" style="font-weight:700;color:#1F2A44;">PAKET:
+                                            {{ $bundleHeader->bundle->nama ?? ($bundleHeader->deskripsi ?? 'Paket Bundle #' . $detail->bundle_id) }}
+                                        </div>
+                                        @if ($bundleHeader->bundle && $bundleHeader->bundle->kode)
+                                            <div style="font-size:9px;color:#666;">Kode:
+                                                {{ $bundleHeader->bundle->kode }}</div>
+                                        @endif
+                                        <div
+                                            style="margin-top:5px;padding:5px;background-color:#f3f4f6;border-radius:3px;">
+                                            <div style="font-size:9px;color:#555;font-weight:bold;">Isi Paket:</div>
+                                            @foreach ($bundleItems as $bundleItem)
+                                                <div style="font-size:9px;color:#666;margin-left:10px;">
+                                                    •
+                                                    @if ($bundleItem->produk && $bundleItem->produk->nama)
+                                                        {{ $bundleItem->produk->nama }}
+                                                    @elseif ($bundleItem->deskripsi)
+                                                        {{ preg_replace('/^└─\s*/', '', preg_replace('/\s*\(dari bundle.*\)$/', '', $bundleItem->deskripsi)) }}
+                                                    @else
+                                                        Item Bundle
+                                                    @endif
+                                                    (@if (floor($bundleItem->quantity) == $bundleItem->quantity)
+                                                        {{ number_format($bundleItem->quantity, 0) }}@else{{ number_format($bundleItem->quantity, 2) }}
+                                                    @endif
+                                                    {{ $bundleItem->satuan->nama ?? 'pcs' }})
+                                                    @if ($bundleItem->produk && $bundleItem->produk->kode)
+                                                        - {{ $bundleItem->produk->kode }}
+                                                    @endif
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        @if (floor($bundleHeader->quantity) == $bundleHeader->quantity)
+                                            {{ number_format($bundleHeader->quantity, 0) }}
+                                        @else
+                                            {{ number_format($bundleHeader->quantity, 2) }}
+                                        @endif
+                                    </td>
+                                    <td class="text-center">Paket</td>
+                                    <td class="text-center">Rp {{ number_format($bundleHeader->harga, 0, ',', '.') }}
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($bundleHeader->diskon_persen > 0)
+                                            {{ number_format($bundleHeader->diskon_persen, 1) }}%
+                                        @endif
+                                    </td>
+                                    <td class="text-right">Rp {{ number_format($bundleHeader->subtotal, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @elseif (!$detail->bundle_id)
+                                <tr class="table-row">
+                                    <td class="text-center">{{ $no++ }}</td>
+                                    <td>
+                                        <div class="product-name">{{ $detail->produk->nama ?? 'Produk' }}</div>
+                                        @if ($detail->deskripsi)
+                                            <p class="product-desc">{{ $detail->deskripsi }}</p>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if (floor($detail->quantity) == $detail->quantity)
+                                            {{ number_format($detail->quantity, 0) }}
+                                        @else
+                                            {{ number_format($detail->quantity, 2) }}
+                                        @endif
+                                    </td>
+                                    <td class="text-center">{{ $detail->satuan->nama ?? '-' }}</td>
+                                    <td class="text-center">Rp {{ number_format($detail->harga, 0, ',', '.') }}</td>
+                                    <td class="text-center">
+                                        @if ($detail->diskon_persen > 0)
+                                            {{ number_format($detail->diskon_persen, 1) }}%
+                                        @endif
+                                    </td>
+                                    <td class="text-right">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>
@@ -794,7 +870,7 @@
                         </div>
                         <div class="signature-item">
                             <div class="signature-line"></div>
-                            <p class="signature-label">Direktur</p>
+                            <p class="signature-label">{{ $template_config['direktur_nama'] ?? 'Direktur' }}</p>
                             <p style="font-size: 8px; margin: 2px 0; color: #64748b;">PT Indo Atsaka Industri</p>
                         </div>
                     </div>

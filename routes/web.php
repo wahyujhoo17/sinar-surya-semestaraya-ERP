@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 // Import Controller untuk Master Data
 use App\Http\Controllers\MasterData\ProdukController;
+use App\Http\Controllers\MasterData\ProductBundleController;
 use App\Http\Controllers\MasterData\KategoriProdukController;
 use App\Http\Controllers\MasterData\GudangController;
 use App\Http\Controllers\MasterData\CustomerController;
@@ -184,6 +185,13 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::resource('produk', ProdukController::class);
 
+        // PRODUCT BUNDLE - with permission middleware
+        Route::middleware('permission:product_bundle.view')->group(function () {
+            Route::get('product-bundle/{id}/data', [ProductBundleController::class, 'getBundleData'])->name('product-bundle.data');
+            Route::get('product-bundle/{id}/check-stock', [ProductBundleController::class, 'checkStock'])->name('product-bundle.check-stock');
+        });
+        Route::resource('product-bundle', ProductBundleController::class);
+
         // KATEGORI PRODUK - with permission middleware
         Route::middleware('permission:kategori_produk.delete')->group(function () {
             Route::delete('kategori-produk/bulk-destroy', [KategoriProdukController::class, 'bulkDestroy'])->name('kategori-produk.bulk-destroy');
@@ -304,6 +312,7 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:quotation.view')->group(function () {
             Route::get('api/quotations', [QuotationController::class, 'getQuotationsForSelect'])->name('api.quotations');
+            Route::get('quotation/get-bundle-data/{bundleId}', [QuotationController::class, 'getBundleData'])->name('quotation.getBundleData');
         });
         Route::resource('quotation', QuotationController::class);
 
@@ -315,7 +324,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('sales-order/{id}/pdf/{template?}', [SalesOrderController::class, 'exportPdf'])->name('sales-order.pdf');
 
         Route::middleware('permission:sales_order.view')->group(function () {
+            Route::get('sales-order/get-bundles', [SalesOrderController::class, 'getBundles'])->name('sales-order.get-bundles');
             Route::get('sales-order/get-quotation-data/{id}', [SalesOrderController::class, 'getQuotationData'])->name('sales-order.get-quotation-data');
+            Route::get('sales-order/get-bundle-data/{id}', [SalesOrderController::class, 'getBundleData'])->name('sales-order.get-bundle-data');
+            Route::get('sales-order/check-bundle-stock/{id}', [SalesOrderController::class, 'checkBundleStock'])->name('sales-order.check-bundle-stock');
         });
         Route::resource('sales-order', SalesOrderController::class);
 

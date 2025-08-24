@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Auth;
 use App\View\Components\TableHeader;
 use Illuminate\Support\Facades\URL;
 
@@ -32,5 +33,10 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Blade::component('table-header', TableHeader::class);
+
+        // Custom Blade directive for permission checking
+        Blade::if('hasPermission', function ($permission) {
+            return Auth::check() && Auth::user()->hasPermission($permission);
+        });
     }
 }

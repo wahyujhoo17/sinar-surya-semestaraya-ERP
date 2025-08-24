@@ -120,7 +120,7 @@ class DeliveryOrderController extends Controller
         $permintaanBarang = null;
 
         if ($salesOrderId) {
-            $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'customer'])
+            $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'details.bundle', 'customer'])
                 ->findOrFail($salesOrderId);
         }
 
@@ -130,7 +130,7 @@ class DeliveryOrderController extends Controller
 
             // Ensure sales order is loaded if coming from permintaan barang
             if (!$salesOrder && $permintaanBarang->sales_order_id) {
-                $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'customer'])
+                $salesOrder = SalesOrder::with(['details.produk', 'details.satuan', 'details.bundle', 'customer'])
                     ->findOrFail($permintaanBarang->sales_order_id);
                 $salesOrderId = $salesOrder->id;
             }
@@ -175,6 +175,8 @@ class DeliveryOrderController extends Controller
             'gudang_id' => 'required|exists:gudang,id',
             'alamat_pengiriman' => 'required|string',
             'catatan' => 'nullable|string',
+            'sales_order_detail_id' => 'required|array',
+            'sales_order_detail_id.*' => 'required|exists:sales_order_detail,id',
             'produk_id' => 'required|array',
             'produk_id.*' => 'required|exists:produk,id',
             'quantity' => 'required|array',
@@ -235,13 +237,12 @@ class DeliveryOrderController extends Controller
 
                 $addedDetails++;
 
-                // Get the sales order detail for this product
-                $salesOrderDetail = SalesOrderDetail::where('sales_order_id', $request->sales_order_id)
-                    ->where('produk_id', $request->produk_id[$i])
-                    ->first();
+                // Get the sales order detail by ID (more reliable than searching by product)
+                $salesOrderDetail = SalesOrderDetail::with(['bundle', 'childDetails'])
+                    ->find($request->sales_order_detail_id[$i]);
 
-                if (!$salesOrderDetail) {
-                    throw new \Exception("Produk tidak ditemukan dalam Sales Order");
+                if (!$salesOrderDetail || $salesOrderDetail->sales_order_id != $request->sales_order_id) {
+                    throw new \Exception("Sales Order Detail tidak ditemukan atau tidak cocok dengan Sales Order yang dipilih");
                 }
 
                 // Calculate remaining quantity that can be delivered
@@ -263,6 +264,37 @@ class DeliveryOrderController extends Controller
                     throw new \Exception("Stok tidak mencukupi untuk produk {$produk->nama} di gudang {$gudang->nama}. Stok tersedia: {$currentStock}, Permintaan: {$request->quantity[$i]}");
                 }
 
+                // Get bundle information from sales order detail
+                $bundleInfo = [
+                    'is_bundle_item' => false,
+                    'bundle_name' => null
+                ];
+
+                if ($salesOrderDetail->parent_detail_id) {
+                    // This is a bundle child
+                    $bundleParent = SalesOrderDetail::find($salesOrderDetail->parent_detail_id);
+                    $bundleInfo['is_bundle_item'] = true;
+                    $bundleInfo['bundle_name'] = $bundleParent ? $bundleParent->produk->nama : 'Bundle';
+                } elseif ($salesOrderDetail->childDetails && $salesOrderDetail->childDetails->count() > 0) {
+                    // This is a bundle parent
+                    $bundleInfo['is_bundle_item'] = true;
+                    $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                } elseif ($salesOrderDetail->is_bundle_item) {
+                    // This is a bundle item (legacy or standalone bundle)
+                    $bundleInfo['is_bundle_item'] = true;
+                    if ($salesOrderDetail->bundle && $salesOrderDetail->bundle->nama) {
+                        $bundleInfo['bundle_name'] = $salesOrderDetail->bundle->nama;
+                    } else {
+                        $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                    }
+                }
+
+                Log::info("Saving Delivery Order Detail with Bundle Info", [
+                    'produk' => $salesOrderDetail->produk->nama,
+                    'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                    'bundle_name' => $bundleInfo['bundle_name']
+                ]);
+
                 // Create delivery order detail
                 DeliveryOrderDetail::create([
                     'delivery_id' => $deliveryOrder->id,
@@ -271,6 +303,8 @@ class DeliveryOrderController extends Controller
                     'quantity' => $request->quantity[$i],
                     'satuan_id' => $request->satuan_id[$i],
                     'keterangan' => $request->keterangan[$i] ?? null,
+                    'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                    'bundle_name' => $bundleInfo['bundle_name'],
                 ]);
             }
 
@@ -339,6 +373,8 @@ class DeliveryOrderController extends Controller
         $deliveryOrder = DeliveryOrder::with([
             'salesOrder.details.produk',
             'salesOrder.details.satuan',
+            'salesOrder.details.parentDetail.produk',
+            'salesOrder.details.childDetails.produk',
             'customer',
             'gudang',
             'details.produk',
@@ -472,15 +508,73 @@ class DeliveryOrderController extends Controller
                 }
 
                 if ($deliveryOrderDetail) {
+                    // Get bundle info from sales order detail
+                    $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id']);
+                    $bundleInfo = [
+                        'is_bundle_item' => false,
+                        'bundle_name' => null
+                    ];
+
+                    if ($salesOrderDetail) {
+                        if ($salesOrderDetail->parent_detail_id) {
+                            // This is a bundle child
+                            $bundleParent = SalesOrderDetail::find($salesOrderDetail->parent_detail_id);
+                            $bundleInfo['is_bundle_item'] = true;
+                            $bundleInfo['bundle_name'] = $bundleParent ? $bundleParent->produk->nama : 'Bundle';
+                        } elseif ($salesOrderDetail->childDetails && $salesOrderDetail->childDetails->count() > 0) {
+                            // This is a bundle parent
+                            $bundleInfo['is_bundle_item'] = true;
+                            $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                        } elseif ($salesOrderDetail->is_bundle_item) {
+                            // This is a bundle item (legacy or standalone bundle)
+                            $bundleInfo['is_bundle_item'] = true;
+                            if ($salesOrderDetail->bundle && $salesOrderDetail->bundle->nama) {
+                                $bundleInfo['bundle_name'] = $salesOrderDetail->bundle->nama;
+                            } else {
+                                $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                            }
+                        }
+                    }
+
                     $deliveryOrderDetail->update([
                         'sales_order_detail_id' => $itemData['sales_order_detail_id'],
                         'produk_id' => $itemData['produk_id'],
                         'quantity' => $itemData['quantity'],
                         'satuan_id' => $itemData['satuan_id'],
                         'keterangan' => $itemData['keterangan'] ?? null,
+                        'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                        'bundle_name' => $bundleInfo['bundle_name'],
                     ]);
                     $processedDetailIds[] = $deliveryOrderDetail->id;
                 } else {
+                    // Get bundle info from sales order detail for new items
+                    $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id']);
+                    $bundleInfo = [
+                        'is_bundle_item' => false,
+                        'bundle_name' => null
+                    ];
+
+                    if ($salesOrderDetail) {
+                        if ($salesOrderDetail->parent_detail_id) {
+                            // This is a bundle child
+                            $bundleParent = SalesOrderDetail::find($salesOrderDetail->parent_detail_id);
+                            $bundleInfo['is_bundle_item'] = true;
+                            $bundleInfo['bundle_name'] = $bundleParent ? $bundleParent->produk->nama : 'Bundle';
+                        } elseif ($salesOrderDetail->childDetails && $salesOrderDetail->childDetails->count() > 0) {
+                            // This is a bundle parent
+                            $bundleInfo['is_bundle_item'] = true;
+                            $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                        } elseif ($salesOrderDetail->is_bundle_item) {
+                            // This is a bundle item (legacy or standalone bundle)
+                            $bundleInfo['is_bundle_item'] = true;
+                            if ($salesOrderDetail->bundle && $salesOrderDetail->bundle->nama) {
+                                $bundleInfo['bundle_name'] = $salesOrderDetail->bundle->nama;
+                            } else {
+                                $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
+                            }
+                        }
+                    }
+
                     $newDetail = DeliveryOrderDetail::create([
                         'delivery_id' => $deliveryOrder->id,
                         'sales_order_detail_id' => $itemData['sales_order_detail_id'],
@@ -488,6 +582,8 @@ class DeliveryOrderController extends Controller
                         'quantity' => $itemData['quantity'],
                         'satuan_id' => $itemData['satuan_id'],
                         'keterangan' => $itemData['keterangan'] ?? null,
+                        'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                        'bundle_name' => $bundleInfo['bundle_name'],
                     ]);
                     $processedDetailIds[] = $newDetail->id;
                 }
@@ -1339,6 +1435,9 @@ class DeliveryOrderController extends Controller
         $salesOrder = SalesOrder::with([
             'details.produk',
             'details.satuan',
+            'details.bundle',
+            'details.parentDetail.produk',
+            'details.childDetails.produk',
             'customer'
         ])->findOrFail($id);
 
@@ -1346,6 +1445,31 @@ class DeliveryOrderController extends Controller
             'salesOrder' => $salesOrder,
             'customer' => $salesOrder->customer,
             'details' => $salesOrder->details->map(function ($detail) {
+                // Determine bundle information
+                $bundleInfo = [
+                    'is_bundle_item' => false,
+                    'bundle_name' => null
+                ];
+
+                if ($detail->parent_detail_id) {
+                    // This is a bundle child
+                    $bundleParent = $detail->parentDetail;
+                    $bundleInfo['is_bundle_item'] = true;
+                    $bundleInfo['bundle_name'] = $bundleParent && $bundleParent->produk ? $bundleParent->produk->nama : 'Bundle';
+                } elseif ($detail->childDetails && $detail->childDetails->count() > 0) {
+                    // This is a bundle parent
+                    $bundleInfo['is_bundle_item'] = true;
+                    $bundleInfo['bundle_name'] = $detail->produk->nama;
+                } elseif ($detail->is_bundle_item) {
+                    // This is a bundle item (legacy or standalone bundle)
+                    $bundleInfo['is_bundle_item'] = true;
+                    if ($detail->bundle && $detail->bundle->nama) {
+                        $bundleInfo['bundle_name'] = $detail->bundle->nama;
+                    } else {
+                        $bundleInfo['bundle_name'] = $detail->produk->nama;
+                    }
+                }
+
                 return [
                     'id' => $detail->id,
                     'produk_id' => $detail->produk_id,
@@ -1356,11 +1480,17 @@ class DeliveryOrderController extends Controller
                     'quantity_sisa' => $detail->quantity - $detail->quantity_terkirim,
                     'satuan_id' => $detail->satuan_id,
                     'satuan_nama' => $detail->satuan->nama,
+                    // Bundle information using the determined logic
+                    'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                    'bundle_name' => $bundleInfo['bundle_name'],
+                    // Legacy bundle fields for backward compatibility
+                    'bundle_id' => $detail->bundle_id,
+                    'is_bundle' => $detail->is_bundle ?? false,
+                    'bundle_code' => $detail->bundle ? $detail->bundle->kode : null,
                 ];
             })
         ]);
     }
-
     /**
      * Get delivery order data for AJAX table.
      */

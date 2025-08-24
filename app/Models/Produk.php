@@ -79,4 +79,53 @@ class Produk extends Model
     {
         return $this->stok->sum('jumlah');
     }
+
+    /**
+     * Mendapatkan stok tersedia dari gudang tertentu atau total dari semua gudang
+     */
+    public function stokTersedia($gudangId = null)
+    {
+        if ($gudangId) {
+            return $this->stok()
+                ->where('gudang_id', $gudangId)
+                ->value('jumlah') ?? 0;
+        }
+
+        return $this->stok()->sum('jumlah') ?? 0;
+    }
+
+    /**
+     * Mendapatkan stok tersedia dari semua gudang (alias untuk stokTersedia tanpa parameter)
+     */
+    public function getTotalStokTersediaAttribute()
+    {
+        return $this->stokTersedia();
+    }
+
+    /**
+     * Mendapatkan detail stok per gudang
+     */
+    public function getStokPerGudang()
+    {
+        return $this->stok()
+            ->with('gudang')
+            ->get()
+            ->map(function ($stok) {
+                return [
+                    'gudang_id' => $stok->gudang_id,
+                    'gudang_nama' => $stok->gudang->nama ?? 'Unknown',
+                    'jumlah' => $stok->jumlah,
+                    'lokasi_rak' => $stok->lokasi_rak,
+                    'batch_number' => $stok->batch_number
+                ];
+            });
+    }
+
+    /**
+     * Cek apakah stok mencukupi untuk quantity tertentu
+     */
+    public function isStokCukup($quantity, $gudangId = null)
+    {
+        return $this->stokTersedia($gudangId) >= $quantity;
+    }
 }

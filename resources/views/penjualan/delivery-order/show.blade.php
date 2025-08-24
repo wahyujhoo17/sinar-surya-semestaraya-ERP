@@ -500,7 +500,17 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @forelse ($deliveryOrder->deliveryOrderDetail as $index => $detail)
+                                {{-- Debug: Show count --}}
+                                @if ($deliveryOrder->details->count() == 0)
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                            Debug: Tidak ada detail produk ditemukan
+                                            ({{ $deliveryOrder->details->count() }} items)
+                                        </td>
+                                    </tr>
+                                @endif
+
+                                @forelse ($deliveryOrder->details as $index => $detail)
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -509,6 +519,13 @@
                                         <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                             <div class="font-medium">{{ $detail->produk->kode ?? '-' }}</div>
                                             <div>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</div>
+                                            @if ($detail->is_bundle_item && $detail->bundle_name)
+                                                <div
+                                                    class="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center">
+                                                    <i class="fas fa-layer-group mr-1"></i>
+                                                    PAKET: {{ $detail->bundle_name }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">

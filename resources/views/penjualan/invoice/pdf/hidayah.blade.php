@@ -515,7 +515,7 @@
                 <div style="height: 60px; margin-bottom: 10px;"></div>
                 <div style="border-top: 1px solid #cbd5e1; width: 80%; margin: 0 auto 10px auto;"></div>
                 <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
-                    Ir. Arief Rahman Hamid
+                    {{ $template['direktur_nama'] }}
                 </div>
                 <div style="font-size: 8px; color: #64748b;">PT Hidayah Cahaya Berkah</div>
             </div>

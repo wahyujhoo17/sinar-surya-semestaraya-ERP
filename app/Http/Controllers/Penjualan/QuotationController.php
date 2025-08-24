@@ -7,6 +7,7 @@ use App\Models\Quotation;
 use App\Models\QuotationDetail;
 use App\Models\Customer;
 use App\Models\Produk;
+use App\Models\ProductBundle;
 use App\Models\Satuan;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
@@ -198,6 +199,7 @@ class QuotationController extends Controller
             $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         }
         $products = Produk::orderBy('nama', 'asc')->get();
+        $bundles = ProductBundle::orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $nomor = $this->generateNewQuotationNumber();
         $tanggal = now()->format('Y-m-d');
@@ -210,43 +212,148 @@ class QuotationController extends Controller
             'kedaluwarsa' => 'Kedaluwarsa'
         ];
 
-        return view('penjualan.quotation.create', compact('customers', 'products', 'satuans', 'nomor', 'tanggal', 'tanggal_berlaku', 'statuses'));
+        return view('penjualan.quotation.create', compact('customers', 'products', 'bundles', 'satuans', 'nomor', 'tanggal', 'tanggal_berlaku', 'statuses'));
     }
 
     public function store(Request $request)
     {
+        Log::info('Quotation store request data:', $request->all());
 
-        // dd($request->all());
-        $request->validate([
+        // Preprocess items untuk bundle validation
+        $items = collect($request->items ?? [])->map(function ($item, $index) {
+            $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+            $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            Log::info("Item {$index} flags:", [
+                'is_bundle' => $isBundle,
+                'is_bundle_item' => $isBundleItem,
+                'has_produk_id' => $hasProdukId,
+                'has_bundle_id' => $hasBundleId
+            ]);
+
+            // Fix conflicting flags - an item cannot be both bundle header and bundle item
+            if ($isBundle && $isBundleItem) {
+                if ($hasProdukId && $hasBundleId) {
+                    // Has both produk_id and bundle_id, prioritize as bundle item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                    $isBundle = false;
+                } elseif ($hasBundleId && !$hasProdukId) {
+                    // Has bundle_id but no produk_id, prioritize as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                    $isBundleItem = false;
+                }
+            }
+
+            // Apply final logic
+            if ($hasBundleId) {
+                if (!$hasProdukId) {
+                    // Has bundle_id but no produk_id, treat as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                } else {
+                    // Has both produk_id and bundle_id, treat as bundle child item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                }
+            } else {
+                // No bundle_id, treat as regular item
+                unset($item['is_bundle']);
+                unset($item['is_bundle_item']);
+                unset($item['bundle_id']);
+            }
+
+            return $item;
+        })->toArray();
+
+        // Build dynamic validation rules
+        $validationRules = [
             'nomor' => 'required|string|unique:quotation,nomor',
             'tanggal' => 'required|date',
             'customer_id' => 'required|exists:customer,id',
-            'tanggal_valid_hingga' => 'nullable|date', // Matches form field name
+            'tanggal_berlaku' => 'required|date',
             'status' => 'required|string|in:draft,dikirim,disetujui,ditolak,kedaluwarsa',
             'catatan' => 'nullable|string',
-            'syarat_pembayaran' => 'nullable|string', // Matches form field name
+            'syarat_pembayaran' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.kuantitas' => 'required|numeric|min:0.01',
-            'items.*.satuan_id' => 'required|exists:satuan,id',
-            'items.*.harga' => 'required|numeric|min:0',
-            'items.*.deskripsi' => 'nullable|string', // Added deskripsi field
-            'items.*.diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
-        ]);
+        ];
 
-        // dd($request->all());
+        // Add validation for each item
+        foreach ($items as $index => $item) {
+            $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+            $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            // Fixed logic validation
+            if ($hasBundleId && !$hasProdukId) {
+                // Has bundle_id but no produk_id, treat as bundle header
+                unset($items[$index]['is_bundle_item']);
+                $isBundleItem = false;
+            } else if ($hasProdukId && $hasBundleId) {
+                // Has both produk_id and bundle_id, treat as bundle child item
+                unset($items[$index]['is_bundle']);
+                $isBundle = false;
+            } else {
+                // Invalid combination or regular item wrongly flagged, remove all bundle flags
+                unset($items[$index]['is_bundle']);
+                unset($items[$index]['is_bundle_item']);
+                unset($items[$index]['bundle_id']);
+                $isBundle = false;
+                $isBundleItem = false;
+            }
+
+            if ($isBundle) {
+                // Bundle header validation
+                $validationRules["items.{$index}.is_bundle"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen"] = 'nullable|numeric|min:0|max:100';
+            } elseif ($isBundleItem) {
+                // Bundle item validation
+                $validationRules["items.{$index}.is_bundle_item"] = 'required|boolean';
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen"] = 'nullable|numeric|min:0|max:100';
+            } else {
+                // Regular item validation
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen"] = 'nullable|numeric|min:0|max:100';
+            }
+        }
+
+        // Update request with processed items
+        $request->merge(['items' => $items]);
+        $request->validate($validationRules);
 
         try {
             DB::beginTransaction();
 
-            $items = $request->items;
             $subtotal = 0;
 
-            // Calculate subtotal
+            // Calculate subtotal (skip bundle headers, only count bundle child items and regular items)
             foreach ($items as $item) {
+                // Skip bundle headers as they are only for display/organization
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
                 $productTotal = $item['harga'] * $item['kuantitas'];
                 $discountValue = 0;
 
@@ -267,7 +374,6 @@ class QuotationController extends Controller
 
             $afterDiscount = $subtotal - $diskonGlobalNominal;
 
-
             $ppn = $request->ppn ?? 0;
             $ppnValue = ($ppn / 100) * $afterDiscount;
             $total = $afterDiscount + $ppnValue;
@@ -284,13 +390,18 @@ class QuotationController extends Controller
             $quotation->ppn = $ppn;
             $quotation->total = $total;
             $quotation->status = $request->status;
-            $quotation->tanggal_berlaku = $request->tanggal_valid_hingga;
+            $quotation->tanggal_berlaku = $request->tanggal_berlaku;
             $quotation->catatan = $request->catatan;
             $quotation->syarat_ketentuan = $request->syarat_pembayaran;
             $quotation->save();
 
             // Create Quotation Details
             foreach ($items as $item) {
+                // Skip bundle headers as they are only for display/organization
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
                 $productTotal = $item['harga'] * $item['kuantitas'];
                 $diskonPersenItem = $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = 0;
@@ -311,6 +422,16 @@ class QuotationController extends Controller
                 $quotationDetail->diskon_persen = $diskonPersenItem;
                 $quotationDetail->diskon_nominal = $diskonNominalItem;
                 $quotationDetail->subtotal = $subtotalItem;
+
+                // Add bundle information if this is a bundle item
+                if (isset($item['is_bundle_item']) && $item['is_bundle_item']) {
+                    $quotationDetail->item_type = 'bundle_item';
+                    $quotationDetail->bundle_id = $item['bundle_id'] ?? null;
+                    $quotationDetail->is_bundle_item = true;
+                } else {
+                    $quotationDetail->item_type = 'produk';
+                }
+
                 $quotationDetail->save();
             }
 
@@ -344,14 +465,14 @@ class QuotationController extends Controller
 
     public function show($id)
     {
-        $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan', 'logAktivitas.user'])->findOrFail($id);
+        $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan', 'details.bundle', 'logAktivitas.user'])->findOrFail($id);
 
         return view('penjualan.quotation.show', compact('quotation'));
     }
 
     public function edit($id)
     {
-        $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan'])->findOrFail($id);
+        $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan', 'details.bundle'])->findOrFail($id);
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
             // Allow access to all customers
             $customers = Customer::orderBy('nama', 'asc')->get();
@@ -360,6 +481,7 @@ class QuotationController extends Controller
             $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         }
         $products = Produk::orderBy('nama', 'asc')->get();
+        $bundles = ProductBundle::with(['items.produk.satuan'])->orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $statuses = [
             'draft' => 'Draft',
@@ -375,7 +497,7 @@ class QuotationController extends Controller
                 ->with('error', 'Hanya quotation dengan status Draft yang dapat diedit');
         }
 
-        return view('penjualan.quotation.edit', compact('quotation', 'customers', 'products', 'satuans', 'statuses'));
+        return view('penjualan.quotation.edit', compact('quotation', 'customers', 'products', 'bundles', 'satuans', 'statuses'));
     }
 
     public function update(Request $request, $id)
@@ -388,24 +510,129 @@ class QuotationController extends Controller
                 ->with('error', 'Hanya quotation dengan status Draft yang dapat diupdate');
         }
 
-        $request->validate([
+        Log::info('Quotation update request data:', $request->all());
+
+        // Preprocess items untuk bundle validation
+        $items = collect($request->items ?? [])->map(function ($item, $index) {
+            $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+            $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            Log::info("Item {$index} flags:", [
+                'is_bundle' => $isBundle,
+                'is_bundle_item' => $isBundleItem,
+                'has_produk_id' => $hasProdukId,
+                'has_bundle_id' => $hasBundleId
+            ]);
+
+            // Fix conflicting flags - an item cannot be both bundle header and bundle item
+            if ($isBundle && $isBundleItem) {
+                if ($hasProdukId && $hasBundleId) {
+                    // Has both produk_id and bundle_id, prioritize as bundle item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                    $isBundle = false;
+                } elseif ($hasBundleId && !$hasProdukId) {
+                    // Has bundle_id but no produk_id, prioritize as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                    $isBundleItem = false;
+                }
+            }
+
+            // Apply final logic
+            if ($hasBundleId) {
+                if (!$hasProdukId) {
+                    // Has bundle_id but no produk_id, treat as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                } else {
+                    // Has both produk_id and bundle_id, treat as bundle child item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                }
+            } else {
+                // No bundle_id, treat as regular item
+                unset($item['is_bundle']);
+                unset($item['is_bundle_item']);
+                unset($item['bundle_id']);
+            }
+
+            return $item;
+        })->toArray();
+
+        // Build dynamic validation rules
+        $validationRules = [
             'nomor' => 'required|string|unique:quotation,nomor,' . $id . ',id',
             'tanggal' => 'required|date',
             'customer_id' => 'required|exists:customer,id',
             'tanggal_berlaku' => 'required|date',
-            'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.kuantitas' => 'required|numeric|min:0.01',
-            'items.*.satuan_id' => 'required|exists:satuan,id',
-            'items.*.harga' => 'required|numeric|min:0',
-            'items.*.deskripsi' => 'nullable|string',
-            'items.*.diskon_persen_item' => 'nullable|numeric|min:0|max:100',
             'catatan' => 'nullable|string',
             'syarat_ketentuan' => 'nullable|string',
+            'items' => 'required|array|min:1',
             'diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
-        ]);
+        ];
+
+        // Add validation for each item
+        foreach ($items as $index => $item) {
+            $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+            $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            // Fixed logic validation
+            if ($hasBundleId && !$hasProdukId) {
+                // Has bundle_id but no produk_id, treat as bundle header
+                unset($items[$index]['is_bundle_item']);
+                $isBundleItem = false;
+            } else if ($hasProdukId && $hasBundleId) {
+                // Has both produk_id and bundle_id, treat as bundle child item
+                unset($items[$index]['is_bundle']);
+                $isBundle = false;
+            } else {
+                // Invalid combination or regular item wrongly flagged, remove all bundle flags
+                unset($items[$index]['is_bundle']);
+                unset($items[$index]['is_bundle_item']);
+                unset($items[$index]['bundle_id']);
+                $isBundle = false;
+                $isBundleItem = false;
+            }
+
+            if ($isBundle) {
+                // Bundle header validation
+                $validationRules["items.{$index}.is_bundle"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen_item"] = 'nullable|numeric|min:0|max:100';
+            } elseif ($isBundleItem) {
+                // Bundle item validation
+                $validationRules["items.{$index}.is_bundle_item"] = 'required|boolean';
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen_item"] = 'nullable|numeric|min:0|max:100';
+            } else {
+                // Regular item validation
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen_item"] = 'nullable|numeric|min:0|max:100';
+            }
+        }
+
+        // Update request with processed items
+        $request->merge(['items' => $items]);
+        $request->validate($validationRules);
 
         try {
             DB::beginTransaction();
@@ -421,15 +648,18 @@ class QuotationController extends Controller
             $items = $request->items;
             $subtotal = 0;
 
-            // Calculate subtotal
+            // Calculate subtotal (skip bundle headers, only count bundle child items and regular items)
             foreach ($items as $item) {
+                // Skip bundle headers as they are only for display/organization
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
                 $productTotal = $item['harga'] * $item['kuantitas'];
                 $discountValue = 0;
 
                 if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
                     $discountValue = ($item['diskon_persen_item'] / 100) * $productTotal;
-                } elseif (isset($item['diskon_nominal_item']) && $item['diskon_nominal_item'] > 0) {
-                    $discountValue = $item['diskon_nominal_item'];
                 }
 
                 $subtotal += $productTotal - $discountValue;
@@ -467,6 +697,11 @@ class QuotationController extends Controller
 
             // Create Quotation Details
             foreach ($items as $item) {
+                // Skip bundle headers as they are only for display/organization
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
                 $productTotal = $item['harga'] * $item['kuantitas'];
                 $diskonPersenItem = $item['diskon_persen_item'] ?? 0;
                 $diskonNominalItem = 0;
@@ -487,6 +722,16 @@ class QuotationController extends Controller
                 $quotationDetail->diskon_persen = $diskonPersenItem;
                 $quotationDetail->diskon_nominal = $diskonNominalItem;
                 $quotationDetail->subtotal = $subtotalItem;
+
+                // Add bundle information if this is a bundle item
+                if (isset($item['is_bundle_item']) && $item['is_bundle_item']) {
+                    $quotationDetail->item_type = 'bundle_item';
+                    $quotationDetail->bundle_id = $item['bundle_id'] ?? null;
+                    $quotationDetail->is_bundle_item = true;
+                } else {
+                    $quotationDetail->item_type = 'produk';
+                }
+
                 $quotationDetail->save();
             }
 
@@ -688,6 +933,49 @@ class QuotationController extends Controller
     }
 
     /**
+     * Get bundle data for AJAX request
+     */
+    public function getBundleData($bundleId)
+    {
+        try {
+            $bundle = ProductBundle::with([
+                'items.produk.satuan'
+            ])->findOrFail($bundleId);
+
+            $bundleItems = $bundle->items->map(function ($item) {
+                return [
+                    'produk_id' => $item->produk_id,
+                    'produk_nama' => $item->produk->nama ?? '',
+                    'produk_kode' => $item->produk->kode ?? '',
+                    'quantity' => $item->quantity,
+                    'satuan_id' => $item->produk->satuan_id ?? null,
+                    'satuan_nama' => $item->produk->satuan->nama ?? '',
+                    'harga_satuan' => $item->harga_satuan ?? 0,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'bundle' => [
+                    'id' => $bundle->id,
+                    'nama' => $bundle->nama,
+                    'kode' => $bundle->kode,
+                    'deskripsi' => $bundle->deskripsi,
+                    'harga_bundle' => $bundle->harga_bundle ?? 0,
+                    'diskon_persen' => $bundle->diskon_persen ?? 0, // Add discount percentage
+                ],
+                'items' => $bundleItems
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting bundle data: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Bundle not found'
+            ], 404);
+        }
+    }
+
+    /**
      * Generate PDF for a quotation
      */
     public function exportPdf($id, $template = 'default')
@@ -700,7 +988,7 @@ class QuotationController extends Controller
             // Log PDF generation start for debugging
             Log::info("PDF generation started for quotation ID: {$id}, template: {$template}");
 
-            $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan'])
+            $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan', 'details.bundle'])
                 ->findOrFail($id);
 
             // Define available templates and their configurations

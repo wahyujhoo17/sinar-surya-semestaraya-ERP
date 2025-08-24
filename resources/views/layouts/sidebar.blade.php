@@ -56,6 +56,7 @@
             <!-- Master Data -->
             @if (auth()->user()->hasPermission('produk.view') ||
                     auth()->user()->hasPermission('kategori_produk.view') ||
+                    auth()->user()->hasPermission('product_bundle.view') ||
                     auth()->user()->hasPermission('pelanggan.view') ||
                     auth()->user()->hasPermission('supplier.view') ||
                     auth()->user()->hasPermission('gudang.view') ||
@@ -91,6 +92,11 @@
                             <a href="{{ route('master.kategori-produk.index') }}"
                                 class="{{ request()->routeIs('master.kategori-produk.index') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Kategori
                                     Produk</span></a>
+                        @endif
+                        @if (auth()->user()->hasPermission('product_bundle.view'))
+                            <a href="{{ route('master.product-bundle.index') }}"
+                                class="{{ request()->routeIs('master.product-bundle.*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Product
+                                    Bundle</span></a>
                         @endif
                         @if (auth()->user()->hasPermission('pelanggan.view'))
                             <a href="{{ route('master.pelanggan.index') }}"

@@ -8,18 +8,20 @@ use Illuminate\Database\Eloquent\Model;
 class DeliveryOrderDetail extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'delivery_order_detail';
-    
+
     protected $fillable = [
         'delivery_id',
         'sales_order_detail_id',
         'produk_id',
         'quantity',
         'satuan_id',
-        'keterangan'
+        'keterangan',
+        'is_bundle_item',
+        'bundle_name'
     ];
-    
+
     /**
      * Relasi ke Delivery Order
      */
@@ -27,7 +29,7 @@ class DeliveryOrderDetail extends Model
     {
         return $this->belongsTo(DeliveryOrder::class, 'delivery_id');
     }
-    
+
     /**
      * Relasi ke Sales Order Detail
      */
@@ -35,7 +37,7 @@ class DeliveryOrderDetail extends Model
     {
         return $this->belongsTo(SalesOrderDetail::class, 'sales_order_detail_id');
     }
-    
+
     /**
      * Relasi ke Produk
      */
@@ -43,7 +45,7 @@ class DeliveryOrderDetail extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    
+
     /**
      * Relasi ke Satuan
      */

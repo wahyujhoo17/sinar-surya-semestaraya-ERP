@@ -910,50 +910,228 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-800">
-                                @foreach ($salesOrder->details as $detail)
-                                    <tr
-                                        class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors duration-150">
-                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                            <div class="font-medium break-words overflow-wrap">
-                                                {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400 break-words">
-                                                {{ $detail->produk->kode ?? '' }}</div>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-900 dark:text-white">
-                                            <div class="break-words overflow-wrap">{{ $detail->deskripsi ?? '-' }}
+                                @php
+                                    $bundleGroups = [];
+                                    $regularItems = [];
+
+                                    // Group items by bundle_id or collect regular items
+                                    foreach ($salesOrder->details as $detail) {
+                                        if ($detail->bundle_id && $detail->is_bundle_item) {
+                                            // This is a bundle item
+                                            $bundleGroups[$detail->bundle_id]['items'][] = $detail;
+                                        } else {
+                                            // This is a regular item
+                                            $regularItems[] = $detail;
+                                        }
+                                    }
+
+                                    // Debug output
+                                    // echo "Bundle groups: " . count($bundleGroups) . ", Regular items: " . count($regularItems);
+
+                                @endphp
+
+                                {{-- Display Bundle Groups --}}
+                                @if (count($bundleGroups) > 0)
+                                    @foreach ($bundleGroups as $bundleId => $bundleGroup)
+                                        @php
+                                            // Initialize variables first
+                                            $bundleName = 'Default Bundle Package';
+                                            $bundleCode = 'N/A';
+                                            $bundleImage = null;
+                                            $itemCount = count($bundleGroup['items']);
+
+                                            // Try to get bundle data from ProductBundle
+                                            try {
+                                                $bundle = \App\Models\ProductBundle::find($bundleId);
+                                                if ($bundle) {
+                                                    $bundleName = $bundle->nama;
+                                                    $bundleCode = $bundle->kode ?? 'N/A';
+                                                    $bundleImage = $bundle->gambar ?? null;
+                                                }
+                                            } catch (Exception $e) {
+                                                // Keep default values
+                                                $bundleName = 'Bundle Package #' . $bundleId;
+                                            }
+                                        @endphp
+
+                                        {{-- Bundle Header Row - Made More Visible --}}
+                                        <tr
+                                            style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: 2px solid #1e40af;">
+                                            <td colspan="7" style="padding: 15px;">
+                                                <div style="display: flex; align-items: center; gap: 15px;">
+                                                    <div
+                                                        style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                        @if ($bundleImage && file_exists(public_path('storage/' . $bundleImage)))
+                                                            <img src="{{ asset('storage/' . $bundleImage) }}"
+                                                                alt="Bundle {{ $bundleName }}"
+                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                            <span
+                                                                style="color: white; font-size: 16px; display: none;">📦</span>
+                                                        @elseif($bundleImage)
+                                                            <!-- Try different image path -->
+                                                            <img src="{{ asset($bundleImage) }}"
+                                                                alt="Bundle {{ $bundleName }}"
+                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                            <span
+                                                                style="color: white; font-size: 16px; display: none;">📦</span>
+                                                        @else
+                                                            <!-- Default bundle icon -->
+                                                            <svg style="width: 24px; height: 24px; color: white;"
+                                                                fill="currentColor" viewBox="0 0 20 20">
+                                                                <path
+                                                                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
+                                                                </path>
+                                                            </svg>
+                                                        @endif
+                                                    </div>
+                                                    <div style="flex: 1;">
+                                                        <h2
+                                                            style="font-size: 18px; font-weight: bold; margin: 0; color: white;">
+                                                            PAKET: {{ $bundleName }}
+                                                        </h2>
+                                                        <div
+                                                            style="font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 5px;">
+                                                            Kode: {{ $bundleCode }} | Berisi {{ $itemCount }}
+                                                            produk
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold;">
+                                                        BUNDLE PACKAGE
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {{-- Bundle Items --}}
+                                        @if (isset($bundleGroup['items']) && count($bundleGroup['items']) > 0)
+                                            @foreach ($bundleGroup['items'] as $bundleItem)
+                                                <tr style="background: #f1f5f9; border-left: 3px solid #94a3b8;">
+                                                    <td class="px-4 py-2 text-sm">
+                                                        <div
+                                                            style="margin-left: 25px; display: flex; align-items: center; gap: 8px;">
+                                                            <span style="color: #64748b; font-size: 14px;">└─</span>
+                                                            <div>
+                                                                <div
+                                                                    class="font-medium text-gray-700 dark:text-gray-300 text-sm">
+                                                                    {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                                </div>
+                                                                <div
+                                                                    style="font-size: 11px; color: #64748b; font-style: italic;">
+                                                                    Item dalam paket •
+                                                                    {{ $bundleItem->produk->kode ?? '' }}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
+                                                        {{ $bundleItem->deskripsi ?? '-' }}
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                                                        {{ number_format($bundleItem->quantity, 2, ',', '.') }}
+                                                        {{ $bundleItem->satuan->nama ?? '' }}
+                                                    </td>
+                                                    <td class="px-4 py-2 text-sm text-center">
+                                                        <span
+                                                            class="{{ $bundleItem->quantity_terkirim > 0 ? ($bundleItem->quantity_terkirim >= $bundleItem->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">
+                                                            {{ number_format($bundleItem->quantity_terkirim, 2, ',', '.') }}
+                                                            {{ $bundleItem->satuan->nama ?? '' }}
+                                                        </span>
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
+                                                        {{ number_format($bundleItem->harga, 0, ',', '.') }}
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
+                                                        @if ($bundleItem->diskon_persen > 0)
+                                                            {{ number_format($bundleItem->diskon_persen, 2, ',', '.') }}%
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2 text-sm text-right font-medium text-gray-600 dark:text-gray-400">
+                                                        {{ number_format($bundleItem->subtotal, 0, ',', '.') }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        @endif
+                                    @endforeach
+                                @endif
+
+                                {{-- Display Regular Items --}}
+                                @if (count($regularItems) > 0)
+                                    @foreach ($regularItems as $detail)
+                                        <tr
+                                            class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors duration-150">
+                                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                                <div class="font-medium break-words overflow-wrap">
+                                                    {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                </div>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 break-words">
+                                                    {{ $detail->produk->kode ?? '' }}
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-4 text-sm text-gray-900 dark:text-white">
+                                                <div class="break-words overflow-wrap">{{ $detail->deskripsi ?? '-' }}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
+                                                {{ number_format($detail->quantity, 2, ',', '.') }}
+                                                {{ $detail->satuan->nama ?? '' }}
+                                            </td>
+                                            <td
+                                                class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
+                                                <span
+                                                    class="{{ $detail->quantity_terkirim > 0 ? ($detail->quantity_terkirim >= $detail->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">
+                                                    {{ number_format($detail->quantity_terkirim, 2, ',', '.') }}
+                                                    {{ $detail->satuan->nama ?? '' }}
+                                                </span>
+                                            </td>
+                                            <td
+                                                class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                                {{ number_format($detail->harga, 0, ',', '.') }}
+                                            </td>
+                                            <td
+                                                class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                                @if ($detail->diskon_persen > 0)
+                                                    {{ number_format($detail->diskon_persen, 2, ',', '.') }}%
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td
+                                                class="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
+                                                {{ number_format($detail->subtotal, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @endif
+
+                                {{-- No Items Message --}}
+                                @if (count($bundleGroups) === 0 && count($regularItems) === 0)
+                                    <tr>
+                                        <td colspan="7"
+                                            class="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
+                                            <div class="flex flex-col items-center">
+                                                <svg class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-4"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2 2V8m16 0H4m16 0l-2-2m-4 2v10m-4-10v10m-4-10v10" />
+                                                </svg>
+                                                <p class="text-lg font-medium">Tidak ada item produk</p>
+                                                <p class="text-sm">Belum ada produk yang ditambahkan ke sales order ini
+                                                </p>
                                             </div>
                                         </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
-                                            {{ number_format($detail->quantity, 2, ',', '.') }}
-                                            {{ $detail->satuan->nama ?? '' }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
-                                            <span
-                                                class="{{ $detail->quantity_terkirim > 0 ? ($detail->quantity_terkirim >= $detail->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">
-                                                {{ number_format($detail->quantity_terkirim, 2, ',', '.') }}
-                                                {{ $detail->satuan->nama ?? '' }}
-                                            </span>
-                                        </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                            {{ number_format($detail->harga, 0, ',', '.') }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                            @if ($detail->diskon_persen > 0)
-                                                {{ number_format($detail->diskon_persen, 2, ',', '.') }}%
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                        <td
-                                            class="px-4 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
-                                            {{ number_format($detail->subtotal, 0, ',', '.') }}
-                                        </td>
                                     </tr>
-                                @endforeach
+                                @endif
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>

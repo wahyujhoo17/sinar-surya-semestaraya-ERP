@@ -973,9 +973,11 @@
                                     <div>
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">${detail.produk_kode}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">${detail.produk_nama}</div>
+                                        ${detail.bundle_name && detail.is_bundle_item ? `<div class="text-xs text-blue-600 dark:text-blue-400 mt-1"><i class="fas fa-layer-group mr-1"></i> PAKET: ${detail.bundle_name}</div>` : ''}
                                         ${!hasRemainingQty ? '<div class="text-xs text-red-500 mt-1"><i class="fas fa-info-circle mr-1"></i> Semua item sudah terkirim</div>' : ''}
                                     </div>
                                 </div>
+                                <input type="hidden" name="sales_order_detail_id[]" value="${detail.id}">
                                 <input type="hidden" name="produk_id[]" value="${detail.produk_id}">
                             </td>
                             <td class="px-3 py-4 whitespace-nowrap text-center">
@@ -1128,9 +1130,11 @@
                                     <div>
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">${detail.produk_kode}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">${detail.produk_nama}</div>
+                                        ${detail.bundle_name && detail.is_bundle_item ? `<div class="text-xs text-blue-600 dark:text-blue-400 mt-1"><i class="fas fa-layer-group mr-1"></i> PAKET: ${detail.bundle_name}</div>` : ''}
                                         ${!hasRemainingQty ? '<div class="text-xs text-red-500 mt-1"><i class="fas fa-info-circle mr-1"></i> Semua item sudah terkirim</div>' : ''}
                                     </div>
                                 </div>
+                                <input type="hidden" name="sales_order_detail_id[]" value="${detail.id}">
                                 <input type="hidden" name="produk_id[]" value="${detail.produk_id}">
                             </td>
                             <td class="px-3 py-4 whitespace-nowrap text-center">

@@ -226,7 +226,7 @@
         </div>
 
         <form id="salesOrderForm" action="{{ route('penjualan.sales-order.store') }}" method="POST"
-            x-data="salesOrderForm()" x-init="init()">
+            x-data="salesOrderForm()" x-init="init()" @submit="validateForm($event)">
             @csrf
 
             @if ($errors->any())
@@ -260,13 +260,11 @@
                                 required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
                         </div>
-
                         <div class="input-group">
                             <label for="nomor_po" class="text-gray-700 dark:text-gray-300">Nomor PO Customer</label>
                             <input type="text" name="nomor_po" id="nomor_po" value="{{ old('nomor_po') }}"
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
                         </div>
-
                         <div class="input-group">
                             <label for="tanggal" class="text-gray-700 dark:text-gray-300">Tanggal <span
                                     class="text-red-500">*</span></label>
@@ -274,7 +272,6 @@
                                 required
                                 class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
                         </div>
-
                         <div class="input-group">
                             <label for="quotation_id" class="text-gray-700 dark:text-gray-300">Berdasarkan
                                 Quotation</label>
@@ -361,15 +358,26 @@
                             </svg>
                             Detail Item
                         </h2>
-                        <button type="button" @click="addItem"
-                            class="group inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-lg text-sm font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                            Tambah Item
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="showBundleModal = true"
+                                class="group inline-flex items-center gap-2 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-lg text-sm font-medium text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                Tambah Bundle
+                            </button>
+                            <button type="button" @click="addItem"
+                                class="group inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-lg text-sm font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Tambah Item
+                            </button>
+                        </div>
                     </div>
 
                     <div class="px-6 py-5">
@@ -383,7 +391,16 @@
                             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Mulai dengan menambahkan item
                                 untuk
                                 sales order ini.</p>
-                            <div class="mt-6">
+                            <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                                <button type="button" @click="showBundleModal = true"
+                                    class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                    </svg>
+                                    Tambah Bundle Produk
+                                </button>
                                 <button type="button" @click="addItem"
                                     class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
@@ -391,47 +408,64 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                     </svg>
-                                    Tambah Item Pertama
+                                    Tambah Item Individual
                                 </button>
                             </div>
                         </div>
 
                         <div x-show="items.length > 0" class="overflow-x-auto">
-                            <div class="space-y-3 mt-2" id="items-container">
+                            <div class="space-y-4 mt-4" id="items-container">
                                 <template x-for="(item, index) in items" :key="index">
-                                    <div
-                                        class="border border-gray-200 dark:border-gray-600 rounded-lg p-5 bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200 hover:border-primary-200 dark:hover:border-primary-800">
-                                        <div class="md:hidden flex justify-between items-center mb-4">
-                                            <span
-                                                class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-xs font-medium text-primary-800 dark:text-primary-300"
-                                                x-text="index + 1"></span>
-                                            <button type="button" @click="removeItem(index)"
-                                                class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 focus:outline-none">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-
-                                        <div class="grid grid-cols-1 gap-6 pb-3">
-                                            <!-- Item Header Line -->
-                                            <div
-                                                class="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 pb-2">
-                                                <span
-                                                    class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                                    <div class="relative">
+                                        <!-- BUNDLE HEADER - Simple & Clean -->
+                                        <div x-show="item.is_bundle"
+                                            class="border-l-4 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 rounded-r-lg p-4">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center space-x-3">
+                                                    <div
+                                                        class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                                        <svg class="w-5 h-5 text-white" fill="none"
+                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                                        </svg>
+                                                    </div>
+                                                    <div>
+                                                        <h4 class="font-semibold text-emerald-800 dark:text-emerald-200"
+                                                            x-text="item.bundle_name"></h4>
+                                                        <p class="text-sm text-emerald-600 dark:text-emerald-400"
+                                                            x-text="item.bundle_code"></p>
+                                                    </div>
                                                     <span
-                                                        class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary-100 dark:bg-primary-900/50 text-xs font-medium text-primary-800 dark:text-primary-300 mr-2"
-                                                        x-text="index + 1"></span>
-                                                    Item Detail
-                                                </span>
-                                                <div class="hidden md:block">
+                                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                                                        Bundle
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center space-x-3">
+                                                    <!-- Bundle Quantity Input -->
+                                                    <div class="flex items-center space-x-2">
+                                                        <label
+                                                            class="text-sm font-medium text-emerald-700 dark:text-emerald-300">Qty:</label>
+                                                        <input type="number" x-model.number="item.kuantitas"
+                                                            @input="updateBundleCalculations(index)"
+                                                            class="w-20 px-2 py-1 text-center border border-emerald-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                            min="1" step="1">
+                                                        <span
+                                                            class="text-sm text-emerald-600 dark:text-emerald-400">paket</span>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <p class="font-bold text-emerald-800 dark:text-emerald-200"
+                                                            x-text="formatRupiah(item.subtotal)"></p>
+                                                        <p class="text-xs text-emerald-600 dark:text-emerald-400">
+                                                            <span x-text="item.kuantitas"></span> x <span
+                                                                x-text="formatRupiah(item.harga)"></span>
+                                                        </p>
+                                                    </div>
                                                     <button type="button" @click="removeItem(index)"
-                                                        class="p-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                            viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round"
                                                                 stroke-width="2"
                                                                 d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -439,338 +473,702 @@
                                                     </button>
                                                 </div>
                                             </div>
+                                            <!-- Hidden inputs for bundle header only -->
+                                            <input type="hidden" :name="`items[${index}][is_bundle]`" value="1">
+                                            <input type="hidden" :name="`items[${index}][bundle_id]`"
+                                                :value="item.bundle_id">
+                                            <input type="hidden" :name="`items[${index}][kuantitas]`"
+                                                :value="item.kuantitas">
+                                            <input type="hidden" :name="`items[${index}][harga]`"
+                                                :value="item.harga">
+                                            <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                :value="item.subtotal">
+                                            <input type="hidden" :name="`items[${index}][deskripsi]`"
+                                                :value="item.deskripsi">
+                                        </div>
+                                        <!-- BUNDLE ITEM - Simple & Clean -->
+                                        <div x-show="item.is_bundle_item"
+                                            class="ml-6 border-l-2 border-gray-300 dark:border-gray-600 pl-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-r">
+                                            <div class="flex items-center justify-between text-sm">
+                                                <div class="flex items-center space-x-2">
+                                                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                                    <span class="font-medium text-gray-700 dark:text-gray-300"
+                                                        x-text="item.nama || item.produk_nama || 'Bundle Item'"></span>
+                                                    <span class="text-gray-500 dark:text-gray-400"
+                                                        x-text="'(' + (item.kode || item.produk_kode || '') + ')'"></span>
+                                                </div>
+                                                <div
+                                                    class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                                                    <span
+                                                        x-text="item.kuantitas + ' ' + (item.satuan_nama || 'pcs')"></span>
+                                                    <span class="text-gray-400"
+                                                        x-show="item.base_quantity && item.kuantitas !== item.base_quantity">
+                                                        (<span x-text="item.base_quantity"></span> × <span
+                                                            x-text="Math.round(item.kuantitas / item.base_quantity)"></span>
+                                                        paket)
+                                                    </span>
+                                                    <span>×</span>
+                                                    <span x-text="formatRupiah(item.harga)"></span>
+                                                    <!-- Show discount if applicable -->
+                                                    <template x-if="item.diskon_persen && item.diskon_persen > 0">
+                                                        <div class="flex items-center space-x-1">
+                                                            <span class="text-red-500">(-<span
+                                                                    x-text="item.diskon_persen"></span>%)</span>
+                                                        </div>
+                                                    </template>
+                                                    <span>=</span>
+                                                    <span class="font-semibold text-gray-700 dark:text-gray-300"
+                                                        x-text="formatRupiah(Math.round(item.subtotal || 0))"></span>
+                                                </div>
+                                            </div>
+                                            <!-- Hidden inputs for bundle items -->
+                                            <input type="hidden" :name="`items[${index}][produk_id]`"
+                                                :value="item.produk_id">
+                                            <input type="hidden" :name="`items[${index}][is_bundle_item]`"
+                                                value="1">
+                                            <input type="hidden" :name="`items[${index}][bundle_id]`"
+                                                :value="item.bundle_id">
+                                            <input type="hidden" :name="`items[${index}][kuantitas]`"
+                                                :value="item.kuantitas">
+                                            <input type="hidden" :name="`items[${index}][satuan_id]`"
+                                                :value="item.satuan_id">
+                                            <input type="hidden" :name="`items[${index}][harga]`"
+                                                :value="item.harga">
+                                            <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                :value="item.subtotal">
+                                            <input type="hidden" :name="`items[${index}][deskripsi]`"
+                                                :value="item.deskripsi">
+                                            <input type="hidden" :name="`items[${index}][diskon_persen_item]`"
+                                                :value="item.diskon_persen || 0">
+                                            <input type="hidden" :name="`items[${index}][diskon_nominal_item]`"
+                                                :value="item.diskon_nominal || 0">
+                                        </div>
 
-                                            <!-- Product Row -->
-                                            <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-4">
-                                                {{-- Produk --}}
-                                                <div class="md:col-span-5">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Produk
-                                                        <span class="text-red-500">*</span></label>
+                                        <!-- REGULAR ITEM DESIGN -->
+                                        <div x-show="!item.is_bundle && !item.is_bundle_item"
+                                            class="border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-all duration-200">
+
+                                            <!-- Header -->
+                                            <div
+                                                class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-600">
+                                                <div class="flex items-center space-x-3">
+                                                    <span
+                                                        class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/50 text-sm font-bold text-primary-800 dark:text-primary-300"
+                                                        x-text="index + 1"></span>
+                                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                                        Item Detail</h3>
+                                                </div>
+                                                <button type="button" @click="removeItem(index)"
+                                                    class="p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                                    <svg class="h-5 w-5" fill="none" stroke="currentColor"
+                                                        viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+
+                                            <!-- Content -->
+                                            <div class="p-4 space-y-4">
+                                                <!-- Product Selection -->
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Produk <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <select :name="`items[${index}][produk_id]`"
+                                                            x-model="item.produk_id"
+                                                            @change="updateItemDetails(index)"
+                                                            :required="!item.is_bundle && !item.is_bundle_item"
+                                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                                                            <option value="">Pilih Produk</option>
+                                                            @foreach ($products as $product)
+                                                                <option value="{{ $product->id }}"
+                                                                    :data-harga="{{ $product->harga_jual ?? 0 }}"
+                                                                    :data-satuan_id="{{ $product->satuan_id ?? '' }}">
+                                                                    {{ $product->kode }} - {{ $product->nama }}
+                                                                </option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Deskripsi Item
+                                                        </label>
+                                                        <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="2"
+                                                            placeholder="Deskripsi tambahan..."
+                                                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white resize-none"></textarea>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Pricing Info -->
+                                                <div
+                                                    class="grid grid-cols-2 md:grid-cols-5 gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Qty <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="number" step="any" min="0.01"
+                                                            :name="`items[${index}][kuantitas]`"
+                                                            x-model.number="item.kuantitas"
+                                                            @input="updateSubtotal(index)"
+                                                            :required="!item.is_bundle && !item.is_bundle_item"
+                                                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-center">
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Unit <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <select :name="`items[${index}][satuan_id]`"
+                                                            x-model="item.satuan_id"
+                                                            :required="!item.is_bundle && !item.is_bundle_item"
+                                                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:text-white">
+                                                            <option value="">Pilih</option>
+                                                            @foreach ($satuans as $satuan)
+                                                                <option value="{{ $satuan->id }}">
+                                                                    {{ $satuan->nama }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Price <span class="text-red-500">*</span>
+                                                        </label>
+                                                        <input type="number" step="any"
+                                                            :name="`items[${index}][harga]`"
+                                                            x-model.number="item.harga" @input="updateSubtotal(index)"
+                                                            :required="!item.is_bundle && !item.is_bundle_item"
+                                                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:text-white">
+                                                    </div>
+                                                    <div x-show="!item.is_bundle_item">
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Disc (%)
+                                                        </label>
+                                                        <input type="number" step="any" min="0"
+                                                            max="100" :name="`items[${index}][diskon_persen]`"
+                                                            x-model.number="item.diskon_persen"
+                                                            @input="updateSubtotal(index)" placeholder="0"
+                                                            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-center">
+                                                    </div>
+                                                    <!-- Bundle item spacer for discount column -->
+                                                    <div x-show="item.is_bundle_item">
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Disc (%)
+                                                        </label>
+                                                        <div
+                                                            class="w-full px-2 py-1 text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-center">
+                                                            <span
+                                                                x-text="item.diskon_persen > 0 ? item.diskon_persen + '%' : '-'"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <label
+                                                            class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                                                            Subtotal
+                                                        </label>
+                                                        <div
+                                                            class="px-2 py-1 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 rounded text-sm font-bold text-primary-700 dark:text-primary-300 text-center">
+                                                            <span x-text="formatRupiah(item.subtotal)"></span>
+                                                        </div>
+                                                        <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                            :value="item.subtotal">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-1 gap-6 pb-3">
+                                        <!-- Item Header Line -->
+                                        <div x-show="!item.is_bundle && !item.is_bundle_item"
+                                            class="flex items-center justify-between border-b border-gray-200 dark:border-gray-600 pb-2">
+                                            <span
+                                                class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+                                                <span
+                                                    class="inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary-100 dark:bg-primary-900/50 text-xs font-medium text-primary-800 dark:text-primary-300 mr-2"
+                                                    x-text="index + 1"></span>
+                                                Item Detail
+                                            </span>
+                                            <div class="hidden md:block">
+                                                <button type="button" @click="removeItem(index)"
+                                                    class="p-1.5 border border-gray-200 dark:border-gray-600 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Product Row -->
+                                        <div class="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-4">
+                                            {{-- Produk --}}
+                                            <div class="md:col-span-5">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Produk
+                                                    <span class="text-red-500">*</span></label>
+                                                <!-- Regular Product Select -->
+                                                <div x-show="!item.is_bundle && !item.is_bundle_item">
                                                     <select :name="`items[${index}][produk_id]`"
                                                         x-model="item.produk_id" @change="updateItemDetails(index)"
-                                                        required
+                                                        :required="!item.is_bundle && !item.is_bundle_item"
                                                         class="produk-select mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                                         <option value="">Pilih Produk</option>
                                                         @foreach ($products as $product)
                                                             <option value="{{ $product->id }}"
                                                                 :data-harga="{{ $product->harga_jual ?? 0 }}"
                                                                 :data-satuan_id="{{ $product->satuan_id ?? '' }}">
-                                                                {{ $product->kode }} - {{ $product->nama }}</option>
-                                                        @endforeach
-                                                    </select>
-                                                </div>
-
-                                                {{-- Deskripsi Item --}}
-                                                <div class="md:col-span-7">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi
-                                                        Item</label>
-                                                    <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="1"
-                                                        placeholder="Deskripsi tambahan untuk item ini..."
-                                                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"></textarea>
-                                                </div>
-                                            </div>
-
-                                            <!-- Pricing Row -->
-                                            <div
-                                                class="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-3 mt-2">
-                                                {{-- Kuantitas --}}
-                                                <div class="md:col-span-2">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kuantitas
-                                                        <span class="text-red-500">*</span></label>
-                                                    <input type="number" step="any" min="0.01"
-                                                        :name="`items[${index}][kuantitas]`"
-                                                        x-model.number="item.kuantitas" @input="updateSubtotal(index)"
-                                                        required placeholder="0"
-                                                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md text-center">
-                                                </div>
-
-                                                {{-- Satuan --}}
-                                                <div class="md:col-span-2">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Satuan
-                                                        <span class="text-red-500">*</span></label>
-                                                    <select :name="`items[${index}][satuan_id]`"
-                                                        x-model="item.satuan_id" required
-                                                        class="satuan-select-single mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
-                                                        <option value="">Pilih</option>
-                                                        @foreach ($satuans as $satuan)
-                                                            <option value="{{ $satuan->id }}">{{ $satuan->nama }}
+                                                                {{ $product->kode }} - {{ $product->nama }}
                                                             </option>
                                                         @endforeach
                                                     </select>
                                                 </div>
-
-                                                {{-- Harga --}}
-                                                <div class="md:col-span-3">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Harga
-                                                        Satuan
-                                                        <span class="text-red-500">*</span></label>
-                                                    <div class="mt-1 relative rounded-md shadow-sm">
-                                                        <div
-                                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                            <span
-                                                                class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                                                        </div>
-                                                        <input type="number" step="any"
-                                                            :name="`items[${index}][harga]`"
-                                                            x-model.number="item.harga" @input="updateSubtotal(index)"
-                                                            required placeholder="0"
-                                                            class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
-                                                    </div>
+                                                <!-- Bundle Display (readonly) -->
+                                                <div x-show="item.is_bundle || item.is_bundle_item">
+                                                    <input type="text"
+                                                        :value="item.is_bundle ? (item.bundle_code + ' - ' + item
+                                                            .bundle_name) : (item.kode + ' - ' + item.nama)"
+                                                        readonly
+                                                        class="mt-1 block w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-md shadow-sm">
+                                                    <!-- Bundle inputs are handled in their respective templates -->
                                                 </div>
+                                            </div>
 
-                                                {{-- Diskon Item (%) --}}
-                                                <div class="md:col-span-2">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diskon
-                                                        (%)</label>
-                                                    <input type="number" step="any" min="0"
-                                                        max="100" :name="`items[${index}][diskon_persen]`"
-                                                        x-model.number="item.diskon_persen"
-                                                        @input="updateSubtotal(index)" placeholder="0"
-                                                        class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md text-center">
+                                            {{-- Deskripsi Item --}}
+                                            <div class="md:col-span-7">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi
+                                                    Item</label>
+                                                <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="1"
+                                                    :readonly="item.is_bundle_item" placeholder="Deskripsi tambahan untuk item ini..."
+                                                    :class="item.is_bundle_item ?
+                                                        'mt-1 block w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-md shadow-sm' :
+                                                        'mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md'"></textarea>
+                                            </div>
+                                        </div>
+
+                                        <!-- Pricing Row -->
+                                        <div
+                                            class="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-4 bg-gray-50 dark:bg-gray-800/30 rounded-lg p-3 mt-2">
+                                            {{-- Kuantitas --}}
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kuantitas
+                                                    <span class="text-red-500">*</span></label>
+                                                <input type="number" step="any" min="0.01"
+                                                    :name="`items[${index}][kuantitas]`"
+                                                    x-model.number="item.kuantitas" @input="updateSubtotal(index)"
+                                                    :readonly="item.is_bundle_item"
+                                                    :required="!item.is_bundle && !item.is_bundle_item"
+                                                    placeholder="0"
+                                                    :class="item.is_bundle_item ?
+                                                        'mt-1 block w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-md shadow-sm text-center' :
+                                                        'mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md text-center'">>
+                                            </div>
+
+                                            {{-- Satuan --}}
+                                            <div class="md:col-span-2">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Satuan
+                                                    <span class="text-red-500">*</span></label>
+                                                <!-- Regular Satuan Select -->
+                                                <div x-show="!item.is_bundle_item">
+                                                    <select :name="`items[${index}][satuan_id]`"
+                                                        x-model="item.satuan_id"
+                                                        :required="!item.is_bundle && !item.is_bundle_item"
+                                                        class="satuan-select-single mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                                        <option value="">Pilih</option>
+                                                        @foreach ($satuans as $satuan)
+                                                            <option value="{{ $satuan->id }}">
+                                                                {{ $satuan->nama }}
+                                                            </option>
+                                                        @endforeach
+                                                    </select>
                                                 </div>
+                                                <!-- Bundle Item Satuan (readonly) -->
+                                                <div x-show="item.is_bundle_item">
+                                                    <input type="text" :value="item.satuan_nama || ''" readonly
+                                                        class="mt-1 block w-full bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-md shadow-sm">
+                                                    <input type="hidden" :name="`items[${index}][satuan_id]`"
+                                                        :value="item.satuan_id">
+                                                </div>
+                                            </div>
 
-                                                {{-- Subtotal --}}
-                                                <div class="md:col-span-3">
-                                                    <label
-                                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtotal</label>
-                                                    <div class="mt-1 relative rounded-md shadow-sm">
-                                                        <div
-                                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                            <span
-                                                                class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                                                        </div>
-                                                        <input type="text" :name="`items[${index}][subtotal]`"
-                                                            x-model="formatRupiah(item.subtotal)" readonly
-                                                            class="bg-gray-100 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md font-medium">
+                                            {{-- Harga --}}
+                                            <div class="md:col-span-3">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Harga
+                                                    Satuan
+                                                    <span class="text-red-500">*</span></label>
+                                                <div class="mt-1 relative rounded-md shadow-sm">
+                                                    <div
+                                                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <span
+                                                            class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                     </div>
+                                                    <input type="number" step="any"
+                                                        :name="`items[${index}][harga]`" x-model.number="item.harga"
+                                                        @input="updateSubtotal(index)" :readonly="item.is_bundle_item"
+                                                        :required="!item.is_bundle && !item.is_bundle_item"
+                                                        placeholder="0"
+                                                        :class="item.is_bundle_item ?
+                                                            'block w-full pl-12 pr-3 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 dark:text-gray-300 rounded-md shadow-sm' :
+                                                            'focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md'">>
+                                                </div>
+                                            </div>
+
+                                            {{-- Diskon Item (%) - Hidden for bundle items --}}
+                                            <div class="md:col-span-2" x-show="!item.is_bundle_item">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diskon
+                                                    (%)</label>
+                                                <input type="number" step="any" min="0" max="100"
+                                                    :name="`items[${index}][diskon_persen]`"
+                                                    x-model.number="item.diskon_persen" @input="updateSubtotal(index)"
+                                                    placeholder="0"
+                                                    class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md text-center">
+                                            </div>
+                                            <!-- Bundle item discount display -->
+                                            <div class="md:col-span-2" x-show="item.is_bundle_item">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                    Diskon (%)
+                                                </label>
+                                                <div
+                                                    class="mt-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md text-center">
+                                                    <span
+                                                        x-text="item.diskon_persen > 0 ? item.diskon_persen + '%' : '-'"></span>
+                                                </div>
+                                            </div>
+
+                                            {{-- Subtotal --}}
+                                            <div class="md:col-span-3">
+                                                <label
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subtotal</label>
+                                                <div class="mt-1 relative rounded-md shadow-sm">
+                                                    <div
+                                                        class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <span
+                                                            class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                                    </div>
+                                                    <input type="text" :name="`items[${index}][subtotal]`"
+                                                        x-model="formatRupiah(item.subtotal)" readonly
+                                                        class="bg-gray-100 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md font-medium">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </template>
                             </div>
+                            </template>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Card 3: Ringkasan Total -->
-                <div
-                    class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 form-card mb-6 summary-card">
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                        <h2 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                            </svg>
-                            Ringkasan Total
-                        </h2>
-                    </div>
-                    <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
-                        <div class="md:col-span-2"></div> {{-- Spacer --}}
-                        <div
-                            class="space-y-2 rounded-lg p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-inner">
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Subtotal
-                                    Keseluruhan:</span>
-                                <span class="text-sm font-semibold text-gray-800 dark:text-white"
-                                    x-text="formatRupiah(calculateTotal().subtotal)"></span>
-                            </div>
-
-                            <div class="flex justify-between items-center">
-                                <label for="diskon_global_persen"
-                                    class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
-                                    (%):</label>
-                                <input type="number" step="any" min="0" max="100"
-                                    name="diskon_global_persen" id="diskon_global_persen"
-                                    x-model.number="diskonGlobalPersen" @input="updateDiskonGlobal('persen')"
-                                    placeholder="0"
-                                    class="w-24 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <label for="diskon_global_nominal"
-                                    class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
-                                    (Rp):</label>
-                                <input type="number" step="any" min="0" name="diskon_global_nominal"
-                                    id="diskon_global_nominal" x-model.number="diskonGlobalNominal"
-                                    @input="updateDiskonGlobal('nominal')" placeholder="0"
-                                    class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Setelah Diskon
-                                    Global:</span>
-                                <span class="text-sm font-semibold text-gray-800 dark:text-white"
-                                    x-text="formatRupiah(calculateTotal().afterGlobalDiscount)"></span>
-                            </div>
-
-                            <hr class="dark:border-gray-600 my-1">
-
-                            <!-- Ongkos Kirim -->
-                            <div class="flex justify-between items-center">
-                                <label for="ongkos_kirim"
-                                    class="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                    Ongkos Kirim:
-                                </label>
-                                <input type="number" step="any" min="0" name="ongkos_kirim"
-                                    id="ongkos_kirim" x-model.number="ongkosKirim" @input="calculateTotal()"
-                                    placeholder="0"
-                                    class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
-                            </div>
-
-                            <!-- PPN Toggle -->
-                            <div class="flex justify-between items-center mt-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" id="include_ppn" x-model="includePPN"
-                                        @change="calculateTotal()"
-                                        class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
-                                    <input type="hidden" name="ppn"
-                                        :value="includePPN ? {{ setting('tax_percentage', 11) }} : 0">
-                                    <span class="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">Include PPN
-                                        ({{ setting('tax_percentage', 11) }}%)</span>
-                                </label>
-                                <span class="text-sm font-semibold text-blue-600 dark:text-blue-400"
-                                    x-text="includePPN ? formatRupiah(calculateTotal().ppnNominal) : 'Rp 0'"></span>
-                            </div>
-
-                            <hr class="dark:border-gray-600 my-1">
-                            <div class="flex justify-between items-center">
-                                <span class="text-lg font-bold text-gray-900 dark:text-white">Grand Total:</span>
-                                <span class="text-lg font-bold text-primary-600 dark:text-primary-400"
-                                    x-text="formatRupiah(calculateTotal().total)"></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Card 4: Informasi Tambahan -->
-                <div
-                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 form-card">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+            <!-- Card 3: Ringkasan Total -->
+            <div
+                class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 form-card mb-6 summary-card">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
-                        Informasi Tambahan
+                        Ringkasan Total
                     </h2>
-
-                    <div class="grid grid-cols-1 gap-4">
-                        <div class="input-group">
-                            <label for="catatan" class="text-gray-700 dark:text-gray-300">Catatan</label>
-                            <textarea name="catatan" id="catatan" rows="3"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">{{ old('catatan') }}</textarea>
+                </div>
+                <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+                    <div class="md:col-span-2"></div> {{-- Spacer --}}
+                    <div
+                        class="space-y-2 rounded-lg p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 shadow-inner">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Subtotal
+                                Keseluruhan:</span>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-white"
+                                x-text="formatRupiah(calculateTotal().subtotal)"></span>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="input-group">
-                                <label for="terms_pembayaran" class="text-gray-700 dark:text-gray-300">Terms
-                                    Pembayaran</label>
-                                <select name="terms_pembayaran" id="terms_pembayaran"
-                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                    <option value="">Pilih Terms Pembayaran</option>
-                                    <option value="COD" {{ old('terms_pembayaran') == 'COD' ? 'selected' : '' }}>
-                                        COD (Cash On Delivery)</option>
-                                    <option value="PIA" {{ old('terms_pembayaran') == 'PIA' ? 'selected' : '' }}>
-                                        PIA (Payment In Advance)</option>
-                                    <option value="Net 7" {{ old('terms_pembayaran') == 'Net 7' ? 'selected' : '' }}>
-                                        Net 7 (7 hari)</option>
-                                    <option value="Net 14"
-                                        {{ old('terms_pembayaran') == 'Net 14' ? 'selected' : '' }}>Net 14 (14 hari)
-                                    </option>
-                                    <option value="Net 30"
-                                        {{ old('terms_pembayaran') == 'Net 30' ? 'selected' : '' }}>Net 30 (30 hari)
-                                    </option>
-                                    <option value="Net 60"
-                                        {{ old('terms_pembayaran') == 'Net 60' ? 'selected' : '' }}>Net 60 (60 hari)
-                                    </option>
-                                    <option value="2/10 Net 30"
-                                        {{ old('terms_pembayaran') == '2/10 Net 30' ? 'selected' : '' }}>2/10 Net 30
-                                        (Diskon 2% jika dibayar dalam 10 hari)</option>
-                                    <option value="custom"
-                                        {{ old('terms_pembayaran') == 'custom' ? 'selected' : '' }}>Kustom</option>
-                                </select>
-                            </div>
-
-                            <div class="input-group">
-                                <label for="terms_pembayaran_hari" class="text-gray-700 dark:text-gray-300">Jatuh
-                                    Tempo (Hari)</label>
-                                <input type="number" name="terms_pembayaran_hari" id="terms_pembayaran_hari"
-                                    min="0" value="{{ old('terms_pembayaran_hari') }}"
-                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
-                                <p class="text-xs text-gray-500 mt-1">Masukkan jumlah hari untuk jatuh tempo
-                                    pembayaran.</p>
-                            </div>
+                        <div class="flex justify-between items-center">
+                            <label for="diskon_global_persen"
+                                class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
+                                (%):</label>
+                            <input type="number" step="any" min="0" max="100"
+                                name="diskon_global_persen" id="diskon_global_persen"
+                                x-model.number="diskonGlobalPersen" @input="updateDiskonGlobal('persen')"
+                                placeholder="0"
+                                class="w-24 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <label for="diskon_global_nominal"
+                                class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
+                                (Rp):</label>
+                            <input type="number" step="any" min="0" name="diskon_global_nominal"
+                                id="diskon_global_nominal" x-model.number="diskonGlobalNominal"
+                                @input="updateDiskonGlobal('nominal')" placeholder="0"
+                                class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
                         </div>
 
-                        <div class="input-group">
-                            <label for="syarat_ketentuan" class="text-gray-700 dark:text-gray-300">Syarat dan
-                                Ketentuan</label>
-                            <textarea name="syarat_ketentuan" id="syarat_ketentuan" rows="3" x-model="syarat_ketentuan"
-                                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">{{ old('syarat_ketentuan') }}</textarea>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Total Setelah Diskon
+                                Global:</span>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-white"
+                                x-text="formatRupiah(calculateTotal().afterGlobalDiscount)"></span>
+                        </div>
+
+                        <hr class="dark:border-gray-600 my-1">
+
+                        <!-- Ongkos Kirim -->
+                        <div class="flex justify-between items-center">
+                            <label for="ongkos_kirim" class="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                Ongkos Kirim:
+                            </label>
+                            <input type="number" step="any" min="0" name="ongkos_kirim"
+                                id="ongkos_kirim" x-model.number="ongkosKirim" @input="calculateTotal()"
+                                placeholder="0"
+                                class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
+                        </div>
+
+                        <!-- PPN Toggle -->
+                        <div class="flex justify-between items-center mt-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="include_ppn" x-model="includePPN"
+                                    @change="calculateTotal()"
+                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+                                <input type="hidden" name="ppn"
+                                    :value="includePPN ? {{ setting('tax_percentage', 11) }} : 0">
+                                <span class="ml-2 text-sm font-medium text-gray-600 dark:text-gray-300">Include PPN
+                                    ({{ setting('tax_percentage', 11) }}%)</span>
+                            </label>
+                            <span class="text-sm font-semibold text-blue-600 dark:text-blue-400"
+                                x-text="includePPN ? formatRupiah(calculateTotal().ppnNominal) : 'Rp 0'"></span>
+                        </div>
+
+                        <hr class="dark:border-gray-600 my-1">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-gray-900 dark:text-white">Grand Total:</span>
+                            <span class="text-lg font-bold text-primary-600 dark:text-primary-400"
+                                x-text="formatRupiah(calculateTotal().total)"></span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="flex items-center justify-end space-x-3">
-                <div class="flex items-center mr-4">
-                    <input type="checkbox" id="check_stock" name="check_stock" value="1" checked
-                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
-                    <label for="check_stock" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Cek Ketersediaan Stok
-                    </label>
-                </div>
-
-                <div class="flex items-center mr-4">
-                    <input type="checkbox" id="create_production_plan" name="create_production_plan" value="1"
-                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
-                    <label for="create_production_plan" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Buat Perencanaan Produksi Otomatis
-                    </label>
-                </div>
-
-                <div class="flex items-center mr-4">
-                    <input type="checkbox" id="buat_permintaan_barang" name="buat_permintaan_barang" value="1"
-                        class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
-                    <label for="buat_permintaan_barang" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                        Buat Permintaan Barang Otomatis
-                    </label>
-                </div>
-
-                <div id="gudang_selection" class="hidden">
-                    <select name="gudang_id" id="gudang_id"
-                        class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
-                        <option value="">Pilih Gudang</option>
-                        @foreach ($gudangs as $gudang)
-                            <option value="{{ $gudang->id }}" {{ old('gudang_id', 1) == $gudang->id ? 'selected' : '' }}>
-                                {{ $gudang->nama }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <a href="{{ route('penjualan.sales-order.index') }}"
-                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    Batal
-                </a>
-                <button type="submit"
-                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+            <!-- Card 4: Informasi Tambahan -->
+            <div
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 form-card">
+                <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" fill="none"
                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                     </svg>
-                    Simpan Sales Order
-                </button>
+                    Informasi Tambahan
+                </h2>
+
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="input-group">
+                        <label for="catatan" class="text-gray-700 dark:text-gray-300">Catatan</label>
+                        <textarea name="catatan" id="catatan" rows="3"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">{{ old('catatan') }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="terms_pembayaran" class="text-gray-700 dark:text-gray-300">Terms
+                                Pembayaran</label>
+                            <select name="terms_pembayaran" id="terms_pembayaran"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
+                                <option value="">Pilih Terms Pembayaran</option>
+                                <option value="COD" {{ old('terms_pembayaran') == 'COD' ? 'selected' : '' }}>
+                                    COD (Cash On Delivery)</option>
+                                <option value="PIA" {{ old('terms_pembayaran') == 'PIA' ? 'selected' : '' }}>
+                                    PIA (Payment In Advance)</option>
+                                <option value="Net 7" {{ old('terms_pembayaran') == 'Net 7' ? 'selected' : '' }}>
+                                    Net 7 (7 hari)</option>
+                                <option value="Net 14" {{ old('terms_pembayaran') == 'Net 14' ? 'selected' : '' }}>Net
+                                    14 (14 hari)
+                                </option>
+                                <option value="Net 30" {{ old('terms_pembayaran') == 'Net 30' ? 'selected' : '' }}>Net
+                                    30 (30 hari)
+                                </option>
+                                <option value="Net 60" {{ old('terms_pembayaran') == 'Net 60' ? 'selected' : '' }}>Net
+                                    60 (60 hari)
+                                </option>
+                                <option value="2/10 Net 30"
+                                    {{ old('terms_pembayaran') == '2/10 Net 30' ? 'selected' : '' }}>2/10 Net 30
+                                    (Diskon 2% jika dibayar dalam 10 hari)</option>
+                                <option value="custom" {{ old('terms_pembayaran') == 'custom' ? 'selected' : '' }}>
+                                    Kustom</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="terms_pembayaran_hari" class="text-gray-700 dark:text-gray-300">Jatuh
+                                Tempo (Hari)</label>
+                            <input type="number" name="terms_pembayaran_hari" id="terms_pembayaran_hari"
+                                min="0" value="{{ old('terms_pembayaran_hari') }}"
+                                class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
+                            <p class="text-xs text-gray-500 mt-1">Masukkan jumlah hari untuk jatuh tempo
+                                pembayaran.</p>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="syarat_ketentuan" class="text-gray-700 dark:text-gray-300">Syarat dan
+                            Ketentuan</label>
+                        <textarea name="syarat_ketentuan" id="syarat_ketentuan" rows="3" x-model="syarat_ketentuan"
+                            class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">{{ old('syarat_ketentuan') }}</textarea>
+                    </div>
+                </div>
             </div>
-        </form>
+    </div>
+
+    <div class="flex items-center justify-end space-x-3">
+        <div class="flex items-center mr-4">
+            <input type="checkbox" id="check_stock" name="check_stock" value="1" checked
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
+            <label for="check_stock" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Cek Ketersediaan Stok
+            </label>
+        </div>
+
+        <div class="flex items-center mr-4">
+            <input type="checkbox" id="create_production_plan" name="create_production_plan" value="1"
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
+            <label for="create_production_plan" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Buat Perencanaan Produksi Otomatis
+            </label>
+        </div>
+
+        <div class="flex items-center mr-4">
+            <input type="checkbox" id="buat_permintaan_barang" name="buat_permintaan_barang" value="1"
+                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-gray-600 dark:bg-gray-700">
+            <label for="buat_permintaan_barang" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
+                Buat Permintaan Barang Otomatis
+            </label>
+        </div>
+
+        <div id="gudang_selection" class="hidden">
+            <select name="gudang_id" id="gudang_id"
+                class="w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
+                <option value="">Pilih Gudang</option>
+                @foreach ($gudangs as $gudang)
+                    <option value="{{ $gudang->id }}" {{ old('gudang_id', 1) == $gudang->id ? 'selected' : '' }}>
+                        {{ $gudang->nama }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <a href="{{ route('penjualan.sales-order.index') }}"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            Batal
+        </a>
+        <button type="submit"
+            class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Simpan Sales Order
+        </button>
+    </div>
+
+    <!-- Bundle Selection Modal -->
+    <div x-show="showBundleModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto"
+        x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showBundleModal = false">
+            </div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
+
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full"
+                @click.stop>
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                    Pilih Bundle Produk
+                                </h3>
+                                <button @click="showBundleModal = false" type="button"
+                                    class="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Search Input -->
+                            <div class="mb-4">
+                                <input type="text" x-model="bundleSearch" placeholder="Cari bundle..."
+                                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:text-white">
+                            </div>
+
+                            <!-- Bundle List -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                                <template x-for="bundle in filteredBundles" :key="bundle.id">
+                                    <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 hover:shadow-md cursor-pointer transition-shadow"
+                                        @click="selectBundle(bundle)">
+                                        <div class="flex justify-between items-start mb-2">
+                                            <div>
+                                                <h4 class="font-semibold text-gray-900 dark:text-white"
+                                                    x-text="bundle.nama"></h4>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400"
+                                                    x-text="bundle.kode"></p>
+                                            </div>
+                                            <div class="text-right">
+                                                <p class="font-semibold text-primary-600 dark:text-primary-400"
+                                                    x-text="formatRupiah(bundle.harga_bundle)"></p>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-2"
+                                            x-text="bundle.deskripsi"></p>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                            <span x-text="bundle.items?.length || 0"></span> item(s)
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- No Results -->
+                            <div x-show="filteredBundles.length === 0"
+                                class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p class="mt-2">Tidak ada bundle yang ditemukan</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="showBundleModal = false" type="button"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    </form>
     </div>
 
     @push('scripts')
@@ -874,11 +1272,25 @@
                     ongkosKirim: {{ old('ongkos_kirim', 0) }},
                     includePPN: {{ old('ppn', $quotation ? ($quotation->ppn > 0 ? 'true' : 'false') : 'true') }},
 
+                    // Bundle related data
+                    showBundleModal: false,
+                    bundleSearch: '',
+                    bundles: @json($bundles),
+
+                    // Computed properties for bundle filtering
+                    get filteredBundles() {
+                        if (!this.bundleSearch) return this.bundles;
+                        return this.bundles.filter(bundle =>
+                            bundle.nama.toLowerCase().includes(this.bundleSearch.toLowerCase()) ||
+                            bundle.kode.toLowerCase().includes(this.bundleSearch.toLowerCase())
+                        );
+                    },
+
                     addItem() {
                         // Generate a unique ID for this item
                         const itemId = Date.now();
 
-                        this.items.push({
+                        const newItem = {
                             id: itemId,
                             produk_id: '',
                             deskripsi: '',
@@ -886,8 +1298,15 @@
                             satuan_id: '',
                             harga: 0,
                             diskon_persen: 0,
-                            subtotal: 0
-                        });
+                            subtotal: 0,
+                            is_bundle: false,
+                            is_bundle_item: false,
+                            bundle_id: null
+                        };
+
+                        console.log('Adding regular item:', newItem);
+                        this.items.push(newItem);
+                        console.log('Items after adding regular item:', this.items);
 
                         const self = this; // Capture 'this'
 
@@ -1212,31 +1631,175 @@
                                         '';
                                     self.syarat_ketentuan = quotation.syarat_ketentuan || '';
 
+                                    console.log('Quotation data received:', quotation);
+
                                     self.items = [];
                                     if (quotation.details && Array.isArray(quotation.details) && quotation.details.length >
                                         0) {
-                                        quotation.details.forEach((detail) => {
+                                        quotation.details.forEach((detail, detailIndex) => {
+                                            console.log(`Processing detail ${detailIndex}:`, detail);
+
                                             if (typeof detail !== 'object' || detail === null) {
                                                 return;
                                             }
                                             const produkId = detail.produk_id ? parseInt(detail.produk_id) : '';
                                             const satuanId = detail.satuan_id ? parseInt(detail.satuan_id) : '';
                                             const harga = parseFloat(detail.harga) || 0;
-                                            const kuantitas = parseFloat(detail.quantity) ||
-                                                1;
+                                            const kuantitas = parseFloat(detail.quantity) || 1;
                                             const diskonPersen = parseFloat(detail.diskon_persen) || 0;
-                                            const itemSubtotal = (harga * kuantitas) * (1 - (diskonPersen / 100));
+                                            const itemSubtotal = parseFloat(detail.subtotal) || ((harga *
+                                                kuantitas) * (1 - (diskonPersen / 100)));
 
-                                            self.items.push({
+                                            console.log(`Detail ${detailIndex} discount info:`, {
+                                                produk_id: produkId,
+                                                is_bundle_item: detail.is_bundle_item,
+                                                bundle_id: detail.bundle_id,
+                                                diskon_persen: diskonPersen,
+                                                original_diskon_persen: detail.diskon_persen
+                                            });
+
+                                            // Handle bundle items properly
+                                            const newItem = {
+                                                id: Date.now() + Math.random(),
+                                                originalDetailId: detail
+                                                    .id, // Store original detail ID for reference
                                                 produk_id: produkId,
                                                 deskripsi: detail.deskripsi || '',
                                                 kuantitas: kuantitas,
                                                 satuan_id: satuanId,
                                                 harga: harga,
                                                 diskon_persen: diskonPersen,
-                                                subtotal: itemSubtotal
-                                            });
+                                                subtotal: itemSubtotal,
+                                                // Bundle properties
+                                                bundle_id: detail.bundle_id || null,
+                                                item_type: detail.item_type || 'regular',
+                                                // Fix bundle detection logic
+                                                is_bundle: (detail.item_type === 'bundle' || (detail
+                                                    .bundle_id && detail.is_bundle_item !== 1)),
+                                                is_bundle_item: (detail.is_bundle_item === 1 || detail
+                                                    .item_type === 'bundle_item'),
+                                                bundle_name: (detail.bundle && detail.bundle.nama) || detail
+                                                    .bundle_name || '',
+                                                bundle_code: (detail.bundle && detail.bundle.kode) || detail
+                                                    .bundle_code || '',
+                                                base_quantity: detail.base_quantity || kuantitas,
+                                                readonly: (detail.is_bundle_item === 1 || detail.item_type ===
+                                                    'bundle_item'),
+                                                // Additional bundle data
+                                                nama: detail.produk ? detail.produk.nama : '',
+                                                kode: detail.produk ? detail.produk.kode : '',
+                                                satuan_nama: detail.satuan ? detail.satuan.nama : ''
+                                            };
+
+                                            console.log(`Created item ${detailIndex}:`, newItem);
+                                            self.items.push(newItem);
                                         });
+
+                                        console.log('Items before reorganization:', self.items);
+
+                                        // Create bundle headers for bundle items that don't have headers
+                                        const bundleGroups = new Map();
+
+                                        // Group bundle items by bundle_id
+                                        self.items.forEach(item => {
+                                            if (item.bundle_id && item.is_bundle_item) {
+                                                if (!bundleGroups.has(item.bundle_id)) {
+                                                    bundleGroups.set(item.bundle_id, {
+                                                        children: [],
+                                                        bundleData: null
+                                                    });
+                                                }
+                                                bundleGroups.get(item.bundle_id).children.push(item);
+
+                                                // Store bundle data from first child
+                                                if (!bundleGroups.get(item.bundle_id).bundleData && item
+                                                    .bundle_name) {
+                                                    bundleGroups.get(item.bundle_id).bundleData = {
+                                                        id: item.bundle_id,
+                                                        nama: item.bundle_name,
+                                                        kode: item.bundle_code,
+                                                        harga_bundle: quotation.details.find(d => d
+                                                                .bundle_id === item.bundle_id && d.bundle)
+                                                            ?.bundle?.harga_bundle || 0
+                                                    };
+                                                }
+                                            }
+                                        });
+
+                                        // Create bundle headers for groups that don't have them
+                                        bundleGroups.forEach((group, bundleId) => {
+                                            const hasHeader = self.items.some(item => item.bundle_id === bundleId &&
+                                                item.is_bundle);
+
+                                            if (!hasHeader && group.bundleData && group.children.length > 0) {
+                                                // Simple approach: Calculate bundle quantity from children quantities
+                                                // For most bundles, all children will have the same multiplier
+                                                const firstChild = group.children[0];
+                                                console.log('First child data:', firstChild);
+
+                                                // Assume base quantity is 1 for each child in a bundle
+                                                // Bundle quantity = child quantity / 1 = child quantity
+                                                let bundleQuantity = Math.round(firstChild.kuantitas);
+
+                                                // However, if all children have the same quantity, use that as bundle quantity
+                                                const allSameQuantity = group.children.every(child => child
+                                                    .kuantitas === firstChild.kuantitas);
+                                                if (allSameQuantity) {
+                                                    bundleQuantity = Math.round(firstChild.kuantitas);
+                                                } else {
+                                                    // If different quantities, try to find the common divisor
+                                                    bundleQuantity = Math.round(Math.min(...group.children.map(c =>
+                                                        c.kuantitas)));
+                                                }
+
+                                                console.log('Calculated bundle quantity:', bundleQuantity);
+
+                                                // Update children with proper base quantities (assume 1 for each item in bundle)
+                                                group.children.forEach(child => {
+                                                    child.base_quantity = child.kuantitas / bundleQuantity;
+                                                    console.log(
+                                                        `Child ${child.produk_id}: qty=${child.kuantitas}, base_qty=${child.base_quantity}`
+                                                    );
+                                                });
+
+                                                const bundleSubtotal = parseFloat(group.bundleData.harga_bundle ||
+                                                    0) * bundleQuantity;
+
+                                                const bundleHeader = {
+                                                    id: Date.now() + Math.random(),
+                                                    produk_id: '',
+                                                    bundle_id: bundleId,
+                                                    item_type: 'bundle',
+                                                    deskripsi: `Bundle: ${group.bundleData.nama}`,
+                                                    kuantitas: bundleQuantity,
+                                                    satuan_id: '',
+                                                    harga: parseFloat(group.bundleData.harga_bundle || 0),
+                                                    diskon_persen: 0,
+                                                    subtotal: bundleSubtotal,
+                                                    is_bundle: true,
+                                                    is_bundle_item: false,
+                                                    bundle_name: group.bundleData.nama,
+                                                    bundle_code: group.bundleData.kode,
+                                                    readonly: false
+                                                };
+
+                                                console.log('Creating missing bundle header:', bundleHeader);
+                                                console.log('Bundle quantity calculated:', bundleQuantity);
+                                                console.log('Children base quantities:', group.children.map(c => ({
+                                                    id: c.produk_id,
+                                                    base_qty: c.base_quantity,
+                                                    current_qty: c.kuantitas
+                                                })));
+
+                                                self.items.unshift(bundleHeader); // Add at beginning
+                                            }
+                                        });
+
+                                        // Reorganize items to group bundles properly
+                                        if (typeof self.reorganizeItems === 'function') {
+                                            self.reorganizeItems();
+                                            console.log('Items after reorganization:', self.items);
+                                        }
                                     }
 
                                     self.diskonGlobalPersen = parseFloat(quotation.diskon_persen) || 0;
@@ -1372,6 +1935,23 @@
                     },
 
                     removeItem(index) {
+                        const item = this.items[index];
+
+                        // If removing a bundle, also remove all its items
+                        if (item.is_bundle) {
+                            // Find and remove all bundle items that belong to this bundle
+                            for (let i = this.items.length - 1; i >= 0; i--) {
+                                if (this.items[i].bundle_id === item.bundle_id && this.items[i].is_bundle_item) {
+                                    this.items.splice(i, 1);
+                                    // Adjust index if we removed items before current index
+                                    if (i < index) {
+                                        index--;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Remove the main item
                         this.items.splice(index, 1);
                         this.calculateTotal();
                     },
@@ -1406,7 +1986,13 @@
                     },
 
                     calculateSubtotal() {
-                        return this.items.reduce((total, item) => total + (parseFloat(item.subtotal) || 0), 0);
+                        return this.items.reduce((total, item) => {
+                            // Only count bundle headers and regular items, skip bundle items to avoid double counting
+                            if (item.is_bundle_item) {
+                                return total; // Skip bundle items as they are already included in bundle price
+                            }
+                            return total + (parseFloat(item.subtotal) || 0);
+                        }, 0);
                     },
 
                     calculateTotal() {
@@ -1447,13 +2033,354 @@
                         };
                     },
 
+                    // Bundle quantity update method
+                    updateBundleCalculations(index) {
+                        const item = this.items[index];
+                        if (item && item.is_bundle) {
+                            // Update bundle subtotal based on quantity
+                            item.subtotal = (parseFloat(item.harga) || 0) * (parseFloat(item.kuantitas) || 1);
+
+                            // Update all bundle items quantities to match bundle multiplier
+                            const bundleId = item.bundle_id;
+                            const bundleQuantity = parseFloat(item.kuantitas) || 1;
+
+                            this.items.forEach((bundleItem, itemIndex) => {
+                                if (bundleItem.is_bundle_item && bundleItem.bundle_id === bundleId) {
+                                    // Update bundle item quantity (base quantity * bundle quantity)
+                                    const baseQuantity = parseFloat(bundleItem.base_quantity) || parseFloat(bundleItem
+                                        .kuantitas) || 1;
+                                    bundleItem.kuantitas = baseQuantity * bundleQuantity;
+                                    bundleItem.subtotal = (parseFloat(bundleItem.harga) || 0) * bundleItem.kuantitas;
+                                }
+                            });
+
+                            // Recalculate totals
+                            this.calculateTotal();
+                        }
+                    },
+
+                    // Bundle methods
+                    selectBundle(bundle) {
+                        this.showBundleModal = false;
+                        this.bundleSearch = '';
+
+                        // Check if bundle already exists
+                        const existingBundleIndex = this.items.findIndex(item =>
+                            item.is_bundle && item.bundle_id === bundle.id
+                        );
+
+                        if (existingBundleIndex !== -1) {
+                            // Bundle already exists, increase quantity
+                            this.items[existingBundleIndex].kuantitas += 1;
+                            this.updateBundleCalculations(existingBundleIndex);
+
+                            // Show notification
+                            if (typeof window.notify === 'function') {
+                                window.notify(
+                                    `Kuantitas bundle "${bundle.nama}" ditambah menjadi ${this.items[existingBundleIndex].kuantitas}`,
+                                    'success', 'Bundle Updated');
+                            }
+                        } else {
+                            // Bundle doesn't exist, add new bundle
+                            this.addBundleToItems(bundle);
+                        }
+                    },
+
+                    async addBundleToItems(bundle) {
+                        try {
+                            if (!bundle.id) {
+                                throw new Error('Bundle ID is missing');
+                            }
+
+                            // Show loading notification if available
+                            if (typeof window.notify === 'function') {
+                                window.notify('Memuat data bundle...', 'info', 'Memproses');
+                            }
+
+                            // Fetch detailed bundle data
+                            const url = `/penjualan/sales-order/get-bundle-data/${bundle.id}`;
+
+                            const response = await fetch(url, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute(
+                                        'content') || ''
+                                }
+                            });
+
+                            if (!response.ok) {
+                                const errorText = await response.text();
+                                console.error('Response error:', errorText);
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            }
+
+                            const data = await response.json();
+
+                            if (!data.success) {
+                                throw new Error(data.message || 'Failed to get bundle data');
+                            }
+
+                            await this.processBundleData(data.bundle, data.items);
+
+                        } catch (error) {
+                            console.error('Error adding bundle:', error);
+
+                            // Hide loading notification
+                            if (typeof window.notify === 'function') {
+                                window.notify('Gagal menambahkan bundle: ' + error.message, 'error', 'Error');
+                            } else {
+                                alert('Gagal menambahkan bundle: ' + error.message);
+                            }
+                        }
+                    },
+
+                    async processBundleData(bundleData, bundleItems) {
+                        try {
+                            console.log('processBundleData called with:', {
+                                bundleData,
+                                bundleItems
+                            });
+
+                            // Get bundle discount
+                            const bundleDiskonPersen = parseFloat(bundleData.diskon_persen || 0);
+                            console.log('Bundle discount percent:', bundleDiskonPersen);
+
+                            // Bundle header shows original price without discount applied
+                            const bundleSubtotalBefore = parseFloat(bundleData.harga_bundle || 0);
+                            const bundleSubtotal = bundleSubtotalBefore; // Header tidak dikurangi diskon
+
+                            // Add bundle as main item with bundle type
+                            const bundleMainItem = {
+                                id: Date.now(),
+                                produk_id: '', // Bundle doesn't have single product ID
+                                bundle_id: bundleData.id,
+                                item_type: 'bundle',
+                                deskripsi: `Bundle: ${bundleData.nama}`,
+                                kuantitas: 1,
+                                satuan_id: '',
+                                harga: bundleSubtotalBefore,
+                                diskon_persen: 0, // Header tidak ada diskon
+                                subtotal: bundleSubtotal, // Header subtotal tanpa diskon
+                                is_bundle: true,
+                                is_bundle_item: false,
+                                bundle_name: bundleData.nama,
+                                bundle_code: bundleData.kode
+                            };
+
+                            console.log('Adding bundle header:', bundleMainItem);
+                            // Add bundle header at the end
+                            this.items.push(bundleMainItem);
+
+                            // Add individual bundle items immediately after the header
+                            bundleItems.forEach((item, itemIndex) => {
+                                console.log(`Processing bundle item ${itemIndex}:`, item);
+
+                                // Apply bundle discount to each child item
+                                const itemSubtotalBefore = (item.harga_satuan || 0) * item.quantity;
+                                const itemDiskonNominal = (itemSubtotalBefore * bundleDiskonPersen) / 100;
+                                const itemSubtotal = itemSubtotalBefore - itemDiskonNominal;
+
+                                const childItem = {
+                                    id: Date.now() + Math.random(),
+                                    produk_id: item.produk_id,
+                                    bundle_id: bundleData.id,
+                                    item_type: 'bundle_item',
+                                    parent_bundle_name: bundleData.nama,
+                                    kode: item.produk_kode || '',
+                                    nama: item.produk_nama || '',
+                                    satuan_nama: item.satuan_nama || '',
+                                    deskripsi: `└─ ${item.produk_nama} (dari bundle ${bundleData.nama})`,
+                                    kuantitas: item.quantity,
+                                    base_quantity: item.quantity, // Store original quantity for calculation
+                                    satuan_id: item.satuan_id,
+                                    harga: item.harga_satuan,
+                                    diskon_persen: bundleDiskonPersen, // Apply bundle discount
+                                    subtotal: itemSubtotal, // Calculated with discount
+                                    is_bundle: false,
+                                    is_bundle_item: true,
+                                    readonly: true // Make it read-only to prevent editing
+                                };
+
+                                console.log(`Adding bundle child item ${itemIndex}:`, childItem);
+                                this.items.push(childItem);
+                            });
+
+                            console.log('Items after adding bundle:', this.items);
+
+                            // Reorganize items to group bundles properly
+                            if (typeof this.reorganizeItems === 'function') {
+                                this.reorganizeItems();
+                                console.log('Items after reorganization:', this.items);
+                            }
+
+                            // Calculate totals
+                            this.calculateTotal();
+
+                            // Show success notification
+                            if (typeof window.notify === 'function') {
+                                window.notify(`Bundle "${bundleData.nama}" berhasil ditambahkan`, 'success',
+                                    'Bundle Added');
+                            }
+
+                        } catch (error) {
+                            console.error('Error processing bundle data:', error);
+                            throw error;
+                        }
+                    },
+
+                    reorganizeItems() {
+                        // Separate regular items and bundle groups
+                        const regularItems = [];
+                        const bundleGroups = new Map();
+
+                        // Categorize all items
+                        this.items.forEach(item => {
+                            if (item.is_bundle) {
+                                // Bundle header
+                                if (!bundleGroups.has(item.bundle_id)) {
+                                    bundleGroups.set(item.bundle_id, {
+                                        header: null,
+                                        children: []
+                                    });
+                                }
+                                bundleGroups.get(item.bundle_id).header = item;
+                            } else if (item.is_bundle_item) {
+                                // Bundle child item
+                                if (!bundleGroups.has(item.bundle_id)) {
+                                    bundleGroups.set(item.bundle_id, {
+                                        header: null,
+                                        children: []
+                                    });
+                                }
+                                bundleGroups.get(item.bundle_id).children.push(item);
+                            } else {
+                                // Regular item
+                                regularItems.push(item);
+                            }
+                        });
+
+                        // Rebuild items array: regular items first, then bundle groups
+                        const reorganizedItems = [...regularItems];
+
+                        // Add bundle groups (header followed by children)
+                        bundleGroups.forEach(group => {
+                            if (group.header) {
+                                reorganizedItems.push(group.header);
+                                reorganizedItems.push(...group.children);
+                            }
+                        });
+
+                        // Update the items array
+                        this.items = reorganizedItems;
+                    },
+
+                    updateBundleCalculations(bundleIndex) {
+                        const bundleHeader = this.items[bundleIndex];
+                        if (!bundleHeader.is_bundle) return;
+
+                        // Update bundle children quantities based on bundle header quantity
+                        const bundleItems = this.items.filter(item =>
+                            item.is_bundle_item && item.bundle_id === bundleHeader.bundle_id
+                        );
+
+                        bundleItems.forEach(item => {
+                            // Update quantity based on bundle quantity and base quantity
+                            item.kuantitas = item.base_quantity * bundleHeader.kuantitas;
+
+                            // Recalculate subtotal
+                            const itemSubtotalBefore = item.harga * item.kuantitas;
+                            const itemDiskonNominal = (itemSubtotalBefore * item.diskon_persen) / 100;
+                            item.subtotal = itemSubtotalBefore - itemDiskonNominal;
+                        });
+
+                        // Update bundle header subtotal
+                        const bundleSubtotalBefore = bundleHeader.harga * bundleHeader.kuantitas;
+                        bundleHeader.subtotal = bundleSubtotalBefore;
+
+                        this.calculateTotal();
+                    },
+
+                    removeItem(index) {
+                        const item = this.items[index];
+
+                        // If removing a bundle header, also remove all its bundle items
+                        if (item.is_bundle && item.bundle_id) {
+                            // Find all bundle items with the same bundle_id
+                            const bundleItemsToRemove = [];
+                            for (let i = this.items.length - 1; i >= 0; i--) {
+                                const currentItem = this.items[i];
+                                if (currentItem.bundle_id === item.bundle_id) {
+                                    bundleItemsToRemove.push(i);
+                                }
+                            }
+
+                            // Remove all bundle items (including the header) in reverse order to maintain indices
+                            bundleItemsToRemove.sort((a, b) => b - a); // Sort descending
+                            bundleItemsToRemove.forEach(itemIndex => {
+                                this.items.splice(itemIndex, 1);
+                            });
+                        } else {
+                            // Regular item removal
+                            this.items.splice(index, 1);
+                        }
+
+                        this.calculateTotal();
+                    },
+
+                    validateForm(event) {
+                        // Debug: Log items data before submission
+                        console.log('Items before submission:', this.items);
+                        console.log('Items count:', this.items.length);
+                        this.items.forEach((item, index) => {
+                            console.log(`Item ${index}:`, {
+                                produk_id: item.produk_id,
+                                is_bundle: item.is_bundle,
+                                is_bundle_item: item.is_bundle_item,
+                                bundle_id: item.bundle_id,
+                                kuantitas: item.kuantitas,
+                                harga: item.harga
+                            });
+
+                            // Check for invalid combinations
+                            if (item.is_bundle && item.is_bundle_item) {
+                                console.error(
+                                    `❌ INVALID: Item ${index} has both is_bundle=true AND is_bundle_item=true!`);
+                            }
+                            if (item.is_bundle && !item.bundle_id) {
+                                console.error(`❌ INVALID: Item ${index} has is_bundle=true but bundle_id is null!`);
+                            }
+                        });
+
+                        // Check if there are any items (bundle or regular)
+                        if (this.items.length === 0) {
+                            event.preventDefault();
+                            alert('Harap tambahkan minimal satu item atau bundle untuk melanjutkan!');
+                            return false;
+                        }
+
+                        // Check if customer is selected
+                        if (!this.customer_id) {
+                            event.preventDefault();
+                            alert('Harap pilih customer terlebih dahulu!');
+                            return false;
+                        }
+
+                        return true;
+                    },
+
                     formatRupiah(amount) {
+                        // Round to nearest integer to avoid decimal places
+                        const roundedAmount = Math.round(amount || 0);
                         const formatter = new Intl.NumberFormat('id-ID', {
                             style: 'currency',
                             currency: 'IDR',
-                            minimumFractionDigits: 0
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
                         });
-                        return formatter.format(amount || 0);
+                        return formatter.format(roundedAmount);
                     }
                 };
             }

@@ -7,12 +7,14 @@ use App\Models\SalesOrder;
 use App\Models\SalesOrderDetail;
 use App\Models\Customer;
 use App\Models\Produk;
+use App\Models\ProductBundle;
 use App\Models\Satuan;
 use App\Models\Quotation;
 use App\Models\LogAktivitas;
 use App\Models\StokProduk;
 use App\Models\PerencanaanProduksi;
 use App\Models\PerencanaanProduksiDetail;
+use App\Services\ProductBundleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -21,9 +23,20 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\NotificationService;
+use App\Services\DirekturUtamaService;
+use App\Models\Karyawan;
 
 class SalesOrderController extends Controller
 {
+
+    /**
+     * Get direktur utama from user with role 'Direktur Utama'
+     * If multiple directors exist, take the first one
+     */
+    private function getDirekturUtama()
+    {
+        return DirekturUtamaService::getDirekturUtama();
+    }
 
     private function generateNewSalesOrderNumber()
     {
@@ -219,6 +232,7 @@ class SalesOrderController extends Controller
         }
         // $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
+        $bundles = ProductBundle::where('is_active', true)->with(['items.produk'])->orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
         $gudangs = \App\Models\Gudang::orderBy('nama', 'asc')->get();
         $nomor = $this->generateNewSalesOrderNumber();
@@ -247,6 +261,7 @@ class SalesOrderController extends Controller
         return view('penjualan.sales-order.create', compact(
             'customers',
             'products',
+            'bundles',
             'satuans',
             'gudangs',
             'nomor',
@@ -267,8 +282,18 @@ class SalesOrderController extends Controller
             $gudangId = $request->gudang_id;
             $stokKurang = [];
             foreach ($items as $idx => $item) {
+                // Skip bundle headers, only check stock for actual products
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
+                // Only check stock if produk_id exists (regular items and bundle child items)
+                if (!isset($item['produk_id'])) {
+                    continue;
+                }
+
                 $produkId = $item['produk_id'];
-                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : ($item['quantity'] ?? 1);
                 $produk = Produk::find($produkId);
                 $stokTersedia = StokProduk::where('produk_id', $produkId)
                     ->where('gudang_id', $gudangId)
@@ -315,9 +340,15 @@ class SalesOrderController extends Controller
                 $salesOrderStockNotif->notifyStockInsufficientForSalesOrder($stokKurang, $gudangId, $soNomor, $soId, $userId);
             }
         }
-        // dd($request->all());
 
-        $request->validate([
+        // Debug: Log raw request data
+        Log::info('Sales Order Store - Raw Request:', [
+            'items_count' => count($request->items ?? []),
+            'items' => $request->items ?? []
+        ]);
+
+        // Validate base fields
+        $validationRules = [
             'nomor' => 'required|string|unique:sales_order,nomor',
             'nomor_po' => 'nullable|string',
             'tanggal' => 'required|date',
@@ -332,13 +363,6 @@ class SalesOrderController extends Controller
             'terms_pembayaran' => 'nullable|string',
             'terms_pembayaran_hari' => 'nullable|integer|min:0',
             'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.kuantitas' => 'required_without:items.*.quantity|numeric|min:0.01',
-            'items.*.quantity' => 'required_without:items.*.kuantitas|numeric|min:0.01',
-            'items.*.satuan_id' => 'required|exists:satuan,id',
-            'items.*.harga' => 'required|numeric|min:0',
-            'items.*.deskripsi' => 'nullable|string',
-            'items.*.diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
             'ongkos_kirim' => 'nullable|numeric|min:0',
@@ -346,7 +370,84 @@ class SalesOrderController extends Controller
             'check_stock' => 'nullable|boolean',
             'create_production_plan' => 'nullable|boolean',
             'gudang_id' => 'nullable|exists:gudang,id',
+        ];
+
+        // dd($validationRules);
+
+        // Clean and validate items based on their type
+        $items = $request->items;
+        foreach ($items as $index => $item) {
+            // Clean invalid flag combinations and missing data
+            $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+            $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            // Fix data corruption: item cannot be both bundle header and bundle item
+            if ($isBundle && $isBundleItem) {
+                Log::warning('Data corruption detected', [
+                    'index' => $index,
+                    'item' => $item,
+                    'has_produk_id' => $hasProdukId,
+                    'has_bundle_id' => $hasBundleId
+                ]);
+
+                // Determine which type based on data integrity
+                if ($hasBundleId && !$hasProdukId) {
+                    // Has bundle_id but no produk_id, treat as bundle header
+                    unset($items[$index]['is_bundle_item']);
+                    $isBundleItem = false;
+                } else if ($hasProdukId && $hasBundleId) {
+                    // Has both produk_id and bundle_id, treat as bundle child item
+                    unset($items[$index]['is_bundle']);
+                    $isBundle = false;
+                } else {
+                    // Invalid combination or regular item wrongly flagged, remove all bundle flags
+                    unset($items[$index]['is_bundle']);
+                    unset($items[$index]['is_bundle_item']);
+                    unset($items[$index]['bundle_id']);
+                    $isBundle = false;
+                    $isBundleItem = false;
+                }
+            }
+
+            if ($isBundle) {
+                // Bundle header validation
+                $validationRules["items.{$index}.is_bundle"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+            } elseif ($isBundleItem) {
+                // Bundle child item validation
+                $validationRules["items.{$index}.is_bundle_item"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+            } else {
+                // Regular item validation
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                $validationRules["items.{$index}.diskon_persen"] = 'nullable|numeric|min:0|max:100';
+            }
+        }
+
+        // Update request with cleaned items data
+        $request->merge(['items' => $items]);
+
+        // Debug: Log cleaned data
+        Log::info('Sales Order Store - After Cleaning:', [
+            'items_count' => count($items),
+            'items' => $items
         ]);
+
+        $request->validate($validationRules);
 
         try {
             DB::beginTransaction();
@@ -354,9 +455,14 @@ class SalesOrderController extends Controller
             $items = $request->items;
             $subtotal = 0;
 
-            // Calculate subtotal
+            // Calculate subtotal (exclude bundle headers to avoid double counting)
             foreach ($items as $item) {
-                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                // Skip bundle headers, only count regular items and bundle child items
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : ($item['quantity'] ?? 1);
                 $productTotal = $item['harga'] * $quantity;
                 $discountValue = 0;
 
@@ -414,7 +520,13 @@ class SalesOrderController extends Controller
 
             // Create Sales Order Details
             foreach ($items as $item) {
-                $productTotal = $item['harga'] * (isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity']);
+                // Skip bundle items as they are only for display/organization
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    continue;
+                }
+
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : ($item['quantity'] ?? 1);
+                $productTotal = $item['harga'] * $quantity;
                 $diskonPersenItem = $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = 0;
 
@@ -423,7 +535,6 @@ class SalesOrderController extends Controller
                 }
 
                 $subtotalItem = $productTotal - $diskonNominalItem;
-                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
 
                 $salesOrderDetail = new SalesOrderDetail();
                 $salesOrderDetail->sales_order_id = $salesOrder->id;
@@ -436,17 +547,26 @@ class SalesOrderController extends Controller
                 $salesOrderDetail->diskon_persen = $diskonPersenItem;
                 $salesOrderDetail->diskon_nominal = $diskonNominalItem;
                 $salesOrderDetail->subtotal = $subtotalItem;
+
+                // Add bundle information if this is a bundle item
+                if (isset($item['is_bundle_item']) && $item['is_bundle_item']) {
+                    $salesOrderDetail->bundle_id = $item['bundle_id'] ?? null;
+                    $salesOrderDetail->is_bundle_item = true;
+                }
+
                 $salesOrderDetail->save();
 
-                // Update harga_jual di model Produk agar selalu relevan
-                $produk = Produk::find($item['produk_id']);
-                if ($produk) {
-                    $produk->harga_jual = $item['harga'];
-                    $produk->save();
+                // Update harga_jual di model Produk agar selalu relevan (only for regular products, not bundle items)
+                if (!isset($item['is_bundle_item']) || !$item['is_bundle_item']) {
+                    $produk = Produk::find($item['produk_id']);
+                    if ($produk) {
+                        $produk->harga_jual = $item['harga'];
+                        $produk->save();
+                    }
                 }
 
                 // Jika opsi check_stock diaktifkan, cek ketersediaan stok
-                if ($request->check_stock && $gudangId) {
+                if ($request->check_stock && $gudangId && isset($item['produk_id'])) {
                     $produk = Produk::find($item['produk_id']);
                     $stokTersedia = StokProduk::where('produk_id', $item['produk_id'])
                         ->where('gudang_id', $gudangId)
@@ -617,6 +737,7 @@ class SalesOrderController extends Controller
             'quotation',
             'details.produk',
             'details.satuan',
+            'details.productBundle',
             'logAktivitas.user',
             'workOrders',
             'deliveryOrders',
@@ -629,7 +750,13 @@ class SalesOrderController extends Controller
 
     public function edit($id)
     {
-        $salesOrder = SalesOrder::with(['customer', 'quotation', 'details.produk', 'details.satuan'])->findOrFail($id);
+        $salesOrder = SalesOrder::with([
+            'customer',
+            'quotation',
+            'details.produk',
+            'details.satuan',
+            'details.bundle'
+        ])->findOrFail($id);
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
             // Allow access to all customers
             $customers = Customer::orderBy('nama', 'asc')->get();
@@ -670,8 +797,10 @@ class SalesOrderController extends Controller
 
     public function update(Request $request, $id)
     {
-        $salesOrder = SalesOrder::findOrFail($id);
 
+        // dd($request->all());
+
+        $salesOrder = SalesOrder::findOrFail($id);
 
         // Check if sales order has related delivery orders or invoices
         if ($salesOrder->deliveryOrders()->exists() || $salesOrder->invoices()->exists() || $salesOrder->workOrders()->exists()) {
@@ -679,7 +808,79 @@ class SalesOrderController extends Controller
                 ->with('error', 'Sales Order ini tidak dapat diupdate karena sudah memiliki Delivery Order, Work Order, atau Invoice terkait.');
         }
 
-        $request->validate([
+        // Clean and validate items data (same logic as store)
+        $items = collect($request->items ?? [])->map(function ($item, $index) {
+            // Debug: Log this item with bundle flags
+            Log::info("Processing item {$index}:", [
+                'produk_id' => $item['produk_id'] ?? 'null',
+                'is_bundle' => isset($item['is_bundle']) ? $item['is_bundle'] : 'not_set',
+                'is_bundle_item' => isset($item['is_bundle_item']) ? $item['is_bundle_item'] : 'not_set',
+                'bundle_id' => $item['bundle_id'] ?? 'null',
+                'deskripsi' => $item['deskripsi'] ?? 'null',
+                'kuantitas' => $item['kuantitas'] ?? 'null',
+                'all_keys' => array_keys($item)
+            ]);
+
+            // Clean subtotal - convert from Rupiah format to number
+            if (isset($item['subtotal']) && is_string($item['subtotal'])) {
+                $item['subtotal'] = (float) preg_replace('/[^\d.]/', '', $item['subtotal']);
+            }
+
+            // Clean numeric fields
+            $item['kuantitas'] = (float) ($item['kuantitas'] ?? 0);
+            $item['harga'] = (float) ($item['harga'] ?? 0);
+            $item['diskon_persen'] = (float) ($item['diskon_persen'] ?? 0);
+
+            $isBundle = isset($item['is_bundle']) && ($item['is_bundle'] === true || $item['is_bundle'] === '1');
+            $isBundleItem = isset($item['is_bundle_item']) && ($item['is_bundle_item'] === true || $item['is_bundle_item'] === '1');
+            $hasProdukId = !empty($item['produk_id']);
+            $hasBundleId = !empty($item['bundle_id']);
+
+            Log::info("Item {$index} flags:", [
+                'is_bundle' => $isBundle,
+                'is_bundle_item' => $isBundleItem,
+                'has_produk_id' => $hasProdukId,
+                'has_bundle_id' => $hasBundleId
+            ]);
+
+            // Fix conflicting flags - an item cannot be both bundle header and bundle item
+            if ($isBundle && $isBundleItem) {
+                if ($hasProdukId && $hasBundleId) {
+                    // Has both produk_id and bundle_id, prioritize as bundle item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                    $isBundle = false;
+                } elseif ($hasBundleId && !$hasProdukId) {
+                    // Has bundle_id but no produk_id, prioritize as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                    $isBundleItem = false;
+                }
+            }
+
+            // Apply final logic
+            if ($hasBundleId) {
+                if (!$hasProdukId) {
+                    // Has bundle_id but no produk_id, treat as bundle header
+                    unset($item['is_bundle_item']);
+                    $item['is_bundle'] = true;
+                } else {
+                    // Has both produk_id and bundle_id, treat as bundle child item
+                    unset($item['is_bundle']);
+                    $item['is_bundle_item'] = true;
+                }
+            } else {
+                // No bundle_id, treat as regular item
+                unset($item['is_bundle']);
+                unset($item['is_bundle_item']);
+                unset($item['bundle_id']);
+            }
+
+            return $item;
+        })->toArray();
+
+        // Build dynamic validation rules
+        $validationRules = [
             'nomor' => 'required|string|unique:sales_order,nomor,' . $id . ',id',
             'nomor_po' => 'nullable|string',
             'tanggal' => 'required|date',
@@ -692,16 +893,46 @@ class SalesOrderController extends Controller
             'catatan' => 'nullable|string',
             'syarat_ketentuan' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.produk_id' => 'required|exists:produk,id',
-            'items.*.kuantitas' => 'required_without:items.*.quantity|numeric|min:0',
-            'items.*.quantity' => 'required_without:items.*.kuantitas|numeric|min:0',
-            'items.*.satuan_id' => 'required|exists:satuan,id',
-            'items.*.harga' => 'required|numeric|min:0',
-            'items.*.deskripsi' => 'nullable|string',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
-        ]);
+        ];
+
+        foreach ($items as $index => $item) {
+            if (isset($item['is_bundle']) && $item['is_bundle']) {
+                // Bundle header validation
+                $validationRules["items.{$index}.is_bundle"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+                // Bundle headers don't need produk_id or satuan_id
+                $validationRules["items.{$index}.produk_id"] = 'nullable';
+                $validationRules["items.{$index}.satuan_id"] = 'nullable';
+            } elseif (isset($item['is_bundle_item']) && $item['is_bundle_item']) {
+                // Bundle item validation
+                $validationRules["items.{$index}.is_bundle_item"] = 'required|boolean';
+                $validationRules["items.{$index}.bundle_id"] = 'required|exists:product_bundles,id';
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+            } else {
+                // Regular item validation
+                $validationRules["items.{$index}.produk_id"] = 'required|exists:produk,id';
+                $validationRules["items.{$index}.kuantitas"] = 'required|numeric|min:0.01';
+                $validationRules["items.{$index}.satuan_id"] = 'required|exists:satuan,id';
+                $validationRules["items.{$index}.harga"] = 'required|numeric|min:0';
+                $validationRules["items.{$index}.deskripsi"] = 'nullable|string';
+            }
+
+            // Add subtotal validation for all items
+            $validationRules["items.{$index}.subtotal"] = 'nullable|numeric|min:0';
+            $validationRules["items.{$index}.diskon_persen"] = 'nullable|numeric|min:0|max:100';
+        }
+
+        $request->validate($validationRules);
 
         try {
             DB::beginTransaction();
@@ -729,8 +960,14 @@ class SalesOrderController extends Controller
             $items = $request->items;
             $subtotal = 0;
 
-            // Calculate subtotal
+            // Calculate subtotal (exclude bundle headers to avoid double counting)
             foreach ($items as $item) {
+                // Skip bundle headers, only count regular items and bundle child items
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    Log::info("Skipping bundle header for total calculation", $item);
+                    continue;
+                }
+
                 $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
                 $productTotal = $item['harga'] * $quantity;
                 $discountValue = 0;
@@ -743,8 +980,26 @@ class SalesOrderController extends Controller
                     $discountValue = $item['diskon_nominal_item'];
                 }
 
-                $subtotal += $productTotal - $discountValue;
+                $itemSubtotal = $productTotal - $discountValue;
+                $subtotal += $itemSubtotal;
+
+                Log::info("Including item in total calculation", [
+                    'harga' => $item['harga'],
+                    'quantity' => $quantity,
+                    'productTotal' => $productTotal,
+                    'discountValue' => $discountValue,
+                    'itemSubtotal' => $itemSubtotal,
+                    'runningSubtotal' => $subtotal
+                ]);
             }
+
+            Log::info("Final subtotal calculation", [
+                'subtotal' => $subtotal,
+                'diskon_global_persen' => $request->diskon_global_persen ?? 0,
+                'diskon_global_nominal' => $request->diskon_global_nominal ?? 0,
+                'ppn' => $request->ppn ?? 0,
+                'ongkos_kirim' => $request->ongkos_kirim ?? 0
+            ]);
 
             // Calculate discounts and taxes
             $diskonPersen = $request->diskon_global_persen ?? 0;
@@ -785,9 +1040,22 @@ class SalesOrderController extends Controller
             // Delete existing details and create new ones
             SalesOrderDetail::where('sales_order_id', $salesOrder->id)->delete();
 
-            // Create Sales Order Details
-            foreach ($items as $item) {
-                $productTotal = $item['harga'] * (isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity']);
+            Log::info('Starting to save details. Total items count: ' . count($items));
+
+            // Create Sales Order Details with bundle support
+            foreach ($items as $index => $item) {
+                Log::info("Processing item {$index} for save:", $item);
+
+                // Skip bundle headers - they don't get saved as individual line items
+                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                    Log::info("Skipping bundle header item {$index}");
+                    continue;
+                }
+
+                Log::info("Saving item {$index} as detail");
+
+                $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                $productTotal = $item['harga'] * $quantity;
                 $diskonPersenItem = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = $item['diskon_nominal_item'] ?? 0;
 
@@ -801,20 +1069,29 @@ class SalesOrderController extends Controller
                 $salesOrderDetail->sales_order_id = $salesOrder->id;
                 $salesOrderDetail->produk_id = $item['produk_id'];
                 $salesOrderDetail->deskripsi = $item['deskripsi'] ?? null;
-                $salesOrderDetail->quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
+                $salesOrderDetail->quantity = $quantity;
                 $salesOrderDetail->quantity_terkirim = 0;
                 $salesOrderDetail->satuan_id = $item['satuan_id'];
                 $salesOrderDetail->harga = $item['harga'];
                 $salesOrderDetail->diskon_persen = $diskonPersenItem;
                 $salesOrderDetail->diskon_nominal = $diskonNominalItem;
                 $salesOrderDetail->subtotal = $subtotalItem;
+
+                // Add bundle information if this is a bundle item
+                if (isset($item['is_bundle_item']) && $item['is_bundle_item']) {
+                    $salesOrderDetail->bundle_id = $item['bundle_id'] ?? null;
+                    $salesOrderDetail->is_bundle_item = true;
+                }
+
                 $salesOrderDetail->save();
 
-                // Update harga_jual di model Produk agar selalu relevan
-                $produk = Produk::find($item['produk_id']);
-                if ($produk) {
-                    $produk->harga_jual = $item['harga'];
-                    $produk->save();
+                // Update harga_jual di model Produk agar selalu relevan (only for regular products, not bundle items)
+                if (!isset($item['is_bundle_item']) || !$item['is_bundle_item']) {
+                    $produk = Produk::find($item['produk_id']);
+                    if ($produk) {
+                        $produk->harga_jual = $item['harga'];
+                        $produk->save();
+                    }
                 }
             }
 
@@ -964,7 +1241,7 @@ class SalesOrderController extends Controller
     public function getQuotationData($id)
     {
         try {
-            $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan'])->findOrFail($id);
+            $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan', 'details.bundle'])->findOrFail($id);
 
             return response()->json([
                 'success' => true,
@@ -1001,22 +1278,28 @@ class SalesOrderController extends Controller
             $salesOrder = SalesOrder::with(['customer', 'user', 'details.produk', 'details.satuan'])
                 ->findOrFail($id);
 
+            // Get direktur utama dynamically
+            $direkturUtama = $this->getDirekturUtama();
+
             // Define available templates and their configurations
             $templates = [
                 'default' => [
                     'view' => 'penjualan.sales-order.pdf',
                     'company_name' => 'PT. SINAR SURYA SEMESTARAYA',
-                    'filename_prefix' => 'SalesOrder-SS'
+                    'filename_prefix' => 'SalesOrder-SS',
+                    'direktur_nama' => $direkturUtama
                 ],
                 'indo-atsaka' => [
                     'view' => 'penjualan.sales-order.pdf-indo-atsaka',
                     'company_name' => 'PT INDO ATSAKA INDUSTRI',
-                    'filename_prefix' => 'SalesOrder-IAI'
+                    'filename_prefix' => 'SalesOrder-IAI',
+                    'direktur_nama' => $direkturUtama
                 ],
                 'hidayah-cahaya' => [
                     'view' => 'penjualan.sales-order.pdf-hidayah-cahaya',
                     'company_name' => 'PT HIDAYAH CAHAYA BERKAH',
-                    'filename_prefix' => 'SalesOrder-HCB'
+                    'filename_prefix' => 'SalesOrder-HCB',
+                    'direktur_nama' => $direkturUtama
                 ]
             ];
 
@@ -1061,6 +1344,94 @@ class SalesOrderController extends Controller
         } catch (\Exception $e) {
             Log::error('Error generating PDF: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat membuat PDF. Silakan coba lagi.');
+        }
+    }
+
+    /**
+     * Get bundle data for sales order
+     */
+    /**
+     * Get all bundles for selection
+     */
+    public function getBundles()
+    {
+        try {
+            Log::info('Getting bundles - start');
+
+            $bundles = ProductBundle::select('id', 'kode', 'nama', 'harga_bundle')
+                ->orderBy('nama')
+                ->get();
+
+            Log::info('Found bundles: ' . $bundles->count());
+
+            return response()->json([
+                'success' => true,
+                'bundles' => $bundles
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error getting bundles: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error getting bundles: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getBundleData($id)
+    {
+        try {
+            $bundle = ProductBundle::with(['items.produk.satuan'])->findOrFail($id);
+
+            $bundleService = app(ProductBundleService::class);
+            $priceCalculation = $bundleService->getBundlePriceCalculation($bundle);
+
+            return response()->json([
+                'success' => true,
+                'bundle' => $bundle,
+                'price_calculation' => $priceCalculation,
+                'items' => $bundle->items->map(function ($item) {
+                    return [
+                        'produk_id' => $item->produk_id,
+                        'produk_nama' => $item->produk->nama,
+                        'quantity' => $item->quantity,
+                        'satuan_id' => $item->produk->satuan_id,
+                        'satuan_nama' => $item->produk->satuan->nama_satuan ?? 'Unit',
+                        'harga_satuan' => $item->harga_satuan ?? $item->produk->harga_jual,
+                        'subtotal' => ($item->harga_satuan ?? $item->produk->harga_jual) * $item->quantity
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bundle tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    /**
+     * Check bundle stock availability
+     */
+    public function checkBundleStock(Request $request, $id)
+    {
+        try {
+            $quantity = $request->input('quantity', 1);
+            $gudangId = $request->input('gudang_id');
+
+            $bundleService = app(ProductBundleService::class);
+            $stockValidation = $bundleService->validateBundleStock($id, $quantity, $gudangId);
+
+            return response()->json([
+                'success' => true,
+                'stock_validation' => $stockValidation
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error checking stock: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -201,6 +201,28 @@
             text-align: right;
         }
 
+        /* Bundle styling */
+        .bundle-header {
+            background-color: #f8f9fa !important;
+            border-left: 3px solid #1E40AF !important;
+        }
+
+        .bundle-item {
+            background-color: #fefffe !important;
+            border-left: 2px solid #10B981 !important;
+        }
+
+        .bundle-item-name {
+            padding-left: 15px !important;
+            font-style: italic;
+            color: #374151 !important;
+        }
+
+        .bundle-arrow {
+            color: #10B981;
+            font-weight: bold;
+        }
+
         /* Footer */
         .footer {
             margin-top: 20px;
@@ -366,22 +388,85 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($deliveryOrder->details as $index => $detail)
-                    <tr>
-                        <td class="text-center">{{ $index + 1 }}</td>
-                        <td>{{ $detail->produk->kode ?? '-' }}</td>
-                        <td>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</td>
-                        <td class="text-right">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
-                        <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
-                        <td>{{ $detail->keterangan ?: '-' }}</td>
-                    </tr>
-                @empty
+                @php
+                    // Group items by bundle for better presentation
+                    $bundleGroups = [];
+                    $nonBundleItems = [];
+
+                    foreach ($deliveryOrder->details as $detail) {
+                        if ($detail->is_bundle_item && $detail->bundle_name) {
+                            if (!isset($bundleGroups[$detail->bundle_name])) {
+                                $bundleGroups[$detail->bundle_name] = [];
+                            }
+                            $bundleGroups[$detail->bundle_name][] = $detail;
+                        } else {
+                            $nonBundleItems[] = $detail;
+                        }
+                    }
+
+                    $itemNumber = 1;
+                @endphp
+
+                @if (count($bundleGroups) > 0 || count($nonBundleItems) > 0)
+                    {{-- Render Bundle Groups --}}
+                    @foreach ($bundleGroups as $bundleName => $bundleItems)
+                        {{-- Bundle Header --}}
+                        <tr class="bundle-row">
+                            <td class="text-center">{{ $itemNumber++ }}</td>
+                            <td style="vertical-align: top;">
+                                <span style="color: transparent;">-</span><br>
+                                @foreach ($bundleItems as $detail)
+                                    <span style="font-size: 10px; color: #666;">
+                                        {{ $detail->produk->kode ?? '-' }}
+                                    </span><br>
+                                @endforeach
+                            </td>
+                            <td style="font-weight: bold; color: #1E40AF; vertical-align: top;">
+                                <strong>{{ $bundleName }}:</strong><br>
+                                @foreach ($bundleItems as $index => $detail)
+                                    <span style="font-weight: normal; font-size: 10px; color: #666; margin-left: 10px;">
+                                        • {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}
+                                    </span><br>
+                                @endforeach
+                            </td>
+                            <td class="text-right" style="vertical-align: top;">
+                                <span style="color: transparent;">-</span><br>
+                                @foreach ($bundleItems as $detail)
+                                    <span style="font-size: 10px; color: #666;">
+                                        {{ number_format($detail->quantity, 0, ',', '.') }}
+                                    </span><br>
+                                @endforeach
+                            </td>
+                            <td class="text-center" style="vertical-align: top;">
+                                Paket<br>
+                                @foreach ($bundleItems as $detail)
+                                    <span style="font-size: 10px; color: #666;">
+                                        {{ $detail->produk->satuan->nama ?? '-' }}
+                                    </span><br>
+                                @endforeach
+                            </td>
+                            <td style="font-style: italic; vertical-align: top;">Bundle Package</td>
+                        </tr>
+                    @endforeach
+
+                    {{-- Render Non-Bundle Items --}}
+                    @foreach ($nonBundleItems as $detail)
+                        <tr>
+                            <td class="text-center">{{ $itemNumber++ }}</td>
+                            <td>{{ $detail->produk->kode ?? '-' }}</td>
+                            <td>{{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</td>
+                            <td class="text-right">{{ number_format($detail->quantity, 2, ',', '.') }}</td>
+                            <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
+                            <td>{{ $detail->keterangan ?: '-' }}</td>
+                        </tr>
+                    @endforeach
+                @else
                     <tr>
                         <td colspan="6" class="text-center" style="padding: 20px;">
                             Tidak ada item untuk dikirim
                         </td>
                     </tr>
-                @endforelse
+                @endif
             </tbody>
         </table>
 

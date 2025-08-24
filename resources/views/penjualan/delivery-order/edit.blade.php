@@ -422,10 +422,19 @@
                                         data-sisa-so="{{ $detail->salesOrderDetail ? $detail->salesOrderDetail->quantity - $detail->salesOrderDetail->quantity_terkirim : 0 }}">
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="flex items-center">
-                                                <span
-                                                    class="text-sm font-medium text-gray-900 dark:text-white">{{ $detail->produk->nama ?? 'N/A' }}</span>
-                                                <span
-                                                    class="text-xs text-gray-500 dark:text-gray-400 ml-2">({{ $detail->produk->kode ?? '-' }})</span>
+                                                <div>
+                                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                        {{ $detail->produk->kode ?? '-' }}</div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                        {{ $detail->produk->nama ?? 'N/A' }}</div>
+                                                    @if ($detail->is_bundle_item && $detail->bundle_name)
+                                                        <div
+                                                            class="text-xs text-blue-600 dark:text-blue-400 mt-1 flex items-center">
+                                                            <i class="fas fa-layer-group mr-1"></i>
+                                                            PAKET: {{ $detail->bundle_name }}
+                                                        </div>
+                                                    @endif
+                                                </div>
                                             </div>
                                             <input type="hidden"
                                                 name="items[{{ $index }}][delivery_order_detail_id]"
@@ -576,7 +585,7 @@
                     // Reset styling
                     $(row).removeClass(
                         'bg-yellow-50 dark:bg-yellow-900 bg-red-50 dark:bg-red-900 border-l-4 border-yellow-400 dark:border-yellow-600 border-red-400 dark:border-red-600'
-                        );
+                    );
                     inputQty.removeClass('border-red-500 dark:border-red-500');
                     inputQty.closest('td').find('.text-xs.text-red-500').remove(); // Remove previous error message
 
@@ -590,7 +599,7 @@
                         } else if (currentQty > stockNum) {
                             $(row).addClass(
                                 'bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 dark:border-yellow-600'
-                                );
+                            );
                             inputQty.addClass('border-red-500 dark:border-red-500');
                             inputQty.closest('td').append(
                                 '<p class="text-xs text-red-500 dark:text-red-400 mt-1">Melebihi stok.</p>');
@@ -600,13 +609,13 @@
                             if (!$(row).hasClass('bg-red-50')) { // Don't override critical stock error styling
                                 $(row).addClass(
                                     'bg-yellow-50 dark:bg-yellow-900 border-l-4 border-yellow-400 dark:border-yellow-600'
-                                    );
+                                );
                             }
                             // Add a specific message if not already showing a stock error
                             if (!inputQty.closest('td').find('.text-xs.text-red-500').length) {
                                 inputQty.closest('td').append(
                                     '<p class="text-xs text-yellow-600 dark:text-yellow-400 mt-1">Qty > Sisa SO.</p>'
-                                    );
+                                );
                             }
                         }
                     }
@@ -620,7 +629,7 @@
                         $('.product-row').each(function() {
                             $(this).find('.stock-cell').html(
                                 '<span class="text-xs text-gray-500 dark:text-gray-400">Pilih Gudang</span>'
-                                );
+                            );
                             $(this).find('input[name^="items"][name$="[quantity]"]').prop('disabled', true);
                         });
                         return;
@@ -641,9 +650,9 @@
                     $('.product-row').each(function() {
                         $(this).find('.stock-cell').html(
                             '<span class="animate-pulse-custom text-xs text-gray-500 dark:text-gray-400">Memuat stok...</span>'
-                            );
+                        );
                         $(this).find('input[name^="items"][name$="[quantity]"]').prop('disabled',
-                        false); // Enable while loading
+                            false); // Enable while loading
                     });
 
                     $.ajax({
@@ -668,7 +677,7 @@
                                     updateStockDisplay(this, 0); // Treat as 0 stock on failure
                                     $(this).find('.stock-cell').html(
                                         '<span class="text-xs text-red-500 dark:text-red-400">Error stok</span>'
-                                        );
+                                    );
                                 });
                             }
                         },
@@ -679,7 +688,7 @@
                                 updateStockDisplay(this, 0);
                                 $(this).find('.stock-cell').html(
                                     '<span class="text-xs text-red-500 dark:text-red-400">Error stok</span>'
-                                    );
+                                );
                             });
                         }
                     });
@@ -728,14 +737,14 @@
                                 } else if (response.customer && response.customer
                                     .alamat_pengiriman) {
                                     $('#alamat_pengiriman').val(response.customer
-                                    .alamat_pengiriman);
+                                        .alamat_pengiriman);
                                 }
                                 // Potentially re-fetch products or update existing ones if SO change means different items
                                 // For edit, this is complex. Usually, DO items are fixed. If SO change *can* alter items,
                                 // then a more complex product table refresh is needed here.
                                 // For now, assume items are based on initial $deliveryOrder and we just update stock.
                                 getStockInfo
-                            (); // Refresh stock based on potentially new SO context (if gudang is also set)
+                                    (); // Refresh stock based on potentially new SO context (if gudang is also set)
                             },
                             error: function(xhr, status, error) {
                                 console.error("Error fetching sales order data for edit page:",
@@ -774,7 +783,7 @@
                     $('input[name^="items"][name$="[quantity]"]').each(function() {
                         const row = $(this).closest('.product-row');
                         const productName = row.find('.text-sm.font-medium').text()
-                    .trim(); // Get product name
+                            .trim(); // Get product name
                         const qty = parseFloat($(this).val()) || 0;
                         const productId = row.data('product-id');
                         const stockQty = productStockInfo[productId] || 0;
@@ -789,7 +798,7 @@
                             $(this).addClass('border-red-500 dark:border-red-500');
                             $(this).closest('td').append(
                                 '<p class="text-xs text-red-500 dark:text-red-400 mt-1">Qty > 0</p>'
-                                );
+                            );
                         } else {
                             if (stockQty <= 0) {
                                 isValid = false;
@@ -798,16 +807,16 @@
                                 $(this).addClass('border-red-500 dark:border-red-500');
                                 $(this).closest('td').append(
                                     '<p class="text-xs text-red-500 dark:text-red-400 mt-1">Stok kosong</p>'
-                                    );
+                                );
                             } else if (qty > stockQty) {
                                 isValid = false;
                                 errorMessages.push(
                                     `Kuantitas ${productName} (${qty}) melebihi stok (${stockQty}).`
-                                    );
+                                );
                                 $(this).addClass('border-red-500 dark:border-red-500');
                                 $(this).closest('td').append(
                                     '<p class="text-xs text-red-500 dark:text-red-400 mt-1">Melebihi stok</p>'
-                                    );
+                                );
                             }
                             // Warning for exceeding Sisa SO, but not a validation blocker unless specified
                             if (qty > sisaSO) {
@@ -845,7 +854,7 @@
                         $('.product-row').each(function() {
                             $(this).find('.stock-cell').html(
                                 '<span class="text-xs text-gray-500 dark:text-gray-400">Pilih Gudang</span>'
-                                );
+                            );
                             $(this).find('input[name^="items"][name$="[quantity]"]').prop('disabled', true);
                         });
                     }

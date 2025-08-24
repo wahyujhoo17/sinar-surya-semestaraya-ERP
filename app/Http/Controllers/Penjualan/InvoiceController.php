@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\DirekturUtamaService;
 
 
 class InvoiceController extends Controller
@@ -37,6 +38,11 @@ class InvoiceController extends Controller
             'ip_address' => request()->ip(),
             'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
         ]);
+    }
+
+    private function getDirekturUtama()
+    {
+        return DirekturUtamaService::getDirekturUtama();
     }
 
     private function generateNewInvoiceNumber()
@@ -548,10 +554,9 @@ class InvoiceController extends Controller
                 'details.satuan',
                 'pembayaranPiutang' // Changed 'pembayaran' to 'pembayaranPiutang'
             ]);
-            $direktur = Karyawan::whereHas('jabatan', function ($q) {
-                $q->where('nama', 'Direktur Utama');
-            })->first();
-            $namaDirektur = $direktur ? $direktur->nama_lengkap : '';
+
+            // Get direktur utama using service
+            $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
             // Set paper size and orientation
             $pdf = PDF::loadView('penjualan.invoice.print', compact('invoice', 'namaDirektur'))
@@ -813,11 +818,8 @@ class InvoiceController extends Controller
                 'details.satuan',
             ])->findOrFail($id);
 
-            // Ambil nama karyawan yang menjabat sebagai Direktur
-            $direktur = Karyawan::whereHas('jabatan', function ($q) {
-                $q->where('nama', 'Direktur Utama');
-            })->first();
-            $namaDirektur = $direktur ? $direktur->nama_lengkap : '';
+            // Get direktur utama using service
+            $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
 
             // Use PDF template service
@@ -852,22 +854,27 @@ class InvoiceController extends Controller
                 'pembayaranPiutang'
             ])->findOrFail($id);
 
+            $direkturUtama = $this->getDirekturUtama();
+
             // Template configuration
             $templates = [
                 'sinar-surya' => [
                     'name' => 'PT Sinar Surya Semestaraya',
                     'view' => 'penjualan.invoice.pdf.sinar-surya',
-                    'logo' => public_path('img/logo-sinar-surya.png')
+                    'logo' => public_path('img/logo-sinar-surya.png'),
+                    'direktur_nama' => $direkturUtama
                 ],
                 'atsaka' => [
                     'name' => 'PT Indo Atsaka Industri',
                     'view' => 'penjualan.invoice.pdf.atsaka',
-                    'logo' => public_path('img/PTIndoatsakaindustri-2.jpeg')
+                    'logo' => public_path('img/PTIndoatsakaindustri-2.jpeg'),
+                    'direktur_nama' => $direkturUtama
                 ],
                 'hidayah' => [
                     'name' => 'PT Hidayah Cahaya Berkah',
                     'view' => 'penjualan.invoice.pdf.hidayah',
-                    'logo' => public_path('img/LogoHCB-0.jpeg')
+                    'logo' => public_path('img/LogoHCB-0.jpeg'),
+                    'direktur_nama' => $direkturUtama
                 ]
             ];
 
