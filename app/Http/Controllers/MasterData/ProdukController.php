@@ -223,11 +223,37 @@ class ProdukController extends Controller
         $produk->load(['kategori', 'satuan', 'jenis']);
         $jenisProduks = JenisProduk::orderBy('nama')->get(); // Add this line
 
+        // Get riwayat pembelian dari sales order yang mengandung produk ini
+        $riwayatPembelian = DB::table('sales_order_detail as sod')
+            ->join('sales_order as so', 'sod.sales_order_id', '=', 'so.id')
+            ->join('customer as c', 'so.customer_id', '=', 'c.id')
+            ->leftJoin('users as u', 'so.user_id', '=', 'u.id')
+            ->where('sod.produk_id', $produk->id)
+            ->whereNull('sod.parent_detail_id') // Exclude bundle child items
+            ->select(
+                'so.id as sales_order_id',
+                'so.nomor as nomor_so',
+                'so.tanggal',
+                'so.status_pembayaran',
+                'so.status_pengiriman',
+                'so.total as total_so',
+                'sod.quantity',
+                'sod.quantity_terkirim',
+                'sod.harga',
+                'sod.subtotal',
+                'c.nama as customer_nama',
+                'c.company as customer_company',
+                'u.name as sales_person'
+            )
+            ->orderBy('so.tanggal', 'desc')
+            ->limit(10) // Batasi 10 transaksi terbaru
+            ->get();
+
         $breadcrumbs = [
             'Produk' => route('master.produk.index')
         ];
         $currentPage = 'Detail Produk';
-        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'jenisProduks'));
+        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'jenisProduks', 'riwayatPembelian'));
     }
 
     /**
