@@ -17,8 +17,8 @@ class DirekturUtamaService
     public static function getDirekturUtama()
     {
         try {
-            // Try cache first (cache for 1 hour)
-            return Cache::remember('direktur_utama', 3600, function () {
+            // Try cache first (cache for 5 minutes for better responsiveness)
+            return Cache::remember('direktur_utama', 300, function () {
                 return self::fetchDirekturUtama();
             });
         } catch (\Exception $e) {
@@ -34,7 +34,7 @@ class DirekturUtamaService
     public static function getDirekturUtamaUser()
     {
         try {
-            return Cache::remember('direktur_utama_user', 3600, function () {
+            return Cache::remember('direktur_utama_user', 300, function () {
                 // Try to get direktur utama from user with role 'Direktur Utama'
                 $direktur = User::whereHas('roles', function ($query) {
                     $query->where('nama', 'Direktur Utama')
@@ -120,7 +120,7 @@ class DirekturUtamaService
         try {
             $cacheKey = "direktur_utama_company_{$companyId}";
 
-            return Cache::remember($cacheKey, 3600, function () use ($companyId) {
+            return Cache::remember($cacheKey, 300, function () use ($companyId) {
                 $query = User::whereHas('roles', function ($roleQuery) {
                     $roleQuery->where('nama', 'Direktur Utama')
                         ->orWhere('kode', 'direktur_utama');

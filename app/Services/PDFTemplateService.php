@@ -116,29 +116,104 @@ class PDFTemplateService
             $qtyCol = 114;
             $satuanCol = 145;
 
-            foreach ($deliveryOrder->details as $index => $detail) {
+            // Group bundle items first
+            $bundleGroups = [];
+            $nonBundleItems = [];
+
+            foreach ($deliveryOrder->details as $detail) {
+                if (!empty($detail->is_bundle_item) && !empty($detail->bundle_name)) {
+                    $bundleGroups[$detail->bundle_name][] = $detail;
+                } else {
+                    $nonBundleItems[] = $detail;
+                }
+            }
+
+            $itemNumber = 1;
+
+            // Render Bundle Groups first
+            foreach ($bundleGroups as $bundleName => $bundleItems) {
                 if ($currentY > $maxItemsY) break;
+
+                // Bundle Header - Show bundle name
+                $pdf->SetXY($noCol, $currentY);
+                $pdf->Cell(8, $lineHeight, $itemNumber++, 0, 0, 'C');
+
+                // Bundle name in bold
+                $pdf->SetXY($namaCol, $currentY);
+                $pdf->SetFont('helvetica', 'B', 9); // Bold font for bundle name
+                $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $bundleName . ':', 0, 0, 'L');
+
+                // Empty cells for bundle header
+                $pdf->SetXY($kodeCol, $currentY);
+                $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, '-', 0, 0, 'L');
+                $pdf->SetXY($qtyCol - 5, $currentY);
+                $pdf->Cell(($satuanCol - $qtyCol - 2) + 3, $lineHeight, 'Paket', 0, 0, 'R');
+
+                $currentY += $lineHeight;
+
+                // Bundle Items - Show each item in the bundle
+                foreach ($bundleItems as $detail) {
+                    if ($currentY > $maxItemsY) break;
+
+                    $pdf->SetFont('helvetica', '', 9); // Reset to normal font
+
+                    // No urut (empty for bundle items)
+                    $pdf->SetXY($noCol, $currentY);
+                    $pdf->Cell(8, $lineHeight, '', 0, 0, 'C');
+
+                    // Item name with indent
+                    $itemName = '  • ' . $detail->produk->nama; // Indent with bullet
+                    $itemName = strlen($itemName) > 35 ? substr($itemName, 0, 32) . '...' : $itemName;
+
+                    $pdf->SetXY($namaCol, $currentY);
+                    $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $itemName, 0, 0, 'L');
+
+                    // Kode barang
+                    $detailNomor = $detail->produk->kode ?? '-';
+                    $pdf->SetXY($kodeCol, $currentY);
+                    $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, $detailNomor, 0, 0, 'L');
+
+                    // Qty & Satuan
+                    $qtyValue = number_format($detail->quantity, 0);
+                    $satuanValue = $detail->satuan->nama ?? 'PCS';
+                    $pdf->SetXY($qtyCol - 5, $currentY);
+                    $pdf->Cell(($satuanCol - $qtyCol - 2) + 3, $lineHeight, $qtyValue . ' ' . $satuanValue, 0, 0, 'R');
+
+                    $currentY += $lineHeight;
+                }
+            }
+
+            // Render Non-Bundle Items
+            foreach ($nonBundleItems as $detail) {
+                if ($currentY > $maxItemsY) break;
+
+                $pdf->SetFont('helvetica', '', 9); // Normal font
+
                 // No urut
                 $pdf->SetXY($noCol, $currentY);
-                $pdf->Cell(8, $lineHeight, ($index + 1), 0, 0, 'C');
+                $pdf->Cell(8, $lineHeight, $itemNumber++, 0, 0, 'C');
+
                 // Nama produk
                 $namaProduk = strlen($detail->produk->nama) > 35 ?
                     substr($detail->produk->nama, 0, 32) . '...' :
                     $detail->produk->nama;
+
                 $pdf->SetXY($namaCol, $currentY);
                 $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $namaProduk, 0, 0, 'L');
+
                 // Kode barang
                 $detailNomor = $detail->produk->kode ?? '-';
                 $pdf->SetXY($kodeCol, $currentY);
                 $pdf->Cell($qtyCol - $kodeCol - 2, $lineHeight, $detailNomor, 0, 0, 'L');
-                // Qty & Satuan dalam 1 cell, digeser lebih kiri 3mm
+
+                // Qty & Satuan
                 $qtyValue = number_format($detail->quantity, 0);
                 $satuanValue = $detail->satuan->nama ?? 'PCS';
                 $pdf->SetXY($qtyCol - 5, $currentY);
                 $pdf->Cell(($satuanCol - $qtyCol - 2) + 3, $lineHeight, $qtyValue . ' ' . $satuanValue, 0, 0, 'R');
+
                 $currentY += $lineHeight;
             }
-
             return $pdf;
         } catch (\Exception $e) {
             Log::error('FPDI Error: ' . $e->getMessage());
@@ -200,15 +275,52 @@ class PDFTemplateService
         $pdf->Cell(30, 8, 'Satuan', 1, 0, 'C');
         $pdf->Cell(40, 8, 'Keterangan', 1, 1, 'C');
 
-        // Items
-        foreach ($deliveryOrder->details as $index => $detail) {
-            $pdf->Cell(10, 8, ($index + 1), 1, 0, 'C');
+        // Group bundle items first
+        $bundleGroups = [];
+        $nonBundleItems = [];
+
+        foreach ($deliveryOrder->details as $detail) {
+            if (!empty($detail->is_bundle_item) && !empty($detail->bundle_name)) {
+                $bundleGroups[$detail->bundle_name][] = $detail;
+            } else {
+                $nonBundleItems[] = $detail;
+            }
+        }
+
+        $itemNumber = 1;
+
+        // Render Bundle Groups first
+        foreach ($bundleGroups as $bundleName => $bundleItems) {
+            // Bundle Header
+            $pdf->Cell(10, 8, $itemNumber++, 1, 0, 'C');
+            $pdf->SetFont('helvetica', 'B', 10); // Bold for bundle name
+            $pdf->Cell(80, 8, $bundleName . ':', 1, 0, 'L');
+            $pdf->SetFont('helvetica', '', 10); // Reset font
+            $pdf->Cell(30, 8, '-', 1, 0, 'C');
+            $pdf->Cell(30, 8, 'Paket', 1, 0, 'C');
+            $pdf->Cell(40, 8, 'Bundle Package', 1, 1, 'L');
+
+            // Bundle Items
+            foreach ($bundleItems as $detail) {
+                $pdf->Cell(10, 8, '', 1, 0, 'C'); // Empty number for bundle items
+                $itemName = '  • ' . $detail->produk->nama; // Indent with bullet
+                $pdf->Cell(80, 8, $itemName, 1, 0, 'L');
+                $pdf->Cell(30, 8, number_format($detail->quantity, 0), 1, 0, 'R');
+                $pdf->Cell(30, 8, $detail->satuan->nama ?? 'PCS', 1, 0, 'C');
+
+                $keterangan = 'Item dari ' . $detail->bundle_name;
+                $pdf->Cell(40, 8, $keterangan, 1, 1, 'L');
+            }
+        }
+
+        // Render Non-Bundle Items
+        foreach ($nonBundleItems as $detail) {
+            $pdf->Cell(10, 8, $itemNumber++, 1, 0, 'C');
             $pdf->Cell(80, 8, $detail->produk->nama, 1, 0, 'L');
             $pdf->Cell(30, 8, number_format($detail->quantity, 0), 1, 0, 'R');
             $pdf->Cell(30, 8, $detail->satuan->nama ?? 'PCS', 1, 0, 'C');
             $pdf->Cell(40, 8, $detail->keterangan ?? '', 1, 1, 'L');
         }
-
         return $pdf;
     }
 
@@ -551,17 +663,84 @@ class PDFTemplateService
             $currentY = $coords['items_start_y'];
             $maxItemsY = $templateSize['height'] * 0.85;
 
-            foreach ($deliveryOrder->details as $index => $detail) {
+            // Group bundle items first
+            $bundleGroups = [];
+            $nonBundleItems = [];
+
+            foreach ($deliveryOrder->details as $detail) {
+                if (!empty($detail->is_bundle_item) && !empty($detail->bundle_name)) {
+                    $bundleGroups[$detail->bundle_name][] = $detail;
+                } else {
+                    $nonBundleItems[] = $detail;
+                }
+            }
+
+            $itemNumber = 1;
+
+            // Render Bundle Groups first
+            foreach ($bundleGroups as $bundleName => $bundleItems) {
+                if ($currentY > $maxItemsY) break;
+
+                // Bundle Header
+                $pdf->SetXY($coords['items_no_x'], $currentY);
+                $pdf->Cell(12, $coords['items_line_height'], $itemNumber++, 0, 0, 'C');
+
+                // Bundle name in bold
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->SetXY($coords['items_nama_x'], $currentY);
+                $pdf->Cell(0, $coords['items_line_height'], $bundleName . ':', 0, 0, 'L');
+                $pdf->SetFont('helvetica', '', 9); // Reset font
+
+                // Quantity column shows "Paket"
+                $pdf->SetXY($coords['items_qty_x'], $currentY);
+                $pdf->Cell(15, $coords['items_line_height'], '-', 0, 0, 'R');
+
+                // Satuan column
+                $pdf->SetXY($coords['items_satuan_x'], $currentY);
+                $pdf->Cell(20, $coords['items_line_height'], 'Paket', 0, 0, 'L');
+
+                $currentY += $coords['items_line_height'];
+
+                // Bundle Items
+                foreach ($bundleItems as $detail) {
+                    if ($currentY > $maxItemsY) break;
+
+                    // Empty number for bundle items
+                    $pdf->SetXY($coords['items_no_x'], $currentY);
+                    $pdf->Cell(12, $coords['items_line_height'], '', 0, 0, 'C');
+
+                    // Item name with indent
+                    $itemName = '  • ' . $detail->produk->nama;
+                    $itemName = strlen($itemName) > 35 ? substr($itemName, 0, 32) . '...' : $itemName;
+
+                    $pdf->SetXY($coords['items_nama_x'], $currentY);
+                    $pdf->Cell(0, $coords['items_line_height'], $itemName, 0, 0, 'L');
+
+                    // Quantity
+                    $pdf->SetXY($coords['items_qty_x'], $currentY);
+                    $pdf->Cell(15, $coords['items_line_height'], number_format($detail->quantity, 0), 0, 0, 'R');
+
+                    // Satuan
+                    $pdf->SetXY($coords['items_satuan_x'], $currentY);
+                    $pdf->Cell(20, $coords['items_line_height'], $detail->satuan->nama ?? 'PCS', 0, 0, 'L');
+
+                    $currentY += $coords['items_line_height'];
+                }
+            }
+
+            // Render Non-Bundle Items
+            foreach ($nonBundleItems as $detail) {
                 if ($currentY > $maxItemsY) break;
 
                 // No urut
                 $pdf->SetXY($coords['items_no_x'], $currentY);
-                $pdf->Cell(12, $coords['items_line_height'], ($index + 1), 0, 0, 'C');
+                $pdf->Cell(12, $coords['items_line_height'], $itemNumber++, 0, 0, 'C');
 
                 // Nama produk
                 $namaProduk = strlen($detail->produk->nama) > 35 ?
                     substr($detail->produk->nama, 0, 32) . '...' :
                     $detail->produk->nama;
+
                 $pdf->SetXY($coords['items_nama_x'], $currentY);
                 $pdf->Cell(0, $coords['items_line_height'], $namaProduk, 0, 0, 'L');
 
@@ -574,9 +753,7 @@ class PDFTemplateService
                 $pdf->Cell(20, $coords['items_line_height'], $detail->satuan->nama ?? 'PCS', 0, 0, 'L');
 
                 $currentY += $coords['items_line_height'];
-            }
-
-            // Catatan jika ada
+            }            // Catatan jika ada
             if ($deliveryOrder->catatan && $currentY < $maxItemsY) {
                 $catatanY = $currentY + 8;
                 if ($catatanY < $templateSize['height'] * 0.9) {

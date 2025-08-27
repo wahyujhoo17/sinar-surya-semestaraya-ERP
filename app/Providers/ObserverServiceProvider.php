@@ -11,6 +11,7 @@ use App\Models\ReturPembelian;
 use App\Models\PenyesuaianStok;
 use App\Models\BiayaOperasional;
 use App\Models\Penggajian;
+use App\Models\Karyawan;
 use App\Observers\InvoiceObserver;
 use App\Observers\PembayaranPiutangObserver;
 use App\Observers\PembelianObserver;
@@ -20,6 +21,7 @@ use App\Observers\ReturPembelianObserver;
 use App\Observers\PenyesuaianStokObserver;
 use App\Observers\BiayaOperasionalObserver;
 use App\Observers\PenggajianObserver;
+use App\Observers\KaryawanObserver;
 use Illuminate\Support\ServiceProvider;
 
 class ObserverServiceProvider extends ServiceProvider
@@ -47,5 +49,8 @@ class ObserverServiceProvider extends ServiceProvider
         PenyesuaianStok::observe(PenyesuaianStokObserver::class);
         BiayaOperasional::observe(BiayaOperasionalObserver::class);
         Penggajian::observe(PenggajianObserver::class);
+
+        // Register observer for automatic cache clearing when karyawan data changes
+        Karyawan::observe(KaryawanObserver::class);
     }
 }

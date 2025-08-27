@@ -821,11 +821,12 @@ class InvoiceController extends Controller
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
-
             // Use PDF template service
             $pdfService = new \App\Services\PDFInvoiceTamplate();
             // $pdf = $pdfService->fillInvoiceTemplate($invoice);
             $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
+
+
 
             // Output PDF
             $filename = 'Invoice-' . $invoice->nomor . '.pdf';
