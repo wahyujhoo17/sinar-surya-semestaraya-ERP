@@ -345,6 +345,60 @@
                     </div>
                 </div>
 
+                <!-- Warning untuk produk dengan harga beli 0 -->
+                @if (isset($productsWithZeroPurchasePrice) && $productsWithZeroPurchasePrice->count() > 0)
+                    <div
+                        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div class="ml-3 flex-1">
+                                <h3 class="text-sm font-medium text-amber-800 dark:text-amber-200">
+                                    Peringatan: Produk dengan Harga Beli 0
+                                </h3>
+                                <div class="mt-2 text-sm text-amber-700 dark:text-amber-300">
+                                    <p class="mb-2">Terdapat {{ $productsWithZeroPurchasePrice->count() }} produk
+                                        yang memiliki harga beli Rp 0 atau NULL. Hal ini dapat mempengaruhi perhitungan
+                                        margin yang tidak akurat.</p>
+
+                                    <div class="mt-3">
+                                        <details class="group">
+                                            <summary
+                                                class="cursor-pointer text-amber-800 dark:text-amber-200 hover:text-amber-900 dark:hover:text-amber-100 font-medium">
+                                                Lihat Daftar Produk ({{ $productsWithZeroPurchasePrice->count() }}
+                                                produk)
+                                            </summary>
+                                            <div class="mt-2 ml-4 space-y-1 max-h-32 overflow-y-auto">
+                                                @foreach ($productsWithZeroPurchasePrice as $product)
+                                                    <div
+                                                        class="flex justify-between items-center text-xs bg-amber-100 dark:bg-amber-800/30 px-2 py-1 rounded">
+                                                        <span class="font-medium">{{ $product['nama'] }}</span>
+                                                        <span class="text-amber-600 dark:text-amber-400">
+                                                            Harga Beli:
+                                                            {{ $product['harga_beli'] === null ? 'NULL' : 'Rp ' . number_format($product['harga_beli'], 0, ',', '.') }}
+                                                        </span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        </details>
+                                    </div>
+
+                                    <p class="mt-2 text-xs">
+                                        <strong>Rekomendasi:</strong> Pastikan untuk memperbarui harga beli
+                                        produk-produk tersebut di master data untuk perhitungan margin yang akurat.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Card 2: Item Produk -->
                 <div
                     class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 form-card mb-6">
@@ -1272,6 +1326,9 @@
                     ongkosKirim: parseFloat("{{ old('ongkos_kirim', $quotation ? $quotation->ongkos_kirim : 0) }}"),
                     includePPN: {{ old('ppn', $quotation ? ($quotation->ppn > 0 ? 'true' : 'false') : 'true') }},
 
+                    // Data produk dengan harga beli 0 untuk warning
+                    productsWithZeroPurchasePrice: @json($productsWithZeroPurchasePrice ?? []),
+
                     // Bundle related data
                     showBundleModal: false,
                     bundleSearch: '',
@@ -1524,6 +1581,48 @@
                                                 const harga = selectedOption.data('harga');
                                                 const satuanId = selectedOption.data(
                                                     'satuan_id');
+
+                                                // Check if this product has zero purchase price
+                                                const productWithZeroPrice = self
+                                                    .productsWithZeroPurchasePrice.find(
+                                                        p => p.id == selectedProdukId
+                                                    );
+
+                                                if (productWithZeroPrice) {
+                                                    // Show warning for product with zero purchase price
+                                                    const toastHtml = `
+                                                        <div class="flex items-start p-4 bg-amber-100 border border-amber-300 rounded-lg">
+                                                            <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                                            </svg>
+                                                            <div class="flex-1">
+                                                                <h4 class="text-sm font-medium text-amber-800">Peringatan Harga Beli</h4>
+                                                                <p class="text-sm text-amber-700 mt-1">
+                                                                    Produk "${productWithZeroPrice.nama}" memiliki harga beli Rp 0. 
+                                                                    Hal ini dapat mempengaruhi perhitungan margin yang tidak akurat.
+                                                                </p>
+                                                                <p class="text-xs text-amber-600 mt-1">
+                                                                    Pastikan untuk memperbarui harga beli di master data.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    `;
+
+                                                    // Create and show toast notification
+                                                    const toastId = 'toast-' + Date.now();
+                                                    const toast = $(
+                                                        `<div id="${toastId}" class="fixed top-4 right-4 z-50 max-w-sm">${toastHtml}</div>`
+                                                        );
+                                                    $('body').append(toast);
+
+                                                    // Auto remove after 8 seconds
+                                                    setTimeout(() => {
+                                                        $(`#${toastId}`).fadeOut(300,
+                                                            function() {
+                                                                $(this).remove();
+                                                            });
+                                                    }, 8000);
+                                                }
 
                                                 // Directly update Alpine model
                                                 self.items[index].harga = parseFloat(harga) ||

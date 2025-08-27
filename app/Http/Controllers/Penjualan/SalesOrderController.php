@@ -38,6 +38,31 @@ class SalesOrderController extends Controller
         return DirekturUtamaService::getDirekturUtama();
     }
 
+    /**
+     * Get products with zero or null purchase price
+     * This helps identify products that may affect margin calculations
+     */
+    private function getProductsWithZeroPurchasePrice()
+    {
+        return Produk::where(function ($query) {
+            $query->where('harga_beli', 0)
+                ->orWhereNull('harga_beli');
+        })
+            ->select('id', 'nama', 'harga_beli', 'harga_jual')
+            ->orderBy('nama', 'asc')
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'nama' => $product->nama,
+                    'harga_beli' => $product->harga_beli ?? 0,
+                    'harga_jual' => $product->harga_jual ?? 0,
+                    'warning_message' => 'Produk ini memiliki harga beli ' . ($product->harga_beli === null ? 'NULL' : 'Rp 0') .
+                        ' yang dapat mempengaruhi perhitungan margin.'
+                ];
+            });
+    }
+
     private function generateNewSalesOrderNumber()
     {
         $prefix = 'SO-';
@@ -239,6 +264,9 @@ class SalesOrderController extends Controller
         $tanggal = now()->format('Y-m-d');
         $tanggal_kirim = now()->addDays(3)->format('Y-m-d');
 
+        // Get products with zero or null purchase price for margin calculation warning
+        $productsWithZeroPurchasePrice = $this->getProductsWithZeroPurchasePrice();
+
         $quotation_id = $request->quotation_id;
         $quotation = null;
 
@@ -269,7 +297,8 @@ class SalesOrderController extends Controller
             'tanggal_kirim',
             'quotation',
             'status_pembayaran',
-            'status_pengiriman'
+            'status_pengiriman',
+            'productsWithZeroPurchasePrice'
         ));
     }
 
