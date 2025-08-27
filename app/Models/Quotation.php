@@ -20,6 +20,7 @@ class Quotation extends Model
         'diskon_persen',
         'diskon_nominal',
         'ppn',
+        'ongkos_kirim',
         'total',
         'status', // 'draft', 'diajukan', 'disetujui', 'ditolak', 'expired', 'diterima'
         'catatan_status', // catatan perubahan status

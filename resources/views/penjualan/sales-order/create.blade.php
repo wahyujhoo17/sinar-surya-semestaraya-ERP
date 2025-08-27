@@ -1269,7 +1269,7 @@
                         "{{ old('diskon_global_persen', $quotation ? $quotation->diskon_persen : 0) }}"),
                     diskonGlobalNominal: parseFloat(
                         "{{ old('diskon_global_nominal', $quotation ? $quotation->diskon_nominal : 0) }}"),
-                    ongkosKirim: {{ old('ongkos_kirim', 0) }},
+                    ongkosKirim: parseFloat("{{ old('ongkos_kirim', $quotation ? $quotation->ongkos_kirim : 0) }}"),
                     includePPN: {{ old('ppn', $quotation ? ($quotation->ppn > 0 ? 'true' : 'false') : 'true') }},
 
                     // Bundle related data
@@ -1592,6 +1592,7 @@
                             self.items = [];
                             self.diskonGlobalPersen = 0;
                             self.diskonGlobalNominal = 0;
+                            self.ongkosKirim = 0;
                             self.includePPN = true;
 
                             self.$nextTick(() => {
@@ -1804,6 +1805,7 @@
 
                                     self.diskonGlobalPersen = parseFloat(quotation.diskon_persen) || 0;
                                     self.diskonGlobalNominal = parseFloat(quotation.diskon_nominal) || 0;
+                                    self.ongkosKirim = parseFloat(quotation.ongkos_kirim) || 0;
                                     self.includePPN = quotation.ppn ? parseFloat(quotation.ppn) > 0 :
                                         true;
 

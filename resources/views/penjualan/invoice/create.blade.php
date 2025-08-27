@@ -627,7 +627,8 @@
                                                 </div>
                                             </div>
 
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex justify-between items-center" x-show="ppnPersen > 0"
+                                                x-cloak>
                                                 <div class="flex items-center">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                         class="h-4 w-4 text-blue-400 mr-2" fill="none"
@@ -635,24 +636,14 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                     </svg>
-                                                    <span class="text-sm text-gray-600 dark:text-gray-300">PPN</span>
+                                                    <span class="text-sm text-gray-600 dark:text-gray-300">PPN (<span
+                                                            x-text="ppnPersen"></span>%)</span>
                                                 </div>
                                                 <div class="flex items-center space-x-2">
-                                                    <div class="relative w-20">
-                                                        <input type="number" name="ppn_persen" min="0"
-                                                            max="100" step="0.01" x-model="ppnPersen"
-                                                            @input="calculateTotal"
-                                                            class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm 
-                                                            focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-right pr-7">
-                                                        <div
-                                                            class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                            <span
-                                                                class="text-gray-500 dark:text-gray-400 text-xs">%</span>
-                                                        </div>
-                                                    </div>
                                                     <span class="text-sm font-medium text-blue-500 dark:text-blue-400"
                                                         x-text="'+ ' + formatRupiah(ppnNominal)"></span>
                                                     <input type="hidden" name="ppn" x-model="ppnNominal">
+                                                    <input type="hidden" name="ppn_persen" x-model="ppnPersen">
                                                 </div>
                                             </div>
 
@@ -742,7 +733,7 @@
                     subtotal: 0,
                     diskonPersen: 0,
                     diskonNominal: 0,
-                    ppnPersen: {{ setting('tax_percentage', 11) }}, // Default PPN from settings
+                    ppnPersen: 0, // Default PPN is 0, will be set from sales order
                     ppnNominal: 0,
                     ongkosKirim: 0,
                     total: 0,
@@ -762,7 +753,7 @@
                         this.subtotal = this.subtotal || 0;
                         this.diskonPersen = this.diskonPersen || 0;
                         this.diskonNominal = this.diskonNominal || 0;
-                        this.ppnPersen = this.ppnPersen || {{ setting('tax_percentage', 11) }};
+                        this.ppnPersen = this.ppnPersen || 0;
                         this.ppnNominal = this.ppnNominal || 0;
                         this.ongkosKirim = this.ongkosKirim || 0;
                         this.total = this.total || 0;
@@ -855,6 +846,14 @@
 
                                     // Get diskon from sales order
                                     this.diskonPersen = data.sales_order.diskon_persen || 0;
+
+                                    // Set PPN from sales order (if exists)
+                                    if (typeof data.sales_order.ppn !== 'undefined' && data.sales_order.ppn !== null) {
+                                        this.ppnPersen = parseFloat(data.sales_order.ppn) || 0;
+                                    } else {
+                                        // If no PPN in sales order, set to 0
+                                        this.ppnPersen = 0;
+                                    }
 
                                     // Set jatuh tempo based on terms pembayaran from sales order
                                     if (data.jatuh_tempo) {
@@ -978,7 +977,7 @@
                         this.subtotal = 0;
                         this.diskonPersen = 0;
                         this.diskonNominal = 0;
-                        this.ppnPersen = {{ setting('tax_percentage', 11) }};
+                        this.ppnPersen = 0;
                         this.ppnNominal = 0;
                         this.ongkosKirim = 0;
                         this.total = 0;

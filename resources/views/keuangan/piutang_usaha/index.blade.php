@@ -823,8 +823,8 @@
                                     {{ $index + 1 }}</td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300">
-                                    <a href="{{ route('penjualan.invoice.show', $invoice->id) }}" target="_blank"
-                                        class="hover:underline">{{ $invoice->nomor }}</a>
+                                    <a href="{{ route('keuangan.pembayaran-piutang.create', ['invoice_id' => $invoice->id]) }}"
+                                        target="_blank" class="hover:underline">{{ $invoice->nomor }}</a>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">
                                     {{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}</td>

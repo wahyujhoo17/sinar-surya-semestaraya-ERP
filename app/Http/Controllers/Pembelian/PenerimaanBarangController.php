@@ -422,7 +422,7 @@ class PenerimaanBarangController extends Controller
             $po->save();
 
             // Update harga beli rata-rata ketika PO selesai melalui penerimaan barang
-            \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
+            \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliTerbaruFromExternalController($po->id);
         } else if ($po->status != 'dibatalkan') {
             // Jika bukan dibatalkan, maka status jadi approved (proses)
             $po->status = 'dikirim';

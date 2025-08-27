@@ -190,14 +190,14 @@ class PembayaranHutangController extends Controller
             } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
                 $po->kelebihan_bayar = 0;
-                
+
                 // Cek apakah juga sudah diterima, jika ya maka PO selesai
                 if ($po->status_penerimaan == 'diterima') {
                     $po->status = 'selesai';
                     $po->save();
-                    
+
                     // Update harga beli rata-rata ketika PO selesai melalui pembayaran
-                    \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
+                    \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliTerbaruFromExternalController($po->id);
                 } else {
                     $po->save();
                 }
@@ -342,12 +342,12 @@ class PembayaranHutangController extends Controller
             } else if ($sisaHutang == 0) {
                 $po->status_pembayaran = 'lunas';
                 $po->kelebihan_bayar = 0;
-                
+
                 // Cek apakah juga sudah diterima, jika ya maka PO selesai
                 if ($po->status_penerimaan == 'diterima') {
                     $po->status = 'selesai';
                     $po->save();
-                    
+
                     // Update harga beli rata-rata ketika PO selesai melalui pembayaran
                     \App\Http\Controllers\Pembelian\PurchasingOrderController::updateHargaBeliRataRataFromExternalController($po->id);
                 } else {

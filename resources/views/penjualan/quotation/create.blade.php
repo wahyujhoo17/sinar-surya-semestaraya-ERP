@@ -785,6 +785,18 @@
                                 x-text="$data.includePPN && $data.summary && typeof $data.formatCurrency === 'function' ? $data.formatCurrency($data.summary.ppn_nominal) : 'Rp 0,00'"></span>
                         </div>
 
+                        <!-- Ongkos Kirim -->
+                        <div class="flex justify-between items-center mt-2">
+                            <label class="text-sm font-medium text-gray-600 dark:text-gray-300">Ongkos Kirim:</label>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">Rp</span>
+                                <input type="number" name="ongkos_kirim" x-model="$data.ongkosKirim"
+                                    @input="calculateTotals()" min="0" step="1000"
+                                    class="w-32 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm"
+                                    placeholder="0">
+                            </div>
+                        </div>
+
                         <hr class="dark:border-gray-600 my-1">
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-bold text-gray-900 dark:text-white">Grand Total:</span>
@@ -918,6 +930,7 @@
                     diskon_global_persen: 0,
                     diskon_global_nominal: 0,
                     includePPN: false,
+                    ongkosKirim: 0,
                     summary: {
                         total_sebelum_diskon_global: 0,
                         total_setelah_diskon_global: 0,
@@ -1224,7 +1237,8 @@
                                 .total_setelah_diskon_global;
                         }
                         this.summary.ppn_nominal = ppnNominal;
-                        this.summary.grand_total = this.summary.total_setelah_diskon_global + ppnNominal;
+                        const ongkosKirim = parseFloat(this.ongkosKirim) || 0;
+                        this.summary.grand_total = this.summary.total_setelah_diskon_global + ppnNominal + ongkosKirim;
                     },
                     calculateGlobalDiscount(type) {
                         if (type === 'persen') {
@@ -1496,6 +1510,7 @@
                         createGlobalHiddenInput('diskon_persen', this.diskon_global_persen || '0');
                         createGlobalHiddenInput('diskon_nominal', this.diskon_global_nominal || '0');
                         createGlobalHiddenInput('ppn', this.includePPN ? "{{ setting('tax_percentage', 11) }}" : '0');
+                        createGlobalHiddenInput('ongkos_kirim', this.ongkosKirim || '0');
                         createGlobalHiddenInput('total', this.summary.grand_total || '0');
                         form.submit();
                     }

@@ -514,7 +514,8 @@
                                                 </div>
                                             </div>
 
-                                            <div class="flex justify-between items-center">
+                                            <div class="flex justify-between items-center" x-show="ppnPersen > 0"
+                                                x-cloak>
                                                 <div class="flex items-center">
                                                     <svg xmlns="http://www.w3.org/2000/svg"
                                                         class="h-4 w-4 text-blue-400 mr-2" fill="none"
@@ -522,24 +523,14 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                     </svg>
-                                                    <span class="text-sm text-gray-600 dark:text-gray-300">PPN</span>
+                                                    <span class="text-sm text-gray-600 dark:text-gray-300">PPN (<span
+                                                            x-text="ppnPersen"></span>%)</span>
                                                 </div>
                                                 <div class="flex items-center space-x-2">
-                                                    <div class="relative w-20">
-                                                        <input type="number" name="ppn_persen" min="0"
-                                                            max="100" step="0.01" x-model="ppnPersen"
-                                                            @input="calculateTotal"
-                                                            class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm 
-                                                            focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-right pr-7">
-                                                        <div
-                                                            class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                                                            <span
-                                                                class="text-gray-500 dark:text-gray-400 text-xs">%</span>
-                                                        </div>
-                                                    </div>
                                                     <span class="text-sm font-medium text-blue-500 dark:text-blue-400"
                                                         x-text="'Rp ' + formatRupiah(ppnNominal, '')"></span>
                                                     <input type="hidden" name="ppn" :value="ppnNominal">
+                                                    <input type="hidden" name="ppn_persen" x-model="ppnPersen">
                                                 </div>
                                             </div>
 
@@ -640,7 +631,7 @@
                     subtotal: {{ $invoice->subtotal ?? 0 }},
                     diskonPersen: {{ $invoice->diskon_persen ?? 0 }},
                     diskonNominal: {{ $invoice->diskon_nominal ?? 0 }},
-                    ppnPersen: {{ ($invoice->subtotal - $invoice->diskon_nominal > 0 ? number_format(($invoice->ppn * 100) / ($invoice->subtotal - $invoice->diskon_nominal), 2, '.', '') : $invoice->ppn_persen) ?? setting('tax_percentage', 11) }},
+                    ppnPersen: {{ $invoice->ppn_persen ?? 0 }},
                     ppnNominal: {{ $invoice->ppn ?? 0 }},
                     ongkosKirim: {{ $invoice->ongkos_kirim ?? 0 }},
                     total: {{ $invoice->total ?? 0 }},

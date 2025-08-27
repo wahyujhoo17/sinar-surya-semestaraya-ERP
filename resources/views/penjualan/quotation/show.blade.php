@@ -972,6 +972,16 @@
                         </td>
                     </tr>
                 @endif
+                @if ($quotation->ongkos_kirim > 0)
+                    <tr>
+                        <td colspan="7"
+                            class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
+                            Ongkos Kirim:</td>
+                        <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ number_format($quotation->ongkos_kirim, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @endif
                 <tr>
                     <td colspan="7" class="px-6 py-4 font-medium text-lg text-gray-900 dark:text-white text-right">
                         Total:</td>

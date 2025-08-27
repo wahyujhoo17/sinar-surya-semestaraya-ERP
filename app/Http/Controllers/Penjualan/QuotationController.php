@@ -282,6 +282,7 @@ class QuotationController extends Controller
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
+            'ongkos_kirim' => 'nullable|numeric|min:0',
         ];
 
         // Add validation for each item
@@ -357,8 +358,9 @@ class QuotationController extends Controller
                 $productTotal = $item['harga'] * $item['kuantitas'];
                 $discountValue = 0;
 
-                if (isset($item['diskon_persen']) && $item['diskon_persen'] > 0) {
-                    $discountValue = ($item['diskon_persen'] / 100) * $productTotal;
+                $diskonPersen = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
+                if ($diskonPersen > 0) {
+                    $discountValue = ($diskonPersen / 100) * $productTotal;
                 }
 
                 $subtotal += $productTotal - $discountValue;
@@ -376,7 +378,8 @@ class QuotationController extends Controller
 
             $ppn = $request->ppn ?? 0;
             $ppnValue = ($ppn / 100) * $afterDiscount;
-            $total = $afterDiscount + $ppnValue;
+            $ongkosKirim = $request->ongkos_kirim ?? 0;
+            $total = $afterDiscount + $ppnValue + $ongkosKirim;
 
             // Create Quotation
             $quotation = new Quotation();
@@ -388,6 +391,7 @@ class QuotationController extends Controller
             $quotation->diskon_persen = $diskonGlobalPersen;
             $quotation->diskon_nominal = $diskonGlobalNominal;
             $quotation->ppn = $ppn;
+            $quotation->ongkos_kirim = $ongkosKirim;
             $quotation->total = $total;
             $quotation->status = $request->status;
             $quotation->tanggal_berlaku = $request->tanggal_berlaku;
@@ -403,7 +407,7 @@ class QuotationController extends Controller
                 }
 
                 $productTotal = $item['harga'] * $item['kuantitas'];
-                $diskonPersenItem = $item['diskon_persen'] ?? 0;
+                $diskonPersenItem = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = 0;
 
                 if ($diskonPersenItem > 0) {
@@ -574,6 +578,7 @@ class QuotationController extends Controller
             'diskon_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_nominal' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
+            'ongkos_kirim' => 'nullable|numeric|min:0',
         ];
 
         // Add validation for each item
@@ -676,7 +681,8 @@ class QuotationController extends Controller
             $afterDiscount = $subtotal - $diskonNominal;
             $ppn = $request->ppn ?? 0;
             $ppnValue = ($ppn / 100) * $afterDiscount;
-            $total = $afterDiscount + $ppnValue;
+            $ongkosKirim = $request->ongkos_kirim ?? 0;
+            $total = $afterDiscount + $ppnValue + $ongkosKirim;
 
             // Update Quotation
             $quotation->nomor = $request->nomor;
@@ -686,6 +692,7 @@ class QuotationController extends Controller
             $quotation->diskon_persen = $diskonPersen;
             $quotation->diskon_nominal = $diskonNominal;
             $quotation->ppn = $ppn;
+            $quotation->ongkos_kirim = $ongkosKirim;
             $quotation->total = $total;
             $quotation->tanggal_berlaku = $request->tanggal_berlaku;
             $quotation->catatan = $request->catatan;
@@ -703,7 +710,7 @@ class QuotationController extends Controller
                 }
 
                 $productTotal = $item['harga'] * $item['kuantitas'];
-                $diskonPersenItem = $item['diskon_persen_item'] ?? 0;
+                $diskonPersenItem = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
                 $diskonNominalItem = 0;
 
                 if ($diskonPersenItem > 0) {
