@@ -739,7 +739,7 @@
                                     <!-- Header -->
                                     <div class="flex items-center justify-between">
                                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                                            Riwayat Pembelian dari Sales Order
+                                            Riwayat Pembelian dari Purchase Order
                                         </h3>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
                                             Menampilkan 10 transaksi terbaru
@@ -833,11 +833,11 @@
                                                         <tr>
                                                             <th scope="col"
                                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                                Sales Order
+                                                                Purchase Order
                                                             </th>
                                                             <th scope="col"
                                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                                Customer
+                                                                Supplier
                                                             </th>
                                                             <th scope="col"
                                                                 class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -872,19 +872,19 @@
                                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                                     <div class="flex items-center">
                                                                         <div
-                                                                            class="flex-shrink-0 w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                                                                            class="flex-shrink-0 w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
                                                                             <span
-                                                                                class="text-primary-600 dark:text-primary-400 font-semibold text-xs">SO</span>
+                                                                                class="text-green-600 dark:text-green-400 font-semibold text-xs">PO</span>
                                                                         </div>
                                                                         <div class="ml-3">
-                                                                            <a href="{{ route('penjualan.sales-order.show', $riwayat->sales_order_id) }}"
+                                                                            <a href="{{ route('pembelian.purchasing-order.show', $riwayat->purchase_order_id) }}"
                                                                                 class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 hover:underline">
-                                                                                {{ $riwayat->nomor_so }}
+                                                                                {{ $riwayat->nomor_po }}
                                                                             </a>
                                                                             <p
                                                                                 class="text-xs text-gray-500 dark:text-gray-400">
-                                                                                Total SO: Rp
-                                                                                {{ number_format($riwayat->total_so, 0, ',', '.') }}
+                                                                                Total PO: Rp
+                                                                                {{ number_format($riwayat->total_po, 0, ',', '.') }}
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -892,12 +892,12 @@
                                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                                     <div
                                                                         class="text-sm font-medium text-gray-900 dark:text-white">
-                                                                        {{ $riwayat->customer_company ?: $riwayat->customer_nama }}
+                                                                        {{ $riwayat->supplier_nama }}
                                                                     </div>
-                                                                    @if ($riwayat->customer_company && $riwayat->customer_nama)
+                                                                    @if ($riwayat->supplier_kode)
                                                                         <div
                                                                             class="text-xs text-gray-500 dark:text-gray-400">
-                                                                            {{ $riwayat->customer_nama }}
+                                                                            Kode: {{ $riwayat->supplier_kode }}
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -910,11 +910,11 @@
                                                                         class="text-sm font-medium text-gray-900 dark:text-white">
                                                                         {{ number_format($riwayat->quantity, 0, ',', '.') }}
                                                                     </div>
-                                                                    @if ($riwayat->quantity_terkirim > 0)
+                                                                    @if ($riwayat->quantity_diterima > 0)
                                                                         <div
                                                                             class="text-xs text-green-600 dark:text-green-400">
-                                                                            Terkirim:
-                                                                            {{ number_format($riwayat->quantity_terkirim, 0, ',', '.') }}
+                                                                            Diterima:
+                                                                            {{ number_format($riwayat->quantity_diterima, 0, ',', '.') }}
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -948,21 +948,21 @@
                                                                             </span>
                                                                         @endif
 
-                                                                        <!-- Delivery Status -->
-                                                                        @if ($riwayat->status_pengiriman === 'dikirim')
+                                                                        <!-- Receiving Status -->
+                                                                        @if ($riwayat->status_penerimaan === 'diterima')
                                                                             <span
                                                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                                                                                Terkirim
+                                                                                Diterima
                                                                             </span>
-                                                                        @elseif($riwayat->status_pengiriman === 'sebagian')
+                                                                        @elseif($riwayat->status_penerimaan === 'sebagian')
                                                                             <span
                                                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-                                                                                Sebagian Kirim
+                                                                                Sebagian Terima
                                                                             </span>
                                                                         @else
                                                                             <span
                                                                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400">
-                                                                                Belum Kirim
+                                                                                Belum Terima
                                                                             </span>
                                                                         @endif
                                                                     </div>
@@ -1001,18 +1001,19 @@
                                             <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">Belum
                                                 ada riwayat pembelian</h3>
                                             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-                                                Produk ini belum pernah dibeli melalui sales order. Riwayat akan muncul
-                                                setelah produk ini ditambahkan ke sales order.
+                                                Produk ini belum pernah dibeli melalui purchase order. Riwayat akan
+                                                muncul
+                                                setelah produk ini ditambahkan ke purchase order.
                                             </p>
                                             <div class="mt-6">
-                                                <a href="{{ route('penjualan.sales-order.create') }}"
+                                                <a href="{{ route('pembelian.purchasing-order.create') }}"
                                                     class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                                                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor"
                                                         viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2" d="M12 4v16m8-8H4" />
                                                     </svg>
-                                                    Buat Sales Order Baru
+                                                    Buat Purchase Order Baru
                                                 </a>
                                             </div>
                                         </div>

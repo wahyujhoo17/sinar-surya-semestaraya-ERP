@@ -223,29 +223,30 @@ class ProdukController extends Controller
         $produk->load(['kategori', 'satuan', 'jenis']);
         $jenisProduks = JenisProduk::orderBy('nama')->get(); // Add this line
 
-        // Get riwayat pembelian dari sales order yang mengandung produk ini
-        $riwayatPembelian = DB::table('sales_order_detail as sod')
-            ->join('sales_order as so', 'sod.sales_order_id', '=', 'so.id')
-            ->join('customer as c', 'so.customer_id', '=', 'c.id')
-            ->leftJoin('users as u', 'so.user_id', '=', 'u.id')
-            ->where('sod.produk_id', $produk->id)
-            ->whereNull('sod.parent_detail_id') // Exclude bundle child items
+        // Get riwayat pembelian dari purchase order yang mengandung produk ini
+        // Hanya tampilkan PO dengan status selesai
+        $riwayatPembelian = DB::table('purchase_order_detail as pod')
+            ->join('purchase_order as po', 'pod.po_id', '=', 'po.id')
+            ->join('supplier as s', 'po.supplier_id', '=', 's.id')
+            ->leftJoin('users as u', 'po.user_id', '=', 'u.id')
+            ->where('pod.produk_id', $produk->id)
+            ->where('po.status', 'selesai') // Hanya PO yang sudah selesai
             ->select(
-                'so.id as sales_order_id',
-                'so.nomor as nomor_so',
-                'so.tanggal',
-                'so.status_pembayaran',
-                'so.status_pengiriman',
-                'so.total as total_so',
-                'sod.quantity',
-                'sod.quantity_terkirim',
-                'sod.harga',
-                'sod.subtotal',
-                'c.nama as customer_nama',
-                'c.company as customer_company',
-                'u.name as sales_person'
+                'po.id as purchase_order_id',
+                'po.nomor as nomor_po',
+                'po.tanggal',
+                'po.status_pembayaran',
+                'po.status_penerimaan',
+                'po.total as total_po',
+                'pod.quantity',
+                'pod.quantity_diterima',
+                'pod.harga',
+                'pod.subtotal',
+                's.nama as supplier_nama',
+                's.kode as supplier_kode', // Gunakan kode supplier sebagai pengganti company
+                'u.name as purchasing_person'
             )
-            ->orderBy('so.tanggal', 'desc')
+            ->orderBy('po.tanggal', 'desc')
             ->limit(10) // Batasi 10 transaksi terbaru
             ->get();
 
