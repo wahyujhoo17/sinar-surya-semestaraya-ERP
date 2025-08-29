@@ -109,21 +109,24 @@ class PDFInvoiceTamplate
             $currentY = $itemsStartY + $lineHeight;
             foreach ($invoice->details as $index => $detail) {
                 if ($currentY > 150) break;
-                $pdf->SetXY(8, $currentY);
-                $pdf->Cell(11.5, $lineHeight, ($index + 1), 0, 0, 'C');
-                $pdf->Cell(35, $lineHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
 
-                // Nama produk dengan max width dan wrap, hitung tinggi baris
+                // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
                 $maxNamaWidth = 56.5;
                 $maxNamaLength = 38;
                 $namaProduk = $detail->produk->nama ?? '-';
                 if (mb_strlen($namaProduk) > $maxNamaLength) {
                     $namaProduk = mb_substr($namaProduk, 0, $maxNamaLength - 3) . '...';
                 }
+                $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
+
+                // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
+                $pdf->SetXY(8, $currentY);
+                $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
+                $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
+
+                // Nama produk dengan max width dan wrap
                 $xNama = $pdf->GetX();
                 $yNama = $pdf->GetY();
-                // Hitung tinggi MultiCell tanpa mencetak
-                $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
                 // Cetak MultiCell nama produk (parameter sesuai dokumentasi TCPDF)
                 $pdf->MultiCell($maxNamaWidth, $namaHeight, $namaProduk, 0, 'L', false, 0);
                 // Kembali ke baris awal, setelah kolom nama
