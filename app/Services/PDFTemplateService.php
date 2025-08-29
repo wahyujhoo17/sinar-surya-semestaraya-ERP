@@ -60,7 +60,7 @@ class PDFTemplateService
             // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
             $nomorX = 31;
-            $nomorY = 42.5;
+            $nomorY = 44.5;
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
@@ -84,7 +84,7 @@ class PDFTemplateService
 
             // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
             $customerX = 90;
-            $customerY = 40;
+            $customerY = 42;
             $maxCustomerWidth = 50;
 
             // Nama customer bold
@@ -104,7 +104,7 @@ class PDFTemplateService
             $pdf->SetFont('helvetica', '', 8);
 
             // Items table (misal mulai X=15mm, Y=55mm)
-            $itemsStartY = 74;
+            $itemsStartY = 79;
             $lineHeight = 6;
             $currentY = $itemsStartY;
             $maxItemsY = 170;
