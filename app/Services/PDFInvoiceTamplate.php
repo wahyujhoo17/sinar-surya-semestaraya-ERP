@@ -13,7 +13,7 @@ class PDFInvoiceTamplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '')
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice-New.pdf');
 
         // XY = 214x 163
@@ -43,13 +43,13 @@ class PDFInvoiceTamplate
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(95, 37.5);
+            $pdf->SetXY(97, 36.5);
             $pdf->Cell(0, 0, $invoice->nomor, 0, 0, 'L');
-            $pdf->SetXY(154, 13.5);
+            $pdf->SetXY(156, 13.5);
             $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
 
             // --- Customer ---
-            $customerX = 10;
+            $customerX = 12;
             $customerY = 37;
             $maxCustomerWidth = 70;
             $pdf->SetFont('helvetica', 'B', 9);
@@ -68,8 +68,8 @@ class PDFInvoiceTamplate
 
             // DETAIL INV
             $maxDetilWidth = 45;
-            $salesOrderX = 156;
-            $salesOrderY = 32.8;
+            $salesOrderX = 158;
+            $salesOrderY = 31.8;
             // NOMOR PO
             $pdf->SetFont('helvetica', '', 9);
             $pdf->SetXY($salesOrderX, $salesOrderY);
@@ -104,11 +104,16 @@ class PDFInvoiceTamplate
             $itemsStartY = 61;
             $lineHeight = 6;
 
+            // Fixed summary position: reserve space at bottom so summary is always at the same Y
+            $yTotal = $customHeight - 50; // posisi paling bawah (fix)
+            $summaryReserveLines = 5; // jumlah baris maksimal yang dipakai summary (Total, Ongkos Kirim, PPN, Diskon, Subtotal)
+            $itemsMaxY = $yTotal - ($summaryReserveLines * 6) - 2; // sisa ruang untuk items
+
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
             $currentY = $itemsStartY + $lineHeight;
             foreach ($invoice->details as $index => $detail) {
-                if ($currentY > 150) break;
+                if ($currentY > $itemsMaxY) break;
 
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
                 $maxNamaWidth = 56.5;
@@ -120,58 +125,59 @@ class PDFInvoiceTamplate
                 $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
 
                 // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
-                $pdf->SetXY(8, $currentY);
+                // Geser nomor dan kode 2mm ke kanan (startX 8 -> 10)
+                $pdf->SetXY(10, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
                 $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
 
-                // Nama produk dengan max width dan wrap
-                $xNama = $pdf->GetX();
+                // Nama produk tetap mulai pada X = 54.5 (agar kolom lain tidak terpengaruh)
+                $xNama = 54.5;
                 $yNama = $pdf->GetY();
+                $pdf->SetXY($xNama, $yNama);
                 // Cetak MultiCell nama produk (parameter sesuai dokumentasi TCPDF)
                 $pdf->MultiCell($maxNamaWidth, $namaHeight, $namaProduk, 0, 'L', false, 0);
                 // Kembali ke baris awal, setelah kolom nama
                 $pdf->SetXY($xNama + $maxNamaWidth, $yNama);
                 $pdf->Cell(28, $namaHeight, number_format($detail->quantity, 0, ',', '.'), 0, 0, 'C');
-                $pdf->Cell(29, $namaHeight, 'Rp ' . number_format($detail->harga, 0, ',', '.'), 0, 0, 'L');
+                $pdf->Cell(29, $namaHeight, number_format($detail->harga, 0, ',', '.'), 0, 0, 'R');
                 $pdf->Cell(11, $namaHeight, rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '', 0, 0, 'L');
-                $pdf->Cell(32, $namaHeight, 'Rp ' . number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'L');
+                $pdf->Cell(30, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
                 $currentY += $namaHeight;
             }
 
             // --- Summary (dari bawah ke atas) ---
-            $yTotal = $customHeight - 50; // posisi paling bawah (atur sesuai kebutuhan layout)
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY(142, $yTotal);
             $pdf->Cell(35, 6, 'Total', 0, 0, 'L');
-            $pdf->Cell(25, 6, 'Rp ' . number_format($invoice->total, 0, ',', '.'), 0, 1, 'L');
+            $pdf->Cell(25, 6, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
 
             $y = $yTotal - 6;
             if ($invoice->ongkos_kirim > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
                 $pdf->Cell(35, 6, 'Ongkos Kirim', 0, 0, 'L');
-                $pdf->Cell(25, 6, 'Rp ' . number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'L');
+                $pdf->Cell(25, 6, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             if ($invoice->ppn > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
                 $pdf->Cell(35, 6, 'PPN 11%', 0, 0, 'L');
-                $pdf->Cell(25, 6, 'Rp ' . number_format($invoice->ppn, 0, ',', '.'), 0, 1, 'L');
+                $pdf->Cell(25, 6, number_format($invoice->ppn, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             if ($invoice->diskon_nominal > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
                 $pdf->Cell(35, 6, 'Diskon', 0, 0, 'L');
-                $pdf->Cell(25, 6, 'Rp ' . number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'L');
+                $pdf->Cell(25, 6, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             // Subtotal selalu tampil
             $pdf->SetFont('helvetica', '', 8);
             $pdf->SetXY(142, $y);
             $pdf->Cell(35, 6, 'Subtotal', 0, 0, 'L');
-            $pdf->Cell(25, 6, 'Rp ' . number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'L');
+            $pdf->Cell(25, 6, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
 
             // Tambahkan garis horizontal sebelum total
             $pdf->SetDrawColor(0, 0, 0); // warna hitam
@@ -183,7 +189,8 @@ class PDFInvoiceTamplate
 
             // TERBILANG
 
-            $pdf->SetXY(10, 123);
+            // moved up by 1mm as requested
+            $pdf->SetXY(10, 121);
             // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $invoice->total) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
