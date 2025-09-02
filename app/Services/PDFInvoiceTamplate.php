@@ -111,7 +111,7 @@ class PDFInvoiceTamplate
 
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY(21.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2
+            $pdf->SetXY(22.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2 and right by 1
             $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
 
             // --- Items ---
@@ -130,8 +130,8 @@ class PDFInvoiceTamplate
                 $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
 
                 // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
-                // Geser nomor dan kode 2mm ke kanan (startX 8 -> 10)
-                $pdf->SetXY(10, $currentY);
+                // Geser nomor dan kode 3mm ke kanan dari origin sebelumnya (startX 8 -> 11)
+                $pdf->SetXY(11, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
                 $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
 
@@ -142,10 +142,26 @@ class PDFInvoiceTamplate
                 // Cetak MultiCell nama produk (parameter sesuai dokumentasi TCPDF)
                 $pdf->MultiCell($maxNamaWidth, $namaHeight, $namaProduk, 0, 'L', false, 0);
                 // Kembali ke baris awal, setelah kolom nama
-                $pdf->SetXY($xNama + $maxNamaWidth, $yNama);
+                // Use explicit X positions so we can shift HARGA 1 unit left without affecting other columns
+                $baseX = $xNama + $maxNamaWidth; // original starting X for the first numeric column
+
+                // QTY stays at baseX with width 28
+                $pdf->SetXY($baseX, $yNama);
                 $pdf->Cell(28, $namaHeight, number_format($detail->quantity, 0, ',', '.'), 0, 0, 'C');
+
+                // HARGA should be 1 unit to the left of its original position (original was baseX + 28)
+                $hargaX = $baseX + 27; // move left by 1
+                $pdf->SetXY($hargaX, $yNama);
                 $pdf->Cell(29, $namaHeight, number_format($detail->harga, 0, ',', '.'), 0, 0, 'R');
+
+                // DISC keep its original starting X = baseX + 28 + 29 = baseX + 57
+                $discX = $baseX + 57;
+                $pdf->SetXY($discX, $yNama);
                 $pdf->Cell(11, $namaHeight, rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '', 0, 0, 'L');
+
+                // SUBTOTAL keep original starting X = baseX + 68, moved left by 1 -> baseX + 67
+                $subtotalX = $baseX + 67;
+                $pdf->SetXY($subtotalX, $yNama);
                 $pdf->Cell(30, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
                 $currentY += $namaHeight;
             }
