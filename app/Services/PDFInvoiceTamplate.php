@@ -109,6 +109,11 @@ class PDFInvoiceTamplate
             $summaryReserveLines = 5; // jumlah baris maksimal yang dipakai summary (Total, Ongkos Kirim, PPN, Diskon, Subtotal)
             $itemsMaxY = $yTotal - ($summaryReserveLines * 6) - 2; // sisa ruang untuk items
 
+            // Print table header for KODE BARANG
+            $pdf->SetFont('helvetica', 'B', 8);
+            $pdf->SetXY(21.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2
+            $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
             $currentY = $itemsStartY + $lineHeight;
