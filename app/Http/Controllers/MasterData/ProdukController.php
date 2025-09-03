@@ -7,6 +7,7 @@ use App\Models\Produk;
 use App\Models\KategoriProduk;
 use App\Models\Satuan;
 use App\Models\JenisProduk; // Add JenisProduk model
+use App\Services\BOMCostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage; // Import Storage facade for file handling
 use Illuminate\Support\Facades\DB;
@@ -18,10 +19,13 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ProdukController extends Controller
 {
-    public function __construct()
+    protected $bomCostService;
+
+    public function __construct(BOMCostService $bomCostService)
     {
+        $this->bomCostService = $bomCostService;
         // Apply permission middleware to controller methods
-        $this->middleware('permission:produk.view')->only(['index', 'show', 'getById', 'apiGetById']);
+        $this->middleware('permission:produk.view')->only(['index', 'show', 'getById', 'apiGetById', 'costBreakdown']);
         $this->middleware('permission:produk.create')->only(['create', 'store', 'ajaxStore', 'generateCode']);
         $this->middleware('permission:produk.edit')->only(['edit', 'update', 'ajaxUpdate']);
         $this->middleware('permission:produk.delete')->only(['destroy', 'bulkDestroy']);
@@ -622,6 +626,26 @@ class ProdukController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengambil jumlah produk'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get cost breakdown untuk produk dengan BOM
+     */
+    public function costBreakdown($id)
+    {
+        try {
+            $breakdown = $this->bomCostService->getCostBreakdown($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $breakdown
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan breakdown cost: ' . $e->getMessage()
             ], 500);
         }
     }

@@ -692,6 +692,18 @@
                     errors: {},
                     isSubmitting: false,
 
+                    // Helper function for notifications
+                    showNotification(type, title, message, timeout = 5000) {
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: {
+                                type: type,
+                                title: title,
+                                message: message,
+                                timeout: timeout
+                            }
+                        }));
+                    },
+
                     // Components array
                     components: {!! json_encode(
                         $bom->details->map(function ($detail) {
@@ -877,6 +889,14 @@
                         this.isSubmitting = true;
                         this.errors = {};
 
+                        // Prepare form data with proper boolean conversion
+                        const submitData = {
+                            ...this.formData,
+                            is_active: this.formData.is_active ? 1 : 0
+                        };
+
+                        console.log('Submitting data:', submitData);
+
                         fetch(`{{ route('produksi.bom.update', $bom->id) }}`, {
                                 method: 'PUT',
                                 headers: {
@@ -884,29 +904,68 @@
                                     'X-CSRF-TOKEN': '{{ csrf_token() }}',
                                     'Accept': 'application/json'
                                 },
-                                body: JSON.stringify(this.formData)
+                                body: JSON.stringify(submitData)
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                console.log('Response status:', response.status);
+                                // Check if response is ok
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                }
+                                return response.json();
+                            })
                             .then(data => {
+                                console.log('Response data:', data);
                                 if (data.success) {
-                                    // Show success notification
-                                    this.$dispatch('notice', {
-                                        type: 'success',
-                                        text: data.message
-                                    });
+                                    // Show success notification using the correct event
+                                    window.dispatchEvent(new CustomEvent('notify', {
+                                        detail: {
+                                            type: 'success',
+                                            title: 'Berhasil',
+                                            message: data.message || 'BOM berhasil diperbarui',
+                                            timeout: 3000
+                                        }
+                                    }));
+
+                                    // Redirect to show page after a short delay
+                                    setTimeout(() => {
+                                        window.location.href = `{{ route('produksi.bom.show', $bom->id) }}`;
+                                    }, 1000);
                                 } else {
                                     // Handle validation errors
-                                    if (data.message) {
-                                        this.errors = data.message;
+                                    if (data.errors) {
+                                        this.errors = data.errors;
+                                        // Show validation error notification
+                                        window.dispatchEvent(new CustomEvent('notify', {
+                                            detail: {
+                                                type: 'error',
+                                                title: 'Validation Error',
+                                                message: 'Silakan periksa form dan perbaiki kesalahan yang ada.',
+                                                timeout: 5000
+                                            }
+                                        }));
+                                    } else if (data.message) {
+                                        window.dispatchEvent(new CustomEvent('notify', {
+                                            detail: {
+                                                type: 'error',
+                                                title: 'Error',
+                                                message: data.message,
+                                                timeout: 5000
+                                            }
+                                        }));
                                     }
                                 }
                             })
                             .catch(error => {
                                 console.error('Error:', error);
-                                this.$dispatch('notice', {
-                                    type: 'error',
-                                    text: 'Terjadi kesalahan saat menyimpan data'
-                                });
+                                window.dispatchEvent(new CustomEvent('notify', {
+                                    detail: {
+                                        type: 'error',
+                                        title: 'Error',
+                                        message: 'Terjadi kesalahan saat menyimpan data: ' + error.message,
+                                        timeout: 5000
+                                    }
+                                }));
                             })
                             .finally(() => {
                                 this.isSubmitting = false;
@@ -1167,23 +1226,14 @@
                                 .then(data => {
                                     if (data.success) {
                                         this.components.splice(this.deleteIndex, 1);
-                                        this.$dispatch('notice', {
-                                            type: 'success',
-                                            text: 'Komponen berhasil dihapus'
-                                        });
+                                        this.showNotification('success', 'Berhasil', 'Komponen berhasil dihapus', 3000);
                                     } else {
-                                        this.$dispatch('notice', {
-                                            type: 'error',
-                                            text: data.message || 'Gagal menghapus komponen'
-                                        });
+                                        this.showNotification('error', 'Error', data.message || 'Gagal menghapus komponen');
                                     }
                                 })
                                 .catch(error => {
                                     console.error('Error:', error);
-                                    this.$dispatch('notice', {
-                                        type: 'error',
-                                        text: 'Terjadi kesalahan saat menghapus komponen'
-                                    });
+                                    this.showNotification('error', 'Error', 'Terjadi kesalahan saat menghapus komponen');
                                 });
                         } else {
                             // Just remove from local array if not saved to server yet
@@ -1211,23 +1261,14 @@
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {
-                                    this.$dispatch('notice', {
-                                        type: 'success',
-                                        text: 'Komponen berhasil diperbarui'
-                                    });
+                                    this.showNotification('success', 'Berhasil', 'Komponen berhasil diperbarui', 3000);
                                 } else {
-                                    this.$dispatch('notice', {
-                                        type: 'error',
-                                        text: data.message || 'Gagal memperbarui komponen'
-                                    });
+                                    this.showNotification('error', 'Error', data.message || 'Gagal memperbarui komponen');
                                 }
                             })
                             .catch(error => {
                                 console.error('Error:', error);
-                                this.$dispatch('notice', {
-                                    type: 'error',
-                                    text: 'Terjadi kesalahan saat memperbarui komponen'
-                                });
+                                this.showNotification('error', 'Error', 'Terjadi kesalahan saat memperbarui komponen');
                             });
                     },
 
@@ -1260,23 +1301,14 @@
                                         this.components[index].id = data.data.id;
                                     }
 
-                                    this.$dispatch('notice', {
-                                        type: 'success',
-                                        text: 'Komponen berhasil ditambahkan'
-                                    });
+                                    this.showNotification('success', 'Berhasil', 'Komponen berhasil ditambahkan', 3000);
                                 } else {
-                                    this.$dispatch('notice', {
-                                        type: 'error',
-                                        text: data.message || 'Gagal menambahkan komponen'
-                                    });
+                                    this.showNotification('error', 'Error', data.message || 'Gagal menambahkan komponen');
                                 }
                             })
                             .catch(error => {
                                 console.error('Error:', error);
-                                this.$dispatch('notice', {
-                                    type: 'error',
-                                    text: 'Terjadi kesalahan saat menambahkan komponen'
-                                });
+                                this.showNotification('error', 'Error', 'Terjadi kesalahan saat menambahkan komponen');
                             });
                     }
                 }

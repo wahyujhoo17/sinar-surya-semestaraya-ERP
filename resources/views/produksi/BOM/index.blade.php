@@ -235,6 +235,34 @@
             </div>
         </div>
 
+        {{-- Batch Actions --}}
+        @if (auth()->user()->hasPermission('bill_of_material.view'))
+            <div
+                class="mb-4 bg-white dark:bg-gray-800 shadow-md rounded-xl overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <h3 class="text-sm font-medium text-gray-900 dark:text-white">Batch Actions</h3>
+                    </div>
+                    <button onclick="batchUpdateBOMCosts()"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        Update Semua Harga BOM
+                    </button>
+                </div>
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Update harga beli produk untuk semua BOM yang
+                    memiliki komponen dengan harga valid</p>
+            </div>
+        @endif
+
         {{-- BOM Table --}}
         <div id="bom-table-container"
             class="bg-white dark:bg-gray-800 shadow-md rounded-xl overflow-hidden ring-1 ring-gray-200 dark:ring-gray-700">
@@ -309,6 +337,10 @@
                                             d="M19 9l-7 7-7-7" />
                                     </svg>
                                 </div>
+                            </th>
+                            <th scope="col"
+                                class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Cost Status
                             </th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
@@ -1551,6 +1583,163 @@
                 // Initialize once on page load
                 updateFilterIndicators();
             });
+
+            // BOM Cost Update Function
+            function updateBOMCost(bomId) {
+                // Confirm action
+                if (!confirm('Apakah Anda yakin ingin mengupdate harga beli produk berdasarkan BOM ini?')) {
+                    return;
+                }
+
+                // Show loading state
+                const button = event.target.closest('button');
+                const originalContent = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML =
+                    '<svg class="animate-spin w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...';
+
+                // Make AJAX request
+                $.ajax({
+                    url: `/produksi/bom/${bomId}/update-cost`,
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Content-Type': 'application/json'
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'success',
+                                    title: 'Berhasil',
+                                    message: response.message ||
+                                        'Harga beli produk berhasil diupdate dari BOM.'
+                                }
+                            }));
+
+                            // Optionally refresh the table data
+                            if (typeof loadBOMData === 'function') {
+                                loadBOMData(1); // Reload current page
+                            }
+                        } else {
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Error',
+                                    message: response.message || 'Gagal mengupdate harga beli produk.'
+                                }
+                            }));
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error updating BOM cost:', xhr);
+
+                        // Show error notification
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: {
+                                type: 'error',
+                                title: 'Error',
+                                message: 'Terjadi kesalahan saat mengupdate harga beli produk.'
+                            }
+                        }));
+                    },
+                    complete: function() {
+                        // Restore button state
+                        button.disabled = false;
+                        button.innerHTML = originalContent;
+                    }
+                });
+            }
+
+            // Make function globally available
+            window.updateBOMCost = updateBOMCost;
+
+            // Batch Update BOM Costs Function
+            function batchUpdateBOMCosts() {
+                // Confirm action
+                if (!confirm(
+                        'Apakah Anda yakin ingin mengupdate harga beli produk untuk semua BOM yang memiliki komponen dengan harga valid?\n\nProses ini mungkin memerlukan waktu beberapa saat.'
+                    )) {
+                    return;
+                }
+
+                // Show loading state
+                const button = event.target.closest('button');
+                const originalContent = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML =
+                    '<svg class="animate-spin w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Processing...';
+
+                // Make AJAX request
+                $.ajax({
+                    url: '/produksi/bom/batch-update-costs',
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 60000, // 60 seconds timeout for batch operation
+                    success: function(response) {
+                        if (response.success) {
+                            // Show success notification with details
+                            const message = response.message || 'Batch update harga BOM berhasil dilakukan.';
+                            const details = response.updated_count ?
+                                ` (${response.updated_count} produk diupdate)` : '';
+
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'success',
+                                    title: 'Batch Update Berhasil',
+                                    message: message + details
+                                }
+                            }));
+
+                            // Refresh the table data
+                            if (typeof loadBOMData === 'function') {
+                                loadBOMData(1); // Reload current page
+                            }
+                        } else {
+                            // Show error notification
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'error',
+                                    title: 'Batch Update Gagal',
+                                    message: response.message ||
+                                        'Gagal melakukan batch update harga BOM.'
+                                }
+                            }));
+                        }
+                    },
+                    error: function(xhr) {
+                        console.error('Error in batch update BOM costs:', xhr);
+
+                        let errorMessage = 'Terjadi kesalahan saat melakukan batch update harga BOM.';
+                        if (xhr.status === 504 || xhr.status === 408) {
+                            errorMessage =
+                                'Batch update memerlukan waktu lebih lama dari biasanya. Silakan periksa hasilnya dalam beberapa saat.';
+                        }
+
+                        // Show error notification
+                        window.dispatchEvent(new CustomEvent('notify', {
+                            detail: {
+                                type: 'error',
+                                title: 'Batch Update Error',
+                                message: errorMessage
+                            }
+                        }));
+                    },
+                    complete: function() {
+                        // Restore button state
+                        button.disabled = false;
+                        button.innerHTML = originalContent;
+                    }
+                });
+            }
+
+            // Make function globally available
+            window.batchUpdateBOMCosts = batchUpdateBOMCosts;
         </script>
     @endpush
 </x-app-layout>

@@ -7,15 +7,19 @@ use App\Models\BillOfMaterial;
 use App\Models\BillOfMaterialDetail;
 use App\Models\Produk;
 use App\Models\Satuan;
+use App\Services\BOMCostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BOMController extends Controller
 {
-    public function __construct()
+    protected $bomCostService;
+
+    public function __construct(BOMCostService $bomCostService)
     {
-        $this->middleware('permission:bill_of_material.view')->only(['index', 'show', 'getById', 'data', 'getComponentUnit']);
+        $this->bomCostService = $bomCostService;
+        $this->middleware('permission:bill_of_material.view')->only(['index', 'show', 'getById', 'data', 'getComponentUnit', 'getCostBreakdown']);
         $this->middleware('permission:bill_of_material.create')->only(['create', 'store', 'addComponent']);
         $this->middleware('permission:bill_of_material.edit')->only(['edit', 'update', 'updateComponent']);
         $this->middleware('permission:bill_of_material.delete')->only(['destroy', 'deleteComponent']);
@@ -184,21 +188,28 @@ class BOMController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $bom = BillOfMaterial::findOrFail($id);
-
-        $validated = $request->validate([
-            'nama' => 'required|string|max:255',
-            'kode' => 'required|string|max:50|unique:bill_of_materials,kode,' . $id,
-            'produk_id' => 'required|exists:produk,id',
-            'deskripsi' => 'nullable|string',
-            'versi' => 'nullable|string|max:20',
-            'is_active' => 'boolean'
-        ]);
-
         try {
+            Log::info("BOM update called with ID: {$id}");
+            Log::info("Request data: " . json_encode($request->all()));
+
+            $bom = BillOfMaterial::findOrFail($id);
+            Log::info("BOM found: {$bom->nama}");
+
+            $validated = $request->validate([
+                'nama' => 'required|string|max:255',
+                'kode' => 'required|string|max:50|unique:bill_of_materials,kode,' . $id,
+                'produk_id' => 'required|exists:produk,id',
+                'deskripsi' => 'nullable|string',
+                'versi' => 'nullable|string|max:20',
+                'is_active' => 'boolean'
+            ]);
+
+            Log::info("Validation passed");
+
             DB::beginTransaction();
 
             $bom->update($validated);
+            Log::info("BOM updated successfully");
 
             DB::commit();
 
@@ -207,9 +218,17 @@ class BOMController extends Controller
                 'message' => 'BOM berhasil diperbarui',
                 'data' => $bom
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error in BOM update: ' . json_encode($e->errors()));
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating BOM: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'success' => false,
@@ -286,6 +305,9 @@ class BOMController extends Controller
                 'catatan' => $request->catatan
             ]);
 
+            // Update harga beli produk berdasarkan BOM setelah menambah komponen
+            $this->bomCostService->updateProductCostFromBOM($bom->produk_id, $id);
+
             DB::commit();
 
             return response()->json([
@@ -330,6 +352,10 @@ class BOMController extends Controller
                 'catatan' => $request->catatan
             ]);
 
+            // Update harga beli produk berdasarkan BOM setelah update komponen
+            $bom = $component->bom;
+            $this->bomCostService->updateProductCostFromBOM($bom->produk_id, $bom->id);
+
             DB::commit();
 
             return response()->json([
@@ -358,9 +384,13 @@ class BOMController extends Controller
 
             // Find the component
             $component = BillOfMaterialDetail::findOrFail($id);
+            $bom = $component->bom;
 
             // Delete the component
             $component->delete();
+
+            // Update harga beli produk berdasarkan BOM setelah hapus komponen
+            $this->bomCostService->updateProductCostFromBOM($bom->produk_id, $bom->id);
 
             DB::commit();
 
@@ -483,5 +513,85 @@ class BOMController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    /**
+     * Get cost breakdown untuk produk dengan BOM
+     */
+    public function getCostBreakdown(string $id)
+    {
+        try {
+            // $id adalah BOM ID, kita perlu mendapatkan produk_id dari BOM
+            $bom = BillOfMaterial::findOrFail($id);
+            $breakdown = $this->bomCostService->getCostBreakdown($bom->produk_id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $breakdown
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mendapatkan breakdown cost: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    /**
+     * Manual update harga beli produk berdasarkan BOM
+     */
+    public function updateProductCost(Request $request, string $id)
+    {
+        try {
+            Log::info("updateProductCost called with BOM ID: {$id}");
+
+            $bom = BillOfMaterial::findOrFail($id);
+            Log::info("BOM found: {$bom->nama}, Product ID: {$bom->produk_id}");
+
+            $result = $this->bomCostService->updateProductCostFromBOM($bom->produk_id, $id);
+            Log::info("Service result: " . json_encode($result));
+
+            if ($result) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Harga beli produk berhasil diupdate berdasarkan BOM',
+                    'data' => $result
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal mengupdate harga beli produk'
+                ], 400);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error in updateProductCost: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengupdate harga beli: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Batch update semua produk dengan BOM aktif
+     */
+    public function batchUpdateCosts()
+    {
+        try {
+            $results = $this->bomCostService->batchUpdateAllBOMProducts();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Batch update harga beli berhasil dilakukan',
+                'data' => $results,
+                'updated_count' => count($results)
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal melakukan batch update: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

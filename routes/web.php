@@ -169,6 +169,7 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:produk.view')->group(function () {
             Route::get('produk/{produk}/get', [ProdukController::class, 'getById'])->name('produk.get');
+            Route::get('produk/{produk}/cost-breakdown', [ProdukController::class, 'costBreakdown'])->name('produk.cost-breakdown');
         });
         Route::middleware('permission:produk.create')->group(function () {
             Route::get('/produk/generate-code', [ProdukController::class, 'generateCode'])->name('produk.generate-code');
@@ -481,6 +482,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('bom/{id}/get', [BOMController::class, 'getById'])->name('bom.get');
             Route::get('bom-data', [BOMController::class, 'data'])->name('bom.data');
             Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');
+            Route::get('bom/{id}/cost-breakdown', [BOMController::class, 'getCostBreakdown'])->name('bom.cost-breakdown');
         });
         Route::middleware('permission:bill_of_material.add_component')->group(function () {
             Route::post('bom/{id}/components', [BOMController::class, 'addComponent'])->name('bom.add-component');
@@ -491,6 +493,13 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:bill_of_material.delete_component')->group(function () {
             Route::delete('bom-component/{id}', [BOMController::class, 'deleteComponent'])->name('bom.delete-component');
         });
+
+        // Cost update routes - accessible to all who can view BOM
+        Route::middleware('permission:bill_of_material.view')->group(function () {
+            Route::post('bom/{id}/update-cost', [BOMController::class, 'updateProductCost'])->name('bom.update-cost');
+            Route::post('bom/batch-update-costs', [BOMController::class, 'batchUpdateCosts'])->name('bom.batch-update-costs');
+        });
+
         Route::resource('bom', BOMController::class);
 
         // Perencanaan Produksi Routes - with permission middleware

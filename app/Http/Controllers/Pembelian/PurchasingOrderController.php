@@ -10,6 +10,7 @@ use App\Models\Produk;
 use App\Models\Satuan;
 use App\Models\PurchaseRequest;
 use App\Models\SupplierProduk;
+use App\Services\BOMCostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +23,11 @@ class PurchasingOrderController extends Controller
 {
     use HasPDFQRCode;
 
-    public function __construct()
+    protected $bomCostService;
+
+    public function __construct(BOMCostService $bomCostService)
     {
+        $this->bomCostService = $bomCostService;
         $this->middleware('permission:purchase_order.view')->only(['printPdf', 'exportPdf']);
     }
     /**
@@ -77,7 +81,8 @@ class PurchasingOrderController extends Controller
             return false;
         }
 
-        $instance = new static();
+        $bomCostService = app(BOMCostService::class);
+        $instance = new static($bomCostService);
 
         foreach ($po->details as $detail) {
             if ($detail->produk_id) {
@@ -87,6 +92,9 @@ class PurchasingOrderController extends Controller
                     $detail->quantity,
                     $po->id
                 );
+
+                // Update produk lain yang menggunakan produk ini sebagai komponen BOM
+                $instance->bomCostService->updateDependentProducts($detail->produk_id);
             }
         }
 

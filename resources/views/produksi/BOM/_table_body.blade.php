@@ -25,6 +25,67 @@
                 </span>
             @endif
         </td>
+        <td class="px-6 py-4 whitespace-nowrap text-center">
+            @if ($bom->is_active && $bom->details->count() > 0)
+                <!-- BOM Cost Indicator -->
+                <div class="flex items-center justify-center space-x-2">
+                    @php
+                        $hasValidComponents =
+                            $bom->details
+                                ->filter(function ($detail) {
+                                    return $detail->komponen && $detail->komponen->harga_beli > 0;
+                                })
+                                ->count() > 0;
+                    @endphp
+
+                    @if ($hasValidComponents)
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-200/30 dark:text-green-400">
+                            <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Ready
+                        </span>
+                        @if (auth()->user()->hasPermission('bill_of_material.view'))
+                            <button onclick="updateBOMCost({{ $bom->id }})"
+                                class="inline-flex items-center px-2 py-1 border border-transparent rounded text-xs font-medium text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                title="Update harga beli produk berdasarkan BOM">
+                                <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Update
+                            </button>
+                        @endif
+                    @else
+                        <span
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-200/30 dark:text-yellow-400">
+                            <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            No Cost
+                        </span>
+                    @endif
+                </div>
+            @elseif ($bom->is_active)
+                <span
+                    class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-200/30 dark:text-gray-400">
+                    <svg class="w-3 h-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    Empty
+                </span>
+            @else
+                <span class="text-gray-400 dark:text-gray-500 text-xs">-</span>
+            @endif
+        </td>
         <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
             <div class="flex justify-center space-x-2">
                 @if (auth()->user()->hasPermission('bill_of_material.view'))
