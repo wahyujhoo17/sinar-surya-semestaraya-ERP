@@ -13,7 +13,7 @@ class PDFInvoiceTamplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '')
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice-New.pdf');
 
         // XY = 214x 163
@@ -25,7 +25,7 @@ class PDFInvoiceTamplate
             $pdf->setPrintHeader(false);
             $pdf->setPrintFooter(false);
             $pdf->SetAutoPageBreak(false, 0);
-            $pdf->SetMargins(0, 0, 0, true); // no margin at all, full page
+            $pdf->SetMargins(0, 0, 0, false); // no margin at all, full page
 
             $orientation = $customHeight > $customWidth ? 'P' : 'L';
             $pdf->AddPage($orientation, [$customWidth, $customHeight]);
@@ -162,42 +162,42 @@ class PDFInvoiceTamplate
                 // SUBTOTAL keep original starting X = baseX + 68, moved left by 1 -> baseX + 67
                 $subtotalX = $baseX + 67;
                 $pdf->SetXY($subtotalX, $yNama);
-                $pdf->Cell(30, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
+                $pdf->Cell(26, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
                 $currentY += $namaHeight;
             }
 
             // --- Summary (dari bawah ke atas) ---
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY(142, $yTotal);
-            $pdf->Cell(35, 6, 'Total', 0, 0, 'L');
+            $pdf->Cell(37, 6, 'Total', 0, 0, 'L');
             $pdf->Cell(25, 6, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
 
             $y = $yTotal - 6;
             if ($invoice->ongkos_kirim > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(35, 6, 'Ongkos Kirim', 0, 0, 'L');
+                $pdf->Cell(37, 6, 'Ongkos Kirim', 0, 0, 'L');
                 $pdf->Cell(25, 6, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             if ($invoice->ppn > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(35, 6, 'PPN 11%', 0, 0, 'L');
+                $pdf->Cell(37, 6, 'PPN 11%', 0, 0, 'L');
                 $pdf->Cell(25, 6, number_format($invoice->ppn, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             if ($invoice->diskon_nominal > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(35, 6, 'Diskon', 0, 0, 'L');
+                $pdf->Cell(37, 6, 'Diskon', 0, 0, 'L');
                 $pdf->Cell(25, 6, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
                 $y -= 6;
             }
             // Subtotal selalu tampil
             $pdf->SetFont('helvetica', '', 8);
             $pdf->SetXY(142, $y);
-            $pdf->Cell(35, 6, 'Subtotal', 0, 0, 'L');
+            $pdf->Cell(37, 6, 'Subtotal', 0, 0, 'L');
             $pdf->Cell(25, 6, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
 
             // Tambahkan garis horizontal sebelum total
@@ -211,7 +211,7 @@ class PDFInvoiceTamplate
             // TERBILANG
 
             // moved up by 1mm as requested
-            $pdf->SetXY(10, 121);
+            $pdf->SetXY(14, 121);
             // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $invoice->total) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
