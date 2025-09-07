@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\DirekturUtamaService;
+use App\Services\PDFInvoiceSinarSuryaTemplate;
 
 
 class InvoiceController extends Controller
@@ -809,7 +810,7 @@ class InvoiceController extends Controller
     public function printTemplate($id)
     {
         try {
-            // Load delivery order with its relationships
+            // Load invoice with its relationships
             $invoice = Invoice::with([
                 'salesOrder',
                 'customer',
@@ -821,9 +822,8 @@ class InvoiceController extends Controller
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
-            // Use PDF template service
+            // Use PDF template service - Menggunakan template asli
             $pdfService = new \App\Services\PDFInvoiceTamplate();
-            // $pdf = $pdfService->fillInvoiceTemplate($invoice);
             $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
 
 
@@ -831,11 +831,19 @@ class InvoiceController extends Controller
             // Output PDF
             $filename = 'Invoice-' . $invoice->nomor . '.pdf';
 
+            // Log aktivitas
+            $this->logUserAktivitas(
+                'print invoice template',
+                'invoice',
+                $invoice->id,
+                'Print invoice menggunakan Sinar Surya FPDI template'
+            );
+
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
 
         } catch (\Exception $e) {
-            Log::error('Error printing delivery order template: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal mencetak surat jalan: ' . $e->getMessage());
+            Log::error('Error printing invoice template: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mencetak invoice: ' . $e->getMessage());
         }
     }
 
@@ -861,6 +869,8 @@ class InvoiceController extends Controller
             $templates = [
                 'sinar-surya' => [
                     'name' => 'PT Sinar Surya Semestaraya',
+                    'use_fpdi_template' => true, // Flag untuk menggunakan FPDI template
+                    'service' => \App\Services\PDFInvoiceSinarSuryaTemplate::class,
                     'view' => 'penjualan.invoice.pdf.sinar-surya',
                     'logo' => public_path('img/logo-sinar-surya.png'),
                     'direktur_nama' => $direkturUtama
@@ -889,6 +899,27 @@ class InvoiceController extends Controller
 
             $templateConfig = $templates[$template];
 
+            // Check if this template uses FPDI service (new template system)
+            if (isset($templateConfig['use_fpdi_template']) && $templateConfig['use_fpdi_template']) {
+                // Use FPDI template service for Sinar Surya
+                $serviceClass = $templateConfig['service'];
+                $pdfService = new $serviceClass();
+                $pdf = $pdfService->fillInvoiceTemplate($invoice, $templateConfig['direktur_nama']);
+
+                $filename = 'Invoice-' . $invoice->nomor . '-' . $templateConfig['name'] . '.pdf';
+
+                // Log aktivitas
+                $this->logUserAktivitas(
+                    'export invoice pdf',
+                    'invoice',
+                    $invoice->id,
+                    'Export invoice ke PDF menggunakan FPDI template: ' . $templateConfig['name']
+                );
+
+                return $pdf->Output($filename, 'I'); // 'I' for inline display
+            }
+
+            // Legacy template system (for other templates)
             // Convert logo to base64 untuk menghindari masalah path
             $logoBase64 = '';
             if (file_exists($templateConfig['logo'])) {

@@ -5,15 +5,21 @@ namespace App\Services;
 use TCPDF;
 use setasign\Fpdi\Tcpdf\Fpdi;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
-class PDFInvoiceTamplate
+class PDFInvoiceSinarSuryaTemplate
 {
     /**
-     * Generate Invoice PDF (mirip Delivery Order, bisa pakai template atau hanya text)
+     * Generate Invoice PDF untuk Sinar Surya dengan template aktif
+     * 
+     * Berbeda dengan PDFInvoiceTamplate, service ini:
+     * - Selalu menggunakan template ($useTemplate = true)
+     * - Khusus dioptimalkan untuk PT Sinar Surya Semestaraya
+     * - Digunakan melalui exportPdf dengan parameter template=sinar-surya
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '')
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = true; // Selalu gunakan template untuk Sinar Surya
         $templatePath = public_path('pdf/Invoice-New.pdf');
 
         // XY = 214x 163
@@ -45,11 +51,11 @@ class PDFInvoiceTamplate
             $pdf->SetFont('helvetica', '', 10);
             $pdf->SetXY(97, 36.5);
             $pdf->Cell(0, 0, $invoice->nomor, 0, 0, 'L');
-            $pdf->SetXY(156, 13.5);
+            $pdf->SetXY(160, 13.5); // Moved right by 4 units from 156
             $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
 
             // --- Customer ---
-            $customerX = 12;
+            $customerX = 9; // Moved left by 3 units from 12
             $customerY = 37;
             $maxCustomerWidth = 70;
             $pdf->SetFont('helvetica', 'B', 9);
@@ -112,7 +118,7 @@ class PDFInvoiceTamplate
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY(22.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2 and right by 1
-            $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+            // $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L'); // Header dihapus sesuai permintaan
 
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
@@ -130,8 +136,8 @@ class PDFInvoiceTamplate
                 $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
 
                 // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
-                // Geser nomor dan kode 3mm ke kanan dari origin sebelumnya (startX 8 -> 11)
-                $pdf->SetXY(11, $currentY);
+                // Geser nomor dan kode 5 unit ke kiri dari posisi sebelumnya (startX 11 -> 6)
+                $pdf->SetXY(6, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
                 $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
 
@@ -210,8 +216,8 @@ class PDFInvoiceTamplate
 
             // TERBILANG
 
-            // moved up by 1mm as requested
-            $pdf->SetXY(14, 121);
+            // moved up by 1mm as requested, and moved left by 4 units, now moved down by 2 units
+            $pdf->SetXY(10, 123);
             // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $invoice->total) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
@@ -240,8 +246,8 @@ class PDFInvoiceTamplate
 
             return $pdf;
         } catch (\Exception $e) {
-            Log::error('FPDI Invoice Error: ' . $e->getMessage());
-            throw new \Exception('Gagal membuat PDF Invoice: ' . $e->getMessage());
+            Log::error('FPDI Invoice Sinar Surya Error: ' . $e->getMessage());
+            throw new \Exception('Gagal membuat PDF Invoice Sinar Surya: ' . $e->getMessage());
         }
     }
 }
