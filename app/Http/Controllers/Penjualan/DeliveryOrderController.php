@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\NotificationService;
+use App\Services\PDFDeliveryOrderSinarSuryaTemplate;
 
 class DeliveryOrderController extends Controller
 {
@@ -1009,6 +1010,8 @@ class DeliveryOrderController extends Controller
             $templates = [
                 'sinar-surya' => [
                     'name' => 'PT Sinar Surya Semestaraya',
+                    'use_fpdi_template' => true, // Flag untuk menggunakan FPDI template
+                    'service' => \App\Services\PDFDeliveryOrderSinarSuryaTemplate::class,
                     'view' => 'penjualan.delivery-order.pdf.sinar-surya',
                     'logo' => public_path('img/logo-sinar-surya.png')
                 ],
@@ -1034,6 +1037,33 @@ class DeliveryOrderController extends Controller
 
             $templateConfig = $templates[$template];
 
+            // Check if this template uses FPDI service (new template system)
+            if (isset($templateConfig['use_fpdi_template']) && $templateConfig['use_fpdi_template']) {
+                // Use FPDI template service for Sinar Surya
+                $serviceClass = $templateConfig['service'];
+                $pdfService = new $serviceClass();
+                $pdf = $pdfService->fillDeliveryOrderTemplate($deliveryOrder);
+
+                $filename = 'Surat-Jalan-' . $deliveryOrder->nomor . '-' . $templateConfig['name'] . '.pdf';
+
+                // Log aktivitas
+                $this->logUserAktivitas(
+                    'export delivery order pdf',
+                    'delivery_order',
+                    $deliveryOrder->id,
+                    'Export surat jalan ke PDF menggunakan FPDI template: ' . $templateConfig['name']
+                );
+
+                return response($pdf->output(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                    'Cache-Control' => 'private, max-age=0, must-revalidate',
+                    'Pragma' => 'public',
+                    'X-Frame-Options' => 'SAMEORIGIN'
+                ]);
+            }
+
+            // Legacy template system (for other templates)
             // Convert logo to base64 untuk menghindari masalah path
             $logoBase64 = '';
             if (file_exists($templateConfig['logo'])) {
@@ -1110,36 +1140,6 @@ class DeliveryOrderController extends Controller
         return $pdf->Output('coordinates-helper.pdf', 'I');
     }
 
-    /**
-     * Test coordinates for template positioning (development use)
-     */
-    public function testTemplateCoordinates($id)
-    {
-        try {
-            // Load delivery order with its relationships
-            $deliveryOrder = DeliveryOrder::with([
-                'salesOrder',
-                'customer',
-                'gudang',
-                'user',
-                'details.produk.satuan',
-                'details.satuan'
-            ])->findOrFail($id);
-
-            // Use PDF template service to test coordinates
-            $pdfService = new \App\Services\PDFTemplateService();
-            $pdf = $pdfService->testCoordinatesWithTemplate($deliveryOrder);
-
-            // Output PDF for testing
-            $filename = 'Test-Coordinates-' . $deliveryOrder->nomor . '.pdf';
-
-            return $pdf->Output($filename, 'I'); // 'I' for inline display
-
-        } catch (\Exception $e) {
-            Log::error('Error testing template coordinates: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Gagal testing koordinat: ' . $e->getMessage());
-        }
-    }
 
     /**
      * Get template information for debugging/development
