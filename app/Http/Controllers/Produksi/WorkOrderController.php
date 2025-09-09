@@ -735,7 +735,7 @@ class WorkOrderController extends Controller
 
             $lastQC = DB::table('quality_control')
                 ->where('nomor', 'like', $prefix . $date . '-%')
-                ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+                ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
                 ->first();
 
             $newNumberSuffix = '001';
@@ -835,7 +835,7 @@ class WorkOrderController extends Controller
 
         $lastWorkOrder = DB::table('work_order')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
@@ -856,7 +856,7 @@ class WorkOrderController extends Controller
 
         $lastPengambilan = DB::table('pengambilan_bahan_baku')
             ->where('nomor', 'like', $prefix . $date . '-%')
-            ->selectRaw('MAX(CAST(SUBSTRING(nomor FROM ' . (strlen($prefix . $date . '-') + 1) . ') AS INTEGER)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($prefix . $date . '-') + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
         $newNumberSuffix = '001';
