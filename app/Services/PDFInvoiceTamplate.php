@@ -105,9 +105,9 @@ class PDFInvoiceTamplate
             $lineHeight = 6;
 
             // Fixed summary position: reserve space at bottom so summary is always at the same Y
-            $yTotal = $customHeight - 50; // posisi paling bawah (fix)
+            $yTotal = $customHeight - 47; // posisi paling bawah (fix), digeser 3 unit ke bawah
             $summaryReserveLines = 5; // jumlah baris maksimal yang dipakai summary (Total, Ongkos Kirim, PPN, Diskon, Subtotal)
-            $itemsMaxY = $yTotal - ($summaryReserveLines * 6) - 2; // sisa ruang untuk items
+            $itemsMaxY = $yTotal - ($summaryReserveLines * 2) - 2; // sisa ruang untuk items
 
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
@@ -169,36 +169,36 @@ class PDFInvoiceTamplate
             // --- Summary (dari bawah ke atas) ---
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY(142, $yTotal);
-            $pdf->Cell(37, 6, 'Total', 0, 0, 'L');
-            $pdf->Cell(25, 6, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
+            $pdf->Cell(37, 4, 'Total', 0, 0, 'L');
+            $pdf->Cell(25, 4, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
 
-            $y = $yTotal - 6;
+            $y = $yTotal - 4;
             if ($invoice->ongkos_kirim > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(37, 6, 'Ongkos Kirim', 0, 0, 'L');
-                $pdf->Cell(25, 6, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
-                $y -= 6;
+                $pdf->Cell(37, 4, 'Ongkos Kirim', 0, 0, 'L');
+                $pdf->Cell(25, 4, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
+                $y -= 4;
             }
             if ($invoice->ppn > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(37, 6, 'PPN 11%', 0, 0, 'L');
-                $pdf->Cell(25, 6, number_format($invoice->ppn, 0, ',', '.'), 0, 1, 'R');
-                $y -= 6;
+                $pdf->Cell(37, 4, 'PPN 11%', 0, 0, 'L');
+                $pdf->Cell(25, 4, number_format($invoice->ppn, 0, ',', '.'), 0, 1, 'R');
+                $y -= 4;
             }
             if ($invoice->diskon_nominal > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(37, 6, 'Diskon', 0, 0, 'L');
-                $pdf->Cell(25, 6, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
-                $y -= 6;
+                $pdf->Cell(37, 4, 'Diskon', 0, 0, 'L');
+                $pdf->Cell(25, 4, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
+                $y -= 4;
             }
             // Subtotal selalu tampil
             $pdf->SetFont('helvetica', '', 8);
             $pdf->SetXY(142, $y);
-            $pdf->Cell(37, 6, 'Subtotal', 0, 0, 'L');
-            $pdf->Cell(25, 6, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
+            $pdf->Cell(37, 4, 'Subtotal', 0, 0, 'L');
+            $pdf->Cell(25, 4, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
 
             // Tambahkan garis horizontal sebelum total
             $pdf->SetDrawColor(0, 0, 0); // warna hitam
