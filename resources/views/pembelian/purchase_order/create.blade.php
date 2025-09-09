@@ -691,6 +691,9 @@
                                                 <label class="inline-flex items-center cursor-pointer">
                                                     <input type="checkbox" x-model="includePPN"
                                                         @change="updateTotals()" class="sr-only peer">
+                                                    <!-- Hidden input untuk mengirim nilai include_ppn ke backend -->
+                                                    <input type="hidden" name="include_ppn"
+                                                        :value="includePPN ? 1 : 0">
                                                     <div
                                                         class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500 dark:peer-focus:ring-primary-600 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500">
                                                     </div>
@@ -937,7 +940,7 @@
                 diskonNominal: 0,
                 ppn: 0,
                 ongkosKirim: 0,
-                includePPN: true,
+                includePPN: false, // Default false agar user harus eksplisit mengaktifkan PPN
                 produksData: @json($produks ?? []),
 
                 init() {

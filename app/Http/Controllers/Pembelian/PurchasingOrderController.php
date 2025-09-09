@@ -338,9 +338,9 @@ class PurchasingOrderController extends Controller
         $diskon_nominal = min($diskon_nominal, $subtotal);
         $after_discount = max(0, $subtotal - $diskon_nominal);
 
-        // Cek apakah PPN diaktifkan (bisa dari request atau default true)
+        // Cek apakah PPN diaktifkan dari toggle frontend
         $ppn_persen = setting('tax_percentage', 11); // default from settings
-        $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
+        $includePPN = (bool)$request->input('include_ppn', false); // default false jika tidak ada
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
 
         // Ongkos kirim
@@ -536,7 +536,7 @@ class PurchasingOrderController extends Controller
         $diskon_nominal = min($diskon_nominal, $subtotal);
         $after_discount = max(0, $subtotal - $diskon_nominal);
         $ppn_persen = setting('tax_percentage', 11); // default from settings
-        $includePPN = $request->has('include_ppn') ? (bool)$request->input('include_ppn') : true;
+        $includePPN = (bool)$request->input('include_ppn', false); // default false jika tidak ada
         $ppn_nominal = $includePPN ? round($after_discount * ($ppn_persen / 100), 2) : 0;
 
         // Ongkos kirim
