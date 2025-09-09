@@ -149,7 +149,8 @@
                         <div class="relative rounded-md shadow-sm">
                             <select name="pr_id" id="pr_id" @if ($purchaseOrder->status !== 'draft') disabled @endif
                                 @change="loadItemsFromPurchaseRequest($event.target.value)"
-                                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                data-placeholder="Tidak Berdasarkan PR"
+                                class="pr-select block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                 <option value="">Tidak Berdasarkan PR</option>
                                 @foreach ($purchaseRequests ?? [] as $pr)
                                     <option value="{{ $pr->id }}"
@@ -1035,19 +1036,32 @@
                         const urlParams = new URLSearchParams(window.location.search);
                         const prIdFromUrl = urlParams.get('pr_id');
 
-                        if (prIdFromUrl) {
-                            // Set the select box value if PR ID is in the URL
-                            if (prSelect) {
-                                prSelect.value = prIdFromUrl;
+                        if (prSelect) {
+                            $(prSelect).select2({
+                                placeholder: $(prSelect).data('placeholder') || 'Tidak Berdasarkan PR',
+                                allowClear: true,
+                                width: '100%'
+                            });
+
+                            $(prSelect).on('select2:select', (e) => {
+                                const id = e.params.data.id;
+                                this.loadItemsFromPurchaseRequest(id);
+                            });
+
+                            $(prSelect).on('select2:clear', () => {
+                                this.loadItemsFromPurchaseRequest('');
+                            });
+
+                            if (prIdFromUrl) {
+                                $(prSelect).val(prIdFromUrl).trigger('change');
+                                window.notify('Memuat item dari permintaan pembelian...', 'info', 'Memuat Data');
+                                setTimeout(() => {
+                                    this.loadItemsFromPurchaseRequest(prIdFromUrl);
+                                }, 500);
+                            } else if (prSelect.value) {
+                                $(prSelect).trigger('change');
+                                this.loadItemsFromPurchaseRequest(prSelect.value);
                             }
-
-                            // Show a loading notification
-                            window.notify('Memuat item dari permintaan pembelian...', 'info', 'Memuat Data');
-
-                            // Delay slightly for better UX
-                            setTimeout(() => {
-                                this.loadItemsFromPurchaseRequest(prIdFromUrl);
-                            }, 500);
                         }
                     }
                 },

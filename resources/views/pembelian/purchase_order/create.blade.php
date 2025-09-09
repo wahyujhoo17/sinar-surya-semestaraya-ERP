@@ -260,7 +260,8 @@
                         <div class="relative rounded-md shadow-sm">
                             <select name="pr_id" id="pr_id"
                                 @change="loadItemsFromPurchaseRequest($event.target.value)"
-                                class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                data-placeholder="Tidak Berdasarkan PR"
+                                class="pr-select block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                 <option value="">Tidak Berdasarkan PR</option>
                                 @foreach ($purchaseRequests ?? [] as $pr)
                                     <option value="{{ $pr->id }}">{{ $pr->nomor }} - {{ $pr->tanggal }}
@@ -973,27 +974,42 @@
                         }
                     }
 
-                    // Check if PR ID is pre-filled or in URL
+                    // Check if PR ID is pre-filled or in URL and initialize Select2 on PR select
                     const prSelect = document.getElementById('pr_id');
                     const urlParams = new URLSearchParams(window.location.search);
                     const prIdFromUrl = urlParams.get('pr_id');
 
-                    if (prIdFromUrl) {
-                        // Set the select box value if PR ID is in the URL
-                        if (prSelect) {
-                            prSelect.value = prIdFromUrl;
+                    if (prSelect) {
+                        // Initialize Select2 for PR dropdown (use existing options already rendered)
+                        $(prSelect).select2({
+                            placeholder: $(prSelect).data('placeholder') || 'Tidak Berdasarkan PR',
+                            allowClear: true,
+                            width: '100%'
+                        });
+
+                        // When user selects a PR via Select2, load items
+                        $(prSelect).on('select2:select', (e) => {
+                            const id = e.params.data.id;
+                            this.loadItemsFromPurchaseRequest(id);
+                        });
+
+                        // When user clears the selection, clear items (existing method returns early if no id)
+                        $(prSelect).on('select2:clear', () => {
+                            this.loadItemsFromPurchaseRequest('');
+                        });
+
+                        // If PR ID is provided in URL, set Select2 value and load items
+                        if (prIdFromUrl) {
+                            $(prSelect).val(prIdFromUrl).trigger('change');
+                            window.notify('Memuat item dari permintaan pembelian...', 'info', 'Memuat Data');
+                            setTimeout(() => {
+                                this.loadItemsFromPurchaseRequest(prIdFromUrl);
+                            }, 500);
+                        } else if (prSelect.value) {
+                            // Trigger load if select has prefilled value
+                            $(prSelect).trigger('change');
+                            this.loadItemsFromPurchaseRequest(prSelect.value);
                         }
-
-                        // Show a loading notification
-                        window.notify('Memuat item dari permintaan pembelian...', 'info', 'Memuat Data');
-
-                        // Delay slightly for better UX
-                        setTimeout(() => {
-                            this.loadItemsFromPurchaseRequest(prIdFromUrl);
-                        }, 500);
-                    } else if (prSelect && prSelect.value) {
-                        // Otherwise use the selected value if it exists
-                        this.loadItemsFromPurchaseRequest(prSelect.value);
                     }
                 },
 

@@ -9,6 +9,7 @@ use App\Models\Supplier;
 use App\Models\Produk;
 use App\Models\Satuan;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestDetail;
 use App\Models\SupplierProduk;
 use App\Services\BOMCostService;
 use Illuminate\Http\Request;
@@ -99,6 +100,79 @@ class PurchasingOrderController extends Controller
         }
 
         return true;
+    }
+
+    /**
+     * Helper untuk mengecek apakah semua item dalam PR sudah terpenuhi oleh PO-PO yang ada
+     * @param int $prId - ID Purchase Request
+     * @return bool - true jika semua item sudah terpenuhi
+     */
+    private function isPurchaseRequestFullyFulfilled($prId)
+    {
+        $pr = PurchaseRequest::with('details')->find($prId);
+        if (!$pr) return false;
+
+        foreach ($pr->details as $prDetail) {
+            // Hitung total quantity yang sudah dipenuhi oleh semua PO aktif (tidak dibatalkan)
+            $totalFulfilledQty = PurchaseOrderDetail::whereHas('purchaseOrder', function ($query) use ($prId) {
+                $query->where('pr_id', $prId)
+                    ->where('status', '!=', 'dibatalkan');
+            })
+                ->where('produk_id', $prDetail->produk_id)
+                ->sum('quantity');
+
+            // Jika masih ada item yang belum terpenuhi sepenuhnya
+            if ($totalFulfilledQty < $prDetail->quantity) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Helper untuk mengupdate status PR berdasarkan kelengkapan item
+     * @param int $prId - ID Purchase Request
+     */
+    private function updatePurchaseRequestStatus($prId)
+    {
+        $pr = PurchaseRequest::find($prId);
+        if (!$pr || $pr->status !== 'disetujui') {
+            return;
+        }
+
+        if ($this->isPurchaseRequestFullyFulfilled($prId)) {
+            $pr->update(['status' => 'selesai']);
+            $this->logUserAktivitas(
+                'update_status_pr',
+                'purchase_request',
+                $pr->id,
+                'Status PR diubah menjadi selesai karena semua item sudah terpenuhi oleh PO'
+            );
+        }
+    }
+
+    /**
+     * Helper untuk mengembalikan status PR dari 'selesai' ke 'disetujui' jika item belum terpenuhi sepenuhnya
+     * @param int $prId - ID Purchase Request
+     */
+    private function revertPurchaseRequestStatus($prId)
+    {
+        $pr = PurchaseRequest::find($prId);
+        if (!$pr || $pr->status !== 'selesai') {
+            return;
+        }
+
+        // Jika setelah PO dibatalkan/dihapus, ternyata PR belum fully fulfilled lagi
+        if (!$this->isPurchaseRequestFullyFulfilled($prId)) {
+            $pr->update(['status' => 'disetujui']);
+            $this->logUserAktivitas(
+                'revert_status_pr',
+                'purchase_request',
+                $pr->id,
+                'Status PR dikembalikan ke disetujui karena item belum terpenuhi sepenuhnya'
+            );
+        }
     }
 
     /**
@@ -217,7 +291,33 @@ class PurchasingOrderController extends Controller
     public function create()
     {
         $suppliers = Supplier::orderBy('nama')->get();
-        $purchaseRequests = PurchaseRequest::where('status', 'disetujui')->get();
+
+        // Ambil PR yang bisa digunakan untuk membuat PO:
+        // 1. Status 'disetujui' (belum ada PO sama sekali atau semua PO dibatalkan)
+        // 2. Status 'selesai' tapi belum fully fulfilled (masih ada item yang bisa dibuat PO)
+        $purchaseRequests = PurchaseRequest::where(function ($query) {
+            // PR dengan status disetujui yang belum ada PO aktif
+            $query->where('status', 'disetujui')
+                ->whereDoesntHave('purchaseOrders', function ($q) {
+                    $q->where('status', '!=', 'dibatalkan');
+                });
+        })
+            ->orWhere(function ($query) {
+                // PR dengan status selesai tapi belum fully fulfilled
+                $query->where('status', 'selesai')
+                    ->whereHas('purchaseOrders', function ($q) {
+                        $q->where('status', '!=', 'dibatalkan');
+                    });
+            })
+            ->get()
+            ->filter(function ($pr) {
+                // Filter manual: untuk PR status selesai, cek apakah masih bisa dibuat PO
+                if ($pr->status === 'selesai') {
+                    return !$this->isPurchaseRequestFullyFulfilled($pr->id);
+                }
+                return true;
+            });
+
         $produks = Produk::orderBy('nama')->get();
         $satuans = Satuan::orderBy('nama')->get();
 
@@ -410,6 +510,11 @@ class PurchasingOrderController extends Controller
                 }
             }
 
+            // Update status PR jika PO dibuat dari PR - cek kelengkapan item
+            if ($purchaseOrder->pr_id) {
+                $this->updatePurchaseRequestStatus($purchaseOrder->pr_id);
+            }
+
             DB::commit();
 
             $this->logUserAktivitas('tambah', 'purchase_order', $purchaseOrder->id, 'Membuat Purchase Order: ' . $purchaseOrder->nomor);
@@ -471,7 +576,39 @@ class PurchasingOrderController extends Controller
         }
 
         $suppliers = Supplier::orderBy('nama')->get();
-        $purchaseRequests = PurchaseRequest::where('status', 'disetujui')->get();
+
+        // Ambil PR yang bisa digunakan untuk edit PO:
+        // 1. Status 'disetujui' yang belum digunakan PO aktif lain (kecuali PO ini)
+        // 2. Status 'selesai' yang belum fully fulfilled (kecuali PO ini)
+        // 3. PR yang sedang digunakan PO ini (selalu bisa dipilih)
+        $purchaseRequests = PurchaseRequest::where(function ($query) use ($purchaseOrder) {
+            // PR dengan status disetujui yang belum ada PO aktif lain
+            $query->where('status', 'disetujui')
+                ->where(function ($q) use ($purchaseOrder) {
+                    $q->whereDoesntHave('purchaseOrders', function ($subq) use ($purchaseOrder) {
+                        $subq->where('status', '!=', 'dibatalkan')
+                            ->where('id', '!=', $purchaseOrder->id);
+                    });
+                });
+        })
+            ->orWhere(function ($query) use ($purchaseOrder) {
+                // PR dengan status selesai tapi belum fully fulfilled
+                $query->where('status', 'selesai')
+                    ->whereHas('purchaseOrders', function ($q) use ($purchaseOrder) {
+                        $q->where('status', '!=', 'dibatalkan');
+                    });
+            })
+            ->orWhere('id', $purchaseOrder->pr_id) // PR yang sedang digunakan PO ini
+            ->distinct()
+            ->get()
+            ->filter(function ($pr) use ($purchaseOrder) {
+                // Filter manual: untuk PR status selesai, cek apakah masih bisa dibuat PO
+                if ($pr->status === 'selesai' && $pr->id !== $purchaseOrder->pr_id) {
+                    return !$this->isPurchaseRequestFullyFulfilled($pr->id);
+                }
+                return true;
+            });
+
         $produks = Produk::orderBy('nama')->get();
         $satuans = Satuan::orderBy('nama')->get();
 
@@ -646,6 +783,11 @@ class PurchasingOrderController extends Controller
                 }
             }
 
+            // Update status PR jika ada perubahan item - cek kelengkapan item
+            if ($purchaseOrder->pr_id) {
+                $this->updatePurchaseRequestStatus($purchaseOrder->pr_id);
+            }
+
             DB::commit();
 
             $this->logUserAktivitas('ubah', 'purchase_order', $purchaseOrder->id, 'Mengubah Purchase Order: ' . $purchaseOrder->nomor);
@@ -673,6 +815,11 @@ class PurchasingOrderController extends Controller
 
         try {
             DB::beginTransaction();
+
+            // Jika PO dibuat dari PR, cek ulang status PR setelah PO dihapus
+            if ($purchaseOrder->pr_id) {
+                $this->revertPurchaseRequestStatus($purchaseOrder->pr_id);
+            }
 
             // Delete all details first
             $purchaseOrder->details()->delete();
@@ -738,6 +885,11 @@ class PurchasingOrderController extends Controller
                     );
                 }
             }
+        }
+
+        // Jika status berubah menjadi "dibatalkan", cek ulang status PR
+        if ($newStatus === 'dibatalkan' && $purchaseOrder->pr_id) {
+            $this->revertPurchaseRequestStatus($purchaseOrder->pr_id);
         }
 
         $this->logUserAktivitas('ubah_status', 'purchase_order', $purchaseOrder->id, 'Ubah status dari ' . $oldStatus . ' ke ' . $newStatus . ' untuk PO: ' . $purchaseOrder->nomor);
