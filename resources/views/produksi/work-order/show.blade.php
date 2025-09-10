@@ -43,6 +43,49 @@
             </div>
         </div>
 
+        {{-- Alert untuk status rework --}}
+        @if ($workOrder->status === 'berjalan' && $workOrder->qualityControl && $workOrder->qualityControl->jumlah_gagal > 0)
+            <div
+                class="mb-6 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
+                            fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                            Work Order dalam Status Rework
+                        </h3>
+                        <div class="mt-2 text-sm text-orange-700 dark:text-orange-300">
+                            <p>
+                                Work Order ini dikembalikan ke produksi untuk rework karena
+                                {{ $workOrder->qualityControl->jumlah_gagal }} unit tidak memenuhi standar QC.
+                                Silakan lakukan perbaikan dan QC ulang setelah selesai.
+                            </p>
+                        </div>
+                        <div class="mt-3">
+                            <div class="bg-orange-100 dark:bg-orange-800/30 rounded-md p-3">
+                                <h4
+                                    class="text-xs font-medium text-orange-800 dark:text-orange-200 uppercase tracking-wide mb-2">
+                                    💡 Tips Proses Rework:
+                                </h4>
+                                <ul class="text-xs text-orange-700 dark:text-orange-300 space-y-1">
+                                    <li>• Analisis penyebab kegagalan QC dari detail kriteria</li>
+                                    <li>• Lakukan perbaikan sesuai standar operasional</li>
+                                    <li>• Setelah rework selesai, ubah status ke "Selesai Produksi"</li>
+                                    <li>• Lakukan QC ulang hingga semua unit memenuhi standar</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Action buttons based on status --}}
         @if ($workOrder->status != 'selesai')
 
@@ -119,16 +162,19 @@
                                 Buat Quality Control
                             </a>
 
-                            <button type="button"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
-                                onclick="showConfirmModal('Kembali ke Produksi', 'Apakah Anda ingin kembali ke tahap produksi?', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                Kembali ke Produksi
-                            </button>
+                            {{-- Button Rework hanya ditampilkan jika QC terakhir ada produk yang gagal --}}
+                            @if ($workOrder->qualityControl && $workOrder->qualityControl->jumlah_gagal > 0)
+                                <button type="button"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                    onclick="showConfirmModal('Rework Produk', 'Apakah ada produk yang perlu diperbaiki/rework? Work Order akan dikembalikan ke status produksi.', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Rework Produk
+                                </button>
+                            @endif
 
                             <button type="button"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -154,6 +200,20 @@
                                 </svg>
                                 Buat Pengembalian Material
                             </a>
+
+                            {{-- Button untuk rework jika ditemukan masalah setelah QC atau QC terakhir ada yang gagal --}}
+                            @if ($workOrder->qualityControl && $workOrder->qualityControl->jumlah_gagal > 0)
+                                <button type="button"
+                                    class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
+                                    onclick="showConfirmModal('Rework Produk', 'Apakah ditemukan masalah dan perlu rework produk? Work Order akan dikembalikan ke status produksi.', '{{ route('produksi.work-order.change-status', ['id' => $workOrder->id, 'status' => 'berjalan']) }}')">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                    Rework Produk
+                                </button>
+                            @endif
 
                             <button type="button"
                                 class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
@@ -238,16 +298,29 @@
                         <div>
                             <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Status</dt>
                             <dd class="mt-1">
+                                @php
+                                    $isRework =
+                                        $workOrder->status === 'berjalan' &&
+                                        $workOrder->qualityControl &&
+                                        $workOrder->qualityControl->jumlah_gagal > 0;
+                                @endphp
+
                                 <span
                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                                     {{ $workOrder->status == 'direncanakan' ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}
-                                    {{ $workOrder->status == 'berjalan' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300' : '' }}
+                                    {{ $workOrder->status == 'berjalan' && !$isRework ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300' : '' }}
+                                    {{ $isRework ? 'bg-orange-100 text-orange-800 dark:bg-orange-700 dark:text-orange-300' : '' }}
                                     {{ $workOrder->status == 'selesai_produksi' ? 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-300' : '' }}
                                     {{ $workOrder->status == 'qc_passed' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-700 dark:text-indigo-300' : '' }}
                                     {{ $workOrder->status == 'pengembalian_material' ? 'bg-purple-100 text-purple-800 dark:bg-purple-700 dark:text-purple-300' : '' }}
                                     {{ $workOrder->status == 'selesai' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-300' : '' }}
                                     {{ $workOrder->status == 'dibatalkan' ? 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-300' : '' }}">
-                                    {{ ucwords(str_replace('_', ' ', $workOrder->status)) }}
+
+                                    @if ($isRework)
+                                        Rework ({{ $workOrder->qualityControl->jumlah_gagal }} unit)
+                                    @else
+                                        {{ ucwords(str_replace('_', ' ', $workOrder->status)) }}
+                                    @endif
                                 </span>
                             </dd>
                         </div>
@@ -810,6 +883,201 @@
                             </div>
                         </div>
                     @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Riwayat QC dan Rework --}}
+        @if ($workOrder->qualityControls && $workOrder->qualityControls->count() > 0)
+            <div
+                class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-gray-600 dark:text-gray-300"
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Riwayat Quality Control
+                        <span
+                            class="ml-2 text-sm bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
+                            {{ $workOrder->qualityControls->count() }} QC
+                        </span>
+                    </h2>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        @foreach ($workOrder->qualityControls as $index => $qc)
+                            <div
+                                class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 {{ $index === 0 ? 'ring-2 ring-blue-200 dark:ring-blue-800' : '' }}">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center">
+                                        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+                                            QC #{{ $qc->nomor }}
+                                        </h3>
+                                        @if ($index === 0)
+                                            <span
+                                                class="ml-2 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded-full">
+                                                Terbaru
+                                            </span>
+                                        @endif
+                                        @if ($index > 0)
+                                            <span
+                                                class="ml-2 text-xs bg-gray-100 text-gray-600 dark:bg-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                                QC ke-{{ $workOrder->qualityControls->count() - $index }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <span class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ date('d/m/Y H:i', strtotime($qc->created_at)) }}
+                                    </span>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4 mb-3">
+                                    <div class="text-center">
+                                        <div class="text-lg font-bold text-green-600 dark:text-green-400">
+                                            {{ $qc->jumlah_lolos }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Unit Lolos</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-lg font-bold text-red-600 dark:text-red-400">
+                                            {{ $qc->jumlah_gagal }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Unit Gagal</div>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                            {{ $qc->jumlah_lolos + $qc->jumlah_gagal }}
+                                        </div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Total Diperiksa</div>
+                                    </div>
+                                </div>
+
+                                @if ($qc->jumlah_gagal > 0)
+                                    <div
+                                        class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-md p-3 mb-3">
+                                        <div class="flex items-center">
+                                            <svg class="h-4 w-4 text-orange-400 mr-2" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="text-sm text-orange-800 dark:text-orange-200 font-medium">
+                                                {{ $qc->jumlah_gagal }} unit memerlukan rework
+                                            </span>
+                                        </div>
+                                        @if ($index === 0 && $workOrder->status === 'berjalan')
+                                            <div class="mt-2 text-xs text-orange-700 dark:text-orange-300">
+                                                Status: Sedang dalam proses rework
+                                            </div>
+                                        @elseif($index > 0)
+                                            <div class="mt-2 text-xs text-orange-700 dark:text-orange-300">
+                                                Status: Telah dirework
+                                            </div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <div
+                                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3 mb-3">
+                                        <div class="flex items-center">
+                                            <svg class="h-4 w-4 text-green-400 mr-2" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="text-sm text-green-800 dark:text-green-200 font-medium">
+                                                Semua unit lulus Quality Control
+                                            </span>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Detail Kriteria QC --}}
+                                @if ($qc->detail && $qc->detail->count() > 0)
+                                    <div class="mt-3">
+                                        <details class="group">
+                                            <summary
+                                                class="cursor-pointer text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 flex items-center">
+                                                <svg class="w-3 h-3 mr-1 transition-transform group-open:rotate-90"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                Lihat Detail Kriteria QC ({{ $qc->detail->count() }} kriteria)
+                                            </summary>
+                                            <div
+                                                class="mt-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600 overflow-hidden">
+                                                <div class="max-h-60 overflow-y-auto">
+                                                    <table
+                                                        class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                                                        <thead class="bg-gray-50 dark:bg-gray-700">
+                                                            <tr>
+                                                                <th
+                                                                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                                    Kriteria</th>
+                                                                <th
+                                                                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                                    Hasil</th>
+                                                                <th
+                                                                    class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                                                                    Keterangan</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+                                                            @foreach ($qc->detail as $detail)
+                                                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                                                                    <td
+                                                                        class="px-3 py-2 text-xs text-gray-900 dark:text-white">
+                                                                        {{ $detail->parameter }}</td>
+                                                                    <td class="px-3 py-2 text-xs">
+                                                                        <span
+                                                                            class="px-2 py-1 rounded-full text-xs font-medium {{ $detail->hasil === 'lolos' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' }}">
+                                                                            {{ ucwords($detail->hasil) }}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3 py-2 text-xs text-gray-600 dark:text-gray-400">
+                                                                        {{ $detail->keterangan ?? '-' }}</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </div>
+                                @endif
+
+                                <div
+                                    class="mt-3 text-xs text-gray-600 dark:text-gray-400 flex items-center justify-between">
+                                    <span>Inspector: {{ $qc->inspector->name ?? '-' }}</span>
+                                    @if ($qc->catatan)
+                                        <span class="text-blue-600 dark:text-blue-400">
+                                            <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Ada catatan
+                                        </span>
+                                    @endif
+                                </div>
+
+                                @if ($qc->catatan)
+                                    <div
+                                        class="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                                        <p class="text-xs text-blue-800 dark:text-blue-200">
+                                            <strong>Catatan:</strong> {{ $qc->catatan }}
+                                        </p>
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         @endif

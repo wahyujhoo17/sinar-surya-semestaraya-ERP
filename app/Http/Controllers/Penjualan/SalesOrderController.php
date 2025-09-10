@@ -95,6 +95,10 @@ class SalesOrderController extends Controller
             });
         }
 
+        if (!auth()->user()->hasPermission('sales_order.view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $sort = $request->get('sort', 'tanggal');
         $direction = $request->get('direction', 'desc');
 

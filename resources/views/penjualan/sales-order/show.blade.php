@@ -1,273 +1,10 @@
 <x-app-layout>
-    @php
-        // Helper functions are autoloaded by composer
-
-        // Helper function to get status color for payment
-        function paymentStatusColor($status)
-        {
-            switch ($status) {
-                case 'belum_bayar':
-                    return 'red';
-                case 'sebagian':
-                    return 'amber';
-                case 'lunas':
-                    return 'emerald';
-                default:
-                    return 'primary';
-            }
-        }
-
-        // Helper function to get status color for delivery
-        function deliveryStatusColor($status)
-        {
-            switch ($status) {
-                case 'belum_dikirim':
-                    return 'red';
-                case 'sebagian':
-                    return 'amber';
-                case 'dikirim':
-                    return 'emerald';
-                default:
-                    return 'primary';
-            }
-        }
-
-        // Helper function to get status label
-        function statusLabel($key, $type = 'payment')
-        {
-            if ($type === 'payment') {
-                $statuses = [
-                    'belum_bayar' => 'Belum Bayar',
-                    'sebagian' => 'Sebagian',
-                    'lunas' => 'Lunas',
-                ];
-            } else {
-                $statuses = [
-                    'belum_dikirim' => 'Belum Dikirim',
-                    'sebagian' => 'Sebagian',
-                    'dikirim' => 'Dikirim',
-                ];
-            }
-
-            return $statuses[$key] ?? ucfirst($key);
-        }
-
-        // Helper function to get activity color
-        function getActivityColor($activity)
-        {
-            switch ($activity) {
-                case 'create':
-                    return 'green';
-                case 'update':
-                    return 'blue';
-                case 'delete':
-                    return 'red';
-                case 'change_status':
-                    return 'amber';
-                default:
-                    return 'gray';
-            }
-        }
-
-        // Helper function to get activity icon
-        function getActivityIcon($activity)
-        {
-            switch ($activity) {
-                case 'create':
-                    return '<svg class="h-4 w-4 text-green-500 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>';
-                case 'update':
-                    return '<svg class="h-4 w-4 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>';
-                case 'delete':
-                    return '<svg class="h-4 w-4 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
-                case 'change_status':
-                    return '<svg class="h-4 w-4 text-amber-500 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>';
-                default:
-                    return '<svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
-            }
-        }
-
-        // Get the badge color and icon for payment status
-        $paymentStatusBgColor =
-            'bg-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-100 dark:bg-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-900/30';
-        $paymentStatusTextColor =
-            'text-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-800 dark:text-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-300';
-        $paymentStatusIconColor =
-            'text-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-500 dark:text-' .
-            paymentStatusColor($salesOrder->status_pembayaran) .
-            '-400';
-
-        // Get the badge color and icon for delivery status
-        $deliveryStatusBgColor =
-            'bg-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-100 dark:bg-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-900/30';
-        $deliveryStatusTextColor =
-            'text-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-800 dark:text-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-300';
-        $deliveryStatusIconColor =
-            'text-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-500 dark:text-' .
-            deliveryStatusColor($salesOrder->status_pengiriman) .
-            '-400';
-    @endphp
-
     @push('styles')
         <style>
-            .status-transition {
-                transition: all 0.3s ease;
-            }
-
+            /* Page-specific styles for Sales Order (bundle, tables, cards, dark mode) */
             .status-dropdown-item:hover {
                 transform: translateX(3px);
-            }
-
-            .status-history-line {
-                position: absolute;
-                left: 15px;
-                top: 24px;
-                bottom: 0;
-                width: 2px;
-                background-color: #e5e7eb;
-                z-index: 0;
-            }
-
-            .dark .status-history-line {
-                background-color: #374151;
-            }
-
-            .card {
-                transition: all 0.2s ease;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            }
-
-            .card:hover {
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.12);
-            }
-
-            .badge-dot {
-                height: 8px;
-                width: 8px;
-                border-radius: 50%;
-                display: inline-block;
-                margin-right: 6px;
-            }
-
-            .timeline-item {
-                position: relative;
-                padding-left: 30px;
-            }
-
-            .timeline-item:before {
-                content: "";
-                position: absolute;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                width: 2px;
-                background-color: #e5e7eb;
-            }
-
-            .dark .timeline-item:before {
-                background-color: #374151;
-            }
-
-            .timeline-dot {
-                position: absolute;
-                left: -6px;
-                top: 0;
-                height: 14px;
-                width: 14px;
-                border-radius: 50%;
-                z-index: 10;
-            }
-
-            .summary-value {
-                font-weight: 600;
-                font-size: 1.125rem;
-            }
-
-            /* Responsive table styles */
-            .overflow-wrap {
-                word-wrap: break-word;
-                word-break: break-word;
-                overflow-wrap: break-word;
-                hyphens: auto;
-            }
-
-            .table-wrapper {
-                border-radius: 0.5rem;
-                overflow: hidden;
-            }
-
-            .table-wrapper table {
-                table-layout: fixed;
-                width: 100%;
-            }
-
-            @media (max-width: 768px) {
-
-                .table-wrapper table th:nth-child(1),
-                .table-wrapper table td:nth-child(1) {
-                    width: 30% !important;
-                }
-
-                .table-wrapper table th:nth-child(2),
-                .table-wrapper table td:nth-child(2) {
-                    width: 35% !important;
-                }
-            }
-
-            font-weight: 500;
-            font-size: 1.125rem;
-            }
-
-            .summary-label {
-                font-size: 0.875rem;
-                color: #6b7280;
-            }
-
-            .dark .summary-label {
-                color: #9ca3af;
-            }
-
-            .table-wrapper {
-                border-radius: 0.5rem;
-                overflow: hidden;
-            }
-
-            /* Dropdown Styling */
-            .dropdown-print {
-                position: absolute;
-                right: 0;
-                top: 100%;
-                margin-top: 0.5rem;
-                z-index: 999;
-                width: 16rem;
-                background: white;
-                border-radius: 0.5rem;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-                border: 1px solid #e5e7eb;
-            }
-
-            .dark .dropdown-print {
-                background: #1f2937;
-                border-color: #374151;
+                < !-- Left Column - Customer Info & Items --><div class="lg:col-span-2 space-y-6">border-color: #374151;
             }
 
             .dropdown-status {
@@ -293,8 +30,190 @@
                 position: relative;
                 overflow: visible !important;
             }
+
+            /* Bundle package styling (supports dark mode) */
+            .bundle-header {
+                color: #ffffff;
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                border: 2px solid #1e40af;
+            }
+
+            .dark .bundle-header {
+                /* darker gradient for dark mode */
+                background: linear-gradient(135deg, #0f172a, #111827);
+                border-color: #0b1220;
+                color: #f9fafb;
+            }
+
+            .bundle-icon-container {
+                background: rgba(255, 255, 255, 0.12);
+                padding: 8px;
+                border-radius: 8px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .bundle-package-badge {
+                background: rgba(255, 255, 255, 0.12);
+                padding: 6px 12px;
+                border-radius: 15px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #ffffff;
+            }
+
+            .bundle-item-row {
+                background: #f1f5f9;
+                border-left: 3px solid #94a3b8;
+            }
+
+            .dark .bundle-item-row {
+                background: transparent;
+                border-left-color: #475569;
+            }
+
+            .bundle-item-indent {
+                margin-left: 25px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
         </style>
     @endpush
+
+    @php
+        if (!function_exists('paymentStatusColor')) {
+            function paymentStatusColor($status)
+            {
+                switch ($status) {
+                    case 'belum_bayar':
+                        return 'red';
+                    case 'sebagian':
+                        return 'amber';
+                    case 'lunas':
+                        return 'emerald';
+                    default:
+                        return 'primary';
+                }
+            }
+        }
+
+        if (!function_exists('deliveryStatusColor')) {
+            function deliveryStatusColor($status)
+            {
+                switch ($status) {
+                    case 'belum_dikirim':
+                        return 'red';
+                    case 'sebagian':
+                        return 'amber';
+                    case 'dikirim':
+                        return 'emerald';
+                    default:
+                        return 'primary';
+                }
+            }
+        }
+
+        if (!function_exists('statusLabel')) {
+            function statusLabel($key, $type = 'payment')
+            {
+                if ($type === 'payment') {
+                    $statuses = [
+                        'belum_bayar' => 'Belum Bayar',
+                        'sebagian' => 'Sebagian',
+                        'lunas' => 'Lunas',
+                    ];
+                } else {
+                    $statuses = [
+                        'belum_dikirim' => 'Belum Dikirim',
+                        'sebagian' => 'Sebagian',
+                        'dikirim' => 'Dikirim',
+                    ];
+                }
+
+                return $statuses[$key] ?? ucfirst($key);
+            }
+        }
+
+        if (!function_exists('getActivityColor')) {
+            function getActivityColor($activity)
+            {
+                switch ($activity) {
+                    case 'create':
+                        return 'green';
+                    case 'update':
+                        return 'blue';
+                    case 'delete':
+                        return 'red';
+                    case 'change_status':
+                        return 'amber';
+                    default:
+                        return 'gray';
+                }
+            }
+        }
+
+        if (!function_exists('getActivityIcon')) {
+            function getActivityIcon($activity)
+            {
+                switch ($activity) {
+                    case 'create':
+                        return '<svg class="h-4 w-4 text-green-500 dark:text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>';
+                    case 'update':
+                        return '<svg class="h-4 w-4 text-blue-500 dark:text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>';
+                    case 'delete':
+                        return '<svg class="h-4 w-4 text-red-500 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+                    case 'change_status':
+                        return '<svg class="h-4 w-4 text-amber-500 dark:text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>';
+                    default:
+                        return '<svg class="h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                }
+            }
+        }
+
+        // compute CSS utility classes for badges
+        $paymentStatusBgColor =
+            'bg-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-100 dark:bg-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-900/30';
+        $paymentStatusTextColor =
+            'text-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-800 dark:text-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-300';
+        $paymentStatusIconColor =
+            'text-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-500 dark:text-' .
+            paymentStatusColor($salesOrder->status_pembayaran) .
+            '-400';
+
+        $deliveryStatusBgColor =
+            'bg-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-100 dark:bg-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-900/30';
+        $deliveryStatusTextColor =
+            'text-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-800 dark:text-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-300';
+        $deliveryStatusIconColor =
+            'text-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-500 dark:text-' .
+            deliveryStatusColor($salesOrder->status_pengiriman) .
+            '-400';
+    @endphp
 
     <div class="max-w-full mx-auto py-6 px-4 sm:px-6 lg:px-8" style="overflow: visible;">
         <!-- Breadcrumb Navigation -->
@@ -723,9 +642,8 @@
 
         <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Column - Customer Info & Items -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Customer Information -->
+            <!-- Informasi Sales Order (kept above Item Produk) -->
+            <div class="lg:col-span-3 mb-6">
                 <div
                     class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card">
                     <div
@@ -831,9 +749,7 @@
                                         <p class="flex items-center">
                                             <span class="w-24 text-gray-500 dark:text-gray-400">Quotation:</span>
                                             <a href="{{ route('penjualan.quotation.show', $salesOrder->quotation->id) }}"
-                                                class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">
-                                                {{ $salesOrder->quotation->nomor }}
-                                            </a>
+                                                class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline">{{ $salesOrder->quotation->nomor }}</a>
                                         </p>
                                     @endif
                                 </div>
@@ -864,10 +780,11 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Items Table -->
+            </div>
+            <!-- Full width Items Table -->
+            <div class="lg:col-span-3">
                 <div
-                    class="card bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700">
+                    class="card bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 mb-6">
                     <div
                         class="border-b border-gray-200 dark:border-gray-700 px-5 py-4 flex justify-between items-center">
                         <h2 class="text-lg font-medium text-gray-900 dark:text-white">Item Produk</h2>
@@ -875,72 +792,54 @@
                             item</span>
                     </div>
                     <div class="overflow-x-auto table-wrapper" style="overflow-x:auto;">
-                        <table class="min-w-[900px] min-w-full divide-y divide-gray-200 dark:divide-gray-700"
+                        <table class="w-full divide-y divide-gray-200 dark:divide-gray-700"
                             style="table-layout: auto;">
                             <thead class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
-                                    <th scope="col" style="width: 25%;"
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Produk
-                                    </th>
-                                    <th scope="col" style="width: 30%;"
+                                        Produk</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Deskripsi
-                                    </th>
-                                    <th scope="col" style="width: 10%;"
+                                        Deskripsi</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Qty
-                                    </th>
-                                    <th scope="col" style="width: 10%;"
+                                        Qty</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Terkirim
-                                    </th>
-                                    <th scope="col" style="width: 10%;"
+                                        Terkirim</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Harga
-                                    </th>
-                                    <th scope="col" style="width: 8%;"
+                                        Harga</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Diskon
-                                    </th>
-                                    <th scope="col" style="width: 12%;"
+                                        Diskon</th>
+                                    <th scope="col"
                                         class="px-4 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                        Subtotal
-                                    </th>
+                                        Subtotal</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-800">
+                                {{-- Reuse grouping logic from earlier --}}
                                 @php
                                     $bundleGroups = [];
                                     $regularItems = [];
-
-                                    // Group items by bundle_id or collect regular items
                                     foreach ($salesOrder->details as $detail) {
                                         if ($detail->bundle_id && $detail->is_bundle_item) {
-                                            // This is a bundle item
                                             $bundleGroups[$detail->bundle_id]['items'][] = $detail;
                                         } else {
-                                            // This is a regular item
                                             $regularItems[] = $detail;
                                         }
                                     }
-
-                                    // Debug output
-                                    // echo "Bundle groups: " . count($bundleGroups) . ", Regular items: " . count($regularItems);
-
                                 @endphp
 
-                                {{-- Display Bundle Groups --}}
                                 @if (count($bundleGroups) > 0)
                                     @foreach ($bundleGroups as $bundleId => $bundleGroup)
                                         @php
-                                            // Initialize variables first
                                             $bundleName = 'Default Bundle Package';
                                             $bundleCode = 'N/A';
                                             $bundleImage = null;
                                             $itemCount = count($bundleGroup['items']);
-
-                                            // Try to get bundle data from ProductBundle
                                             try {
                                                 $bundle = \App\Models\ProductBundle::find($bundleId);
                                                 if ($bundle) {
@@ -949,132 +848,102 @@
                                                     $bundleImage = $bundle->gambar ?? null;
                                                 }
                                             } catch (Exception $e) {
-                                                // Keep default values
                                                 $bundleName = 'Bundle Package #' . $bundleId;
                                             }
                                         @endphp
 
-                                        {{-- Bundle Header Row - Made More Visible --}}
-                                        <tr
-                                            style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; border: 2px solid #1e40af;">
-                                            <td colspan="7" style="padding: 15px;">
-                                                <div style="display: flex; align-items: center; gap: 15px;">
-                                                    <div
-                                                        style="background: rgba(255,255,255,0.2); padding: 8px; border-radius: 8px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                        <tr class="bundle-header">
+                                            <td colspan="7" class="p-4">
+                                                <div class="flex items-center gap-4">
+                                                    <div class="bundle-icon-container">
                                                         @if ($bundleImage && file_exists(public_path('storage/' . $bundleImage)))
                                                             <img src="{{ asset('storage/' . $bundleImage) }}"
                                                                 alt="Bundle {{ $bundleName }}"
-                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                class="w-full h-full object-cover rounded-md"
                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                             <span
                                                                 style="color: white; font-size: 16px; display: none;">📦</span>
                                                         @elseif($bundleImage)
-                                                            <!-- Try different image path -->
                                                             <img src="{{ asset($bundleImage) }}"
                                                                 alt="Bundle {{ $bundleName }}"
-                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                class="w-full h-full object-cover rounded-md"
                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                                             <span
                                                                 style="color: white; font-size: 16px; display: none;">📦</span>
                                                         @else
-                                                            <!-- Default bundle icon -->
-                                                            <svg style="width: 24px; height: 24px; color: white;"
-                                                                fill="currentColor" viewBox="0 0 20 20">
+                                                            <svg class="w-6 h-6 text-white" fill="currentColor"
+                                                                viewBox="0 0 20 20">
                                                                 <path
                                                                     d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
                                                                 </path>
                                                             </svg>
                                                         @endif
                                                     </div>
-                                                    <div style="flex: 1;">
-                                                        <h2
-                                                            style="font-size: 18px; font-weight: bold; margin: 0; color: white;">
-                                                            PAKET: {{ $bundleName }}
-                                                        </h2>
-                                                        <div
-                                                            style="font-size: 14px; color: rgba(255,255,255,0.8); margin-top: 5px;">
-                                                            Kode: {{ $bundleCode }} | Berisi {{ $itemCount }}
-                                                            produk
+                                                    <div class="flex-1">
+                                                        <h2 class="text-white font-bold text-base md:text-lg m-0">
+                                                            PAKET: {{ $bundleName }}</h2>
+                                                        <div class="text-white/80 text-sm mt-1">Kode:
+                                                            {{ $bundleCode }} | Berisi {{ $itemCount }} produk
                                                         </div>
                                                     </div>
-                                                    <div
-                                                        style="background: rgba(255,255,255,0.2); padding: 6px 12px; border-radius: 15px; font-size: 12px; font-weight: bold;">
-                                                        BUNDLE PACKAGE
-                                                    </div>
+                                                    <div class="bundle-package-badge">BUNDLE PACKAGE</div>
                                                 </div>
                                             </td>
                                         </tr>
 
-                                        {{-- Bundle Items --}}
-                                        @if (isset($bundleGroup['items']) && count($bundleGroup['items']) > 0)
-                                            @foreach ($bundleGroup['items'] as $bundleItem)
-                                                <tr style="background: #f1f5f9; border-left: 3px solid #94a3b8;">
-                                                    <td class="px-4 py-2 text-sm">
-                                                        <div
-                                                            style="margin-left: 25px; display: flex; align-items: center; gap: 8px;">
-                                                            <span style="color: #64748b; font-size: 14px;">└─</span>
-                                                            <div>
-                                                                <div
-                                                                    class="font-medium text-gray-700 dark:text-gray-300 text-sm">
-                                                                    {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
-                                                                </div>
-                                                                <div
-                                                                    style="font-size: 11px; color: #64748b; font-style: italic;">
-                                                                    Item dalam paket •
-                                                                    {{ $bundleItem->produk->kode ?? '' }}
-                                                                </div>
+                                        @foreach ($bundleGroup['items'] as $bundleItem)
+                                            <tr class="bundle-item-row">
+                                                <td class="px-4 py-2 text-sm">
+                                                    <div class="bundle-item-indent">
+                                                        <span class="text-slate-400 text-sm">└─</span>
+                                                        <div>
+                                                            <div
+                                                                class="font-medium text-gray-700 dark:text-gray-300 text-sm break-words">
+                                                                {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
                                                             </div>
+                                                            <div class="text-sm text-slate-400 italic">Item dalam paket
+                                                                • {{ $bundleItem->produk->kode ?? '' }}</div>
                                                         </div>
-                                                    </td>
-                                                    <td class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
-                                                        {{ $bundleItem->deskripsi ?? '-' }}
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-2 text-sm text-center text-gray-600 dark:text-gray-400">
-                                                        {{ number_format($bundleItem->quantity, 2, ',', '.') }}
-                                                        {{ $bundleItem->satuan->nama ?? '' }}
-                                                    </td>
-                                                    <td class="px-4 py-2 text-sm text-center">
-                                                        <span
-                                                            class="{{ $bundleItem->quantity_terkirim > 0 ? ($bundleItem->quantity_terkirim >= $bundleItem->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">
-                                                            {{ number_format($bundleItem->quantity_terkirim, 2, ',', '.') }}
-                                                            {{ $bundleItem->satuan->nama ?? '' }}
-                                                        </span>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
-                                                        {{ number_format($bundleItem->harga, 0, ',', '.') }}
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
-                                                        @if ($bundleItem->diskon_persen > 0)
-                                                            {{ number_format($bundleItem->diskon_persen, 2, ',', '.') }}%
-                                                        @else
-                                                            -
-                                                        @endif
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-2 text-sm text-right font-medium text-gray-600 dark:text-gray-400">
-                                                        {{ number_format($bundleItem->subtotal, 0, ',', '.') }}
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 break-words">
+                                                    {{ $bundleItem->deskripsi ?? '-' }}</td>
+                                                <td
+                                                    class="px-4 py-2 text-sm text-center text-gray-600 dark:text-gray-400">
+                                                    {{ number_format($bundleItem->quantity, 2, ',', '.') }}
+                                                    {{ $bundleItem->satuan->nama ?? '' }}</td>
+                                                <td class="px-4 py-2 text-sm text-center"><span
+                                                        class="{{ $bundleItem->quantity_terkirim > 0 ? ($bundleItem->quantity_terkirim >= $bundleItem->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">{{ number_format($bundleItem->quantity_terkirim, 2, ',', '.') }}
+                                                        {{ $bundleItem->satuan->nama ?? '' }}</span></td>
+                                                <td
+                                                    class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
+                                                    {{ number_format($bundleItem->harga, 0, ',', '.') }}</td>
+                                                <td
+                                                    class="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
+                                                    @if ($bundleItem->diskon_persen > 0)
+                                                        {{ number_format($bundleItem->diskon_persen, 2, ',', '.') }}%
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td
+                                                    class="px-4 py-2 text-sm text-right font-medium text-gray-600 dark:text-gray-400">
+                                                    {{ number_format($bundleItem->subtotal, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
                                     @endforeach
                                 @endif
 
-                                {{-- Display Regular Items --}}
                                 @if (count($regularItems) > 0)
                                     @foreach ($regularItems as $detail)
                                         <tr
                                             class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors duration-150">
                                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
                                                 <div class="font-medium break-words overflow-wrap">
-                                                    {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}
-                                                </div>
+                                                    {{ $detail->produk->nama ?? 'Produk tidak ditemukan' }}</div>
                                                 <div class="text-xs text-gray-500 dark:text-gray-400 break-words">
-                                                    {{ $detail->produk->kode ?? '' }}
-                                                </div>
+                                                    {{ $detail->produk->kode ?? '' }}</div>
                                             </td>
                                             <td class="px-4 py-4 text-sm text-gray-900 dark:text-white">
                                                 <div class="break-words overflow-wrap">{{ $detail->deskripsi ?? '-' }}
@@ -1083,20 +952,16 @@
                                             <td
                                                 class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
                                                 {{ number_format($detail->quantity, 2, ',', '.') }}
-                                                {{ $detail->satuan->nama ?? '' }}
-                                            </td>
+                                                {{ $detail->satuan->nama ?? '' }}</td>
                                             <td
                                                 class="px-4 py-4 whitespace-nowrap text-sm text-center text-gray-900 dark:text-white">
                                                 <span
-                                                    class="{{ $detail->quantity_terkirim > 0 ? ($detail->quantity_terkirim >= $detail->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">
-                                                    {{ number_format($detail->quantity_terkirim, 2, ',', '.') }}
-                                                    {{ $detail->satuan->nama ?? '' }}
-                                                </span>
+                                                    class="{{ $detail->quantity_terkirim > 0 ? ($detail->quantity_terkirim >= $detail->quantity ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400') : 'text-gray-500 dark:text-gray-400' }}">{{ number_format($detail->quantity_terkirim, 2, ',', '.') }}
+                                                    {{ $detail->satuan->nama ?? '' }}</span>
                                             </td>
                                             <td
                                                 class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                                {{ number_format($detail->harga, 0, ',', '.') }}
-                                            </td>
+                                                {{ number_format($detail->harga, 0, ',', '.') }}</td>
                                             <td
                                                 class="px-4 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
                                                 @if ($detail->diskon_persen > 0)
@@ -1107,13 +972,11 @@
                                             </td>
                                             <td
                                                 class="px-4 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
-                                                {{ number_format($detail->subtotal, 0, ',', '.') }}
-                                            </td>
+                                                {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                                         </tr>
                                     @endforeach
                                 @endif
 
-                                {{-- No Items Message --}}
                                 @if (count($bundleGroups) === 0 && count($regularItems) === 0)
                                     <tr>
                                         <td colspan="7"
@@ -1132,35 +995,31 @@
                                         </td>
                                     </tr>
                                 @endif
+
                             </tbody>
                             <tfoot class="bg-gray-50 dark:bg-gray-700/50">
                                 <tr>
                                     <td colspan="6"
                                         class="px-4 py-3 text-sm text-right font-medium text-gray-700 dark:text-gray-300">
-                                        Subtotal:
-                                    </td>
+                                        Subtotal:</td>
                                     <td class="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
-                                        {{ number_format($salesOrder->subtotal, 0, ',', '.') }}
-                                    </td>
+                                        {{ number_format($salesOrder->subtotal, 0, ',', '.') }}</td>
                                 </tr>
                                 @if ($salesOrder->diskon_nominal > 0)
                                     <tr>
                                         <td colspan="6"
                                             class="px-4 py-3 text-sm text-right font-medium text-gray-700 dark:text-gray-300">
-                                            Diskon Global:
-                                        </td>
+                                            Diskon Global:</td>
                                         <td
                                             class="px-4 py-3 text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                            -{{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}
-                                        </td>
+                                            -{{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</td>
                                     </tr>
                                 @endif
                                 @if ($salesOrder->ppn > 0)
                                     <tr>
                                         <td colspan="6"
                                             class="px-4 py-3 text-sm text-right font-medium text-gray-700 dark:text-gray-300">
-                                            PPN ({{ $salesOrder->ppn }}%):
-                                        </td>
+                                            PPN ({{ $salesOrder->ppn }}%):</td>
                                         <td
                                             class="px-4 py-3 text-sm text-right font-medium text-blue-600 dark:text-blue-400">
                                             {{ number_format(($salesOrder->subtotal - $salesOrder->diskon_nominal) * ($salesOrder->ppn / 100), 0, ',', '.') }}
@@ -1171,27 +1030,27 @@
                                     <tr>
                                         <td colspan="6"
                                             class="px-4 py-3 text-sm text-right font-medium text-gray-700 dark:text-gray-300">
-                                            Ongkos Kirim:
-                                        </td>
+                                            Ongkos Kirim:</td>
                                         <td
                                             class="px-4 py-3 text-sm text-right font-medium text-blue-600 dark:text-blue-400">
-                                            {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}
-                                        </td>
+                                            {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</td>
                                     </tr>
                                 @endif
                                 <tr>
                                     <td colspan="6"
                                         class="px-4 py-3 text-base text-right font-bold text-gray-900 dark:text-white">
-                                        Total:
-                                    </td>
+                                        Total:</td>
                                     <td class="px-4 py-3 text-base text-right font-bold text-gray-900 dark:text-white">
-                                        {{ number_format($salesOrder->total, 0, ',', '.') }}
-                                    </td>
+                                        {{ number_format($salesOrder->total, 0, ',', '.') }}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                 </div>
+            </div>
+            <!-- Left Column - Customer Info & Items -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Items Table moved into main grid (full width) -->
 
                 <div
                     class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 card">

@@ -28,10 +28,10 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div class="grid grid-cols-1 gap-6 mb-6">
             {{-- Informasi WO --}}
             <div
-                class="lg:col-span-1 bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
                     <h2 class="text-lg font-medium text-gray-900 dark:text-white">Informasi Work Order</h2>
                 </div>
@@ -65,7 +65,7 @@
             </div>
 
             {{-- Form Pengambilan --}}
-            <div class="lg:col-span-2">
+            <div>
                 <form action="{{ route('produksi.work-order.store-pengambilan', $workOrder->id) }}" method="POST"
                     id="form-pengambilan">
                     @csrf
@@ -338,7 +338,8 @@
                             if (!jumlahDiminta.value || !jumlahDiambil.value) {
                                 e.preventDefault();
                                 alert(
-                                    'Jumlah diminta dan jumlah diambil harus diisi untuk material yang dipilih.');
+                                    'Jumlah diminta dan jumlah diambil harus diisi untuk material yang dipilih.'
+                                    );
                                 jumlahDiminta.focus();
                                 return false;
                             }
@@ -351,7 +352,8 @@
                             if (jumlahDiambilValue > stokTersedia) {
                                 e.preventDefault();
                                 alert(
-                                    `Jumlah diambil (${jumlahDiambilValue}) tidak boleh melebihi stok tersedia (${stokTersedia}).`);
+                                    `Jumlah diambil (${jumlahDiambilValue}) tidak boleh melebihi stok tersedia (${stokTersedia}).`
+                                    );
                                 jumlahDiambil.focus();
                                 return false;
                             }

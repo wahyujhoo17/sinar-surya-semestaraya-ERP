@@ -52,6 +52,12 @@
                                             dengan
                                             jumlah yang terpakai.
                                         </p>
+                                        <p>
+                                            <strong>Default:</strong> Jumlah dikembalikan akan otomatis diset ke seluruh
+                                            sisa material
+                                            (Jumlah Awal - Jumlah Terpakai). Anda dapat mengubah jumlah sesuai
+                                            kebutuhan.
+                                        </p>
                                         <p class="font-medium">
                                             Material yang dikembalikan akan ditambahkan ke stok gudang <span
                                                 class="text-blue-800 dark:text-blue-200 font-bold">{{ $workOrder->gudangProduksi->nama }}</span>.
@@ -240,7 +246,8 @@
                                                             <input type="number" name="quantity_return[]"
                                                                 min="0"
                                                                 max="{{ $material->quantity - $material->quantity_terpakai }}"
-                                                                step="0.01" value="0"
+                                                                step="0.01"
+                                                                value="{{ $material->quantity - $material->quantity_terpakai }}"
                                                                 class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-primary-500 focus:ring-primary-500 rounded-md shadow-sm">
                                                             <span
                                                                 class="text-sm text-gray-500 dark:text-gray-400">{{ $material->satuan->nama }}</span>

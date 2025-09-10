@@ -158,6 +158,40 @@
                 </div>
             </div>
 
+            {{-- Rework Status Card --}}
+            <div
+                class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-200 dark:border-gray-700">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 rounded-lg bg-orange-100 dark:bg-orange-900/30 p-3.5">
+                            <svg class="h-7 w-7 text-orange-500 dark:text-orange-400" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Sedang Rework</p>
+                            <div class="mt-1 flex items-baseline">
+                                @php
+                                    $reworkCount = $workOrders
+                                        ->filter(function ($wo) {
+                                            return $wo->status === 'berjalan' &&
+                                                $wo->qualityControl &&
+                                                $wo->qualityControl->jumlah_gagal > 0;
+                                        })
+                                        ->count();
+                                @endphp
+                                <p class="text-2xl font-semibold text-gray-900 dark:text-white">
+                                    {{ $reworkCount }}</p>
+                                <p class="ml-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">item</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {{-- Quick Action Card --}}
             @if (auth()->user()->hasPermission('work_order.create'))
                 <a href="{{ route('produksi.work-order.create') }}"
@@ -235,6 +269,14 @@
                                     Direncanakan</option>
                                 <option value="berjalan" {{ request('status') == 'berjalan' ? 'selected' : '' }}>
                                     Berjalan</option>
+                                <option value="selesai_produksi"
+                                    {{ request('status') == 'selesai_produksi' ? 'selected' : '' }}>
+                                    Selesai Produksi</option>
+                                <option value="qc_passed" {{ request('status') == 'qc_passed' ? 'selected' : '' }}>
+                                    QC Passed</option>
+                                <option value="pengembalian_material"
+                                    {{ request('status') == 'pengembalian_material' ? 'selected' : '' }}>
+                                    Pengembalian Material</option>
                                 <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai
                                 </option>
                                 <option value="dibatalkan" {{ request('status') == 'dibatalkan' ? 'selected' : '' }}>
@@ -357,16 +399,43 @@
                                     {{ $wo->deadline ? date('d/m/Y', strtotime($wo->deadline)) : '-' }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    @php
+                                        $isRework =
+                                            $wo->status === 'berjalan' &&
+                                            $wo->qualityControl &&
+                                            $wo->qualityControl->jumlah_gagal > 0;
+                                    @endphp
+
                                     <span
                                         class="px-2.5 py-1 inline-flex text-xs leading-5 font-medium rounded-full 
                                         {{ $wo->status == 'direncanakan' ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' : '' }}
-                                        {{ $wo->status == 'berjalan' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300' : '' }}
+                                        {{ $wo->status == 'berjalan' && !$isRework ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-300' : '' }}
+                                        {{ $isRework ? 'bg-orange-100 text-orange-800 dark:bg-orange-700 dark:text-orange-300' : '' }}
+                                        {{ $wo->status == 'selesai_produksi' ? 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-300' : '' }}
+                                        {{ $wo->status == 'qc_passed' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-700 dark:text-indigo-300' : '' }}
+                                        {{ $wo->status == 'pengembalian_material' ? 'bg-purple-100 text-purple-800 dark:bg-purple-700 dark:text-purple-300' : '' }}
                                         {{ $wo->status == 'selesai' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-300' : '' }}
-                                        {{ $wo->status == 'dibatalkan' ? 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-300' : '' }}
-                                        {{ $wo->status == 'qc_reject' ? 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-300' : '' }}
-                                        {{ $wo->status == 'qc_pass' ? 'bg-blue-100 text-blue-800 dark:bg-blue-700 dark:text-blue-300' : '' }}">
-                                        {{ ucwords(str_replace('_', ' ', $wo->status)) }}
+                                        {{ $wo->status == 'dibatalkan' ? 'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-300' : '' }}">
+
+                                        @if ($isRework)
+                                            <span class="flex items-center">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                Rework
+                                            </span>
+                                        @else
+                                            {{ ucwords(str_replace('_', ' ', $wo->status)) }}
+                                        @endif
                                     </span>
+
+                                    @if ($isRework)
+                                        <div class="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                            {{ $wo->qualityControl->jumlah_gagal }} unit gagal QC
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">

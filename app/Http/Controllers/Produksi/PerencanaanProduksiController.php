@@ -401,9 +401,9 @@ class PerencanaanProduksiController extends Controller
         $perencanaan = PerencanaanProduksi::with(['detailPerencanaan.produk', 'detailPerencanaan.satuan', 'salesOrder'])
             ->findOrFail($id);
 
-        // Hanya bisa membuat work order jika perencanaan disetujui
-        if ($perencanaan->status !== 'disetujui') {
-            return redirect()->back()->with('error', 'Hanya perencanaan dengan status disetujui yang dapat dibuatkan Work Order.');
+        // Hanya bisa membuat work order jika perencanaan disetujui atau sedang berjalan
+        if (!in_array($perencanaan->status, ['disetujui', 'berjalan'])) {
+            return redirect()->back()->with('error', 'Hanya perencanaan dengan status disetujui atau berjalan yang dapat dibuatkan Work Order.');
         }
 
         $boms = BillOfMaterial::with('produk')->orderBy('kode')->get();

@@ -413,246 +413,152 @@
     @endif
 
     {{-- Main Content --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {{-- Left column - Info + Status --}}
-        <div>
-            {{-- Status Card --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
-                <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Status</h2>
-                </div>
-                <div class="p-5">
-                    @php
-                        $statusColors = [
-                            'draft' => 'gray',
-                            'dikirim' => 'blue',
-                            'disetujui' => 'emerald',
-                            'ditolak' => 'red',
-                            'kedaluwarsa' => 'amber',
-                        ];
-                        $statusColor = $statusColors[$quotation->status] ?? 'gray';
-                    @endphp
-                    <div class="mb-5 flex items-center">
-                        <div class="flex-shrink-0">
-                            <span
-                                class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-{{ $statusColor }}-100 dark:bg-{{ $statusColor }}-900/20 text-{{ $statusColor }}-600 dark:text-{{ $statusColor }}-400">
-                                @if ($quotation->status == 'draft')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                @elseif($quotation->status == 'dikirim')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                    </svg>
-                                @elseif($quotation->status == 'disetujui')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                @elseif($quotation->status == 'ditolak')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                @elseif($quotation->status == 'kedaluwarsa')
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+    <div class="space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- Status (left) --}}
+            <div class="lg:col-span-1">
+                {{-- Status Card --}}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
+                    <div class="p-5 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Status</h2>
+                    </div>
+                    <div class="p-5">
+                        @php
+                            $statusColors = [
+                                'draft' => 'gray',
+                                'dikirim' => 'blue',
+                                'disetujui' => 'emerald',
+                                'ditolak' => 'red',
+                                'kedaluwarsa' => 'amber',
+                            ];
+                            $statusColor = $statusColors[$quotation->status] ?? 'gray';
+                        @endphp
+                        <div class="mb-5 flex items-center">
+                            <div class="flex-shrink-0">
+                                <span
+                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-{{ $statusColor }}-100 dark:bg-{{ $statusColor }}-900/20 text-{{ $statusColor }}-600 dark:text-{{ $statusColor }}-400">
+                                    @if ($quotation->status == 'draft')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    @elseif($quotation->status == 'dikirim')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    @elseif($quotation->status == 'disetujui')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    @elseif($quotation->status == 'ditolak')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    @elseif($quotation->status == 'kedaluwarsa')
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-lg font-medium text-gray-900 dark:text-white capitalize">
+                                    {{ $quotation->status }}</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    @if ($quotation->status == 'draft')
+                                        Quotation masih dalam tahap draft
+                                    @elseif($quotation->status == 'dikirim')
+                                        Quotation telah dikirim ke customer
+                                    @elseif($quotation->status == 'disetujui')
+                                        Quotation telah disetujui oleh customer
+                                    @elseif($quotation->status == 'ditolak')
+                                        Quotation ditolak oleh customer
+                                    @elseif($quotation->status == 'kedaluwarsa')
+                                        Quotation telah kedaluwarsa
+                                    @endif
+                                </p>
+                            </div>
+                        </div>
+
+                        @if ($quotation->tanggal_berlaku && \Carbon\Carbon::parse($quotation->tanggal_berlaku)->isFuture())
+                            <div
+                                class="p-3 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-300 rounded-md">
+                                <div class="flex items-center mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                @endif
-                            </span>
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white capitalize">
-                                {{ $quotation->status }}</h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">
-                                @if ($quotation->status == 'draft')
-                                    Quotation masih dalam tahap draft
-                                @elseif($quotation->status == 'dikirim')
-                                    Quotation telah dikirim ke customer
-                                @elseif($quotation->status == 'disetujui')
-                                    Quotation telah disetujui oleh customer
-                                @elseif($quotation->status == 'ditolak')
-                                    Quotation ditolak oleh customer
-                                @elseif($quotation->status == 'kedaluwarsa')
-                                    Quotation telah kedaluwarsa
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-
-                    @if ($quotation->tanggal_berlaku && \Carbon\Carbon::parse($quotation->tanggal_berlaku)->isFuture())
-                        <div
-                            class="p-3 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-300 rounded-md">
-                            <div class="flex items-center mb-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span class="font-medium">Masa Berlaku:</span>
-                            </div>
-                            <div class="ml-5">
-                                <div>Sampai:
-                                    {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
-                                <div class="mt-0.5">
-                                    Tersisa:
-                                    {{ ceil(now()->floatDiffInDays(\Carbon\Carbon::parse($quotation->tanggal_berlaku))) }}
-                                    hari
+                                    <span class="font-medium">Masa Berlaku:</span>
+                                </div>
+                                <div class="ml-5">
+                                    <div>Sampai:
+                                        {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
+                                    <div class="mt-0.5">Tersisa:
+                                        {{ ceil(now()->floatDiffInDays(\Carbon\Carbon::parse($quotation->tanggal_berlaku))) }}
+                                        hari</div>
                                 </div>
                             </div>
-                        </div>
-                    @elseif ($quotation->tanggal_berlaku)
-                        <div
-                            class="p-3 bg-red-50 dark:bg-red-900/20 text-xs text-red-800 dark:text-red-300 rounded-md">
-                            <div class="flex items-center mb-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <span class="font-medium">Kedaluwarsa:</span>
+                        @elseif ($quotation->tanggal_berlaku)
+                            <div
+                                class="p-3 bg-red-50 dark:bg-red-900/20 text-xs text-red-800 dark:text-red-300 rounded-md">
+                                <div class="flex items-center mb-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="font-medium">Kedaluwarsa:</span>
+                                </div>
+                                <div class="ml-5">
+                                    <div>Tanggal:
+                                        {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
+                                    <div class="mt-0.5">Quotation sudah kedaluwarsa.</div>
+                                </div>
                             </div>
-                            <div class="ml-5">
-                                <div>Tanggal:
-                                    {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
-                                <div class="mt-0.5">Quotation sudah kedaluwarsa.</div>
-                            </div>
-                        </div>
-                    @endif
+                        @endif
+                    </div>
                 </div>
             </div>
 
-            {{-- Info Card --}}
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-                <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Informasi Quotation</h2>
-                </div>
-                <div class="p-5">
-                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <div class="grid grid-cols-3 gap-2 py-3">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor Quotation</dt>
-                            <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ $quotation->nomor }}
-                            </dd>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2 py-3">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal</dt>
-                            <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d M Y') }}</dd>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2 py-3">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</dt>
-                            <dd class="col-span-2">
-                                <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                    {{ $quotation->customer->company ?? ($quotation->customer->nama ?? '-') }}
-                                </div>
-                                @if ($quotation->customer)
-                                    <div class="mt-2 space-y-1.5">
-                                        @if ($quotation->customer->email)
-                                            <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                </svg>
-                                                {{ $quotation->customer->email }}
-                                            </div>
-                                        @endif
-                                        @if ($quotation->customer->telepon)
-                                            <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                </svg>
-                                                {{ $quotation->customer->telepon }}
-                                            </div>
-                                        @endif
-                                        @if ($quotation->customer->telepon_alternatif)
-                                            <div class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                {{ $quotation->customer->telepon_alternatif }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                @endif
-                            </dd>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2 py-3">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat</dt>
-                            <dd class="col-span-2">
-                                @if ($quotation->customer)
-                                    <div class="text-sm text-gray-900 dark:text-white mb-1">
-                                        {{ $quotation->customer->alamat ?? 'Alamat tidak tersedia' }}
-                                    </div>
-                                    <div class="flex flex-wrap gap-x-2 text-xs text-gray-600 dark:text-gray-400">
-                                        @if ($quotation->customer->kota)
-                                            <span>{{ $quotation->customer->kota }}</span>
-                                        @endif
-                                        @if ($quotation->customer->provinsi)
-                                            <span>{{ $quotation->customer->provinsi }}</span>
-                                        @endif
-                                        @if ($quotation->customer->kode_pos)
-                                            <span>{{ $quotation->customer->kode_pos }}</span>
-                                        @endif
-                                    </div>
-                                @else
-                                    <div class="text-sm text-gray-900 dark:text-white">
-                                        Alamat tidak tersedia
-                                    </div>
-                                @endif
-                            </dd>
-                        </div>
-
-                        @if ($quotation->customer && $quotation->customer->npwp)
+            {{-- Informasi (right) --}}
+            <div class="lg:col-span-2">
+                {{-- Info Card --}}
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                    <div class="p-5 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Informasi Quotation</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
                             <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">NPWP</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                    {{ $quotation->customer->npwp }}
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor Quotation</dt>
+                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ $quotation->nomor }}
                                 </dd>
                             </div>
-                        @endif
 
-                        @if ($quotation->customer && $quotation->customer->kontak_person)
                             <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kontak Person</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal</dt>
+                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
+                                    {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d M Y') }}</dd>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 py-3">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</dt>
                                 <dd class="col-span-2">
                                     <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ $quotation->customer->kontak_person }}
-
+                                        {{ $quotation->customer->company ?? ($quotation->customer->nama ?? '-') }}
                                     </div>
-                                    @if ($quotation->customer->no_hp_kontak || $quotation->customer->pic_email)
-                                        <div class="mt-1 space-y-1">
-
-                                            @if ($quotation->customer->no_hp_kontak)
-                                                <div
-                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {{ $quotation->customer->no_hp_kontak }}
-                                                </div>
-                                            @endif
+                                    @if ($quotation->customer)
+                                        <div class="mt-2 space-y-1.5">
                                             @if ($quotation->customer->email)
                                                 <div
                                                     class="flex items-center text-xs text-gray-600 dark:text-gray-400">
@@ -665,54 +571,147 @@
                                                     {{ $quotation->customer->email }}
                                                 </div>
                                             @endif
+                                            @if ($quotation->customer->telepon)
+                                                <div
+                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                    </svg>
+                                                    {{ $quotation->customer->telepon }}
+                                                </div>
+                                            @endif
+                                            @if ($quotation->customer->telepon_alternatif)
+                                                <div
+                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                    </svg>
+                                                    {{ $quotation->customer->telepon_alternatif }}
+                                                </div>
+                                            @endif
                                         </div>
                                     @endif
                                 </dd>
                             </div>
-                        @endif
 
-                        @if ($quotation->alamat_pengiriman)
                             <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat Pengiriman
-                                </dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat</dt>
                                 <dd class="col-span-2">
-                                    <div class="text-sm text-gray-900 dark:text-white whitespace-pre-line">
-                                        {{ $quotation->alamat_pengiriman }}
-                                    </div>
+                                    @if ($quotation->customer)
+                                        <div class="text-sm text-gray-900 dark:text-white mb-1">
+                                            {{ $quotation->customer->alamat ?? 'Alamat tidak tersedia' }}</div>
+                                        <div class="flex flex-wrap gap-x-2 text-xs text-gray-600 dark:text-gray-400">
+                                            @if ($quotation->customer->kota)
+                                                <span>{{ $quotation->customer->kota }}</span>
+                                            @endif
+                                            @if ($quotation->customer->provinsi)
+                                                <span>{{ $quotation->customer->provinsi }}</span>
+                                            @endif
+                                            @if ($quotation->customer->kode_pos)
+                                                <span>{{ $quotation->customer->kode_pos }}</span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="text-sm text-gray-900 dark:text-white">Alamat tidak tersedia</div>
+                                    @endif
                                 </dd>
                             </div>
-                        @endif
 
+                            @if ($quotation->customer && $quotation->customer->npwp)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">NPWP</dt>
+                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
+                                        {{ $quotation->customer->npwp }}</dd>
+                                </div>
+                            @endif
 
-                        <div class="grid grid-cols-3 gap-2 py-3">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Oleh</dt>
-                            <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                {{ $quotation->user->name ?? 'User tidak ditemukan' }}</dd>
-                        </div>
+                            @if ($quotation->customer && $quotation->customer->kontak_person)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kontak Person</dt>
+                                    <dd class="col-span-2">
+                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $quotation->customer->kontak_person }}</div>
+                                        @if ($quotation->customer->no_hp_kontak || $quotation->customer->pic_email)
+                                            <div class="mt-1 space-y-1">
+                                                @if ($quotation->customer->no_hp_kontak)
+                                                    <div
+                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {{ $quotation->customer->no_hp_kontak }}
+                                                    </div>
+                                                @endif
+                                                @if ($quotation->customer->email)
+                                                    <div
+                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {{ $quotation->customer->email }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @endif
+                                    </dd>
+                                </div>
+                            @endif
 
-                        @if ($quotation->catatan)
+                            @if ($quotation->alamat_pengiriman)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat Pengiriman
+                                    </dt>
+                                    <dd class="col-span-2">
+                                        <div class="text-sm text-gray-900 dark:text-white whitespace-pre-line">
+                                            {{ $quotation->alamat_pengiriman }}</div>
+                                    </dd>
+                                </div>
+                            @endif
+
                             <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Catatan</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Oleh</dt>
                                 <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                    {{ $quotation->catatan }}</dd>
+                                    {{ $quotation->user->name ?? 'User tidak ditemukan' }}</dd>
                             </div>
-                        @endif
 
-                        @if ($quotation->syarat_ketentuan)
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Syarat & Ketentuan
-                                </dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white whitespace-pre-line">
-                                    {{ $quotation->syarat_ketentuan }}</dd>
-                            </div>
-                        @endif
+                            @if ($quotation->catatan)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Catatan</dt>
+                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
+                                        {{ $quotation->catatan }}</dd>
+                                </div>
+                            @endif
+
+                            @if ($quotation->syarat_ketentuan)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Syarat & Ketentuan
+                                    </dt>
+                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white whitespace-pre-line">
+                                        {{ $quotation->syarat_ketentuan }}</dd>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Right column - Items --}}
-        <div class="lg:col-span-2">
+        {{-- Items (full width) --}}
+        <div>
             <!-- Items -->
             <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
                 <div class="p-5 border-b border-gray-200 dark:border-gray-700">
@@ -798,32 +797,27 @@
                                     @endphp
 
                                     {{-- Bundle Header Row --}}
-                                    <tr style="background-color: #eff6ff; border-left: 4px solid #3b82f6;">
-                                        <td colspan="8" style="padding: 12px 24px;">
-                                            <div
-                                                style="display: flex; align-items: center; justify-content: space-between;">
-                                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <tr class="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500">
+                                        <td colspan="8" class="px-6 py-4">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-3">
                                                     <div
-                                                        style="width: 32px; height: 32px; background-color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                        class="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center overflow-hidden">
                                                         @if ($bundleImage && file_exists(public_path('storage/' . $bundleImage)))
                                                             <img src="{{ asset('storage/' . $bundleImage) }}"
                                                                 alt="Bundle {{ $bundleName }}"
-                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                class="w-full h-full object-cover rounded-sm"
                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                            <span
-                                                                style="color: white; font-size: 14px; display: none;">📦</span>
+                                                            <span class="hidden text-white">📦</span>
                                                         @elseif($bundleImage)
-                                                            <!-- Try different image path -->
                                                             <img src="{{ asset($bundleImage) }}"
                                                                 alt="Bundle {{ $bundleName }}"
-                                                                style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;"
+                                                                class="w-full h-full object-cover rounded-sm"
                                                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                            <span
-                                                                style="color: white; font-size: 14px; display: none;">📦</span>
+                                                            <span class="hidden text-white">📦</span>
                                                         @else
-                                                            <!-- Default bundle icon -->
-                                                            <svg style="width: 20px; height: 20px; color: white;"
-                                                                fill="currentColor" viewBox="0 0 20 20">
+                                                            <svg class="w-5 h-5 text-white" fill="currentColor"
+                                                                viewBox="0 0 20 20">
                                                                 <path
                                                                     d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
                                                                 </path>
@@ -832,419 +826,417 @@
                                                     </div>
                                                     <div>
                                                         <h3
-                                                            style="font-weight: bold; color: #1e40af; font-size: 14px; margin: 0;">
-                                                            PAKET: {{ $bundleName }}
-                                                        </h3>
-                                                        <div style="font-size: 12px; color: #2563eb; margin-top: 2px;">
-                                                            {{ $bundleCode }} • {{ $itemCount }} item
-                                                        </div>
+                                                            class="font-semibold text-blue-900 dark:text-blue-200 text-sm">
+                                                            PAKET: {{ $bundleName }}</h3>
+                                                        <div class="text-xs text-blue-700 dark:text-blue-200 mt-1">
+                                                            {{ $bundleCode }} • {{ $itemCount }} item</div>
                                                     </div>
                                                 </div>
                                                 <div
-                                                    style="background-color: #dbeafe; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; color: #1e40af;">
-                                                    BUNDLE
-                                                </div>
+                                                    class="bg-blue-100 dark:bg-blue-900/20 px-2 py-1 rounded text-xs font-medium text-blue-700 dark:text-blue-200">
+                                                    BUNDLE</div>
                                             </div>
                                         </td>
                                     </tr>
-                </div>
-            </div>
-            </td>
-            </tr>
 
-            {{-- Bundle Items --}}
-            @if (isset($bundleGroup['items']) && count($bundleGroup['items']) > 0)
-                @foreach ($bundleGroup['items'] as $bundleItemIndex => $bundleItem)
-                    <tr style="background-color: #f9fafb; border-left: 2px solid #d1d5db;">
-                        <td style="padding: 8px 24px; font-size: 14px; color: #9ca3af;">
-                            <span style="margin-left: 16px;">└─</span>
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px;">
-                            <div style="margin-left: 24px;">
-                                <div style="font-weight: 500; color: #374151; font-size: 14px;">
-                                    {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
-                                </div>
-                                <div style="font-size: 12px; color: #6b7280;">
-                                    {{ $bundleItem->produk->kode ?? '' }}
-                                </div>
-                            </div>
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
-                            {{ $bundleItem->deskripsi ?? '-' }}
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
-                            {{ $bundleItem->quantity }}
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
-                            {{ $bundleItem->satuan->nama ?? '-' }}
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
-                            Rp {{ number_format($bundleItem->harga, 0, ',', '.') }}
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; color: #6b7280;">
-                            @if ($bundleItem->diskon_persen > 0)
-                                <span style="color: #059669;">{{ $bundleItem->diskon_persen }}%</span>
-                                <span style="display: block; font-size: 12px;">(Rp
-                                    {{ number_format($bundleItem->diskon_nominal, 0, ',', '.') }})</span>
-                            @else
-                                -
+                                    {{-- Bundle Items --}}
+                                    @if (isset($bundleGroup['items']) && count($bundleGroup['items']) > 0)
+                                        @foreach ($bundleGroup['items'] as $bundleItemIndex => $bundleItem)
+                                            <tr
+                                                class="bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    <span class="ml-4">└─</span>
+                                                </td>
+                                                <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">
+                                                    <div class="ml-4">
+                                                        <div class="font-medium text-gray-900 dark:text-white text-sm">
+                                                            {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                        </div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ $bundleItem->produk->kode ?? '' }}</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $bundleItem->deskripsi ?? '-' }}</td>
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $bundleItem->quantity }}</td>
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    {{ $bundleItem->satuan->nama ?? '-' }}</td>
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">Rp
+                                                    {{ number_format($bundleItem->harga, 0, ',', '.') }}</td>
+                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                    @if ($bundleItem->diskon_persen > 0)
+                                                        <span
+                                                            class="text-green-600 dark:text-green-400">{{ $bundleItem->diskon_persen }}%</span>
+                                                        <span class="block text-xs">(Rp
+                                                            {{ number_format($bundleItem->diskon_nominal, 0, ',', '.') }})</span>
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                                <td
+                                                    class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                    Rp {{ number_format($bundleItem->subtotal, 0, ',', '.') }}</td>
+                                            </tr>
+                                        @endforeach
+                                    @endif
+                                @endforeach
                             @endif
-                        </td>
-                        <td style="padding: 8px 24px; font-size: 14px; font-weight: 500; color: #374151;">
-                            Rp {{ number_format($bundleItem->subtotal, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endforeach
-            @endif
-            @endforeach
-            @endif
 
-            {{-- Display Regular Items --}}
-            @foreach ($regularItems as $index => $detail)
-                <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ $index + count($bundleGroups) + 1 }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                        <div class="font-medium">{{ $detail->produk->kode ?? '-' }}</div>
-                        <div>{{ $detail->produk->nama ?? '-' }}</div>
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {{ $detail->deskripsi ?? '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ $detail->quantity }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {{ $detail->satuan->nama ?? '-' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        Rp {{ number_format($detail->harga, 0, ',', '.') }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        @if ($detail->diskon_persen > 0)
-                            <span class="text-green-600 dark:text-green-400">{{ $detail->diskon_persen }}%</span>
-                            <span class="block text-xs">(Rp
-                                {{ number_format($detail->diskon_nominal, 0, ',', '.') }})</span>
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                        Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
-                    </td>
-                </tr>
-            @endforeach
-
-            @if (count($bundleGroups) == 0 && count($regularItems) == 0)
-                <tr>
-                    <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                        Tidak ada detail item
-                    </td>
-                </tr>
-            @endif
-            </tbody>
-            <tfoot class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <td colspan="7" class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
-                        Subtotal:</td>
-                    <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                        {{ number_format($quotation->subtotal, 0, ',', '.') }}
-                    </td>
-                </tr>
-                @if ($quotation->diskon_nominal > 0)
-                    <tr>
-                        <td colspan="6"
-                            class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
-                            Diskon ({{ $quotation->diskon_persen }}%):</td>
-                        <td colspan="2" class="px-6 py-4 text-sm font-medium text-green-600 dark:text-green-400">
-                            - {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endif
-                @if ($quotation->ppn > 0)
-                    <tr>
-                        <td colspan="7"
-                            class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
-                            PPN ({{ $quotation->ppn }}%):</td>
-                        <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                            {{ number_format(($quotation->subtotal - $quotation->diskon_nominal) * ($quotation->ppn / 100), 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endif
-                @if ($quotation->ongkos_kirim > 0)
-                    <tr>
-                        <td colspan="7"
-                            class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
-                            Ongkos Kirim:</td>
-                        <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                            {{ number_format($quotation->ongkos_kirim, 0, ',', '.') }}
-                        </td>
-                    </tr>
-                @endif
-                <tr>
-                    <td colspan="7" class="px-6 py-4 font-medium text-lg text-gray-900 dark:text-white text-right">
-                        Total:</td>
-                    <td colspan="2" class="px-6 py-4 text-lg font-bold text-gray-900 dark:text-white">
-                        {{ number_format($quotation->total, 0, ',', '.') }}
-                    </td>
-                </tr>
-            </tfoot>
-            </table>
-        </div>
-    </div>
-
-    @if ($quotation->salesOrders && $quotation->salesOrders->count() > 0)
-        <!-- Related Sales Orders -->
-        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
-            <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-white">Sales Order Terkait</h2>
-            </div>
-            <div class="p-5">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-700">
-                            <tr>
-                                <th scope="col"
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Nomor
-                                </th>
-                                <th scope="col"
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Tanggal
-                                </th>
-                                <th scope="col"
-                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Status
-                                </th>
-                                <th scope="col"
-                                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Total
-                                </th>
-                                <th scope="col"
-                                    class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Aksi
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            @foreach ($quotation->salesOrders as $salesOrder)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td
-                                        class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ $salesOrder->nomor }}
+                            {{-- Display Regular Items --}}
+                            @foreach ($regularItems as $index => $detail)
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $index + count($bundleGroups) + 1 }}
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}
+                                    <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
+                                        <div class="font-medium">{{ $detail->produk->kode ?? '-' }}</div>
+                                        <div>{{ $detail->produk->nama ?? '-' }}</div>
                                     </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        @php
-                                            $statusClass = [
-                                                'draft' =>
-                                                    'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-                                                'diproses' =>
-                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-                                                'dikirim' =>
-                                                    'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-                                                'selesai' =>
-                                                    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
-                                                'dibatalkan' =>
-                                                    'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
-                                            ];
-                                            $class = $statusClass[$salesOrder->status] ?? $statusClass['draft'];
-                                        @endphp
-                                        <span
-                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $class }}">
-                                            {{ ucfirst($salesOrder->status) }}
-                                        </span>
+                                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $detail->deskripsi ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $detail->quantity }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        {{ $detail->satuan->nama ?? '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        Rp {{ number_format($detail->harga, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                        @if ($detail->diskon_persen > 0)
+                                            <span
+                                                class="text-green-600 dark:text-green-400">{{ $detail->diskon_persen }}%</span>
+                                            <span class="block text-xs">(Rp
+                                                {{ number_format($detail->diskon_nominal, 0, ',', '.') }})</span>
+                                        @else
+                                            -
+                                        @endif
                                     </td>
                                     <td
-                                        class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                        Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
-                                        <a href="#"
-                                            class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300">
-                                            Detail
-                                        </a>
+                                        class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                        Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endforeach
+
+                            @if (count($bundleGroups) == 0 && count($regularItems) == 0)
+                                <tr>
+                                    <td colspan="8"
+                                        class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        Tidak ada detail item
+                                    </td>
+                                </tr>
+                            @endif
                         </tbody>
+                        <tfoot class="bg-gray-50 dark:bg-gray-700">
+                            <tr>
+                                <td colspan="7"
+                                    class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
+                                    Subtotal:</td>
+                                <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                    {{ number_format($quotation->subtotal, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                            @if ($quotation->diskon_nominal > 0)
+                                <tr>
+                                    <td colspan="6"
+                                        class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
+                                        Diskon ({{ $quotation->diskon_persen }}%):</td>
+                                    <td colspan="2"
+                                        class="px-6 py-4 text-sm font-medium text-green-600 dark:text-green-400">
+                                        - {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endif
+                            @if ($quotation->ppn > 0)
+                                <tr>
+                                    <td colspan="7"
+                                        class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
+                                        PPN ({{ $quotation->ppn }}%):</td>
+                                    <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                        {{ number_format(($quotation->subtotal - $quotation->diskon_nominal) * ($quotation->ppn / 100), 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endif
+                            @if ($quotation->ongkos_kirim > 0)
+                                <tr>
+                                    <td colspan="7"
+                                        class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
+                                        Ongkos Kirim:</td>
+                                    <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                                        {{ number_format($quotation->ongkos_kirim, 0, ',', '.') }}
+                                    </td>
+                                </tr>
+                            @endif
+                            <tr>
+                                <td colspan="7"
+                                    class="px-6 py-4 font-medium text-lg text-gray-900 dark:text-white text-right">
+                                    Total:</td>
+                                <td colspan="2" class="px-6 py-4 text-lg font-bold text-gray-900 dark:text-white">
+                                    {{ number_format($quotation->total, 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
-        </div>
-    @endif
 
-    <!-- Log Aktivitas -->
-    <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-        <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Log Aktivitas</h2>
-        </div>
-        <div class="p-5">
-            @if ($quotation->logAktivitas && $quotation->logAktivitas->count() > 0)
-                <div class="flow-root">
-                    <ul role="list" class="-mb-8">
-                        @foreach ($quotation->logAktivitas as $log)
-                            <li>
-                                <div class="relative pb-8">
-                                    @if (!$loop->last)
-                                        <span
-                                            class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
-                                            aria-hidden="true"></span>
-                                    @endif
-                                    <div class="relative flex items-start space-x-3">
-                                        <div class="relative">
-                                            @php
-                                                $iconClass = 'bg-gray-400';
-                                                $iconSvg =
-                                                    '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+            @if ($quotation->salesOrders && $quotation->salesOrders->count() > 0)
+                <!-- Related Sales Orders -->
+                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
+                    <div class="p-5 border-b border-gray-200 dark:border-gray-700">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Sales Order Terkait</h2>
+                    </div>
+                    <div class="p-5">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead class="bg-gray-50 dark:bg-gray-700">
+                                    <tr>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Nomor
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Tanggal
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Status
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Total
+                                        </th>
+                                        <th scope="col"
+                                            class="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            Aksi
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    @foreach ($quotation->salesOrders as $salesOrder)
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $salesOrder->nomor }}
+                                            </td>
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                                {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d/m/Y') }}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                @php
+                                                    $statusClass = [
+                                                        'draft' =>
+                                                            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                                        'diproses' =>
+                                                            'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+                                                        'dikirim' =>
+                                                            'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
+                                                        'selesai' =>
+                                                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+                                                        'dibatalkan' =>
+                                                            'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+                                                    ];
+                                                    $class = $statusClass[$salesOrder->status] ?? $statusClass['draft'];
+                                                @endphp
+                                                <span
+                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $class }}">
+                                                    {{ ucfirst($salesOrder->status) }}
+                                                </span>
+                                            </td>
+                                            <td
+                                                class="px-4 py-3 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                                Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
+                                            </td>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm text-center">
+                                                <a href="#"
+                                                    class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300">
+                                                    Detail
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
-                                                if ($log->aktivitas == 'create') {
-                                                    $iconClass = 'bg-green-500';
-                                                    $iconSvg =
-                                                        '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>';
-                                                } elseif ($log->aktivitas == 'update') {
-                                                    $iconClass = 'bg-blue-500';
-                                                    $iconSvg =
-                                                        '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>';
-                                                } elseif ($log->aktivitas == 'delete') {
-                                                    $iconClass = 'bg-red-500';
-                                                    $iconSvg =
-                                                        '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
-                                                } elseif ($log->aktivitas == 'change_status') {
-                                                    $iconClass = 'bg-purple-500';
-                                                    $iconSvg =
-                                                        '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>';
-                                                }
-                                            @endphp
-                                            <span
-                                                class="h-10 w-10 rounded-full flex items-center justify-center {{ $iconClass }}">
-                                                {!! $iconSvg !!}
-                                            </span>
-                                        </div>
-                                        <div class="min-w-0 flex-1">
-                                            <div>
-                                                <div class="text-sm">
-                                                    <span class="font-medium text-gray-900 dark:text-white">
-                                                        {{ $log->user->name ?? 'User tidak diketahui' }}
-                                                    </span>
+            <!-- Log Aktivitas -->
+            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+                <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Log Aktivitas</h2>
+                </div>
+                <div class="p-5">
+                    @if ($quotation->logAktivitas && $quotation->logAktivitas->count() > 0)
+                        <div class="flow-root">
+                            <ul role="list" class="-mb-8">
+                                @foreach ($quotation->logAktivitas as $log)
+                                    <li>
+                                        <div class="relative pb-8">
+                                            @if (!$loop->last)
+                                                <span
+                                                    class="absolute top-5 left-5 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                                                    aria-hidden="true"></span>
+                                            @endif
+                                            <div class="relative flex items-start space-x-3">
+                                                <div class="relative">
                                                     @php
-                                                        $aktifitasText = '';
-                                                        switch ($log->aktivitas) {
-                                                            case 'create':
-                                                                $aktifitasText = 'membuat';
-                                                                break;
-                                                            case 'update':
-                                                                $aktifitasText = 'mengubah';
-                                                                break;
-                                                            case 'delete':
-                                                                $aktifitasText = 'menghapus';
-                                                                break;
-                                                            case 'change_status':
-                                                                $aktifitasText = 'mengubah status';
-                                                                break;
-                                                            default:
-                                                                $aktifitasText = $log->aktivitas;
+                                                        $iconClass = 'bg-gray-400';
+                                                        $iconSvg =
+                                                            '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" /></svg>';
+
+                                                        if ($log->aktivitas == 'create') {
+                                                            $iconClass = 'bg-green-500';
+                                                            $iconSvg =
+                                                                '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>';
+                                                        } elseif ($log->aktivitas == 'update') {
+                                                            $iconClass = 'bg-blue-500';
+                                                            $iconSvg =
+                                                                '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>';
+                                                        } elseif ($log->aktivitas == 'delete') {
+                                                            $iconClass = 'bg-red-500';
+                                                            $iconSvg =
+                                                                '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>';
+                                                        } elseif ($log->aktivitas == 'change_status') {
+                                                            $iconClass = 'bg-purple-500';
+                                                            $iconSvg =
+                                                                '<svg class="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>';
                                                         }
                                                     @endphp
                                                     <span
-                                                        class="text-gray-500 dark:text-gray-400">{{ $aktifitasText }}
-                                                        quotation</span>
+                                                        class="h-10 w-10 rounded-full flex items-center justify-center {{ $iconClass }}">
+                                                        {!! $iconSvg !!}
+                                                    </span>
                                                 </div>
-                                                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                                    {{ $log->created_at->format('d M Y, H:i') }}
-                                                    <span class="text-gray-400 dark:text-gray-600">·</span>
-                                                    IP: {{ $log->ip_address }}
-                                                </p>
-                                            </div>
-                                            <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
-                                                @if ($log->aktivitas == 'create')
-                                                    @php $detail = json_decode($log->detail); @endphp
-                                                    Membuat quotation baru nomor <span
-                                                        class="font-medium">{{ $detail->nomor }}</span>
-                                                    untuk customer <span
-                                                        class="font-medium">{{ $detail->customer }}</span>
-                                                    dengan total <span class="font-medium">Rp.
-                                                        {{ number_format($detail->total, 0, ',', '.') }}</span>
-                                                @elseif($log->aktivitas == 'update')
-                                                    @php
-                                                        $detail = json_decode($log->detail);
-                                                        $hasChanges = false;
-                                                    @endphp
-                                                    Mengubah data quotation
-                                                    @if ($detail->before->nomor != $detail->after->nomor)
-                                                        @php $hasChanges = true; @endphp
-                                                        dari nomor
-                                                        <span class="font-medium">{{ $detail->before->nomor }}</span>
-                                                        menjadi <span
-                                                            class="font-medium">{{ $detail->after->nomor }}</span>
-                                                    @endif
-                                                    @if ($detail->before->customer != $detail->after->customer)
-                                                        @php $hasChanges = true; @endphp
-                                                        {{ $detail->before->nomor != $detail->after->nomor ? ',' : '' }}
-                                                        customer dari <span
-                                                            class="font-medium">{{ $detail->before->customer }}</span>
-                                                        menjadi <span
-                                                            class="font-medium">{{ $detail->after->customer }}</span>
-                                                    @endif
-                                                    @if ($detail->before->total != $detail->after->total)
-                                                        @php $hasChanges = true; @endphp
-                                                        {{ $detail->before->nomor != $detail->after->nomor || $detail->before->customer != $detail->after->customer ? ',' : '' }}
-                                                        total dari <span class="font-medium">Rp.
-                                                            {{ number_format($detail->before->total, 0, ',', '.') }}</span>
-                                                        menjadi <span class="font-medium">Rp.
-                                                            {{ number_format($detail->after->total, 0, ',', '.') }}</span>
-                                                    @endif
-                                                    @if (!$hasChanges)
-                                                        dengan nomor <span
-                                                            class="font-medium">{{ $detail->after->nomor }}</span>
-                                                    @endif
-                                                @elseif($log->aktivitas == 'delete')
-                                                    @php $detail = json_decode($log->detail); @endphp
-                                                    Menghapus quotation nomor <span
-                                                        class="font-medium">{{ $detail->nomor }}</span>
-                                                    untuk customer <span
-                                                        class="font-medium">{{ $detail->customer }}</span>
-                                                    dengan total <span class="font-medium">Rp.
-                                                        {{ number_format($detail->total, 0, ',', '.') }}</span>
-                                                @elseif($log->aktivitas == 'change_status')
-                                                    @php $detail = json_decode($log->detail); @endphp
-                                                    Mengubah status quotation nomor <span
-                                                        class="font-medium">{{ $detail->nomor }}</span>
-                                                    dari <span
-                                                        class="font-medium capitalize">{{ $detail->status_lama }}</span>
-                                                    menjadi <span
-                                                        class="font-medium capitalize">{{ $detail->status_baru }}</span>
-                                                    @if ($detail->catatan != '-')
-                                                        <p class="mt-1 text-xs italic">Catatan:
-                                                            "{{ $detail->catatan }}"</p>
-                                                    @endif
-                                                @else
-                                                    {{ $log->detail }}
-                                                @endif
+                                                <div class="min-w-0 flex-1">
+                                                    <div>
+                                                        <div class="text-sm">
+                                                            <span class="font-medium text-gray-900 dark:text-white">
+                                                                {{ $log->user->name ?? 'User tidak diketahui' }}
+                                                            </span>
+                                                            @php
+                                                                $aktifitasText = '';
+                                                                switch ($log->aktivitas) {
+                                                                    case 'create':
+                                                                        $aktifitasText = 'membuat';
+                                                                        break;
+                                                                    case 'update':
+                                                                        $aktifitasText = 'mengubah';
+                                                                        break;
+                                                                    case 'delete':
+                                                                        $aktifitasText = 'menghapus';
+                                                                        break;
+                                                                    case 'change_status':
+                                                                        $aktifitasText = 'mengubah status';
+                                                                        break;
+                                                                    default:
+                                                                        $aktifitasText = $log->aktivitas;
+                                                                }
+                                                            @endphp
+                                                            <span
+                                                                class="text-gray-500 dark:text-gray-400">{{ $aktifitasText }}
+                                                                quotation</span>
+                                                        </div>
+                                                        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ $log->created_at->format('d M Y, H:i') }}
+                                                            <span class="text-gray-400 dark:text-gray-600">·</span>
+                                                            IP: {{ $log->ip_address }}
+                                                        </p>
+                                                    </div>
+                                                    <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        @if ($log->aktivitas == 'create')
+                                                            @php $detail = json_decode($log->detail); @endphp
+                                                            Membuat quotation baru nomor <span
+                                                                class="font-medium">{{ $detail->nomor }}</span>
+                                                            untuk customer <span
+                                                                class="font-medium">{{ $detail->customer }}</span>
+                                                            dengan total <span class="font-medium">Rp.
+                                                                {{ number_format($detail->total, 0, ',', '.') }}</span>
+                                                        @elseif($log->aktivitas == 'update')
+                                                            @php
+                                                                $detail = json_decode($log->detail);
+                                                                $hasChanges = false;
+                                                            @endphp
+                                                            Mengubah data quotation
+                                                            @if ($detail->before->nomor != $detail->after->nomor)
+                                                                @php $hasChanges = true; @endphp
+                                                                dari nomor
+                                                                <span
+                                                                    class="font-medium">{{ $detail->before->nomor }}</span>
+                                                                menjadi <span
+                                                                    class="font-medium">{{ $detail->after->nomor }}</span>
+                                                            @endif
+                                                            @if ($detail->before->customer != $detail->after->customer)
+                                                                @php $hasChanges = true; @endphp
+                                                                {{ $detail->before->nomor != $detail->after->nomor ? ',' : '' }}
+                                                                customer dari <span
+                                                                    class="font-medium">{{ $detail->before->customer }}</span>
+                                                                menjadi <span
+                                                                    class="font-medium">{{ $detail->after->customer }}</span>
+                                                            @endif
+                                                            @if ($detail->before->total != $detail->after->total)
+                                                                @php $hasChanges = true; @endphp
+                                                                {{ $detail->before->nomor != $detail->after->nomor || $detail->before->customer != $detail->after->customer ? ',' : '' }}
+                                                                total dari <span class="font-medium">Rp.
+                                                                    {{ number_format($detail->before->total, 0, ',', '.') }}</span>
+                                                                menjadi <span class="font-medium">Rp.
+                                                                    {{ number_format($detail->after->total, 0, ',', '.') }}</span>
+                                                            @endif
+                                                            @if (!$hasChanges)
+                                                                dengan nomor <span
+                                                                    class="font-medium">{{ $detail->after->nomor }}</span>
+                                                            @endif
+                                                        @elseif($log->aktivitas == 'delete')
+                                                            @php $detail = json_decode($log->detail); @endphp
+                                                            Menghapus quotation nomor <span
+                                                                class="font-medium">{{ $detail->nomor }}</span>
+                                                            untuk customer <span
+                                                                class="font-medium">{{ $detail->customer }}</span>
+                                                            dengan total <span class="font-medium">Rp.
+                                                                {{ number_format($detail->total, 0, ',', '.') }}</span>
+                                                        @elseif($log->aktivitas == 'change_status')
+                                                            @php $detail = json_decode($log->detail); @endphp
+                                                            Mengubah status quotation nomor <span
+                                                                class="font-medium">{{ $detail->nomor }}</span>
+                                                            dari <span
+                                                                class="font-medium capitalize">{{ $detail->status_lama }}</span>
+                                                            menjadi <span
+                                                                class="font-medium capitalize">{{ $detail->status_baru }}</span>
+                                                            @if ($detail->catatan != '-')
+                                                                <p class="mt-1 text-xs italic">Catatan:
+                                                                    "{{ $detail->catatan }}"</p>
+                                                            @endif
+                                                        @else
+                                                            {{ $log->detail }}
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @else
+                        <div class="text-center py-4 text-gray-500 dark:text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-gray-400"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p>Belum ada log aktivitas untuk quotation ini.</p>
+                        </div>
+                    @endif
                 </div>
-            @else
-                <div class="text-center py-4 text-gray-500 dark:text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2 text-gray-400"
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <p>Belum ada log aktivitas untuk quotation ini.</p>
-                </div>
-            @endif
+            </div>
         </div>
-    </div>
-    </div>
     </div>
     </div>
 

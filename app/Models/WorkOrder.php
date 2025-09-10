@@ -103,11 +103,19 @@ class WorkOrder extends Model
     }
 
     /**
-     * Relasi ke quality control
+     * Relasi ke quality control (semua riwayat QC)
+     */
+    public function qualityControls()
+    {
+        return $this->hasMany(QualityControl::class, 'work_order_id')->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Relasi ke quality control terakhir
      */
     public function qualityControl()
     {
-        return $this->hasOne(QualityControl::class, 'work_order_id');
+        return $this->hasOne(QualityControl::class, 'work_order_id')->latestOfMany('created_at');
     }
 
     /**

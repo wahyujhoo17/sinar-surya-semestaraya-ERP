@@ -72,7 +72,7 @@ class WorkOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = WorkOrder::with(['produk', 'salesOrder', 'perencanaanProduksi']);
+        $query = WorkOrder::with(['produk', 'salesOrder', 'perencanaanProduksi', 'qualityControl', 'qualityControls', 'satuan']);
 
         $sort = $request->get('sort', 'tanggal');
         $direction = $request->get('direction', 'desc');
@@ -156,9 +156,9 @@ class WorkOrderController extends Controller
                 return view('produksi.work-order.select-product', compact('perencanaan'));
             }
         } else {
-            // Get approved production plans, with eager loading to improve performance
+            // Get approved and running production plans, with eager loading to improve performance
             $perencanaanList = PerencanaanProduksi::with(['salesOrder.customer'])
-                ->where('status', 'disetujui')
+                ->whereIn('status', ['disetujui', 'berjalan'])
                 ->orderBy('tanggal', 'desc')
                 ->get();
 
@@ -268,7 +268,43 @@ class WorkOrderController extends Controller
                 ]);
             }
 
-            // Catat log aktivitas
+            // Cek apakah semua item dalam perencanaan produksi sudah memiliki Work Order
+            $totalItemsInPlan = PerencanaanProduksiDetail::where('perencanaan_produksi_id', $request->perencanaan_produksi_id)->count();
+            $itemsWithWorkOrder = WorkOrder::where('perencanaan_produksi_id', $request->perencanaan_produksi_id)
+                ->distinct('produk_id')
+                ->count();
+
+            // Update status perencanaan produksi menjadi selesai hanya jika semua item sudah ada work ordernya
+            if ($itemsWithWorkOrder >= $totalItemsInPlan) {
+                $perencanaan->status = 'selesai';
+                $perencanaan->save();
+
+                // Catat log aktivitas untuk perubahan status perencanaan produksi
+                LogAktivitas::create([
+                    'user_id' => Auth::id(),
+                    'aktivitas' => 'Mengubah status perencanaan produksi menjadi selesai: ' . $perencanaan->nomor . ' (semua item sudah memiliki work order)',
+                    'modul' => 'produksi',
+                    'id_referensi' => $perencanaan->id,
+                    'jenis_referensi' => 'perencanaan_produksi',
+                ]);
+            } else {
+                // Update status menjadi berjalan jika belum semua item memiliki work order
+                if ($perencanaan->status === 'disetujui') {
+                    $perencanaan->status = 'berjalan';
+                    $perencanaan->save();
+
+                    // Catat log aktivitas untuk perubahan status perencanaan produksi
+                    LogAktivitas::create([
+                        'user_id' => Auth::id(),
+                        'aktivitas' => 'Mengubah status perencanaan produksi menjadi berjalan: ' . $perencanaan->nomor . ' (ada work order baru: ' . $nomor . ')',
+                        'modul' => 'produksi',
+                        'id_referensi' => $perencanaan->id,
+                        'jenis_referensi' => 'perencanaan_produksi',
+                    ]);
+                }
+            }
+
+            // Catat log aktivitas untuk work order
             LogAktivitas::create([
                 'user_id' => Auth::id(),
                 'aktivitas' => 'Membuat work order baru: ' . $nomor,
@@ -307,7 +343,11 @@ class WorkOrderController extends Controller
             'pengambilanBahanBaku.detail',
             'pengambilanBahanBaku.detail.produk',
             'pengambilanBahanBaku.detail.satuan',
-            'qualityControl'
+            'qualityControl',
+            'qualityControls',
+            'qualityControls.detail',
+            'qualityControls.inspector',
+            'satuan'
         ])->findOrFail($id);
 
         return view('produksi.work-order.show', compact('workOrder'));
@@ -446,12 +486,12 @@ class WorkOrderController extends Controller
         $workOrder = WorkOrder::findOrFail($id);
         $newStatus = $request->status;
 
-        // Validasi perubahan status
+        // Validasi perubahan status dengan dukungan rework
         $validStatus = [
             'direncanakan' => ['berjalan'],
             'berjalan' => ['selesai_produksi', 'dibatalkan'],
-            'selesai_produksi' => ['berjalan', 'qc_passed'],
-            'qc_passed' => ['pengembalian_material'],
+            'selesai_produksi' => ['berjalan', 'qc_passed'], // Bisa kembali ke berjalan untuk rework
+            'qc_passed' => ['pengembalian_material', 'berjalan'], // Bisa kembali ke berjalan jika ada masalah
             'pengembalian_material' => ['selesai'],
             'selesai' => ['selesai'], // Maintain the current status
             'dibatalkan' => ['dibatalkan'] // Maintain the current status
@@ -481,10 +521,36 @@ class WorkOrderController extends Controller
             $workOrder->status = $newStatus;
             $workOrder->save();
 
-            // Catat log aktivitas
+            // Update material consumption ketika status berubah menjadi selesai_produksi
+            if ($newStatus === 'selesai_produksi') {
+                // Update quantity_terpakai berdasarkan jumlah produksi yang dihasilkan
+                // Untuk sementara, diasumsikan semua material terpakai penuh (100% consumption rate)
+                // Nanti bisa diperbaiki dengan input actual consumption dari user
+                WorkOrderMaterial::where('work_order_id', $workOrder->id)
+                    ->update(['quantity_terpakai' => DB::raw('quantity')]);
+            }
+
+            // Reset material consumption ketika status kembali ke berjalan untuk rework
+            if ($newStatus === 'berjalan' && in_array($workOrder->getOriginal('status'), ['selesai_produksi', 'qc_passed'])) {
+                // Reset quantity_terpakai ke 0 untuk rework
+                // Material yang sudah dikembalikan akan tetap ter-record sebagai tidak terpakai
+                WorkOrderMaterial::where('work_order_id', $workOrder->id)
+                    ->update(['quantity_terpakai' => 0]);
+            }
+
+            // Catat log aktivitas dengan konteks yang jelas
+            $statusContext = '';
+            if ($newStatus === 'berjalan' && in_array($workOrder->getOriginal('status'), ['selesai_produksi', 'qc_passed'])) {
+                $statusContext = ' (untuk rework/perbaikan produk)';
+            } elseif ($newStatus === 'selesai_produksi') {
+                $statusContext = ' (siap untuk Quality Control)';
+            } elseif ($newStatus === 'qc_passed') {
+                $statusContext = ' (lulus Quality Control)';
+            }
+
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Mengubah status work order ' . $workOrder->nomor . ' menjadi ' . $newStatus,
+                'aktivitas' => 'Mengubah status work order ' . $workOrder->nomor . ' menjadi ' . $newStatus . $statusContext,
                 'modul' => 'produksi',
                 'id_referensi' => $workOrder->id,
                 'jenis_referensi' => 'work_order',
@@ -769,17 +835,20 @@ class WorkOrderController extends Controller
             }
 
             // Update status work order setelah QC
-            // Jika QC lolos, ubah ke qc_passed
-            // Jika QC gagal, kembalikan ke berjalan untuk perbaikan
+            // Jika semua produk lolos QC, ubah ke qc_passed
+            // Jika ada produk gagal, kembalikan ke berjalan untuk rework/perbaikan
             $newStatus = $request->jumlah_gagal > 0 ? 'berjalan' : 'qc_passed';
             $workOrder->status = $newStatus;
             $workOrder->save();
 
-            // Catat log aktivitas
+            // Catat log aktivitas dengan detail hasil QC
+            $qcResult = $request->jumlah_gagal > 0 ?
+                "PERLU REWORK - {$request->jumlah_gagal} unit gagal dari {$workOrder->quantity} unit total" :
+                "LULUS QC - Semua {$request->jumlah_lolos} unit memenuhi standar";
+
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Membuat quality control untuk work order ' . $workOrder->nomor . ' dengan hasil ' .
-                    ($newStatus === 'qc_passed' ? 'lulus QC' : 'perlu perbaikan'),
+                'aktivitas' => 'Quality Control Work Order ' . $workOrder->nomor . ': ' . $qcResult,
                 'modul' => 'produksi',
                 'id_referensi' => $qc->id,
                 'jenis_referensi' => 'quality_control',
@@ -787,8 +856,13 @@ class WorkOrderController extends Controller
 
             DB::commit();
 
+            // Pesan yang berbeda berdasarkan hasil QC
+            $successMessage = $request->jumlah_gagal > 0 ?
+                "Quality Control selesai. {$request->jumlah_gagal} unit perlu rework. Work Order dikembalikan ke status produksi untuk perbaikan." :
+                "Quality Control selesai. Semua {$request->jumlah_lolos} unit lulus QC. Work Order siap untuk tahap selanjutnya.";
+
             return redirect()->route('produksi.work-order.show', $workOrder->id)
-                ->with('success', 'Quality Control berhasil dibuat.');
+                ->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();

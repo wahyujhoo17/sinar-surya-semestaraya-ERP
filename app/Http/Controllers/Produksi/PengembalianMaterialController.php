@@ -112,7 +112,7 @@ class PengembalianMaterialController extends Controller
                     'jumlah_setelah' => $stokProduk->jumlah,
                     'jenis' => 'masuk',
                     'referensi_tipe' => 'produksi',
-                    'referensi_id' => $workOrder->nomor,
+                    'referensi_id' => $workOrder->id,
                     'keterangan' => "Pengembalian material dari Work Order #{$workOrder->nomor}"
                 ]);
 
