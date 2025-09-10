@@ -125,4 +125,17 @@ class WorkOrder extends Model
     {
         return $this->belongsTo(PerencanaanProduksi::class, 'perencanaan_produksi_id');
     }
+
+    /**
+     * Relasi ke riwayat pengembalian material
+     */
+    public function riwayatPengembalianMaterial()
+    {
+        return $this->hasMany(RiwayatStok::class, 'referensi_id')
+            ->where('referensi_tipe', 'produksi')
+            ->where('jenis', 'masuk')
+            ->where('keterangan', 'like', '%Pengembalian material%')
+            ->with(['produk', 'gudang', 'user'])
+            ->orderBy('created_at', 'desc');
+    }
 }

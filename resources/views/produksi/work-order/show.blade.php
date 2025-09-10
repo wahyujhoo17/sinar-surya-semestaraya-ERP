@@ -463,8 +463,18 @@
                             </th>
                             <th scope="col"
                                 class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
-                                Jumlah
+                                Jumlah Dibutuhkan
                             </th>
+                            @if (in_array($workOrder->status, ['selesai_produksi', 'qc_passed', 'pengembalian_material', 'selesai']))
+                                <th scope="col"
+                                    class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                    Jumlah Terpakai
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                    Sisa
+                                </th>
+                            @endif
                             <th scope="col"
                                 class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                 Satuan
@@ -488,13 +498,35 @@
                                     class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600 dark:text-gray-300 font-medium">
                                     {{ number_format($material->quantity, 2, ',', '.') }}
                                 </td>
+                                @if (in_array($workOrder->status, ['selesai_produksi', 'qc_passed', 'pengembalian_material', 'selesai']))
+                                    <td
+                                        class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600 dark:text-gray-300 font-medium">
+                                        <span class="text-orange-600 dark:text-orange-400">
+                                            {{ number_format($material->quantity_terpakai, 2, ',', '.') }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
+                                        @php
+                                            $sisa = $material->quantity - $material->quantity_terpakai;
+                                        @endphp
+                                        @if ($sisa > 0)
+                                            <span class="text-green-600 dark:text-green-400">
+                                                {{ number_format($sisa, 2, ',', '.') }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-500 dark:text-gray-400">
+                                                {{ number_format($sisa, 2, ',', '.') }}
+                                            </span>
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                                     {{ $material->satuan->nama ?? '-' }}
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4"
+                                <td colspan="@if (in_array($workOrder->status, ['selesai_produksi', 'qc_passed', 'pengembalian_material', 'selesai'])) 6 @else 4 @endif"
                                     class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 text-gray-400"
                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -634,6 +666,122 @@
                 @endif
             </div>
         </div>
+
+        {{-- Riwayat Pengembalian Bahan Baku --}}
+        @if (in_array($workOrder->status, ['qc_passed', 'pengembalian_material', 'selesai']))
+            <div
+                class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 mb-6 transition-all duration-300 hover:shadow-xl">
+                <div
+                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-white dark:from-gray-700 dark:to-gray-800">
+                    <h2 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                            class="h-5 w-5 mr-2 text-green-600 dark:text-green-400" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                        </svg>
+                        Riwayat Pengembalian Bahan Baku
+                    </h2>
+                </div>
+                <div class="p-6">
+                    @if ($workOrder->riwayatPengembalianMaterial->count() > 0)
+                        <div class="space-y-4">
+                            @foreach ($workOrder->riwayatPengembalianMaterial->groupBy(function ($item) {
+        return $item->created_at->format('Y-m-d H:i');
+    }) as $tanggal => $pengembalianGroup)
+                                <div
+                                    class="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 rounded-lg border border-green-200 dark:border-green-700 p-4">
+                                    <div class="flex justify-between items-center mb-3">
+                                        <h4 class="font-semibold text-green-800 dark:text-green-200 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg"
+                                                class="h-4 w-4 mr-2 text-green-600 dark:text-green-400" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                            Pengembalian: {{ \Carbon\Carbon::parse($tanggal)->format('d/m/Y H:i') }}
+                                        </h4>
+                                        <span
+                                            class="text-xs text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-800 px-2 py-1 rounded-full font-medium">
+                                            {{ $pengembalianGroup->count() }} material
+                                        </span>
+                                    </div>
+                                    <div class="overflow-x-auto">
+                                        <table class="min-w-full">
+                                            <thead class="bg-green-100 dark:bg-green-800">
+                                                <tr>
+                                                    <th scope="col"
+                                                        class="px-4 py-2 text-left text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wider">
+                                                        Material
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-4 py-2 text-right text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wider">
+                                                        Jumlah Dikembalikan
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-4 py-2 text-left text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wider">
+                                                        Satuan
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-4 py-2 text-left text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wider">
+                                                        Gudang
+                                                    </th>
+                                                    <th scope="col"
+                                                        class="px-4 py-2 text-left text-xs font-medium text-green-700 dark:text-green-300 uppercase tracking-wider">
+                                                        Petugas
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody
+                                                class="bg-white dark:bg-gray-800 divide-y divide-green-200 dark:divide-green-700">
+                                                @foreach ($pengembalianGroup as $riwayat)
+                                                    <tr
+                                                        class="hover:bg-green-50 dark:hover:bg-green-900 transition-colors duration-150">
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                            {{ $riwayat->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                                {{ $riwayat->produk->kode ?? '-' }}
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600 dark:text-green-400 font-medium">
+                                                            +{{ number_format($riwayat->jumlah_perubahan, 2, ',', '.') }}
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                                                            {{ $riwayat->produk->satuan->nama ?? '-' }}
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                                                            {{ $riwayat->gudang->nama ?? '-' }}
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
+                                                            {{ $riwayat->user->name ?? '-' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div
+                            class="text-center text-gray-500 dark:text-gray-400 py-12 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto mb-3 text-gray-400"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+                            </svg>
+                            <p class="text-sm font-medium">Belum ada pengembalian bahan baku</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @endif
 
         {{-- Quality Control --}}
         @if ($workOrder->qualityControl)

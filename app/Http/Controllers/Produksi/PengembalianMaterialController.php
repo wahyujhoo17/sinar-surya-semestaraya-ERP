@@ -10,6 +10,7 @@ use App\Models\StokProduk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PengembalianMaterialController extends Controller
 {
@@ -33,6 +34,18 @@ class PengembalianMaterialController extends Controller
         if ($workOrder->status !== 'qc_passed') {
             return redirect()->route('produksi.work-order.show', $workOrder->id)
                 ->with('error', 'Pengembalian material hanya dapat dilakukan setelah produk lulus QC.');
+        }
+
+        // Check for legacy work orders where all materials were marked as 100% consumed
+        // If all materials have quantity_terpakai = quantity, reset to 80% consumption rate
+        $allMaterialsFullyConsumed = $workOrder->materials()
+            ->whereRaw('quantity_terpakai >= quantity')
+            ->count() === $workOrder->materials()->count();
+
+        if ($allMaterialsFullyConsumed && $workOrder->materials()->count() > 0) {
+            // Reset consumption rate to 80% for material return flexibility
+            WorkOrderMaterial::where('work_order_id', $workOrder->id)
+                ->update(['quantity_terpakai' => DB::raw('quantity * 0.8')]);
         }
 
         // Get materials that still have remaining quantity (not fully consumed)

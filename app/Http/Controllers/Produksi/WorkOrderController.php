@@ -347,6 +347,10 @@ class WorkOrderController extends Controller
             'qualityControls',
             'qualityControls.detail',
             'qualityControls.inspector',
+            'riwayatPengembalianMaterial',
+            'riwayatPengembalianMaterial.produk',
+            'riwayatPengembalianMaterial.gudang',
+            'riwayatPengembalianMaterial.user',
             'satuan'
         ])->findOrFail($id);
 
@@ -523,11 +527,11 @@ class WorkOrderController extends Controller
 
             // Update material consumption ketika status berubah menjadi selesai_produksi
             if ($newStatus === 'selesai_produksi') {
-                // Update quantity_terpakai berdasarkan jumlah produksi yang dihasilkan
-                // Untuk sementara, diasumsikan semua material terpakai penuh (100% consumption rate)
-                // Nanti bisa diperbaiki dengan input actual consumption dari user
+                // Untuk sementara, kita menggunakan consumption rate 80% sebagai estimasi awal
+                // User bisa mengubah ini melalui pengembalian material nantinya
+                // Ini memberikan fleksibilitas untuk ada material yang tersisa
                 WorkOrderMaterial::where('work_order_id', $workOrder->id)
-                    ->update(['quantity_terpakai' => DB::raw('quantity')]);
+                    ->update(['quantity_terpakai' => DB::raw('quantity * 0.8')]);
             }
 
             // Reset material consumption ketika status kembali ke berjalan untuk rework
