@@ -18,12 +18,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Traits\HasPDFQRCode;
 
 class PermintaanBarangController extends Controller
 {
+    use HasPDFQRCode;
+
     public function __construct()
     {
-        $this->middleware('permission:permintaan_barang.view')->only(['index', 'show']);
+        $this->middleware('permission:permintaan_barang.view')->only(['index', 'show', 'exportPdf']);
         $this->middleware('permission:permintaan_barang.create')->only(['create', 'store', 'generateFromSalesOrder', 'autoProsesFromSalesOrder']);
         $this->middleware('permission:permintaan_barang.edit')->only(['edit', 'update', 'updateStatus']);
         $this->middleware('permission:permintaan_barang.delete')->only(['destroy']);
@@ -163,7 +167,7 @@ class PermintaanBarangController extends Controller
 
         // Debug log jika sales order baru tidak ditemukan
         if ($salesOrders->isEmpty()) {
-            \Log::info('getPendingSalesOrders: Tidak ada sales order yang memenuhi filter', [
+            Log::info('getPendingSalesOrders: Tidak ada sales order yang memenuhi filter', [
                 'processedSalesOrderIds' => $processedSalesOrderIds,
                 'all_sales_orders' => SalesOrder::pluck('id', 'nomor')->toArray(),
             ]);
@@ -452,7 +456,7 @@ class PermintaanBarangController extends Controller
         $permintaanBarang->load(['details.produk', 'details.satuan', 'salesOrder', 'customer', 'gudang', 'user']);
 
         // Debug: Log the permintaan barang details count
-        \Illuminate\Support\Facades\Log::info('Permintaan Barang Details', [
+        Log::info('Permintaan Barang Details', [
             'id' => $permintaanBarang->id,
             'nomor' => $permintaanBarang->nomor,
             'details_count' => $permintaanBarang->details->count(),
@@ -516,5 +520,89 @@ class PermintaanBarangController extends Controller
             'sales_order_id' => $permintaanBarang->sales_order_id,
             'gudang_id' => $permintaanBarang->gudang_id
         ]);
+    }
+
+    /**
+     * Export PDF for permintaan barang
+     */
+    public function exportPdf($id)
+    {
+        try {
+            $permintaanBarang = PermintaanBarang::with([
+                'details.produk',
+                'details.satuan',
+                'gudang',
+                'customer',
+                'user',
+                'salesOrder'
+            ])->findOrFail($id);
+
+            // Calculate summary data
+            $totalItems = $permintaanBarang->details->count();
+            $uniqueSatuans = [];
+
+            foreach ($permintaanBarang->details as $detail) {
+                // Track unique units for display purposes
+                if (isset($detail->satuan) && $detail->satuan->nama) {
+                    $uniqueSatuans[$detail->satuan->id] = $detail->satuan->nama;
+                }
+            }
+
+            // Determine unit display text
+            $multipleUnits = count($uniqueSatuans) > 1;
+            $unitDisplay = $multipleUnits ? 'unit' : (count($uniqueSatuans) === 1 ? reset($uniqueSatuans) : 'unit');
+
+            // Get creator and processor information
+            $createdBy = $permintaanBarang->user;
+            $processedBy = null;
+            $processedAt = null;
+            $isProcessed = in_array($permintaanBarang->status, ['diproses', 'selesai']);
+
+            if ($isProcessed) {
+                // Find the log entry for processing this permintaan barang
+                $processLog = LogAktivitas::with('user')
+                    ->where('modul', 'Permintaan Barang')
+                    ->where('data_id', $permintaanBarang->id)
+                    ->where('aktivitas', 'LIKE', '%memperbarui status%')
+                    ->latest()
+                    ->first();
+
+                if ($processLog) {
+                    $processedBy = $processLog->user;
+                    $processedAt = $processLog->created_at;
+                }
+            }
+
+            // Get QR codes for PDF
+            $qrCodes = $this->getPDFQRCodeData(
+                'permintaan_barang',
+                $permintaanBarang->nomor,
+                $createdBy,
+                $processedBy,
+                [
+                    'gudang' => $permintaanBarang->gudang->nama ?? '-',
+                    'customer' => $permintaanBarang->customer->nama ?? '-',
+                    'total_items' => $totalItems,
+                    'status' => $permintaanBarang->status
+                ]
+            );
+
+            // Generate PDF using the template
+            $pdf = Pdf::loadView('inventaris.permintaan_barang.pdf', compact(
+                'permintaanBarang',
+                'totalItems',
+                'unitDisplay',
+                'createdBy',
+                'processedBy',
+                'isProcessed',
+                'processedAt',
+                'qrCodes'
+            ));
+
+            return $pdf->stream('permintaan-barang-' . $permintaanBarang->nomor . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Error generating PDF for permintaan barang: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menggenerate PDF: ' . $e->getMessage());
+        }
     }
 }

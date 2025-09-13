@@ -297,6 +297,7 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:permintaan_barang.view')->group(function () {
             Route::get('permintaan-barang/{permintaanBarang}/create-do', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'createDeliveryOrder'])->name('permintaan-barang.create-do');
+            Route::get('permintaan-barang/{id}/pdf', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'exportPdf'])->name('permintaan-barang.pdf');
         });
         Route::resource('permintaan-barang', App\Http\Controllers\Inventaris\PermintaanBarangController::class);
     });
