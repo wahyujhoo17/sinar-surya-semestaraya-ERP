@@ -1,4 +1,142 @@
 <x-app-layout :breadcrumbs="$breadcrumbs" :currentPage="$currentPage">
+    @push('styles')
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            /* Modern Select2 styling */
+            .select2-container {
+                width: 100% !important;
+            }
+
+            .select2-container--default .select2-selection--single {
+                height: 38px;
+                padding: 4px 2px;
+                border-color: #D1D5DB;
+                border-radius: 0.375rem;
+                display: flex;
+                align-items: center;
+                background-color: #ffffff;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .select2-container--default .select2-selection--single:hover {
+                border-color: #6366f1;
+            }
+
+            .select2-container--default .select2-selection--single:focus,
+            .select2-container--default.select2-container--focus .select2-selection--single,
+            .select2-container--default.select2-container--open .select2-selection--single {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                outline: none;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: #374151;
+                line-height: 28px;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #9CA3AF;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 38px;
+                position: absolute;
+                top: 1px;
+                right: 1px;
+                width: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .select2-dropdown {
+                border-color: #D1D5DB;
+                border-radius: 0.375rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                overflow: hidden;
+                background-color: #ffffff;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: #6366f1;
+                color: #ffffff;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border-color: #D1D5DB;
+                border-radius: 0.25rem;
+                padding: 0.4rem 0.75rem;
+                background-color: #ffffff;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                border-color: #6366f1;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            }
+
+            /* Dark mode styling */
+            .dark .select2-container--default .select2-selection--single {
+                background-color: #374151;
+                border-color: #4B5563;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: #F9FAFB;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #9CA3AF;
+            }
+
+            .dark .select2-dropdown {
+                background-color: #1F2937;
+                border-color: #4B5563;
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: #F9FAFB;
+                background-color: #1F2937;
+            }
+
+            .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: #6366f1;
+                color: #ffffff;
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: #374151;
+                border-color: #4B5563;
+                color: #F9FAFB;
+            }
+
+            .dark .select2-container--default .select2-results__option[aria-selected=true] {
+                background-color: #374151;
+            }
+
+            /* Custom styling for product result */
+            .select2-result-product .product-name {
+                font-weight: 500;
+                color: #374151;
+            }
+
+            .select2-result-product .product-stock {
+                margin-top: 2px;
+                font-size: 0.75rem;
+                color: #6b7280;
+            }
+
+            .dark .select2-result-product .product-name {
+                color: #f3f4f6;
+            }
+
+            .dark .select2-result-product .product-stock {
+                color: #9ca3af;
+            }
+        </style>
+    @endpush
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
@@ -172,12 +310,13 @@
                                                     <div class="relative">
                                                         <select x-model="item.produk_id" :name="`produk_id[${index}]`"
                                                             @change="updateStokInfo(index)" :disabled="isLoading"
-                                                            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                                            :id="`produk_select_${index}`"
+                                                            class="select2-dropdown-dynamic shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                                             <option value="">-- Pilih Produk --</option>
                                                             <template x-for="produk in _produks"
-                                                                x-if="produk && produk.produk_id"
-                                                                :key="produk.produk_id">
-                                                                <option :value="produk.produk_id"
+                                                                :key="produk?.produk_id || Math.random()">
+                                                                <option x-show="produk && produk.produk_id"
+                                                                    :value="produk.produk_id"
                                                                     x-text="produk && produk.nama ? produk.nama : '(Produk tanpa nama)'"
                                                                     :data-satuan-id="produk && produk.satuan_id ? produk.satuan_id : ''"
                                                                     :data-stok="produk && typeof produk.stok !== 'undefined' ?
@@ -303,6 +442,8 @@
     </div>
 
     @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
             function transferDetailHandler() {
                 return {
@@ -310,12 +451,13 @@
                     _produks: [],
                     gudangAsalId: null,
                     isLoading: false,
-                    allStokProduk: @json($allStokProduk),
+                    allStokProduk: @json($allStokProduk ?? []),
 
                     init() {
                         // Check if allStokProduk is properly loaded
                         console.log('Initializing transfer form with', this.allStokProduk ? this.allStokProduk.length : 0,
                             'products in stock');
+                        console.log('All stock products data:', this.allStokProduk);
 
                         // Add first item
                         this.addItem();
@@ -323,9 +465,12 @@
                         // Listen for gudang asal changes
                         const gudangAsalEl = document.getElementById('gudang_asal_id');
                         if (gudangAsalEl) {
+                            console.log('Setting up gudang asal event listener');
                             gudangAsalEl.addEventListener('change', (e) => {
+                                console.log('Gudang asal change event fired, new value:', e.target.value);
                                 this.gudangAsalId = e.target.value;
                                 console.log('Gudang asal changed to:', this.gudangAsalId);
+                                console.log('Available products data:', this.allStokProduk);
                                 this.fetchProduks();
                             });
 
@@ -333,11 +478,15 @@
                             this.gudangAsalId = gudangAsalEl.value;
                             if (this.gudangAsalId) {
                                 console.log('Initial gudang selection:', this.gudangAsalId);
+                                console.log('Available products data:', this.allStokProduk);
                                 this.fetchProduks();
                             }
                         } else {
                             console.error('Gudang asal element not found');
                         }
+
+                        // Initialize Select2 with MutationObserver
+                        this.initSelect2();
                     }, // Ganti fetchProduks dengan filter lokal
                     fetchProduks() {
                         try {
@@ -423,8 +572,55 @@
 
                             if (this._produks.length === 0) {
                                 console.warn('No products found for warehouse ID', this.gudangAsalId);
-                                alert('Tidak ada produk dengan stok tersedia di gudang ini.');
+                                // Clear all product selections when no products are available
+                                this.items.forEach(item => {
+                                    item.produk_id = '';
+                                    item.stok_tersedia = 0;
+                                    item.satuan_id = '';
+                                    item.satuan_nama = '';
+                                });
+                                alert('Tidak ada produk dengan stok tersedia di gudang ini. Silakan pilih gudang lain.');
                             }
+
+                            // Clear selected products that are not available in the new warehouse
+                            this.clearInvalidSelections();
+
+                            // Refresh Select2 options after products are updated
+                            this.$nextTick(() => {
+                                console.log('Refreshing Select2 options with', this._produks.length, 'products');
+                                $('.select2-dropdown-dynamic').each((index, element) => {
+                                    console.log('Processing dropdown', index, 'with name:', element.name);
+                                    if ($(element).data('select2')) {
+                                        // Clear existing options
+                                        $(element).empty();
+
+                                        // Add default option
+                                        $(element).append('<option value="">-- Pilih Produk --</option>');
+
+                                        // Add filtered products
+                                        console.log('Adding products to dropdown:', this._produks);
+                                        this._produks.forEach(produk => {
+                                            if (produk && produk.produk_id) {
+                                                const option = $(`
+                                                    <option value="${produk.produk_id}"
+                                                            data-satuan-id="${produk.satuan_id || ''}"
+                                                            data-stok="${produk.stok || 0}">
+                                                        ${produk.nama || '(Produk tanpa nama)'}
+                                                    </option>
+                                                `);
+                                                $(element).append(option);
+                                                console.log('Added product option:', produk.nama);
+                                            }
+                                        });
+
+                                        // Trigger change to update Select2
+                                        $(element).trigger('change');
+                                        console.log('Select2 refreshed for dropdown', index);
+                                    } else {
+                                        console.log('Select2 not initialized for dropdown', index);
+                                    }
+                                });
+                            });
                         } catch (error) {
                             console.error('Fatal error in fetchProduks:', error);
                             this._produks = [];
@@ -594,108 +790,274 @@
                         }
                     },
 
-                    removeItem(index) {
-                        this.items.splice(index, 1);
-                    }
+                    initSelect2() {
+                        // Initialize Select2 dengan MutationObserver untuk mendeteksi dropdown baru
+                        const itemsContainer = document.getElementById('detail-items');
+                        if (itemsContainer) {
+                            const observer = new MutationObserver(mutations => {
+                                mutations.forEach(mutation => {
+                                    mutation.addedNodes.forEach(node => {
+                                        if (node.nodeType === 1) {
+                                            const selects = node.querySelectorAll(
+                                                '.select2-dropdown-dynamic');
+                                            selects.forEach(select => {
+                                                if (!$(select).data('select2')) {
+                                                    if (select.name.includes('produk_id')) {
+                                                        $(select).select2({
+                                                            placeholder: '-- Pilih Produk --',
+                                                            allowClear: true,
+                                                            width: '100%',
+                                                            templateResult: function(
+                                                                option) {
+                                                                if (!option.id)
+                                                                    return option
+                                                                        .text;
+
+                                                                const stok = $(
+                                                                        option
+                                                                        .element)
+                                                                    .data('stok') ||
+                                                                    0;
+                                                                const $result = $(`
+                                                                    <div class="select2-result-product">
+                                                                        <div class="product-name">${option.text}</div>
+                                                                        <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                                                    </div>
+                                                                `);
+                                                                return $result;
+                                                            },
+                                                            templateSelection: function(
+                                                                option) {
+                                                                return option.text;
+                                                            }
+                                                        }).on('select2:select', e => {
+                                                            const nameAttr = $(select)
+                                                                .attr('name');
+                                                            const match = nameAttr
+                                                                .match(
+                                                                    /produk_id\[(\d+)\]/
+                                                                );
+                                                            if (match && match[1]) {
+                                                                const idx = parseInt(
+                                                                    match[1]);
+                                                                this.items[idx]
+                                                                    .produk_id = e
+                                                                    .target.value;
+                                                                setTimeout(() => this
+                                                                    .updateStokInfo(
+                                                                        idx), 100);
+                                                            }
+                                                        }).on('select2:clear', e => {
+                                                            const nameAttr = $(select)
+                                                                .attr('name');
+                                                            const match = nameAttr
+                                                                .match(
+                                                                    /produk_id\[(\d+)\]/
+                                                                );
+                                                            if (match && match[1]) {
+                                                                const idx = parseInt(
+                                                                    match[1]);
+                                                                this.items[idx]
+                                                                    .produk_id = '';
+                                                                setTimeout(() => this
+                                                                    .updateStokInfo(
+                                                                        idx), 100);
+                                                            }
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+
+                            observer.observe(itemsContainer, {
+                                childList: true,
+                                subtree: true
+                            });
+
+                            // Initialize Select2 untuk dropdown yang sudah ada
+                            this.$nextTick(() => {
+                                $('.select2-dropdown-dynamic').each((index, select) => {
+                                    if (!$(select).data('select2') && select.name.includes('produk_id')) {
+                                        $(select).select2({
+                                            placeholder: '-- Pilih Produk --',
+                                            allowClear: true,
+                                            width: '100%',
+                                            templateResult: function(option) {
+                                                if (!option.id) return option.text;
+
+                                                const stok = $(option.element).data('stok') || 0;
+                                                const $result = $(`
+                                                    <div class="select2-result-product">
+                                                        <div class="product-name">${option.text}</div>
+                                                        <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                                    </div>
+                                                `);
+                                                return $result;
+                                            },
+                                            templateSelection: function(option) {
+                                                return option.text;
+                                            }
+                                        }).on('select2:select', e => {
+                                            const nameAttr = $(select).attr('name');
+                                            const match = nameAttr.match(/produk_id\[(\d+)\]/);
+                                            if (match && match[1]) {
+                                                const idx = parseInt(match[1]);
+                                                this.items[idx].produk_id = e.target.value;
+                                                setTimeout(() => this.updateStokInfo(idx), 100);
+                                            }
+                                        }).on('select2:clear', e => {
+                                            const nameAttr = $(select).attr('name');
+                                            const match = nameAttr.match(/produk_id\[(\d+)\]/);
+                                            if (match && match[1]) {
+                                                const idx = parseInt(match[1]);
+                                                this.items[idx].produk_id = '';
+                                                setTimeout(() => this.updateStokInfo(idx), 100);
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    },
+
+                    clearInvalidSelections() {
+                        // Clear selected products that are not available in current warehouse
+                        this.items.forEach((item, index) => {
+                            if (item.produk_id) {
+                                const selectedProduct = this._produks.find(p => p && p.produk_id == item.produk_id);
+                                if (!selectedProduct) {
+                                    console.log('Clearing invalid selection for item', index, 'product ID:', item
+                                        .produk_id);
+                                    item.produk_id = '';
+                                    item.stok_tersedia = 0;
+                                    item.satuan_id = '';
+                                    item.satuan_nama = '';
+                                }
+                            }
+                        });
+                    },
                 };
             }
 
             document.addEventListener('DOMContentLoaded', function() {
-                const form = document.getElementById('transferForm');
+                // Ensure jQuery is loaded
+                if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+                    const script = document.createElement('script');
+                    script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+                    script.onload = function() {
+                        console.log('jQuery loaded, initializing form');
+                        initializeForm();
+                    };
+                    document.head.appendChild(script);
+                } else {
+                    console.log('jQuery already available, initializing form');
+                    initializeForm();
+                }
 
-                // Debug form elements
-                console.log('Form elements:', {
-                    'gudang_asal_id': document.getElementById('gudang_asal_id'),
-                    'gudang_tujuan_id': document.getElementById('gudang_tujuan_id'),
-                    'nomor': document.getElementById('nomor'),
-                    'tanggal': document.getElementById('tanggal')
-                });
+                function initializeForm() {
+                    const form = document.getElementById('transferForm');
 
-                form.addEventListener('submit', function(e) {
-                    try {
-                        const gudangAsal = document.getElementById('gudang_asal_id').value;
-                        const gudangTujuan = document.getElementById('gudang_tujuan_id').value;
+                    // Debug form elements
+                    console.log('Form elements:', {
+                        'gudang_asal_id': document.getElementById('gudang_asal_id'),
+                        'gudang_tujuan_id': document.getElementById('gudang_tujuan_id'),
+                        'nomor': document.getElementById('nomor'),
+                        'tanggal': document.getElementById('tanggal')
+                    });
 
-                        // Debug form data
-                        console.log('Form submission triggered');
-                        console.log('Gudang Asal:', gudangAsal);
-                        console.log('Gudang Tujuan:', gudangTujuan);
+                    form.addEventListener('submit', function(e) {
+                        try {
+                            const gudangAsal = document.getElementById('gudang_asal_id').value;
+                            const gudangTujuan = document.getElementById('gudang_tujuan_id').value;
 
-                        if (!gudangAsal) {
-                            e.preventDefault();
-                            alert('Silakan pilih gudang asal!');
-                            return;
-                        }
+                            // Debug form data
+                            console.log('Form submission triggered');
+                            console.log('Gudang Asal:', gudangAsal);
+                            console.log('Gudang Tujuan:', gudangTujuan);
 
-                        if (!gudangTujuan) {
-                            e.preventDefault();
-                            alert('Silakan pilih gudang tujuan!');
-                            return;
-                        }
+                            if (!gudangAsal) {
+                                e.preventDefault();
+                                alert('Silakan pilih gudang asal!');
+                                return;
+                            }
 
-                        if (gudangAsal === gudangTujuan && gudangAsal !== '') {
-                            e.preventDefault();
-                            alert('Gudang asal dan tujuan tidak boleh sama!');
-                            return;
-                        }
+                            if (!gudangTujuan) {
+                                e.preventDefault();
+                                alert('Silakan pilih gudang tujuan!');
+                                return;
+                            }
 
-                        // Validate items have been added and have produk_id
-                        const transferHandler = document.querySelector('[x-data="transferDetailHandler()"]').__x
-                            .$data;
+                            if (gudangAsal === gudangTujuan && gudangAsal !== '') {
+                                e.preventDefault();
+                                alert('Gudang asal dan tujuan tidak boleh sama!');
+                                return;
+                            }
 
-                        if (!transferHandler || !transferHandler.items || transferHandler.items.length === 0) {
-                            e.preventDefault();
-                            alert('Silakan tambahkan minimal satu produk untuk transfer!');
-                            return;
-                        }
+                            // Validate items have been added and have produk_id
+                            const transferHandler = document.querySelector('[x-data="transferDetailHandler()"]')
+                                .__x
+                                .$data;
 
-                        const invalidItems = transferHandler.items.filter(item => !item.produk_id);
-                        if (invalidItems.length > 0) {
-                            e.preventDefault();
-                            alert(
-                                `Ada ${invalidItems.length} produk yang belum dipilih. Silakan pilih produk atau hapus baris tersebut.`
+                            if (!transferHandler || !transferHandler.items || transferHandler.items.length ===
+                                0) {
+                                e.preventDefault();
+                                alert('Silakan tambahkan minimal satu produk untuk transfer!');
+                                return;
+                            }
+
+                            const invalidItems = transferHandler.items.filter(item => !item.produk_id);
+                            if (invalidItems.length > 0) {
+                                e.preventDefault();
+                                alert(
+                                    `Ada ${invalidItems.length} produk yang belum dipilih. Silakan pilih produk atau hapus baris tersebut.`
                                 );
-                            return;
-                        }
+                                return;
+                            }
 
-                        // Verify quantities are valid numbers and within stock limits
-                        const invalidQty = transferHandler.items.filter(item =>
-                            !item.quantity ||
-                            isNaN(parseFloat(item.quantity)) ||
-                            parseFloat(item.quantity) <= 0 ||
-                            parseFloat(item.quantity) > parseFloat(item.stok_tersedia)
-                        );
+                            // Verify quantities are valid numbers and within stock limits
+                            const invalidQty = transferHandler.items.filter(item =>
+                                !item.quantity ||
+                                isNaN(parseFloat(item.quantity)) ||
+                                parseFloat(item.quantity) <= 0 ||
+                                parseFloat(item.quantity) > parseFloat(item.stok_tersedia)
+                            );
 
-                        if (invalidQty.length > 0) {
-                            e.preventDefault();
-                            console.error('Invalid quantities:', invalidQty);
-                            alert(
-                                `Ada ${invalidQty.length} produk dengan kuantitas tidak valid. Pastikan kuantitas lebih dari 0 dan tidak melebihi stok tersedia.`);
-                            return;
-                        }
+                            if (invalidQty.length > 0) {
+                                e.preventDefault();
+                                console.error('Invalid quantities:', invalidQty);
+                                alert(
+                                    `Ada ${invalidQty.length} produk dengan kuantitas tidak valid. Pastikan kuantitas lebih dari 0 dan tidak melebihi stok tersedia.`
+                                );
+                                return;
+                            }
 
-                        // Extra validation for satuan_id
-                        const invalidSatuan = transferHandler.items.filter(item => !item.satuan_id);
-                        if (invalidSatuan.length > 0) {
-                            e.preventDefault();
-                            console.error('Missing satuan_id:', invalidSatuan);
-                            alert(
-                                `Ada ${invalidSatuan.length} produk tanpa satuan. Silakan pilih produk dengan benar.`);
-                            return;
-                        }
+                            // Extra validation for satuan_id
+                            const invalidSatuan = transferHandler.items.filter(item => !item.satuan_id);
+                            if (invalidSatuan.length > 0) {
+                                e.preventDefault();
+                                console.error('Missing satuan_id:', invalidSatuan);
+                                alert(
+                                    `Ada ${invalidSatuan.length} produk tanpa satuan. Silakan pilih produk dengan benar.`
+                                );
+                                return;
+                            }
 
-                        // Log final form data that will be submitted
-                        console.log('Form validation passed. Submitting...');
-                        console.log('Final form data:');
-                        const formData = new FormData(form);
-                        for (const pair of formData.entries()) {
-                            console.log(pair[0], pair[1]);
+                            // Log final form data that will be submitted
+                            console.log('Form validation passed. Submitting...');
+                            console.log('Final form data:');
+                            const formData = new FormData(form);
+                            for (const pair of formData.entries()) {
+                                console.log(pair[0], pair[1]);
+                            }
+                        } catch (error) {
+                            // If any error occurs during validation, allow form to be submitted and let server validation handle it
+                            console.error('Error validating form:', error);
                         }
-                    } catch (error) {
-                        // If any error occurs during validation, allow form to be submitted and let server validation handle it
-                        console.error('Error validating form:', error);
-                    }
-                });
+                    });
+                }
             });
         </script>
     @endpush

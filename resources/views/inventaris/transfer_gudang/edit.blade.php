@@ -1,4 +1,142 @@
 <x-app-layout :breadcrumbs="$breadcrumbs" :currentPage="$currentPage">
+    @push('styles')
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <style>
+            /* Modern Select2 styling */
+            .select2-container {
+                width: 100% !important;
+            }
+
+            .select2-container--default .select2-selection--single {
+                height: 38px;
+                padding: 4px 2px;
+                border-color: #D1D5DB;
+                border-radius: 0.375rem;
+                display: flex;
+                align-items: center;
+                background-color: #ffffff;
+                transition: all 0.2s ease-in-out;
+            }
+
+            .select2-container--default .select2-selection--single:hover {
+                border-color: #6366f1;
+            }
+
+            .select2-container--default .select2-selection--single:focus,
+            .select2-container--default.select2-container--focus .select2-selection--single,
+            .select2-container--default.select2-container--open .select2-selection--single {
+                border-color: #6366f1;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+                outline: none;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: #374151;
+                line-height: 28px;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #9CA3AF;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 38px;
+                position: absolute;
+                top: 1px;
+                right: 1px;
+                width: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .select2-dropdown {
+                border-color: #D1D5DB;
+                border-radius: 0.375rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                overflow: hidden;
+                background-color: #ffffff;
+            }
+
+            .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: #6366f1;
+                color: #ffffff;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field {
+                border-color: #D1D5DB;
+                border-radius: 0.25rem;
+                padding: 0.4rem 0.75rem;
+                background-color: #ffffff;
+            }
+
+            .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                border-color: #6366f1;
+                outline: none;
+                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+            }
+
+            /* Dark mode styling */
+            .dark .select2-container--default .select2-selection--single {
+                background-color: #374151;
+                border-color: #4B5563;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: #F9FAFB;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: #9CA3AF;
+            }
+
+            .dark .select2-dropdown {
+                background-color: #1F2937;
+                border-color: #4B5563;
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: #F9FAFB;
+                background-color: #1F2937;
+            }
+
+            .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: #6366f1;
+                color: #ffffff;
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: #374151;
+                border-color: #4B5563;
+                color: #F9FAFB;
+            }
+
+            .dark .select2-container--default .select2-results__option[aria-selected=true] {
+                background-color: #374151;
+            }
+
+            /* Custom styling for product result */
+            .select2-result-product .product-name {
+                font-weight: 500;
+                color: #374151;
+            }
+
+            .select2-result-product .product-stock {
+                margin-top: 2px;
+                font-size: 0.75rem;
+                color: #6b7280;
+            }
+
+            .dark .select2-result-product .product-name {
+                color: #f3f4f6;
+            }
+
+            .dark .select2-result-product .product-stock {
+                color: #9ca3af;
+            }
+        </style>
+    @endpush
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
@@ -163,15 +301,18 @@
                                                     <div class="relative">
                                                         <select x-model="item.produk_id" :name="`produk_id[${index}]`"
                                                             @change="updateStokInfo(index)" :disabled="isLoading"
-                                                            class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                                                            :id="`produk_select_${index}`"
+                                                            class="select2-dropdown-dynamic shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
                                                             <option value="">-- Pilih Produk --</option>
                                                             <template x-for="produk in _produks"
-                                                                :key="produk.produk_id">
-                                                                <option :value="produk.produk_id" 
-                                                                        x-text="produk.nama"
-                                                                        :data-satuan-id="produk.satuan_id"
-                                                                        :data-stok="produk.stok"
-                                                                        :selected="item.produk_id == produk.produk_id">
+                                                                :key="produk?.produk_id || Math.random()">
+                                                                <option x-show="produk && produk.produk_id"
+                                                                    :value="produk.produk_id"
+                                                                    x-text="produk && produk.nama ? produk.nama : '(Produk tanpa nama)'"
+                                                                    :data-satuan-id="produk && produk.satuan_id ? produk.satuan_id : ''"
+                                                                    :data-stok="produk && typeof produk.stok !== 'undefined' ?
+                                                                        produk.stok : 0"
+                                                                    :selected="item.produk_id == produk.produk_id">
                                                                 </option>
                                                             </template>
                                                         </select>
@@ -286,6 +427,8 @@
     </div>
 
     @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
             function transferDetailHandler() {
                 return {
@@ -310,30 +453,30 @@
 
                     init() {
                         console.log('Initializing transfer form...');
-                            
+
                         // Set initial gudang
                         this.gudangAsalId = document.getElementById('gudang_asal_id').value;
                         console.log('Initial gudang selection:', this.gudangAsalId);
-                        
+
                         // Check if allStokProduk is properly loaded
                         if (!this.allStokProduk || !Array.isArray(this.allStokProduk)) {
                             console.error('allStokProduk is not valid or empty:', this.allStokProduk);
                         } else {
                             console.log(`Found ${this.allStokProduk.length} products in stock data`);
                         }
-                        
+
                         // Load existing details first so they can be included in the filtered products
                         console.log('Loading initial details:', this.initialDetails ? this.initialDetails.length : 0);
-                        
+
                         if (this.initialDetails && this.initialDetails.length > 0) {
                             // Make a deep copy to avoid reference issues
                             this.items = JSON.parse(JSON.stringify(this.initialDetails));
                             console.log('Details loaded into items array:', this.items.length);
-                            
+
                             // Log the loaded product IDs for debugging
                             const loadedProductIds = this.items.map(item => item.produk_id);
                             console.log('Loaded product IDs:', loadedProductIds);
-                            
+
                             // Pre-fetch product information for initially selected products if needed
                             if (loadedProductIds.length > 0) {
                                 console.log('Pre-fetching information for initially selected products');
@@ -342,18 +485,21 @@
                             console.log('No initial details, adding empty item');
                             this.addItem(); // Add an empty item if no details exist
                         }
-                        
+
                         // Now that items are loaded, fetch products (which will include currently selected products)
                         console.log('Initial fetch of products for warehouse:', this.gudangAsalId);
                         this.fetchProduks();
-                        
+
                         // Listen for gudang asal changes
                         document.getElementById('gudang_asal_id').addEventListener('change', (e) => {
                             this.gudangAsalId = e.target.value;
                             console.log('Gudang asal changed to:', this.gudangAsalId);
                             this.fetchProduks();
                         });
-                        
+
+                        // Initialize Select2 with MutationObserver
+                        this.initSelect2();
+
                         // Update stock information for all items after a longer delay to ensure products are loaded
                         setTimeout(() => {
                             console.log('Processing items to update stock info. Items count:', this.items.length);
@@ -370,7 +516,7 @@
                     fetchProduks() {
                         try {
                             console.log('Running fetchProduks function');
-                            
+
                             if (!this.gudangAsalId) {
                                 console.log('No warehouse selected, clearing product list');
                                 this._produks = [];
@@ -386,32 +532,36 @@
 
                             console.log(
                                 `Filtering ${this.allStokProduk.length} products for warehouse ID ${this.gudangAsalId}`);
-                            
+
                             // Create a map of initial products (these are the ones we're editing)
                             const initialProductsMap = {};
-                            
+
                             if (this.initialDetails && this.initialDetails.length > 0) {
                                 console.log(`Creating map for ${this.initialDetails.length} initial products`);
-                                
+
                                 // First, find all products that were previously selected
                                 this.initialDetails.forEach(detail => {
                                     if (detail && detail.produk_id) {
                                         const prodId = String(detail.produk_id);
                                         console.log(`Processing initial detail product ID: ${prodId}`);
-                                        
+
                                         // Find the product in allStokProduk
-                                        const existingProduk = this.allStokProduk.find(p => 
+                                        const existingProduk = this.allStokProduk.find(p =>
                                             p && p.produk_id && String(p.produk_id) === prodId
                                         );
-                                        
+
                                         if (existingProduk) {
                                             // Use existing product data
                                             initialProductsMap[prodId] = existingProduk;
-                                            console.log(`Found existing product ${prodId} in stock data: ${existingProduk.nama}`);
+                                            console.log(
+                                                `Found existing product ${prodId} in stock data: ${existingProduk.nama}`
+                                            );
                                         } else {
                                             // If not found in allStokProduk, create a new entry from initial details
-                                            console.log(`Product ID ${prodId} not found in stock data - creating synthetic entry`);
-                                            
+                                            console.log(
+                                                `Product ID ${prodId} not found in stock data - creating synthetic entry`
+                                            );
+
                                             // Create synthetic product entry with a more descriptive name
                                             const productInfo = {
                                                 produk_id: detail.produk_id,
@@ -421,14 +571,14 @@
                                                 satuan_id: detail.satuan_id,
                                                 satuan_nama: detail.satuan_nama || 'Unit'
                                             };
-                                            
+
                                             initialProductsMap[prodId] = productInfo;
                                             console.log(`Created synthetic product entry for ID ${prodId}`);
                                         }
                                     }
                                 });
                             }
-                            
+
                             // Get the current selections
                             const selectedProductIds = new Set();
                             if (this.items && this.items.length > 0) {
@@ -440,56 +590,56 @@
                                 });
                                 console.log('Currently selected product IDs:', Array.from(selectedProductIds));
                             }
-                            
+
                             // Create an array of initial products to combine with filtered products
                             const initialProducts = Object.values(initialProductsMap);
                             console.log(`Found ${initialProducts.length} initial products to include`);
 
                             // Now filter regular products from the selected warehouse with positive stock
                             const gudangIdStr = String(this.gudangAsalId);
-                            
+
                             const warehouseProducts = this.allStokProduk.filter(p => {
                                 try {
                                     if (!p) {
                                         return false;
                                     }
-                                    
+
                                     // Skip products already included in initialProducts
                                     if (p.produk_id && initialProductsMap[String(p.produk_id)]) {
                                         return false;
                                     }
-                                    
+
                                     // Only include products from this warehouse with stock
                                     if (!p.gudang_id || String(p.gudang_id) !== gudangIdStr) {
                                         return false;
                                     }
-                                    
+
                                     if (!p.produk_id) {
                                         console.warn('Product missing produk_id');
                                         return false;
                                     }
-                                    
+
                                     if (!p.nama) {
                                         console.warn('Product missing nama');
                                         return false;
                                     }
-                                    
+
                                     // Check stock
                                     const stokNum = parseFloat(p.stok);
                                     if (isNaN(stokNum) || stokNum <= 0) {
                                         // Allow products with zero stock only if they're in initialProducts
                                         return false;
                                     }
-                                    
+
                                     return true;
                                 } catch (err) {
                                     console.error('Error processing product:', err);
                                     return false;
                                 }
                             });
-                            
+
                             // Debug output of initial products
-                            
+
                             // Debug output of initial products
                             if (initialProducts.length > 0) {
                                 console.log(`Adding ${initialProducts.length} previously selected products to dropdown:`);
@@ -497,10 +647,10 @@
                                     console.log(`- Product ID: ${p.produk_id}, Name: ${p.nama}, Stock: ${p.stok}`);
                                 });
                             }
-                            
+
                             // Combine initial products with warehouse products
                             this._produks = [...initialProducts, ...warehouseProducts];
-                            
+
                             // Sort products alphabetically by name for better UX
                             this._produks.sort((a, b) => {
                                 if (a.nama && b.nama) {
@@ -508,14 +658,68 @@
                                 }
                                 return 0;
                             });
-                            
+
                             // Log statistics
-                            console.log(`Total products in dropdown: ${this._produks.length} (${initialProducts.length} from initial details, ${warehouseProducts.length} from warehouse)`);
-                            
+                            console.log(
+                                `Total products in dropdown: ${this._produks.length} (${initialProducts.length} from initial details, ${warehouseProducts.length} from warehouse)`
+                            );
+
                             if (this._produks.length === 0) {
                                 console.warn('No products available to display');
-                                alert('Tidak ada produk dengan stok tersedia di gudang ini, dan tidak ada produk yang sudah dipilih sebelumnya.');
+                                alert(
+                                    'Tidak ada produk dengan stok tersedia di gudang ini, dan tidak ada produk yang sudah dipilih sebelumnya.'
+                                    );
                             }
+
+                            // Clear selected products that are not available in the new warehouse
+                            this.clearInvalidSelections();
+
+                            // Refresh Select2 options after products are updated
+                            this.$nextTick(() => {
+                                console.log('Refreshing Select2 options with', this._produks.length, 'products');
+                                $('.select2-dropdown-dynamic').each((index, element) => {
+                                    console.log('Processing dropdown', index, 'with name:', element.name);
+                                    const selectIndex = parseInt(element.id.split('_')[2]);
+                                    const currentValue = this.items[selectIndex]?.produk_id || '';
+
+                                    if ($(element).data('select2')) {
+                                        // Clear existing options
+                                        $(element).empty();
+
+                                        // Add default option
+                                        $(element).append('<option value="">-- Pilih Produk --</option>');
+
+                                        // Add filtered products
+                                        console.log('Adding products to dropdown:', this._produks);
+                                        this._produks.forEach(produk => {
+                                            if (produk && produk.produk_id) {
+                                                const option = $(`
+                                                    <option value="${produk.produk_id}"
+                                                            data-satuan-id="${produk.satuan_id || ''}"
+                                                            data-stok="${produk.stok || 0}">
+                                                        ${produk.nama || '(Produk tanpa nama)'}
+                                                    </option>
+                                                `);
+                                                $(element).append(option);
+                                                console.log('Added product option:', produk.nama);
+                                            }
+                                        });
+
+                                        // Set the current value and trigger change to update Select2 display
+                                        if (currentValue) {
+                                            $(element).val(currentValue).trigger('change');
+                                            console.log(
+                                                `Restored selection for dropdown ${index}: ${currentValue}`);
+                                        }
+
+                                        // Trigger change to update Select2
+                                        $(element).trigger('change');
+                                        console.log('Select2 refreshed for dropdown', index);
+                                    } else {
+                                        console.log('Select2 not initialized for dropdown', index);
+                                    }
+                                });
+                            });
                         } catch (error) {
                             console.error('Error in fetchProduks:', error);
                             this._produks = [];
@@ -546,7 +750,7 @@
                         const isInitialProduct = this.initialDetails && this.initialDetails.some(
                             detail => detail.produk_id === produkId
                         );
-                        
+
                         if (isInitialProduct) {
                             console.log(`Product ID ${produkId} is from initial details, preserving original data`);
                             // Keep the original satuan_id and satuan_nama if they exist
@@ -628,24 +832,28 @@
                                     // Check if data contains error
                                     if (data && data.error) {
                                         console.error('API returned error:', data.error);
-                                        
+
                                         // Special case: check if this is a product from initialDetails
                                         const isInitialProduct = this.initialDetails && this.initialDetails.some(
                                             detail => detail.produk_id === produkId
                                         );
-                                        
+
                                         if (isInitialProduct) {
-                                            console.log(`Product ID ${produkId} is from initial details but not found in current warehouse. Using original data.`);
+                                            console.log(
+                                                `Product ID ${produkId} is from initial details but not found in current warehouse. Using original data.`
+                                            );
                                             // Use data from initialDetails instead
-                                            const initialDetail = this.initialDetails.find(detail => detail.produk_id === produkId);
+                                            const initialDetail = this.initialDetails.find(detail => detail.produk_id ===
+                                                produkId);
                                             if (initialDetail) {
-                                                this.items[index].stok_tersedia = initialDetail.quantity || 0; // Use original quantity as stok_tersedia
+                                                this.items[index].stok_tersedia = initialDetail.quantity ||
+                                                    0; // Use original quantity as stok_tersedia
                                                 this.items[index].satuan_id = initialDetail.satuan_id;
                                                 this.items[index].satuan_nama = initialDetail.satuan_nama || '-';
                                                 return; // Skip the error
                                             }
                                         }
-                                        
+
                                         throw new Error(data.error);
                                     }
 
@@ -712,6 +920,12 @@
                             };
                             this.items.push(newItem);
                             console.log('New item added. Current items:', this.items.length);
+
+                            // Initialize Select2 for the new dropdown after DOM update
+                            this.$nextTick(() => {
+                                this.initializeSelect2();
+                            });
+
                             return newItem;
                         } catch (e) {
                             console.error('Error adding item:', e);
@@ -720,7 +934,289 @@
                         }
                     },
 
+                    initializeSelect2() {
+                        // Initialize Select2 for all product selects
+                        $('.select2-dropdown-dynamic').each((index, element) => {
+                            const $select = $(element);
+                            const selectIndex = parseInt(element.id.split('_')[2]);
+                            const currentValue = this.items[selectIndex]?.produk_id || '';
+
+                            // Destroy existing Select2 if already initialized
+                            if ($select.hasClass('select2-hidden-accessible')) {
+                                $select.select2('destroy');
+                            }
+
+                            // Initialize Select2 with custom configuration
+                            $select.select2({
+                                placeholder: '-- Pilih Produk --',
+                                allowClear: true,
+                                width: '100%',
+                                templateResult: function(option) {
+                                    if (!option.id) return option.text;
+
+                                    const stok = $(option.element).data('stok') || 0;
+                                    const $result = $(`
+                                        <div class="select2-result-product">
+                                            <div class="product-name">${option.text}</div>
+                                            <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                        </div>
+                                    `);
+                                    return $result;
+                                },
+                                templateSelection: function(option) {
+                                    return option.text;
+                                }
+                            });
+
+                            // Set the current value and trigger change to update Select2 display
+                            if (currentValue) {
+                                $select.val(currentValue).trigger('change');
+                                console.log(`Set initial selection for dropdown ${index}: ${currentValue}`);
+                            }
+
+                            // Handle Select2 change event and sync with Alpine.js
+                            $select.off('select2:select').on('select2:select', (e) => {
+                                const selectedValue = e.params.data.id;
+
+                                // Update Alpine.js model
+                                if (this.items && this.items[selectIndex]) {
+                                    this.items[selectIndex].produk_id = selectedValue;
+                                    this.updateStokInfo(selectIndex);
+                                }
+                            });
+
+                            $select.off('select2:clear').on('select2:clear', (e) => {
+                                // Update Alpine.js model
+                                if (this.items && this.items[selectIndex]) {
+                                    this.items[selectIndex].produk_id = '';
+                                    this.updateStokInfo(selectIndex);
+                                }
+                            });
+                        });
+                    },
+
+                    refreshSelect2Options() {
+                        // Refresh Select2 options when products change
+                        this.$nextTick(() => {
+                            $('.select2-dropdown-dynamic').each((index, element) => {
+                                const $select = $(element);
+                                const selectIndex = parseInt(element.id.split('_')[2]);
+                                const currentValue = this.items[selectIndex]?.produk_id || '';
+
+                                // Destroy existing Select2 if already initialized
+                                if ($select.hasClass('select2-hidden-accessible')) {
+                                    $select.select2('destroy');
+                                }
+
+                                // Reinitialize Select2
+                                $select.select2({
+                                    placeholder: '-- Pilih Produk --',
+                                    allowClear: true,
+                                    width: '100%',
+                                    templateResult: function(option) {
+                                        if (!option.id) return option.text;
+
+                                        const stok = $(option.element).data('stok') || 0;
+                                        const $result = $(`
+                                            <div class="select2-result-product">
+                                                <div class="product-name">${option.text}</div>
+                                                <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                            </div>
+                                        `);
+                                        return $result;
+                                    },
+                                    templateSelection: function(option) {
+                                        return option.text;
+                                    }
+                                });
+
+                                // Set the current value and trigger change to update Select2 display
+                                if (currentValue) {
+                                    $select.val(currentValue).trigger('change');
+                                    console.log(`Set initial selection for dropdown ${index}: ${currentValue}`);
+                                }
+
+                                // Handle Select2 change event and sync with Alpine.js
+                                $select.off('select2:select').on('select2:select', (e) => {
+                                    const selectedValue = e.params.data.id;
+                                    if (this.items && this.items[selectIndex]) {
+                                        this.items[selectIndex].produk_id = selectedValue;
+                                        this.updateStokInfo(selectIndex);
+                                    }
+                                });
+
+                                $select.off('select2:clear').on('select2:clear', (e) => {
+                                    if (this.items && this.items[selectIndex]) {
+                                        this.items[selectIndex].produk_id = '';
+                                        this.updateStokInfo(selectIndex);
+                                    }
+                                });
+                            });
+                        });
+                    },
+
+                    clearInvalidSelections() {
+                        // Clear selected products that are not available in current warehouse
+                        this.items.forEach((item, index) => {
+                            if (item.produk_id) {
+                                const selectedProduct = this._produks.find(p => p && p.produk_id == item.produk_id);
+                                if (!selectedProduct) {
+                                    console.log('Clearing invalid selection for item', index, 'product ID:', item
+                                        .produk_id);
+                                    item.produk_id = '';
+                                    item.stok_tersedia = 0;
+                                    item.satuan_id = '';
+                                    item.satuan_nama = '';
+                                }
+                            }
+                        });
+                    },
+
+                    initSelect2() {
+                        // Initialize Select2 dengan MutationObserver untuk mendeteksi dropdown baru
+                        const itemsContainer = document.getElementById('detail-items');
+                        if (itemsContainer) {
+                            const observer = new MutationObserver(mutations => {
+                                mutations.forEach(mutation => {
+                                    mutation.addedNodes.forEach(node => {
+                                        if (node.nodeType === 1) {
+                                            const selects = node.querySelectorAll(
+                                                '.select2-dropdown-dynamic');
+                                            selects.forEach(select => {
+                                                if (!$(select).data('select2')) {
+                                                    if (select.name.includes('produk_id')) {
+                                                        const nameAttr = $(select).attr('name');
+                                                        const match = nameAttr.match(
+                                                            /produk_id\[(\d+)\]/);
+                                                        const idx = match ? parseInt(match[1]) :
+                                                            0;
+                                                        const currentValue = this.items[idx]
+                                                            ?.produk_id || '';
+
+                                                        $(select).select2({
+                                                            placeholder: '-- Pilih Produk --',
+                                                            allowClear: true,
+                                                            width: '100%',
+                                                            templateResult: function(
+                                                                option) {
+                                                                if (!option.id)
+                                                                    return option
+                                                                        .text;
+
+                                                                const stok = $(
+                                                                        option
+                                                                        .element)
+                                                                    .data('stok') ||
+                                                                    0;
+                                                                const $result = $(`
+                                                                    <div class="select2-result-product">
+                                                                        <div class="product-name">${option.text}</div>
+                                                                        <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                                                    </div>
+                                                                `);
+                                                                return $result;
+                                                            },
+                                                            templateSelection: function(
+                                                                option) {
+                                                                return option.text;
+                                                            }
+                                                        });
+
+                                                        // Set initial value if exists
+                                                        if (currentValue) {
+                                                            $(select).val(currentValue).trigger(
+                                                                'change');
+                                                            console.log(
+                                                                `Set initial selection for new dropdown ${idx}: ${currentValue}`
+                                                                );
+                                                        }
+
+                                                        $(select).on('select2:select', e => {
+                                                            this.items[idx].produk_id =
+                                                                e.target.value;
+                                                            setTimeout(() => this
+                                                                .updateStokInfo(
+                                                                idx), 100);
+                                                        }).on('select2:clear', e => {
+                                                            this.items[idx].produk_id =
+                                                                '';
+                                                            setTimeout(() => this
+                                                                .updateStokInfo(
+                                                                idx), 100);
+                                                        });
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    });
+                                });
+                            });
+
+                            observer.observe(itemsContainer, {
+                                childList: true,
+                                subtree: true
+                            });
+
+                            // Initialize Select2 untuk dropdown yang sudah ada
+                            this.$nextTick(() => {
+                                $('.select2-dropdown-dynamic').each((index, select) => {
+                                    if (!$(select).data('select2') && select.name.includes('produk_id')) {
+                                        const nameAttr = $(select).attr('name');
+                                        const match = nameAttr.match(/produk_id\[(\d+)\]/);
+                                        const idx = match ? parseInt(match[1]) : 0;
+                                        const currentValue = this.items[idx]?.produk_id || '';
+
+                                        $(select).select2({
+                                            placeholder: '-- Pilih Produk --',
+                                            allowClear: true,
+                                            width: '100%',
+                                            templateResult: function(option) {
+                                                if (!option.id) return option.text;
+
+                                                const stok = $(option.element).data('stok') || 0;
+                                                const $result = $(`
+                                                    <div class="select2-result-product">
+                                                        <div class="product-name">${option.text}</div>
+                                                        <div class="product-stock text-xs text-gray-500">Stok: ${stok}</div>
+                                                    </div>
+                                                `);
+                                                return $result;
+                                            },
+                                            templateSelection: function(option) {
+                                                return option.text;
+                                            }
+                                        });
+
+                                        // Set initial value if exists
+                                        if (currentValue) {
+                                            $(select).val(currentValue).trigger('change');
+                                            console.log(
+                                                `Set initial selection for existing dropdown ${idx}: ${currentValue}`
+                                                );
+                                        }
+
+                                        $(select).on('select2:select', e => {
+                                            const idx = parseInt(match[1]);
+                                            this.items[idx].produk_id = e.target.value;
+                                            setTimeout(() => this.updateStokInfo(idx), 100);
+                                        }).on('select2:clear', e => {
+                                            const idx = parseInt(match[1]);
+                                            this.items[idx].produk_id = '';
+                                            setTimeout(() => this.updateStokInfo(idx), 100);
+                                        });
+                                    }
+                                });
+                            });
+                        }
+                    },
+
                     removeItem(index) {
+                        // Destroy Select2 instance for the item being removed
+                        const selectId = `#produk_select_${index}`;
+                        if ($(selectId).hasClass('select2-hidden-accessible')) {
+                            $(selectId).select2('destroy');
+                        }
+
                         this.items.splice(index, 1);
                         if (this.items.length === 0) {
                             this.addItem(); // Always have at least one item
@@ -783,7 +1279,7 @@
                             e.preventDefault();
                             alert(
                                 `Ada ${invalidItems.length} produk yang belum dipilih. Silakan pilih produk atau hapus baris tersebut.`
-                                );
+                            );
                             return;
                         }
 
@@ -799,7 +1295,8 @@
                             e.preventDefault();
                             console.error('Invalid quantities:', invalidQty);
                             alert(
-                                `Ada ${invalidQty.length} produk dengan kuantitas tidak valid. Pastikan kuantitas lebih dari 0 dan tidak melebihi stok tersedia.`);
+                                `Ada ${invalidQty.length} produk dengan kuantitas tidak valid. Pastikan kuantitas lebih dari 0 dan tidak melebihi stok tersedia.`
+                            );
                             return;
                         }
 
@@ -809,7 +1306,8 @@
                             e.preventDefault();
                             console.error('Missing satuan_id:', invalidSatuan);
                             alert(
-                                `Ada ${invalidSatuan.length} produk tanpa satuan. Silakan pilih produk dengan benar.`);
+                                `Ada ${invalidSatuan.length} produk tanpa satuan. Silakan pilih produk dengan benar.`
+                            );
                             return;
                         }
 
@@ -826,6 +1324,16 @@
                     }
                 });
             });
+
+            // Inisialisasi jQuery dan Select2
+            if (typeof jQuery === 'undefined' || typeof $ === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
+                script.onload = function() {
+                    console.log('jQuery loaded for edit form');
+                };
+                document.head.appendChild(script);
+            }
         </script>
     @endpush
 </x-app-layout>
