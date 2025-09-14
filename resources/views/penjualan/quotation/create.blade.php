@@ -424,12 +424,43 @@
                                                         min="1" step="1">
                                                     <span style="color: #059669; font-size: 14px;">paket</span>
                                                 </div>
+                                                <div style="display: flex; align-items: center; gap: 8px;">
+                                                    <span style="font-weight: 500; color: #047857;">Diskon
+                                                        Tambahan:</span>
+                                                    <input type="number"
+                                                        x-model.number="item.additional_diskon_persen"
+                                                        @input="updateBundleCalculations(index)"
+                                                        style="width: 70px; padding: 4px 8px; text-align: center; border: 1px solid #a7f3d0; border-radius: 6px; outline: none;"
+                                                        min="0" max="100" step="0.01"
+                                                        placeholder="0">
+                                                    <span style="color: #059669; font-size: 14px;">%</span>
+                                                </div>
                                                 <div style="text-align: right;">
                                                     <div style="font-weight: bold; color: #047857;"
                                                         x-text="formatRupiah(item.subtotal || 0)"></div>
                                                     <div style="font-size: 12px; color: #059669;">
-                                                        <span x-text="item.kuantitas"></span> x <span
-                                                            x-text="formatRupiah(item.harga)"></span>
+                                                        <span x-text="item.kuantitas"></span> x
+                                                        <!-- Show original price and discounted price if there's additional discount -->
+                                                        <template
+                                                            x-if="item.additional_diskon_persen && item.additional_diskon_persen > 0">
+                                                            <span>
+                                                                <span
+                                                                    style="text-decoration: line-through; color: #9CA3AF;"
+                                                                    x-text="formatRupiah(item.harga)"></span>
+                                                                <span style="color: #059669; font-weight: 500;"
+                                                                    x-text="formatRupiah(item.harga * (1 - (item.additional_diskon_persen || 0) / 100))"></span>
+                                                            </span>
+                                                        </template>
+                                                        <!-- Show original price if no additional discount -->
+                                                        <template
+                                                            x-if="!item.additional_diskon_persen || item.additional_diskon_persen <= 0">
+                                                            <span x-text="formatRupiah(item.harga)"></span>
+                                                        </template>
+                                                    </div>
+                                                    <div style="font-size: 11px; color: #dc2626;"
+                                                        x-show="item.additional_diskon_persen && item.additional_diskon_persen > 0">
+                                                        Diskon Tambahan: <span
+                                                            x-text="item.additional_diskon_persen.toFixed(2)"></span>%
                                                     </div>
                                                 </div>
                                                 <button type="button" @click="removeItem(index)"
@@ -455,6 +486,8 @@
                                             :value="item.deskripsi">
                                         <input type="hidden" :name="`items[${index}][diskon_persen_item]`"
                                             :value="item.diskon_persen || 0">
+                                        <input type="hidden" :name="`items[${index}][additional_bundle_discount]`"
+                                            :value="item.additional_bundle_discount || 0">
                                     </div>
 
                                     <!-- Regular Item Card -->
@@ -660,10 +693,11 @@
                                 </div>
                             </template>
 
-                            <!-- BUNDLE CHILD ITEMS - Display child items separately (like Create Page) -->
+                            <!-- BUNDLE CHILD ITEMS - Simplified display -->
                             <template x-for="(item, index) in items" :key="'child-' + item.id">
                                 <div x-show="item.is_bundle_item"
                                     class="ml-6 border-l-2 border-gray-300 dark:border-gray-600 pl-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-r">
+
                                     <div class="flex items-center justify-between text-sm">
                                         <div class="flex items-center space-x-2">
                                             <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
@@ -682,19 +716,33 @@
                                                 paket)
                                             </span>
                                             <span>×</span>
-                                            <span x-text="formatRupiah(item.harga)"></span>
-                                            <!-- Show discount if applicable -->
-                                            <template x-if="item.diskon_persen && item.diskon_persen > 0">
+                                            <!-- Show original price if there's discount -->
+                                            <template x-if="item.total_diskon_persen && item.total_diskon_persen > 0">
+                                                <div class="flex items-center space-x-1">
+                                                    <span class="line-through text-gray-400"
+                                                        x-text="formatRupiah(item.harga)"></span>
+                                                    <span class="text-green-600 font-medium"
+                                                        x-text="formatRupiah(item.harga * (1 - (item.total_diskon_persen || 0) / 100))"></span>
+                                                </div>
+                                            </template>
+                                            <!-- Show original price if no discount -->
+                                            <template
+                                                x-if="!item.total_diskon_persen || item.total_diskon_persen <= 0">
+                                                <span x-text="formatRupiah(item.harga)"></span>
+                                            </template>
+                                            <!-- Show total discount if applicable -->
+                                            <template x-if="item.total_diskon_persen && item.total_diskon_persen > 0">
                                                 <div class="flex items-center space-x-1">
                                                     <span class="text-red-500">(-<span
-                                                            x-text="item.diskon_persen"></span>%)</span>
+                                                            x-text="item.total_diskon_persen.toFixed(2)"></span>%)</span>
                                                 </div>
                                             </template>
                                             <span>=</span>
                                             <span class="font-semibold text-gray-700 dark:text-gray-300"
-                                                x-text="formatRupiah(item.subtotal || (item.harga * item.kuantitas))"></span>
+                                                x-text="formatRupiah(item.subtotal || 0)"></span>
                                         </div>
                                     </div>
+
                                     <!-- Hidden inputs for bundle child items -->
                                     <input type="hidden" :name="`items[${index}][id]`" x-model="item.item_id_db">
                                     <input type="hidden" :name="`items[${index}][produk_id]`"
@@ -709,11 +757,15 @@
                                     <input type="hidden" :name="`items[${index}][harga]`" :value="item.harga">
                                     <input type="hidden" :name="`items[${index}][deskripsi]`"
                                         :value="item.deskripsi">
+                                    <!-- Store total discount from bundle -->
                                     <input type="hidden" :name="`items[${index}][diskon_persen_item]`"
-                                        :value="item.diskon_persen || 0">
+                                        :value="item.total_diskon_persen || 0">
                                     <input type="hidden" :name="`items[${index}][diskon_nominal_item]`"
                                         :value="item.diskon_nominal || 0">
                                     <input type="hidden" :name="`items[${index}][subtotal]`" :value="item.subtotal">
+                                    <!-- Bundle Additional Discount -->
+                                    <input type="hidden" :name="`items[${index}][additional_diskon_persen]`"
+                                        :value="item.additional_diskon_persen || 0" x-show="item.is_bundle">
                                 </div>
                             </template>
                         </div>
@@ -1208,6 +1260,10 @@
                     },
                     calculateSubtotal(index) {
                         const item = this.items[index];
+
+                        // Skip bundle items - they have their own calculation
+                        if (item.is_bundle_item) return;
+
                         const qty = parseFloat(item.kuantitas) || 0;
                         const harga = parseFloat(item.harga) || 0;
                         const diskonPersen = parseFloat(item.diskon_persen) || 0;
@@ -1378,6 +1434,11 @@
                                     base_quantity: item.quantity, // For calculating bundle multiplier
                                     satuan_id: item.satuan_id,
                                     harga: item.harga_satuan || 0,
+                                    // Bundle discount fields
+                                    bundle_diskon_persen: bundleDiskonPersen,
+                                    additional_diskon_persen: 0, // Default additional discount
+                                    total_diskon_persen: bundleDiskonPersen,
+                                    // Legacy fields for compatibility
                                     diskon_persen: bundleDiskonPersen,
                                     diskon_nominal: itemDiskonNominal,
                                     subtotal: itemSubtotalAfter,
@@ -1418,10 +1479,16 @@
                         const item = this.items[index];
                         if (!item.is_bundle) return;
 
-                        // Bundle header: Update subtotal WITHOUT discount and reset discount values
-                        item.diskon_persen = 0; // Header tidak ada diskon
-                        item.diskon_nominal = 0; // Header tidak ada diskon nominal
-                        item.subtotal = (parseFloat(item.harga) || 0) * (parseFloat(item.kuantitas) || 1);
+                        // Get bundle-level additional discount from bundle header item
+                        const bundleAdditionalDiscount = parseFloat(item.additional_diskon_persen) || 0;
+
+                        // Bundle header: Apply additional discount to subtotal
+                        const baseSubtotal = (parseFloat(item.harga) || 0) * (parseFloat(item.kuantitas) || 1);
+                        const discountAmount = baseSubtotal * (bundleAdditionalDiscount / 100);
+
+                        item.diskon_persen = bundleAdditionalDiscount;
+                        item.diskon_nominal = discountAmount;
+                        item.subtotal = baseSubtotal - discountAmount;
 
                         // Update all bundle items quantities and apply discount to child items only
                         const bundleId = item.bundle_id;
@@ -1438,13 +1505,59 @@
                                     .kuantitas) || 1;
                                 bundleItem.kuantitas = baseQuantity * bundleQuantity;
 
-                                // Apply bundle discount to child item
-                                const itemSubtotalBefore = (parseFloat(bundleItem.harga) || 0) * bundleItem.kuantitas;
-                                const itemDiskonNominal = (itemSubtotalBefore * bundleDiskonPersen) / 100;
-                                bundleItem.diskon_persen = bundleDiskonPersen;
-                                bundleItem.diskon_nominal = itemDiskonNominal;
-                                bundleItem.subtotal = itemSubtotalBefore - itemDiskonNominal;
+                                // Set bundle discount
+                                bundleItem.bundle_diskon_persen = bundleDiskonPersen;
+
+                                // Apply bundle-level additional discount to all child items
+                                bundleItem.additional_diskon_persen = bundleAdditionalDiscount;
+
+                                // Calculate combined discount and subtotal
+                                this.calculateBundleItemDiscount(itemIndex);
                             }
+                        });
+
+                        // Recalculate totals
+                        this.calculateTotals();
+                    },
+
+                    calculateBundleItemDiscount(index) {
+                        const item = this.items[index];
+                        if (!item.is_bundle_item) return;
+
+                        // Get base values
+                        const harga = parseFloat(item.harga) || 0;
+                        const kuantitas = parseFloat(item.kuantitas) || 0;
+                        const bundleDiskonPersen = parseFloat(item.bundle_diskon_persen) || 0;
+                        const additionalDiskonPersen = parseFloat(item.additional_diskon_persen) || 0;
+
+                        // Calculate subtotal before any discount
+                        const subtotalBefore = harga * kuantitas;
+
+                        // Calculate total discount percentage (bundle + additional)
+                        // Formula: Total = Bundle + Additional - (Bundle * Additional / 100)
+                        // This prevents over-discounting when combining percentages
+                        const totalDiskonPersen = bundleDiskonPersen + additionalDiskonPersen -
+                            (bundleDiskonPersen * additionalDiskonPersen / 100);
+
+                        // Calculate nominal discount
+                        const diskonNominal = (subtotalBefore * totalDiskonPersen) / 100;
+
+                        // Calculate final subtotal
+                        const subtotalAfter = subtotalBefore - diskonNominal;
+
+                        // Update item values
+                        item.total_diskon_persen = Math.round(totalDiskonPersen * 100) / 100; // Round to 2 decimal places
+                        item.diskon_persen = Math.round(totalDiskonPersen * 100) / 100; // Round to match total_diskon_persen
+                        item.diskon_nominal = diskonNominal;
+                        item.subtotal = subtotalAfter;
+
+                        // Debug log for bundle item discount calculation
+                        console.log('Bundle item discount calculation (CREATE):', {
+                            produk_nama: item.produk_nama || item.nama,
+                            bundleDiskonPersen,
+                            additionalDiskonPersen,
+                            totalDiskonPersen: item.total_diskon_persen,
+                            finalDiskonPersen: item.diskon_persen
                         });
 
                         // Recalculate totals
