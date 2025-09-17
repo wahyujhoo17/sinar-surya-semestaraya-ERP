@@ -107,7 +107,8 @@ class BOMController extends Controller
             'produk_id' => 'required|exists:produk,id',
             'deskripsi' => 'nullable|string',
             'versi' => 'nullable|string|max:20',
-            'is_active' => 'boolean'
+            'is_active' => 'boolean',
+            'overhead_cost' => 'nullable|numeric|min:0'
         ]);
 
         try {
@@ -201,7 +202,8 @@ class BOMController extends Controller
                 'produk_id' => 'required|exists:produk,id',
                 'deskripsi' => 'nullable|string',
                 'versi' => 'nullable|string|max:20',
-                'is_active' => 'boolean'
+                'is_active' => 'boolean',
+                'overhead_cost' => 'nullable|numeric|min:0'
             ]);
 
             Log::info("Validation passed");

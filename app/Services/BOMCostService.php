@@ -23,6 +23,7 @@ class BOMCostService
 
             Log::info("Calculating BOM cost for BOM ID: {$bomId}, Details count: " . $bom->details->count());
 
+            // Hitung biaya komponen
             foreach ($bom->details as $component) {
                 Log::info("Processing component ID: {$component->komponen_id}, has komponen: " . ($component->komponen ? 'yes' : 'no'));
 
@@ -43,13 +44,32 @@ class BOMCostService
                 }
             }
 
+            // Tambahkan biaya overhead
+            $overheadCost = $bom->overhead_cost ?? 0;
+            $totalCost += $overheadCost;
+
+            Log::info("Overhead cost: {$overheadCost}");
+
+            // Tambahkan overhead ke breakdown
+            if ($overheadCost > 0) {
+                $costBreakdown[] = [
+                    'komponen_id' => null,
+                    'komponen_nama' => 'Biaya Overhead',
+                    'quantity' => 1,
+                    'harga_satuan' => $overheadCost,
+                    'total_cost' => $overheadCost
+                ];
+            }
+
             $costPerUnit = $quantity > 0 ? $totalCost / $quantity : 0;
 
-            Log::info("Final calculation - Total cost: {$totalCost}, Cost per unit: {$costPerUnit}");
+            Log::info("Final calculation - Component cost: " . ($totalCost - $overheadCost) . ", Overhead cost: {$overheadCost}, Total cost: {$totalCost}, Cost per unit: {$costPerUnit}");
 
             return [
                 'cost_per_unit' => round($costPerUnit, 2),
                 'total_cost' => round($totalCost, 2),
+                'component_cost' => round($totalCost - $overheadCost, 2),
+                'overhead_cost' => round($overheadCost, 2),
                 'breakdown' => $costBreakdown,
                 'bom_id' => $bomId,
                 'quantity' => $quantity

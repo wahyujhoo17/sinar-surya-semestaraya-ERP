@@ -8,18 +8,19 @@ use Illuminate\Database\Eloquent\Model;
 class BillOfMaterial extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'bill_of_materials';
-    
+
     protected $fillable = [
         'produk_id',
         'nama',
         'kode',
         'deskripsi',
         'is_active',
-        'versi'
+        'versi',
+        'overhead_cost'
     ];
-    
+
     /**
      * Relasi ke Produk
      */
@@ -27,7 +28,7 @@ class BillOfMaterial extends Model
     {
         return $this->belongsTo(Produk::class, 'produk_id');
     }
-    
+
     /**
      * Relasi ke BOM Detail
      */
@@ -35,7 +36,7 @@ class BillOfMaterial extends Model
     {
         return $this->hasMany(BillOfMaterialDetail::class, 'bom_id');
     }
-    
+
     /**
      * Relasi ke Work Order
      */

@@ -338,6 +338,17 @@
                                     </svg>
                                 </div>
                             </th>
+                            <th scope="col" data-sort="overhead_cost"
+                                class="sortable px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                <div class="flex items-center justify-end">
+                                    Biaya Overhead
+                                    <svg class="w-4 h-4 ml-1 sort-icon" xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </div>
+                            </th>
                             <th scope="col"
                                 class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                 Cost Status
@@ -390,14 +401,15 @@
                 produk_id: event.detail.produk_id,
                 deskripsi: event.detail.deskripsi,
                 versi: event.detail.versi,
-                is_active: event.detail.is_active
+                is_active: event.detail.is_active,
+                overhead_cost: event.detail.overhead_cost || 0
             };
     
             // No need for special initialization here, 
             // x-model will handle the select element automatically
         } else {
             // Reset for creation
-            formData = { id: null, nama: '', kode: '', produk_id: '', deskripsi: '', versi: '1.0', is_active: true };
+            formData = { id: null, nama: '', kode: '', produk_id: '', deskripsi: '', versi: '1.0', is_active: true, overhead_cost: 0 };
             // Generate BOM code automatically
             generateBOMCode();
         }
@@ -609,6 +621,28 @@
                                             x-show="errors.deskripsi" x-text="errors.deskripsi"></p>
                                     </div>
 
+                                    <!-- Biaya Overhead -->
+                                    <div>
+                                        <label for="overhead_cost"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Biaya
+                                            Overhead</label>
+                                        <div class="mt-1 relative rounded-md shadow-sm">
+                                            <div
+                                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                            </div>
+                                            <input type="number" name="overhead_cost" id="overhead_cost"
+                                                x-model="formData.overhead_cost" step="0.01" min="0"
+                                                class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 shadow-sm sm:text-sm border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white rounded-md"
+                                                placeholder="0.00">
+                                        </div>
+                                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                            Biaya overhead yang akan ditambahkan ke total biaya produk (opsional)
+                                        </p>
+                                        <p class="mt-1 text-sm text-red-600 dark:text-red-400"
+                                            x-show="errors.overhead_cost" x-text="errors.overhead_cost"></p>
+                                    </div>
+
                                     <!-- Status -->
                                     <div class="flex items-start">
                                         <div class="flex items-center h-5">
@@ -655,7 +689,8 @@
                         produk_id: '',
                         deskripsi: '',
                         versi: '1.0',
-                        is_active: true
+                        is_active: true,
+                        overhead_cost: 0
                     },
                     errors: {},
 

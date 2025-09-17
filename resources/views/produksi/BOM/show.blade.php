@@ -105,6 +105,18 @@
                         <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Deskripsi</h3>
                         <p class="mt-1 text-base text-gray-900 dark:text-white">{{ $bom->deskripsi ?? '-' }}</p>
                     </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Biaya Overhead</h3>
+                        <p class="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                            @if ($bom->overhead_cost > 0)
+                                <span class="text-blue-600 dark:text-blue-400">
+                                    Rp {{ number_format($bom->overhead_cost, 0, ',', '.') }}
+                                </span>
+                            @else
+                                <span class="text-gray-400 dark:text-gray-500">-</span>
+                            @endif
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

@@ -298,6 +298,28 @@
                                     x-text="errors.deskripsi"></div>
                             </div>
 
+                            {{-- Biaya Overhead --}}
+                            <div>
+                                <label for="overhead_cost"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Biaya Overhead
+                                </label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                    </div>
+                                    <input type="number" name="overhead_cost" id="overhead_cost"
+                                        x-model="formData.overhead_cost" step="0.01" min="0"
+                                        class="w-full pl-12 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                        placeholder="0.00">
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                    Biaya overhead yang akan ditambahkan ke total biaya produk (opsional)
+                                </p>
+                                <div x-show="errors.overhead_cost" class="text-red-500 text-sm mt-1"
+                                    x-text="errors.overhead_cost"></div>
+                            </div>
+
                             <div class="pt-4">
                                 <button type="submit" :disabled="isSubmitting"
                                     class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -687,7 +709,8 @@
                         produk_id: '{{ $bom->produk_id }}',
                         versi: '{{ $bom->versi }}',
                         deskripsi: '{{ $bom->deskripsi }}',
-                        is_active: {{ $bom->is_active ? 'true' : 'false' }}
+                        is_active: {{ $bom->is_active ? 'true' : 'false' }},
+                        overhead_cost: {{ $bom->overhead_cost ?? 0 }}
                     },
                     errors: {},
                     isSubmitting: false,

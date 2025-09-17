@@ -25,6 +25,15 @@
                 </span>
             @endif
         </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-700 dark:text-gray-300">
+            @if ($bom->overhead_cost > 0)
+                <span class="font-medium text-blue-600 dark:text-blue-400">
+                    Rp {{ number_format($bom->overhead_cost, 0, ',', '.') }}
+                </span>
+            @else
+                <span class="text-gray-400 dark:text-gray-500">-</span>
+            @endif
+        </td>
         <td class="px-6 py-4 whitespace-nowrap text-center">
             @if ($bom->is_active && $bom->details->count() > 0)
                 <!-- BOM Cost Indicator -->
@@ -145,7 +154,8 @@
                         @click.prevent="window.dispatchEvent(new CustomEvent('open-bom-modal', {detail: {}}))">
                         <svg class="-ml-0.5 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4v16m8-8H4" />
                         </svg>
                         Tambah BOM
                     </button>
