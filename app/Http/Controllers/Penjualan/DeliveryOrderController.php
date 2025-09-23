@@ -208,6 +208,18 @@ class DeliveryOrderController extends Controller
         try {
             DB::beginTransaction();
 
+            // Auto-link to active permintaan barang if exists and not already linked
+            $permintaanBarangId = $request->permintaan_barang_id;
+            if (!$permintaanBarangId) {
+                $activePermintaanBarang = \App\Models\PermintaanBarang::where('sales_order_id', $request->sales_order_id)
+                    ->whereIn('status', ['menunggu', 'diproses'])
+                    ->first();
+
+                if ($activePermintaanBarang) {
+                    $permintaanBarangId = $activePermintaanBarang->id;
+                }
+            }
+
             // Create delivery order
             $deliveryOrder = DeliveryOrder::create([
                 'nomor' => $request->nomor,
@@ -216,7 +228,7 @@ class DeliveryOrderController extends Controller
                 'customer_id' => $request->customer_id,
                 'user_id' => Auth::id(),
                 'gudang_id' => $request->gudang_id,
-                'permintaan_barang_id' => $request->permintaan_barang_id,
+                'permintaan_barang_id' => $permintaanBarangId,
                 'alamat_pengiriman' => $request->alamat_pengiriman,
                 'status' => 'draft',
                 'catatan' => $request->catatan,
@@ -322,11 +334,11 @@ class DeliveryOrderController extends Controller
                 "Membuat Delivery Order dengan nomor {$deliveryOrder->nomor} untuk Sales Order {$salesOrder->nomor}"
             );
 
-            // Update permintaan barang status if created from permintaan barang
-            if ($request->has('permintaan_barang_id') && $request->permintaan_barang_id) {
+            // Update permintaan barang status if linked to permintaan barang
+            if ($permintaanBarangId) {
                 try {
                     // Use our automatic status checker
-                    $this->updatePermintaanBarangStatus($request->permintaan_barang_id, $deliveryOrder->id);
+                    $this->updatePermintaanBarangStatus($permintaanBarangId, $deliveryOrder->id);
                 } catch (\Exception $e) {
                     // Just log the error but don't rollback
                     Log::error('Error updating permintaan barang status: ' . $e->getMessage());
@@ -335,8 +347,13 @@ class DeliveryOrderController extends Controller
 
             DB::commit();
 
+            $successMessage = 'Delivery Order berhasil dibuat!';
+            if ($permintaanBarangId && !$request->permintaan_barang_id) {
+                $successMessage .= ' Delivery Order ini telah otomatis dihubungkan dengan Permintaan Barang yang aktif.';
+            }
+
             return redirect()->route('penjualan.delivery-order.show', $deliveryOrder->id)
-                ->with('success', 'Delivery Order berhasil dibuat!');
+                ->with('success', $successMessage);
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();

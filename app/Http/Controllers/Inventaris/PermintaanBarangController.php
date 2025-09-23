@@ -157,11 +157,16 @@ class PermintaanBarangController extends Controller
             ->pluck('sales_order_id')
             ->toArray();
 
+        // Juga exclude sales order yang sudah memiliki DO yang diterima (selesai)
+        $completedDeliveryOrderIds = \App\Models\DeliveryOrder::where('status', 'diterima')
+            ->pluck('sales_order_id')
+            ->toArray();
 
+        $excludeSalesOrderIds = array_unique(array_merge($processedSalesOrderIds, $completedDeliveryOrderIds));
 
         $salesOrders = SalesOrder::with(['details.produk', 'customer'])
             ->whereIn('status_pengiriman', ['belum_dikirim', 'sebagian'])
-            ->whereNotIn('id', $processedSalesOrderIds)
+            ->whereNotIn('id', $excludeSalesOrderIds)
             ->orderBy('tanggal', 'desc')
             ->get();
 
@@ -276,6 +281,30 @@ class PermintaanBarangController extends Controller
                 ]);
             }
 
+            // Jika ada DO yang masih draft dan belum ter-link, otomatis link ke permintaan barang baru
+            $draftDeliveryOrders = \App\Models\DeliveryOrder::where('sales_order_id', $salesOrder->id)
+                ->where('status', 'draft')
+                ->whereNull('permintaan_barang_id')
+                ->get();
+
+            $autoLinkedDOs = [];
+            foreach ($draftDeliveryOrders as $do) {
+                $do->update([
+                    'permintaan_barang_id' => $permintaanBarang->id,
+                    'updated_by' => Auth::id(),
+                ]);
+
+                $autoLinkedDOs[] = $do->nomor;
+
+                // Log aktivitas
+                $this->logUserAktivitas(
+                    'menghubungkan delivery order otomatis',
+                    'permintaan_barang',
+                    $permintaanBarang->id,
+                    "Delivery Order {$do->nomor} otomatis dihubungkan ke Permintaan Barang {$permintaanBarang->nomor}"
+                );
+            }
+
             DB::commit();
 
             $this->logUserAktivitas(
@@ -287,7 +316,8 @@ class PermintaanBarangController extends Controller
             );
 
             return redirect()->route('inventaris.permintaan-barang.show', $permintaanBarang->id)
-                ->with('success', 'Permintaan barang berhasil dibuat dari Sales Order.');
+                ->with('success', 'Permintaan barang berhasil dibuat dari Sales Order' .
+                    (count($autoLinkedDOs) > 0 ? ' - ' . count($autoLinkedDOs) . ' Delivery Order otomatis dihubungkan: ' . implode(', ', $autoLinkedDOs) : '') . '.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error generating permintaan barang: ' . $e->getMessage());
@@ -324,6 +354,21 @@ class PermintaanBarangController extends Controller
                 ]);
             }
 
+            // Periksa apakah sudah ada delivery order yang dikirim untuk sales order ini
+            $existingDeliveryOrders = \App\Models\DeliveryOrder::where('sales_order_id', $salesOrder->id)
+                ->whereIn('status', ['dikirim', 'diterima'])
+                ->whereNull('permintaan_barang_id') // Hanya DO yang tidak terkait permintaan barang
+                ->get();
+
+            if ($existingDeliveryOrders->count() > 0) {
+                $doNumbers = $existingDeliveryOrders->pluck('nomor')->join(', ');
+                return response()->json([
+                    'status' => 'warning',
+                    'message' => 'Sales Order ini sudah memiliki Delivery Order yang dikirim: ' . $doNumbers . '. ' .
+                        'Tidak dapat membuat Permintaan Barang baru untuk menghindari duplikasi pengiriman.',
+                ]);
+            }
+
             // Buat permintaan barang baru
             $permintaanBarang = PermintaanBarang::create([
                 'nomor' => $this->generateNomorPermintaan(),
@@ -338,6 +383,30 @@ class PermintaanBarangController extends Controller
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
+
+            // Jika ada DO yang masih draft dan belum ter-link, otomatis link ke permintaan barang baru
+            $draftDeliveryOrders = \App\Models\DeliveryOrder::where('sales_order_id', $salesOrder->id)
+                ->where('status', 'draft')
+                ->whereNull('permintaan_barang_id')
+                ->get();
+
+            $autoLinkedDOs = [];
+            foreach ($draftDeliveryOrders as $do) {
+                $do->update([
+                    'permintaan_barang_id' => $permintaanBarang->id,
+                    'updated_by' => Auth::id(),
+                ]);
+
+                $autoLinkedDOs[] = $do->nomor;
+
+                // Log aktivitas
+                $this->logUserAktivitas(
+                    'menghubungkan delivery order otomatis',
+                    'permintaan_barang',
+                    $permintaanBarang->id,
+                    "Delivery Order {$do->nomor} otomatis dihubungkan ke Permintaan Barang {$permintaanBarang->nomor}"
+                );
+            }
 
             // Buat detail permintaan barang untuk setiap item di sales order
             $produkCount = 0;
@@ -400,9 +469,11 @@ class PermintaanBarangController extends Controller
             return response()->json([
                 'status' => 'success',
                 'message' => 'Permintaan barang berhasil dibuat dari Sales Order' .
-                    (count($produkNotAvailable) > 0 ? ' (terdapat produk dengan stok kurang)' : ''),
+                    (count($produkNotAvailable) > 0 ? ' (terdapat produk dengan stok kurang)' : '') .
+                    (count($autoLinkedDOs) > 0 ? ' - ' . count($autoLinkedDOs) . ' Delivery Order otomatis dihubungkan: ' . implode(', ', $autoLinkedDOs) : ''),
                 'redirect' => route('inventaris.permintaan-barang.show', $permintaanBarang->id),
-                'produk_tidak_tersedia' => $produkNotAvailable
+                'produk_tidak_tersedia' => $produkNotAvailable,
+                'auto_linked_dos' => $autoLinkedDOs
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -453,7 +524,18 @@ class PermintaanBarangController extends Controller
      */
     public function show(PermintaanBarang $permintaanBarang)
     {
-        $permintaanBarang->load(['details.produk', 'details.satuan', 'salesOrder', 'customer', 'gudang', 'user']);
+        $permintaanBarang->load(['details.produk', 'details.satuan', 'salesOrder', 'customer', 'gudang', 'user', 'deliveryOrders']);
+
+        // Load delivery orders yang belum terkait dengan permintaan barang untuk sales order yang sama
+        $unlinkedDeliveryOrders = [];
+        if ($permintaanBarang->sales_order_id) {
+            $unlinkedDeliveryOrders = \App\Models\DeliveryOrder::where('sales_order_id', $permintaanBarang->sales_order_id)
+                ->whereNull('permintaan_barang_id')
+                ->whereIn('status', ['draft', 'dikirim']) // Hanya draft dan dikirim yang bisa di-link
+                ->with(['user'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
 
         // Auto-update stok tersedia jika permintaan belum selesai atau dibatalkan
         if ($permintaanBarang->status != 'selesai' && $permintaanBarang->status != 'dibatalkan') {
@@ -490,7 +572,156 @@ class PermintaanBarangController extends Controller
             'details' => $permintaanBarang->details->toArray()
         ]);
 
-        return view('inventaris.permintaan_barang.show', compact('permintaanBarang'));
+        return view('inventaris.permintaan_barang.show', compact('permintaanBarang', 'unlinkedDeliveryOrders'));
+    }
+
+    /**
+     * Link existing delivery orders to permintaan barang
+     */
+    public function linkExistingDeliveryOrders(Request $request, PermintaanBarang $permintaanBarang)
+    {
+        $request->validate([
+            'delivery_order_ids' => 'required|array',
+            'delivery_order_ids.*' => 'exists:delivery_order,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $linkedCount = 0;
+            $errors = [];
+
+            foreach ($request->delivery_order_ids as $doId) {
+                $deliveryOrder = \App\Models\DeliveryOrder::find($doId);
+
+                // Validasi bahwa DO milik sales order yang sama
+                if ($deliveryOrder->sales_order_id != $permintaanBarang->sales_order_id) {
+                    $errors[] = "Delivery Order {$deliveryOrder->nomor} tidak milik Sales Order yang sama";
+                    continue;
+                }
+
+                // Validasi bahwa DO belum diterima (selesai) - hanya draft dan dikirim yang bisa di-link
+                if ($deliveryOrder->status === 'diterima') {
+                    $errors[] = "Delivery Order {$deliveryOrder->nomor} sudah diterima dan tidak dapat dihubungkan";
+                    continue;
+                }
+
+                // Validasi bahwa DO belum terkait dengan permintaan barang lain
+                if ($deliveryOrder->permintaan_barang_id && $deliveryOrder->permintaan_barang_id != $permintaanBarang->id) {
+                    $errors[] = "Delivery Order {$deliveryOrder->nomor} sudah terkait dengan Permintaan Barang lain";
+                    continue;
+                }
+
+                // Update DO untuk link ke permintaan barang ini
+                $deliveryOrder->update([
+                    'permintaan_barang_id' => $permintaanBarang->id,
+                    'updated_by' => Auth::id(),
+                ]);
+
+                $linkedCount++;
+
+                // Log aktivitas
+                $this->logUserAktivitas(
+                    'menghubungkan delivery order ke permintaan barang',
+                    'permintaan_barang',
+                    $permintaanBarang->id,
+                    "Delivery Order {$deliveryOrder->nomor} dihubungkan ke Permintaan Barang {$permintaanBarang->nomor}"
+                );
+            }
+
+            // Update status permintaan barang berdasarkan DO yang sudah di-link
+            if ($linkedCount > 0) {
+                try {
+                    // Panggil method untuk update status berdasarkan semua DO terkait
+                    $this->updatePermintaanBarangStatusFromAllDO($permintaanBarang->id);
+                } catch (\Exception $e) {
+                    Log::error('Error updating permintaan barang status after linking DO: ' . $e->getMessage());
+                }
+            }
+
+            DB::commit();
+
+            $message = "Berhasil menghubungkan {$linkedCount} Delivery Order ke Permintaan Barang.";
+            if (!empty($errors)) {
+                $message .= " Error: " . implode(', ', $errors);
+            }
+
+            return redirect()->route('inventaris.permintaan-barang.show', $permintaanBarang->id)
+                ->with('success', $message);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error linking delivery orders: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menghubungkan Delivery Order: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update permintaan barang status based on all linked delivery orders
+     */
+    private function updatePermintaanBarangStatusFromAllDO($permintaanBarangId)
+    {
+        $permintaanBarang = PermintaanBarang::with(['details'])->find($permintaanBarangId);
+
+        if (!$permintaanBarang) {
+            throw new \Exception("Permintaan Barang tidak ditemukan");
+        }
+
+        // Get all delivery orders related to this permintaan barang
+        $deliveryOrders = \App\Models\DeliveryOrder::where('permintaan_barang_id', $permintaanBarangId)
+            ->whereIn('status', ['dikirim', 'diterima'])
+            ->with(['details'])
+            ->get();
+
+        // Create a map of product IDs to shipped quantities
+        $shippedQuantities = [];
+        foreach ($deliveryOrders as $do) {
+            foreach ($do->details as $detail) {
+                if (!isset($shippedQuantities[$detail->produk_id])) {
+                    $shippedQuantities[$detail->produk_id] = 0;
+                }
+                $shippedQuantities[$detail->produk_id] += $detail->quantity;
+            }
+        }
+
+        // Check if all items have been fully shipped
+        $allItemsDelivered = true;
+        $totalItemsShipped = 0;
+
+        foreach ($permintaanBarang->details as $detail) {
+            $shipped = $shippedQuantities[$detail->produk_id] ?? 0;
+
+            if ($shipped < $detail->jumlah) {
+                $allItemsDelivered = false;
+                break;
+            }
+
+            $totalItemsShipped++;
+        }
+
+        // Update status based on delivery status
+        $oldStatus = $permintaanBarang->status;
+        $newStatus = $permintaanBarang->status;
+
+        if ($allItemsDelivered && $totalItemsShipped > 0 && $permintaanBarang->status != 'selesai') {
+            $newStatus = 'selesai';
+        } elseif ($totalItemsShipped > 0 && !$allItemsDelivered && in_array($permintaanBarang->status, ['menunggu', 'diproses'])) {
+            $newStatus = 'diproses';
+        }
+
+        if ($oldStatus != $newStatus) {
+            $permintaanBarang->status = $newStatus;
+            $permintaanBarang->updated_by = Auth::id();
+            $permintaanBarang->save();
+
+            // Log the status change
+            $this->logUserAktivitas(
+                'mengubah status permintaan barang',
+                'permintaan_barang',
+                $permintaanBarang->id,
+                "dari {$oldStatus} menjadi {$newStatus} karena Delivery Order dihubungkan"
+            );
+        }
     }
 
     /**

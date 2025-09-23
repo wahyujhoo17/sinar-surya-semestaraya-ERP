@@ -364,6 +364,225 @@
                 </div>
             </div>
         </div>
+
+        {{-- Delivery Orders Section --}}
+        <div class="mt-6">
+            <div
+                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                    <div>
+                        <h3
+                            class="text-lg leading-6 font-medium text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                            Delivery Orders
+                        </h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                            Daftar delivery order yang terkait dengan permintaan barang ini
+                        </p>
+                    </div>
+                    @if ($permintaanBarang->deliveryOrders->count() > 0)
+                        <span
+                            class="bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-400 text-xs font-medium py-1 px-2 rounded">
+                            {{ $permintaanBarang->deliveryOrders->count() }} DO terkait
+                        </span>
+                    @endif
+                </div>
+                <div class="overflow-x-auto">
+                    @if ($permintaanBarang->deliveryOrders->count() > 0)
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700/50">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        No</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Nomor DO</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Tanggal</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Status</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        User</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                @foreach ($permintaanBarang->deliveryOrders as $index => $do)
+                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            {{ $index + 1 }}</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                                            <a href="{{ route('penjualan.delivery-order.show', $do->id) }}"
+                                                class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300">
+                                                {{ $do->nomor }}
+                                            </a>
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {{ \Carbon\Carbon::parse($do->tanggal)->format('d F Y') }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if ($do->status == 'draft')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400">Draft</span>
+                                            @elseif($do->status == 'dikirim')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Dikirim</span>
+                                            @elseif($do->status == 'diterima')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Diterima</span>
+                                            @elseif($do->status == 'dibatalkan')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Dibatalkan</span>
+                                            @endif
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            {{ $do->user->name ?? '-' }}
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <a href="{{ route('penjualan.delivery-order.show', $do->id) }}"
+                                                class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300">Lihat</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @else
+                        <div class="text-center py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Belum ada Delivery Order
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Delivery order akan muncul di sini
+                                setelah dibuat dari permintaan barang ini.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        {{-- Unlinked Delivery Orders Section --}}
+        @if (isset($unlinkedDeliveryOrders) && $unlinkedDeliveryOrders->count() > 0)
+            <div class="mt-6">
+                <div
+                    class="bg-yellow-50 dark:bg-yellow-900/10 shadow-sm rounded-lg overflow-hidden border border-yellow-200 dark:border-yellow-800">
+                    <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                        <div>
+                            <h3
+                                class="text-lg leading-6 font-medium text-yellow-800 dark:text-yellow-200 flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                Delivery Orders Belum Terkait
+                            </h3>
+                            <p class="mt-1 max-w-2xl text-sm text-yellow-700 dark:text-yellow-300">
+                                Ada {{ $unlinkedDeliveryOrders->count() }} delivery order untuk sales order ini yang
+                                belum terkait dengan permintaan barang manapun.
+                            </p>
+                        </div>
+                        <form action="{{ route('inventaris.permintaan-barang.link-do', $permintaanBarang->id) }}"
+                            method="POST" id="linkDoForm">
+                            @csrf
+                            <button type="submit"
+                                class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                Hubungkan DO
+                            </button>
+                        </form>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-yellow-200 dark:divide-yellow-800">
+                            <thead class="bg-yellow-100 dark:bg-yellow-900/20">
+                                <tr>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        <input type="checkbox" id="selectAllUnlinked"
+                                            class="rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500">
+                                    </th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        No</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        Nomor DO</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        Tanggal</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        Status</th>
+                                    <th scope="col"
+                                        class="px-6 py-3 text-left text-xs font-medium text-yellow-800 dark:text-yellow-200 uppercase tracking-wider">
+                                        User</th>
+                                </tr>
+                            </thead>
+                            <tbody
+                                class="bg-yellow-50 dark:bg-yellow-900/5 divide-y divide-yellow-200 dark:divide-yellow-800">
+                                @foreach ($unlinkedDeliveryOrders as $index => $do)
+                                    <tr class="hover:bg-yellow-100 dark:hover:bg-yellow-900/10">
+                                        <td class="px-6 py-4">
+                                            <input type="checkbox" name="delivery_order_ids[]"
+                                                value="{{ $do->id }}"
+                                                class="unlinked-checkbox rounded border-yellow-300 text-yellow-600 focus:ring-yellow-500">
+                                        </td>
+                                        <td class="px-6 py-4 text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                                            {{ $index + 1 }}</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-yellow-900 dark:text-yellow-100">
+                                            <a href="{{ route('penjualan.delivery-order.show', $do->id) }}"
+                                                class="text-yellow-700 hover:text-yellow-900 dark:text-yellow-300 dark:hover:text-yellow-100">
+                                                {{ $do->nomor }}
+                                            </a>
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700 dark:text-yellow-300">
+                                            {{ \Carbon\Carbon::parse($do->tanggal)->format('d F Y') }}
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            @if ($do->status == 'draft')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400">Draft</span>
+                                            @elseif($do->status == 'dikirim')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Dikirim</span>
+                                            @elseif($do->status == 'diterima')
+                                                <span
+                                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Diterima</span>
+                                            @endif
+                                        </td>
+                                        <td
+                                            class="px-6 py-4 whitespace-nowrap text-sm text-yellow-700 dark:text-yellow-300">
+                                            {{ $do->user->name ?? '-' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @endif
+
     </div>
 
     <!-- Modal Update Status -->
@@ -431,6 +650,33 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+    // Handle select all checkbox for unlinked delivery orders
+    document.getElementById('selectAllUnlinked')?.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.unlinked-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Handle form submission for linking delivery orders
+    document.getElementById('linkDoForm')?.addEventListener('submit', function(e) {
+        const checkedBoxes = document.querySelectorAll('.unlinked-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            e.preventDefault();
+            alert('Pilih minimal satu delivery order untuk dihubungkan.');
+            return false;
+        }
+
+        if (!confirm(
+                'Apakah Anda yakin ingin menghubungkan delivery order yang dipilih ke permintaan barang ini?'
+                )) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
 
 <style>
     /* Animation for modal */
