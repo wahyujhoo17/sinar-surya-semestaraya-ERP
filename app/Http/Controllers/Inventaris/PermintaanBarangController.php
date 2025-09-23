@@ -29,7 +29,7 @@ class PermintaanBarangController extends Controller
     {
         $this->middleware('permission:permintaan_barang.view')->only(['index', 'show', 'exportPdf']);
         $this->middleware('permission:permintaan_barang.create')->only(['create', 'store', 'generateFromSalesOrder', 'autoProsesFromSalesOrder']);
-        $this->middleware('permission:permintaan_barang.edit')->only(['edit', 'update', 'updateStatus']);
+        $this->middleware('permission:permintaan_barang.edit')->only(['edit', 'update', 'updateStatus', 'updateStok']);
         $this->middleware('permission:permintaan_barang.delete')->only(['destroy']);
         $this->middleware('permission:permintaan_barang.view')->only(['createDeliveryOrder']);
     }
@@ -455,6 +455,32 @@ class PermintaanBarangController extends Controller
     {
         $permintaanBarang->load(['details.produk', 'details.satuan', 'salesOrder', 'customer', 'gudang', 'user']);
 
+        // Auto-update stok tersedia jika permintaan belum selesai atau dibatalkan
+        if ($permintaanBarang->status != 'selesai' && $permintaanBarang->status != 'dibatalkan') {
+            try {
+                foreach ($permintaanBarang->details as $detail) {
+                    // Hitung stok tersedia di gudang
+                    $stokTersedia = StokProduk::where('produk_id', $detail->produk_id)
+                        ->where('gudang_id', $permintaanBarang->gudang_id)
+                        ->value('jumlah') ?? 0;
+
+                    // Update jumlah_tersedia dan keterangan jika berbeda
+                    if ($detail->jumlah_tersedia != $stokTersedia) {
+                        $detail->update([
+                            'jumlah_tersedia' => $stokTersedia,
+                            'keterangan' => $stokTersedia < $detail->jumlah ? 'Stok kurang' : '',
+                        ]);
+                    }
+                }
+
+                // Reload details setelah update
+                $permintaanBarang->load(['details.produk', 'details.satuan']);
+            } catch (\Exception $e) {
+                Log::error('Error auto-updating stok for permintaan barang: ' . $e->getMessage());
+                // Continue without failing the page load
+            }
+        }
+
         // Debug: Log the permintaan barang details count
         Log::info('Permintaan Barang Details', [
             'id' => $permintaanBarang->id,
@@ -603,6 +629,44 @@ class PermintaanBarangController extends Controller
         } catch (\Exception $e) {
             Log::error('Error generating PDF for permintaan barang: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Terjadi kesalahan saat menggenerate PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update stok tersedia untuk detail permintaan barang berdasarkan gudang
+     */
+    public function updateStok(PermintaanBarang $permintaanBarang)
+    {
+        try {
+            DB::beginTransaction();
+
+            foreach ($permintaanBarang->details as $detail) {
+                // Hitung stok tersedia di gudang
+                $stokTersedia = StokProduk::where('produk_id', $detail->produk_id)
+                    ->where('gudang_id', $permintaanBarang->gudang_id)
+                    ->value('jumlah') ?? 0;
+
+                // Update jumlah_tersedia dan keterangan
+                $detail->update([
+                    'jumlah_tersedia' => $stokTersedia,
+                    'keterangan' => $stokTersedia < $detail->jumlah ? 'Stok kurang' : '',
+                ]);
+            }
+
+            DB::commit();
+
+            $this->logUserAktivitas(
+                'mengupdate stok tersedia',
+                'permintaan_barang',
+                $permintaanBarang->id,
+                "Update stok untuk {$permintaanBarang->details->count()} item"
+            );
+
+            return redirect()->back()->with('success', 'Stok tersedia berhasil diupdate.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating stok for permintaan barang: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat mengupdate stok: ' . $e->getMessage());
         }
     }
 }

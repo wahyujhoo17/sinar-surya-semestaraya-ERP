@@ -294,6 +294,7 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware('permission:permintaan_barang.edit')->group(function () {
             Route::put('permintaan-barang/{permintaanBarang}/update-status', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'updateStatus'])->name('permintaan-barang.update-status');
+            Route::post('permintaan-barang/{permintaanBarang}/update-stok', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'updateStok'])->name('permintaan-barang.update-stok');
         });
         Route::middleware('permission:permintaan_barang.view')->group(function () {
             Route::get('permintaan-barang/{permintaanBarang}/create-do', [App\Http\Controllers\Inventaris\PermintaanBarangController::class, 'createDeliveryOrder'])->name('permintaan-barang.create-do');

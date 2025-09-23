@@ -241,6 +241,22 @@
                                         </svg>
                                         Update Status
                                     </button>
+
+                                    <form
+                                        action="{{ route('inventaris.permintaan-barang.update-stok', $permintaanBarang->id) }}"
+                                        method="POST" class="inline-block w-full">
+                                        @csrf
+                                        @method('POST')
+                                        <button type="submit"
+                                            class="inline-flex items-center w-full justify-center px-4 py-2.5 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-300 transform hover:scale-105">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="-ml-1 mr-2 h-5 w-5"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                            Update Stok Tersedia
+                                        </button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
