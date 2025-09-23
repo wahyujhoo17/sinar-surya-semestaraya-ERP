@@ -761,7 +761,7 @@
                                 <div class="mt-4 mb-6">
                                     <h4
                                         style="font-weight: 600; color: #374151; margin-bottom: 12px; font-size: 16px;">
-                                        📊 Detail Komisi Penjualan
+                                        Detail Komisi Penjualan
                                     </h4>
 
                                     @if (!empty($salesOrderDetails))
@@ -854,7 +854,7 @@
                                                     style="display: flex; justify-content: space-between; align-items: center;">
                                                     <div>
                                                         <span
-                                                            style="font-weight: 500; color: #1e3a8a; font-size: 16px;">💰
+                                                            style="font-weight: 500; color: #1e3a8a; font-size: 16px;">
                                                             Total Komisi Keseluruhan:</span>
                                                         <div style="color: #1e40af; font-size: 12px; margin-top: 4px;">
                                                             Dari {{ count($salesOrderDetails) }} sales order
@@ -895,7 +895,7 @@
 
                                 <!-- Commission Rate Info dengan style inline -->
                                 <div style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
-                                    <p style="font-weight: 500; color: #374151; margin: 0 0 8px 0; font-size: 14px;">📋
+                                    <p style="font-weight: 500; color: #374151; margin: 0 0 8px 0; font-size: 14px;">
                                         Informasi Sistem Komisi:</p>
                                     <div style="font-size: 12px; color: #6b7280; line-height: 1.4;">
                                         <p style="margin: 0 0 4px 0;">• Komisi dihitung berdasarkan margin penjualan
@@ -1155,12 +1155,12 @@
                                                     class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
                                                     {{ $penggajian->metode_pembayaran === 'kas' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' }}">
                                                     @if ($penggajian->metode_pembayaran === 'kas')
-                                                        💰 Kas
+                                                        Kas
                                                         @if ($penggajian->kas)
                                                             - {{ $penggajian->kas->nama }}
                                                         @endif
                                                     @else
-                                                        🏦 Bank Transfer
+                                                        Bank Transfer
                                                         @if ($penggajian->rekeningBank)
                                                             - {{ $penggajian->rekeningBank->nama_bank }}
                                                         @endif
