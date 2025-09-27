@@ -453,6 +453,71 @@
                         </div>
                     </div>
 
+                    {{-- Penyesuaian Komisi Per Sales Order --}}
+                    <div x-show="commissionData.orders && commissionData.orders.length > 0"
+                        class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-orange-900 dark:text-orange-100 mb-4">
+                            Penyesuaian Komisi Per Sales Order:
+                        </h4>
+                        <div class="space-y-4">
+                            <template x-for="order in commissionData.orders" :key="order.id">
+                                <div
+                                    class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h5 class="font-medium text-gray-900 dark:text-white"
+                                                x-text="'SO: ' + order.nomor"></h5>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400"
+                                                x-text="'Netto Penjualan: ' + formatRupiah(order.netto_penjualan)"></p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm text-green-600 dark:text-green-400 font-medium"
+                                                x-text="'Komisi: ' + formatRupiah(order.komisi)"></p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Cashback (Nominal)
+                                            </label>
+                                            <input type="number"
+                                                x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0"
+                                                @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', $event.target.value)"
+                                                min="0" step="1000"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Nominal yang akan mengurangi netto penjualan
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                Overhead (%)
+                                            </label>
+                                            <input type="number"
+                                                x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].overhead_persen : 0"
+                                                @input="setSalesOrderAdjustment(order.id, 'overhead_persen', $event.target.value)"
+                                                min="0" max="100" step="0.01"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm"
+                                                placeholder="0.00">
+                                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                Persentase yang akan menambah harga beli
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="mt-4">
+                            <button type="button" @click="calculateCommission()"
+                                class="px-4 py-2 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                Hitung Ulang Komisi dengan Penyesuaian
+                            </button>
+                        </div>
+                    </div>
+
                     {{-- Loading State --}}
                     <div x-show="commissionLoading" class="text-center py-8">
                         <div
@@ -631,6 +696,20 @@
 
                     {{-- Hidden commission input --}}
                     <input type="hidden" name="komisi" x-model="commissionData.total_commission">
+                    {{-- Hidden sales order adjustments --}}
+                    <template x-for="(adjustment, orderIndex) in Object.values(salesOrderAdjustments)"
+                        :key="orderIndex">
+                        <div>
+                            <input type="hidden" :name="'sales_order_adjustments[' + orderIndex + '][sales_order_id]'"
+                                :value="adjustment.sales_order_id">
+                            <input type="hidden"
+                                :name="'sales_order_adjustments[' + orderIndex + '][cashback_nominal]'"
+                                :value="adjustment.cashback_nominal || 0">
+                            <input type="hidden"
+                                :name="'sales_order_adjustments[' + orderIndex + '][overhead_persen]'"
+                                :value="adjustment.overhead_persen || 0">
+                        </div>
+                    </template>
                 </div>
             </div>
 
@@ -859,6 +938,8 @@
                         orders: []
                     },
 
+                    salesOrderAdjustments: {},
+
                     totalSalary: 0,
                     totalGaji: 0, // Total bruto sebelum potongan
 
@@ -910,6 +991,17 @@
                         }
                     },
 
+                    setSalesOrderAdjustment(orderId, field, value) {
+                        if (!this.salesOrderAdjustments[orderId]) {
+                            this.salesOrderAdjustments[orderId] = {
+                                sales_order_id: orderId,
+                                cashback_nominal: 0,
+                                overhead_persen: 0
+                            };
+                        }
+                        this.salesOrderAdjustments[orderId][field] = parseFloat(value) || 0;
+                    },
+
                     async calculateCommission() {
                         if (!this.selectedEmployee || !this.selectedMonth || !this.selectedYear) {
                             this.commissionData = {
@@ -936,7 +1028,8 @@
                                 body: JSON.stringify({
                                     karyawan_id: this.selectedEmployee,
                                     bulan: this.selectedMonth,
-                                    tahun: this.selectedYear
+                                    tahun: this.selectedYear,
+                                    sales_order_adjustments: Object.values(this.salesOrderAdjustments)
                                 })
                             });
 
@@ -944,6 +1037,17 @@
 
                             if (data.success) {
                                 const salesDetails = data.sales_details || [];
+
+                                // Initialize sales order adjustments if not already set
+                                salesDetails.forEach(order => {
+                                    if (!this.salesOrderAdjustments[order.id]) {
+                                        this.salesOrderAdjustments[order.id] = {
+                                            sales_order_id: order.id,
+                                            cashback_nominal: 0,
+                                            overhead_persen: 0
+                                        };
+                                    }
+                                });
 
                                 // Calculate total sales and average margin
                                 let totalSales = 0;
@@ -973,7 +1077,10 @@
                                     total_sales: totalSales,
                                     average_margin: averageMargin,
                                     commission_tiers: Object.values(commissionTiers),
-                                    orders: salesDetails
+                                    orders: salesDetails.map(order => ({
+                                        ...order,
+                                        netto_penjualan: order.harga_jual
+                                    }))
                                 };
                                 console.log(data);
                             } else {

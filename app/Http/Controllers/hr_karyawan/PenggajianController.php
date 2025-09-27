@@ -428,6 +428,10 @@ class PenggajianController extends Controller
             'tanggal_bayar' => 'nullable|date',
             'status' => 'required|in:draft,disetujui,dibayar',
             'catatan' => 'nullable|string',
+            'sales_order_adjustments' => 'nullable|array',
+            'sales_order_adjustments.*.sales_order_id' => 'required|exists:sales_order,id',
+            'sales_order_adjustments.*.cashback_nominal' => 'nullable|numeric|min:0',
+            'sales_order_adjustments.*.overhead_persen' => 'nullable|numeric|min:0|max:100',
             'komponenGaji' => 'nullable|array',
             'komponenGaji.*.nama_komponen' => 'required|string',
             'komponenGaji.*.jenis' => 'required|in:pendapatan,potongan',
@@ -445,10 +449,18 @@ class PenggajianController extends Controller
             return back()->with('error', 'Data penggajian untuk karyawan, bulan dan tahun ini sudah ada')->withInput();
         }
 
-        // Hitung komisi dari sales order jika ada
-        $komisiData = $this->hitungKomisiKaryawan($request->karyawan_id, $request->bulan, $request->tahun);
+        // Hitung komisi dari sales order jika ada dengan penyesuaian per sales order
+        $salesOrderAdjustments = $request->input('sales_order_adjustments', []);
+
+        $komisiData = $this->hitungKomisiKaryawan(
+            $request->karyawan_id,
+            $request->bulan,
+            $request->tahun,
+            $salesOrderAdjustments
+        );
         $komisi = $komisiData['komisi'];
         $salesOrderIds = $komisiData['salesOrderIds'];
+        $komisiDetails = $komisiData['details'] ?? [];
 
         // Override komisi jika dikirim dari request (manual input)
         if ($request->has('komisi') && $request->komisi !== null) {
@@ -509,23 +521,42 @@ class PenggajianController extends Controller
                 'disetujui_oleh' => $request->status == 'disetujui' ? Auth::id() : null,
             ]);
 
-            // Tambahkan komponen komisi jika ada
-            if ($komisi > 0) {
-                $keteranganKomisi = 'Komisi dari sales order bulan ' . $request->bulan . ' tahun ' . $request->tahun;
+            // Tambahkan komponen komisi per sales order jika ada
+            if (!empty($komisiDetails)) {
+                foreach ($komisiDetails as $detail) {
+                    $salesOrder = \App\Models\SalesOrder::find($detail['sales_order_id']);
+                    $keteranganKomisi = 'Komisi dari SO: ' . ($salesOrder ? $salesOrder->nomor : $detail['sales_order_id']);
 
-                // Tambahkan sales order nomors jika ada
-                if (!empty($salesOrderIds)) {
-                    $salesOrderNomors = $this->getSalesOrderNomors($salesOrderIds);
-                    $keteranganKomisi .= ' (SO: ' . implode(', ', $salesOrderNomors) . ')';
+                    // Tambahkan informasi penyesuaian jika ada
+                    $adjustments = [];
+                    if ($detail['cashback_nominal'] > 0) {
+                        $adjustments[] = "Cashback: Rp " . number_format($detail['cashback_nominal'], 0, ',', '.');
+                    }
+                    if ($detail['overhead_persen'] > 0) {
+                        $adjustments[] = "Overhead: {$detail['overhead_persen']}%";
+                    }
+
+                    if (!empty($adjustments)) {
+                        $keteranganKomisi .= ' [' . implode(', ', $adjustments) . ']';
+                    }
+
+                    KomponenGaji::create([
+                        'penggajian_id' => $penggajian->id,
+                        'nama_komponen' => 'Komisi Penjualan',
+                        'jenis' => 'pendapatan',
+                        'nilai' => $detail['komisi'],
+                        'keterangan' => $keteranganKomisi,
+                        'sales_order_id' => $detail['sales_order_id'],
+                        'cashback_nominal' => $detail['cashback_nominal'],
+                        'overhead_persen' => $detail['overhead_persen'],
+                        'netto_penjualan_original' => $detail['netto_penjualan_original'],
+                        'netto_beli_original' => $detail['netto_beli_original'],
+                        'netto_penjualan_adjusted' => $detail['netto_penjualan_adjusted'],
+                        'netto_beli_adjusted' => $detail['netto_beli_adjusted'],
+                        'margin_persen' => $detail['margin_persen'],
+                        'komisi_rate' => $detail['komisi_rate']
+                    ]);
                 }
-
-                KomponenGaji::create([
-                    'penggajian_id' => $penggajian->id,
-                    'nama_komponen' => 'Komisi Penjualan',
-                    'jenis' => 'pendapatan',
-                    'nilai' => $komisi,
-                    'keterangan' => $keteranganKomisi
-                ]);
             }
 
             // Simpan komponen gaji lainnya jika ada
@@ -536,7 +567,9 @@ class PenggajianController extends Controller
                         'nama_komponen' => $komponen['nama_komponen'],
                         'jenis' => $komponen['jenis'],
                         'nilai' => $komponen['nilai'],
-                        'keterangan' => $komponen['keterangan'] ?? null
+                        'keterangan' => $komponen['keterangan'] ?? null,
+                        'cashback_persen' => $komponen['cashback_persen'] ?? 0,
+                        'overhead_persen' => $komponen['overhead_persen'] ?? 0
                     ]);
                 }
             }
@@ -554,7 +587,7 @@ class PenggajianController extends Controller
      */
     public function show($id)
     {
-        $penggajian = Penggajian::with(['karyawan', 'approver', 'komponenGaji'])->findOrFail($id);
+        $penggajian = Penggajian::with(['karyawan', 'approver', 'komponenGaji.salesOrder.customer'])->findOrFail($id);
 
         // Load cash accounts and bank accounts for payment form
         $cashAccounts = \App\Models\Kas::where('is_aktif', true)->get();
@@ -722,7 +755,7 @@ class PenggajianController extends Controller
      * Hitung komisi karyawan berdasarkan sales order
      * @return array Returns an array with total commission and processed sales order IDs
      */
-    private function hitungKomisiKaryawan($karyawanId, $bulan, $tahun)
+    private function hitungKomisiKaryawan($karyawanId, $bulan, $tahun, $salesOrderAdjustments = [])
     {
         // Get the user_id associated with karyawan
         $karyawan = Karyawan::findOrFail($karyawanId);
@@ -733,7 +766,8 @@ class PenggajianController extends Controller
         $userId = $karyawan->user_id;
 
         // Ambil semua sales order milik customer yang sales_id-nya sama dengan user ini, sudah LUNAS dan dibayar pada bulan/tahun tertentu
-        $salesOrders = SalesOrder::where('status_pembayaran', 'lunas')
+        $salesOrders = SalesOrder::with(['customer'])
+            ->where('status_pembayaran', 'lunas')
             ->whereHas('customer', function ($query) use ($userId) {
                 $query->where('sales_id', $userId);
             })
@@ -747,13 +781,17 @@ class PenggajianController extends Controller
 
         $totalKomisi = 0;
         $processedSalesOrderIds = [];
+        $komisiDetails = [];
+
+        // Convert adjustments array for easier lookup
+        $adjustmentsByOrderId = [];
+        foreach ($salesOrderAdjustments as $adjustment) {
+            $adjustmentsByOrderId[$adjustment['sales_order_id']] = $adjustment;
+        }
 
         // Cek apakah sudah ada komisi yang dihitung pada periode sebelumnya
-        // Karena sekarang komisi dihitung berdasarkan tanggal pembayaran lunas,
-        // kita perlu mengecek periode berdasarkan bulan/tahun komisi yang sudah dihitung
         $existingKomisi = Penggajian::where('karyawan_id', $karyawanId)
             ->where(function ($query) use ($bulan, $tahun) {
-                // Cek periode sebelumnya atau sama (bulan dan tahun sama atau sebelumnya)
                 $query->where(function ($q) use ($bulan, $tahun) {
                     $q->where('tahun', '<', $tahun)
                         ->orWhere(function ($q2) use ($bulan, $tahun) {
@@ -768,84 +806,82 @@ class PenggajianController extends Controller
             ->pluck('id')
             ->toArray();
 
-        // Dapatkan semua sales order nomor yang sudah pernah dihitung komisinya
+        // Dapatkan semua sales order yang sudah pernah dihitung komisinya
         $alreadyProcessedSalesOrderIds = [];
         if (!empty($existingKomisi)) {
             $alreadyProcessedSalesOrderIds = KomponenGaji::whereIn('penggajian_id', $existingKomisi)
                 ->where('nama_komponen', 'like', '%Komisi Penjualan%')
-                ->where(function ($query) {
-                    $query->where('keterangan', 'like', '%SO:%')
-                        ->orWhere('keterangan', 'like', '%sales order ID:%');
-                })
-                ->get()
-                ->map(function ($item) {
-                    // Extract sales order info from keterangan and convert to IDs
-
-                    // Check for new format with sales order nomors
-                    if (preg_match('/SO: ([\w\-,\s]+)/', $item->keterangan, $matches)) {
-                        $salesOrderNomors = array_map('trim', explode(',', $matches[1]));
-                        // Convert nomor back to IDs
-                        return SalesOrder::whereIn('nomor', $salesOrderNomors)->pluck('id')->toArray();
-                    }
-
-                    // Check for old format with sales order IDs (backward compatibility)
-                    if (preg_match('/sales order ID: ([\d,]+)/', $item->keterangan, $matches)) {
-                        $salesOrderIds = array_map('trim', explode(',', $matches[1]));
-                        return array_map('intval', $salesOrderIds);
-                    }
-
-                    return null;
-                })
-                ->flatten()
-                ->filter()
+                ->whereNotNull('sales_order_id')
+                ->pluck('sales_order_id')
                 ->toArray();
         }
+
         Log::info('alreadyProcessedSalesOrderIds', ['ids' => $alreadyProcessedSalesOrderIds]);
 
-
         foreach ($salesOrders as $order) {
-            // Skip if this sales order has already been processed in previous months
+            // Skip if this sales order has already been processed
             if (in_array($order->id, $alreadyProcessedSalesOrderIds)) {
                 continue;
             }
 
+            // Get adjustments for this specific sales order
+            $adjustment = $adjustmentsByOrderId[$order->id] ?? [];
+            $cashbackNominal = $adjustment['cashback_nominal'] ?? 0;
+            $overheadPersen = $adjustment['overhead_persen'] ?? 0;
+
             $details = SalesOrderDetail::where('sales_order_id', $order->id)->get();
-            $orderKomisi = 0;
 
-
+            // Hitung total netto penjualan dan netto beli untuk sales order ini
+            $totalNettoPenjualan = 0;
+            $totalNettoBeli = 0;
 
             foreach ($details as $detail) {
-                // Ambil data produk
                 $produk = Produk::find($detail->produk_id);
-
                 if ($produk) {
-                    // Hitung Netto Penjualan dan Netto Beli
-                    $nettoPenjualan = $detail->harga * $detail->quantity; // Harga jual × quantity
-                    $nettoBeli = $produk->harga_beli * $detail->quantity; // Harga beli × quantity
-
-
-
-                    if ($nettoBeli > 0) {
-                        // 1. Hitung Margin % = (Netto Penjualan - Netto Beli) / Netto Beli × 100
-                        $marginPersen = (($nettoPenjualan - $nettoBeli) / $nettoBeli) * 100;
-
-                        // 2. Cari Tier Persentase Komisi dari tabel
-                        $komisiRate = $this->getKomisiRateByMargin($marginPersen);
-
-                        // 3. Hitung Komisi: Netto Penjualan × %Komisi
-                        $komisi = $nettoPenjualan * ($komisiRate / 100);
-
-                        $orderKomisi += $komisi;
-
-                        Log::info('details', ['salesOrderID' => $detail->sales_order_id, 'produk_id' => $produk->id, 'Margin Persen' => $komisiRate, 'orderKomisi' => $komisi]);
-                    }
+                    $totalNettoPenjualan += $detail->harga * $detail->quantity;
+                    $totalNettoBeli += $produk->harga_beli * $detail->quantity;
                 }
             }
 
-            // Jika ada komisi untuk order ini, tambahkan ke total dan track sales order ID
-            if ($orderKomisi > 0) {
-                $totalKomisi += $orderKomisi;
-                $processedSalesOrderIds[] = $order->id;
+            // Apply penyesuaian untuk sales order ini
+            $nettoPenjualanAdjusted = $totalNettoPenjualan - $cashbackNominal; // Kurangi cashback nominal
+            $nettoBeliAdjusted = $totalNettoBeli * (1 + $overheadPersen / 100); // Tambah overhead persen
+
+            if ($nettoBeliAdjusted > 0 && $nettoPenjualanAdjusted > 0) {
+                // Hitung margin berdasarkan nilai yang sudah disesuaikan
+                $marginPersen = (($nettoPenjualanAdjusted - $nettoBeliAdjusted) / $nettoBeliAdjusted) * 100;
+
+                // Cari tier persentase komisi
+                $komisiRate = $this->getKomisiRateByMargin($marginPersen);
+
+                // Hitung komisi untuk sales order ini
+                $orderKomisi = $nettoPenjualanAdjusted * ($komisiRate / 100);
+
+                if ($orderKomisi > 0) {
+                    $totalKomisi += $orderKomisi;
+                    $processedSalesOrderIds[] = $order->id;
+
+                    // Simpan detail untuk penyimpanan komponen gaji
+                    $komisiDetails[] = [
+                        'sales_order_id' => $order->id,
+                        'komisi' => $orderKomisi,
+                        'cashback_nominal' => $cashbackNominal,
+                        'overhead_persen' => $overheadPersen,
+                        'netto_penjualan_original' => $totalNettoPenjualan,
+                        'netto_beli_original' => $totalNettoBeli,
+                        'netto_penjualan_adjusted' => $nettoPenjualanAdjusted,
+                        'netto_beli_adjusted' => $nettoBeliAdjusted,
+                        'margin_persen' => $marginPersen,
+                        'komisi_rate' => $komisiRate
+                    ];
+                }
+
+                Log::info('Commission calculation for order', [
+                    'order_id' => $order->id,
+                    'margin_persen' => $marginPersen,
+                    'komisi_rate' => $komisiRate,
+                    'order_komisi' => $orderKomisi
+                ]);
             }
         }
 
@@ -853,7 +889,8 @@ class PenggajianController extends Controller
 
         return [
             'komisi' => $totalKomisi,
-            'salesOrderIds' => $processedSalesOrderIds
+            'salesOrderIds' => $processedSalesOrderIds,
+            'details' => $komisiDetails
         ];
     }
 
@@ -977,16 +1014,23 @@ class PenggajianController extends Controller
             'karyawan_id' => 'required|exists:karyawan,id',
             'bulan' => 'required|integer|min:1|max:12',
             'tahun' => 'required|integer|min:2000|max:2100',
+            'sales_order_adjustments' => 'nullable|array',
+            'sales_order_adjustments.*.sales_order_id' => 'required|exists:sales_order,id',
+            'sales_order_adjustments.*.cashback_nominal' => 'nullable|numeric|min:0',
+            'sales_order_adjustments.*.overhead_persen' => 'nullable|numeric|min:0|max:100',
         ]);
+
+        $salesOrderAdjustments = $request->input('sales_order_adjustments', []);
 
         // Log request parameters
         Log::info('Calculating commission', [
             'karyawan_id' => $request->karyawan_id,
             'bulan' => $request->bulan,
-            'tahun' => $request->tahun
+            'tahun' => $request->tahun,
+            'sales_order_adjustments' => $salesOrderAdjustments
         ]);
 
-        $komisiData = $this->hitungKomisiKaryawan($request->karyawan_id, $request->bulan, $request->tahun);
+        $komisiData = $this->hitungKomisiKaryawan($request->karyawan_id, $request->bulan, $request->tahun, $salesOrderAdjustments);
         $komisi = $komisiData['komisi'];
         $salesOrderIds = $komisiData['salesOrderIds'];
 
@@ -997,11 +1041,13 @@ class PenggajianController extends Controller
             'ids' => $salesOrderIds
         ]);
 
-        // Get detailed sales order data
+        // Get detailed sales order data menggunakan data yang sama dari hitungKomisiKaryawan
         $salesOrderDetails = [];
-        if (!empty($salesOrderIds)) {
-            Log::info('Getting detailed sales order data for IDs', ['ids' => $salesOrderIds]);
+        if (!empty($komisiData['details'])) {
+            // Ambil detail komisi yang sudah dihitung dengan benar
+            $detailsById = collect($komisiData['details'])->keyBy('sales_order_id');
 
+            // Get sales order information untuk display
             $salesOrders = SalesOrder::with(['customer', 'details.produk'])
                 ->whereIn('id', $salesOrderIds)
                 ->get();
@@ -1009,64 +1055,26 @@ class PenggajianController extends Controller
             Log::info('Found sales orders', ['count' => $salesOrders->count()]);
 
             foreach ($salesOrders as $order) {
-                $totalHargaJual = 0;
-                $totalHargaBeli = 0;
-                $totalMargin = 0;
-                $totalKomisi = 0;
-                $productNames = [];
+                $detail = $detailsById[$order->id] ?? null;
 
-                Log::debug('Processing sales order', [
-                    'id' => $order->id,
-                    'nomor' => $order->nomor,
-                    'detail_count' => $order->details->count()
-                ]);
+                if ($detail) {
+                    // Gunakan data yang sudah dihitung dengan benar dari hitungKomisiKaryawan
+                    $productNames = $order->details->pluck('produk.nama')->filter()->toArray();
 
-                foreach ($order->details as $detail) {
-                    $produk = $detail->produk;
-                    if ($produk) {
-                        // Hitung Netto Penjualan dan Netto Beli
-                        $nettoPenjualan = $detail->harga * $detail->quantity; // Netto Penjualan
-                        $nettoBeli = $produk->harga_beli * $detail->quantity; // Netto Beli
-                        $margin = $nettoPenjualan - $nettoBeli;
-
-                        if ($nettoBeli > 0) {
-                            // 1. Hitung Margin % = (Netto Penjualan - Netto Beli) / Netto Beli × 100
-                            $marginPersen = ($margin / $nettoBeli) * 100;
-
-                            // 2. Cari Tier Persentase Komisi dari tabel
-                            $komisiRate = $this->getKomisiRateByMargin($marginPersen);
-
-                            // 3. Hitung Komisi: Netto Penjualan × %Komisi
-                            $detailKomisi = $nettoPenjualan * ($komisiRate / 100);
-                            $totalKomisi += $detailKomisi;
-                        }
-
-                        $totalHargaJual += $nettoPenjualan;
-                        $totalHargaBeli += $nettoBeli;
-                        $totalMargin += $margin;
-
-                        // Add product name
-                        $productNames[] = $produk->nama;
-                    }
+                    $salesOrderDetails[] = [
+                        'id' => $order->id,
+                        'nomor' => $order->nomor,
+                        'tanggal' => $order->tanggal,
+                        'customer' => $order->customer ? ($order->customer->company ?? $order->customer->nama) : 'N/A',
+                        'produk' => implode(', ', array_slice($productNames, 0, 3)) . (count($productNames) > 3 ? '...' : ''),
+                        'harga_jual' => $detail['netto_penjualan_original'],
+                        'harga_beli' => $detail['netto_beli_original'],
+                        'margin' => $detail['netto_penjualan_original'] - $detail['netto_beli_original'],
+                        'margin_persen' => round($detail['margin_persen'], 2),
+                        'commission_rate' => $detail['komisi_rate'],
+                        'komisi' => $detail['komisi']
+                    ];
                 }
-
-                // Calculate margin percentage and commission rate for this order
-                $marginPersen = ($totalHargaBeli > 0) ? ($totalMargin / $totalHargaBeli) * 100 : 0;
-                $commissionRate = $this->getKomisiRateByMargin($marginPersen);
-
-                $salesOrderDetails[] = [
-                    'id' => $order->id,
-                    'nomor' => $order->nomor,
-                    'tanggal' => $order->tanggal,
-                    'customer' => $order->customer ? $order->customer->nama : 'N/A',
-                    'produk' => implode(', ', array_slice($productNames, 0, 3)) . (count($productNames) > 3 ? '...' : ''),
-                    'harga_jual' => $totalHargaJual,
-                    'harga_beli' => $totalHargaBeli,
-                    'margin' => $totalMargin,
-                    'margin_persen' => round($marginPersen, 2),
-                    'commission_rate' => $commissionRate,
-                    'komisi' => $totalKomisi
-                ];
             }
         }
 
