@@ -847,6 +847,44 @@ class InvoiceController extends Controller
         }
     }
 
+    public function printTemplateNonPpn($id)
+    {
+        try {
+            // Load invoice with its relationships
+            $invoice = Invoice::with([
+                'salesOrder',
+                'customer',
+                'user',
+                'details.produk.satuan',
+                'details.satuan',
+            ])->findOrFail($id);
+
+            // Get direktur utama using service
+            $namaDirektur = DirekturUtamaService::getDirekturUtama();
+
+            // Use PDF template service untuk Non PPN
+            $pdfService = new \App\Services\PDFInvoiceNonPpnTemplate();
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
+
+            // Output PDF
+            $filename = 'Invoice-Non-PPN-' . $invoice->nomor . '.pdf';
+
+            // Log aktivitas
+            $this->logUserAktivitas(
+                'print invoice template non ppn',
+                'invoice',
+                $invoice->id,
+                'Print invoice menggunakan template Non PPN'
+            );
+
+            return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
+
+        } catch (\Exception $e) {
+            Log::error('Error printing invoice template non ppn: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal mencetak invoice non PPN: ' . $e->getMessage());
+        }
+    }
+
     /**
      * Export invoice to PDF with template selection
      */

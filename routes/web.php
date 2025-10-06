@@ -347,6 +347,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('sales-order/{salesOrder}/generate-invoice', [InvoiceController::class, 'generateFromSalesOrder'])->name('sales-order.generate-invoice');
         });
         Route::get('invoice/{id}/print-template', [InvoiceController::class, 'printTemplate'])->name('invoice.print-template');
+        Route::get('invoice/{id}/print-template-non-ppn', [InvoiceController::class, 'printTemplateNonPpn'])->name('invoice.print-template-non-ppn');
         Route::get('invoice/{id}/export-pdf', [InvoiceController::class, 'exportPdf'])->name('invoice.export-pdf');
         Route::resource('invoice', InvoiceController::class);
 
