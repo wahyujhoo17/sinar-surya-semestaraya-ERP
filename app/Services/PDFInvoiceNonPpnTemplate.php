@@ -13,7 +13,7 @@ class PDFInvoiceNonPpnTemplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '')
     {
-        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice Non PPn.pdf');
 
         // XY = 214x 163
