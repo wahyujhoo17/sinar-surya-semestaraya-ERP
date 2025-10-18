@@ -25,6 +25,20 @@ class PipelinePenjualanController extends Controller
         return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
     }
 
+    /**
+     * Check if current user can edit/delete a specific prospect
+     */
+    private function canEditProspect($prospek)
+    {
+        // Admin and manager can edit all prospects
+        if ($this->canAccessAllProspects()) {
+            return true;
+        }
+
+        // Sales can only edit their own prospects
+        return $prospek->user_id === Auth::id();
+    }
+
     public function index()
     {
         return view('CRM.pipeline_penjualan.index');
@@ -52,12 +66,9 @@ class PipelinePenjualanController extends Controller
         ];
 
         try {
-            // Base query dengan role-based access control
-            if ($this->canAccessAllProspects()) {
-                $query = Prospek::with('user');
-            } else {
-                $query = Prospek::with('user')->where('user_id', Auth::id());
-            }
+            // For viewing data, all sales can see all prospects
+            // But only admin/manager or prospect owner can modify
+            $query = Prospek::with('user');
 
             // Apply search filter
             if ($request->filled('search')) {
@@ -155,14 +166,12 @@ class PipelinePenjualanController extends Controller
     public function updateStatus(Request $request, Prospek $prospek)
     {
         try {
-            // Role-based access control untuk update status
-            if (!$this->canAccessAllProspects()) {
-                if ($prospek->user_id !== Auth::id()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Anda tidak memiliki akses untuk mengubah status prospek ini.'
-                    ], 403);
-                }
+            // Check if user can edit this specific prospect
+            if (!$this->canEditProspect($prospek)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki akses untuk mengubah status prospek ini.'
+                ], 403);
             }
 
             // Log the request for debugging
@@ -282,12 +291,8 @@ class PipelinePenjualanController extends Controller
         // Style the header row
         $sheet->getStyle('A1:I1')->getFont()->setBold(true);
 
-        // Query the data (apply filters from request) dengan role-based access control
-        if ($this->canAccessAllProspects()) {
-            $query = Prospek::with('user');
-        } else {
-            $query = Prospek::with('user')->where('user_id', Auth::id());
-        }
+        // Query the data (apply filters from request) - all sales can view all prospects for export
+        $query = Prospek::with('user');
 
         // Apply search filter
         if ($request->filled('search')) {
@@ -405,12 +410,8 @@ class PipelinePenjualanController extends Controller
         $sheet->setCellValue('H1', 'Sales Penanggung Jawab');
         $sheet->setCellValue('I1', 'Catatan');
 
-        // Query the data (apply filters from request) dengan role-based access control
-        if ($this->canAccessAllProspects()) {
-            $query = Prospek::with('user');
-        } else {
-            $query = Prospek::with('user')->where('user_id', Auth::id());
-        }
+        // Query the data (apply filters from request) - all sales can view all prospects for CSV export
+        $query = Prospek::with('user');
 
         // Apply search filter
         if ($request->filled('search')) {

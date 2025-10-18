@@ -568,7 +568,7 @@
                                 <td class="text-center">{{ $no++ }}</td>
                                 <td>
                                     <div class="product-name">{{ $detail->produk->nama ?? 'Produk' }}</div>
-                                    @if ($detail->deskripsi)
+                                    @if ($detail->deskripsi != $detail->produk->nama)
                                         <p class="product-desc">{{ $detail->deskripsi }}</p>
                                     @endif
                                 </td>
@@ -649,10 +649,30 @@
                         style="margin-bottom: 15px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
                         <strong style="color: #2c3e50; font-size: 10px;">Informasi Pembayaran:</strong>
                         <div style="font-size: 9px; margin-top: 5px;">
-                            Pembayaran Giro, Cek atau Transfer <br>
-                            Bank: {{ setting('company_bank_name', 'Mandiri') }}<br>
-                            No. Rekening: {{ setting('company_bank_account', '006.000.301.9563') }}<br>
-                            Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
+                            @if (isset($primaryBank) && $primaryBank)
+                                Bank: {{ $primaryBank->nama_bank }}<br>
+                                No. Rekening: {{ $primaryBank->nomor_rekening }}<br>
+                                Atas Nama: {{ $primaryBank->atas_nama }}
+                            @elseif(isset($bankAccounts) && $bankAccounts->isNotEmpty())
+                                @php $firstBank = $bankAccounts->first(); @endphp
+                                Bank: {{ $firstBank->nama_bank }}<br>
+                                No. Rekening: {{ $firstBank->nomor_rekening }}<br>
+                                Atas Nama: {{ $firstBank->atas_nama }}
+                            @else
+                                Bank: {{ setting('company_bank_name', 'Mandiri') }}<br>
+                                No. Rekening: {{ setting('company_bank_account', '006.000.301.9563') }}<br>
+                                Atas Nama: {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}
+                            @endif
+
+                            @if (isset($bankAccounts) && $bankAccounts->count() > 1)
+                                <br><strong style="font-size: 8px; color: #666;">Bank Alternatif:</strong><br>
+                                @foreach ($bankAccounts as $bank)
+                                    @if (!$primaryBank || $bank->id != $primaryBank->id)
+                                        <span style="font-size: 8px;">{{ $bank->nama_bank }}:
+                                            {{ $bank->nomor_rekening }} (a.n. {{ $bank->atas_nama }})</span><br>
+                                    @endif
+                                @endforeach
+                            @endif
                         </div>
                     </div>
                 </div>

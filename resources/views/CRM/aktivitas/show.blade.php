@@ -1,8 +1,38 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
 <x-app-layout :breadcrumbs="[
     ['label' => 'CRM', 'url' => route('crm.prospek.index')],
     ['label' => 'Aktivitas & Follow-up', 'url' => route('crm.aktivitas.index')],
     ['label' => 'Detail Aktivitas'],
 ]" :currentPage="'Detail Aktivitas'">
+
+    <!-- Actions Section -->
+    <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
+        <div class="flex justify-between">
+            <a href="{{ route('crm.aktivitas.index') }}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                        clip-rule="evenodd" />
+                </svg>
+                Kembali ke Daftar
+            </a>
+            <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                Lihat Prospek
+                <svg class="ml-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clip-rule="evenodd" />
+                </svg>
+            </a>
+        </div>
+    </div>
 
     <div class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
@@ -233,31 +263,115 @@
                         </div>
                     </div>
                 @endif
-
-                <div class="mt-8 flex justify-between">
-                    <a href="{{ route('crm.aktivitas.index') }}"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                        <svg class="-ml-1 mr-2 h-5 w-5 text-gray-500 dark:text-gray-400"
-                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Kembali ke Daftar
-                    </a>
-                    <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
-                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                        Lihat Prospek
-                        <svg class="ml-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                clip-rule="evenodd" />
-                        </svg>
-                    </a>
-                </div>
             </div>
         </div>
-    </div>
+
+
+
+        <!-- Lampiran File -->
+        @if ($aktivitas->attachments && count($aktivitas->attachments) > 0)
+            <div class="mt-6">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                    <!-- Header -->
+                    <div
+                        class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/10 dark:to-blue-900/10">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-xl shadow-sm">
+                                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Lampiran File</h3>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+                                        {{ count($aktivitas->attachments) }} file terlampir</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            @foreach ($aktivitas->attachments as $index => $attachment)
+                                <div
+                                    class="group relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700/50 dark:to-gray-700/30 rounded-xl border-2 border-gray-200 dark:border-gray-600 p-5 hover:shadow-lg hover:border-green-400 dark:hover:border-green-500 hover:scale-[1.02] transition-all duration-300 cursor-pointer">
+                                    <div class="flex flex-col space-y-3">
+                                        <!-- File Icon -->
+                                        <div class="flex items-center justify-center">
+                                            @if (isset($attachment['mime_type']) && str_starts_with($attachment['mime_type'], 'image/'))
+                                                <div
+                                                    class="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/40 dark:to-blue-800/30 rounded-2xl flex items-center justify-center shadow-md">
+                                                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-400"
+                                                        fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd"
+                                                            d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            @elseif(isset($attachment['mime_type']) && $attachment['mime_type'] === 'application/pdf')
+                                                <div
+                                                    class="w-16 h-16 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/40 dark:to-red-800/30 rounded-2xl flex items-center justify-center shadow-md">
+                                                    <svg class="w-8 h-8 text-red-600 dark:text-red-400"
+                                                        fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd"
+                                                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            @else
+                                                <div
+                                                    class="w-16 h-16 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-600 dark:to-gray-700 rounded-2xl flex items-center justify-center shadow-md">
+                                                    <svg class="w-8 h-8 text-gray-600 dark:text-gray-400"
+                                                        fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd"
+                                                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                                            clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                            @endif
+                                        </div>
+
+                                        <!-- File Info -->
+                                        <div class="flex-1 min-w-0 text-center">
+                                            <h4 class="text-sm font-semibold text-gray-900 dark:text-white truncate px-2"
+                                                title="{{ $attachment['original_name'] ?? 'File' }}">
+                                                {{ $attachment['original_name'] ?? 'File' }}
+                                            </h4>
+                                            <div
+                                                class="mt-2 flex items-center justify-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
+                                                <span
+                                                    class="font-medium">{{ number_format(($attachment['size'] ?? 0) / 1024, 1) }}
+                                                    KB</span>
+                                                @if (isset($attachment['mime_type']))
+                                                    <span>•</span>
+                                                    <span
+                                                        class="uppercase font-medium">{{ explode('/', $attachment['mime_type'])[1] ?? 'file' }}</span>
+                                                @endif
+                                            </div>
+
+                                            <!-- Download Button -->
+                                            <a href="{{ route('crm.aktivitas.attachment.download', ['id' => $aktivitas->id, 'index' => $index]) }}"
+                                                class="mt-3 inline-flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all duration-200 w-full group-hover:scale-105">
+                                                <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                                Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 </x-app-layout>

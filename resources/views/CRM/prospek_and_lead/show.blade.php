@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
 <x-app-layout :breadcrumbs="[
     ['label' => 'CRM', 'url' => route('crm.prospek.index')],
     ['label' => 'Prospek & Lead', 'url' => route('crm.prospek.index')],
@@ -458,6 +462,8 @@
                 </div>
             </div>
 
+
+
             <!-- Catatan & Tindakan -->
             <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
@@ -512,6 +518,106 @@
                 </div>
             </div>
         </div>
+
+        <!-- Lampiran File - Fullscreen Card -->
+        @if ($prospek->attachments && count($prospek->attachments) > 0)
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <!-- Header -->
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Lampiran File</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ count($prospek->attachments) }}
+                                    file terlampir</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach ($prospek->attachments as $index => $attachment)
+                            <div
+                                class="group relative bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600 p-4 hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200">
+                                <div class="flex items-start space-x-3">
+                                    <!-- File Icon -->
+                                    <div class="flex-shrink-0">
+                                        @if (isset($attachment['mime_type']) && str_starts_with($attachment['mime_type'], 'image/'))
+                                            <div
+                                                class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-blue-600 dark:text-blue-400"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        @elseif(isset($attachment['mime_type']) && $attachment['mime_type'] === 'application/pdf')
+                                            <div
+                                                class="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-red-600 dark:text-red-400"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        @else
+                                            <div
+                                                class="w-12 h-12 bg-gray-100 dark:bg-gray-600 rounded-lg flex items-center justify-center">
+                                                <svg class="w-6 h-6 text-gray-600 dark:text-gray-400"
+                                                    fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                                                        clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- File Info -->
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="text-sm font-medium text-gray-900 dark:text-white truncate"
+                                            title="{{ $attachment['original_name'] ?? 'File' }}">
+                                            {{ $attachment['original_name'] ?? 'File' }}
+                                        </h4>
+                                        <div
+                                            class="mt-1 flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                            <span>{{ number_format(($attachment['size'] ?? 0) / 1024, 1) }} KB</span>
+                                            @if (isset($attachment['mime_type']))
+                                                <span>•</span>
+                                                <span
+                                                    class="uppercase">{{ explode('/', $attachment['mime_type'])[1] ?? 'file' }}</span>
+                                            @endif
+                                        </div>
+
+                                        <!-- Download Link -->
+                                        <a href="{{ route('crm.prospek.attachment.download', ['id' => $prospek->id, 'index' => $index]) }}"
+                                            class="mt-2 inline-flex items-center text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">
+                                            <svg class="w-3.5 h-3.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Download
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <!-- Timeline & Aktivitas -->
         @include('CRM.prospek_and_lead.partials.aktivitas_list')

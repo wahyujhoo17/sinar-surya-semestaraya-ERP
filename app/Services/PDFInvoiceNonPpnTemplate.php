@@ -16,9 +16,9 @@ class PDFInvoiceNonPpnTemplate
         $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice Non PPn.pdf');
 
-        // XY = 214x 163
+        // XY = 214x 154
         $customWidth = 214;
-        $customHeight = 163;
+        $customHeight = 154;
 
         try {
             $pdf = new Fpdi();
@@ -43,14 +43,14 @@ class PDFInvoiceNonPpnTemplate
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(100, 35.5);
+            $pdf->SetXY(100, 31);
             $pdf->Cell(0, 0, $invoice->nomor, 0, 0, 'L');
-            $pdf->SetXY(163, 9.5);
+            $pdf->SetXY(163, 9);
             $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
 
             // --- Customer ---
             $customerX = 12;
-            $customerY = 28;
+            $customerY = 24;
             $maxCustomerWidth = 70;
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->SetXY($customerX, $customerY);
@@ -69,7 +69,7 @@ class PDFInvoiceNonPpnTemplate
             // DETAIL INV
             $maxDetilWidth = 45;
             $salesOrderX = 160;
-            $salesOrderY = 19.8;
+            $salesOrderY = 18;
             // NOMOR PO
             $pdf->SetFont('helvetica', '', 9);
             $pdf->SetXY($salesOrderX, $salesOrderY);
@@ -92,13 +92,13 @@ class PDFInvoiceNonPpnTemplate
 
 
             // --- Items Table Header ---
-            $itemsStartY = 54;
-            $lineHeight = 6;
+            $itemsStartY = 51;
+            $lineHeight = 5.5;
 
             // Fixed summary position: reserve space at bottom so summary is always at the same Y
-            $yTotal = $customHeight - 47; // posisi paling bawah (fix), digeser 3 unit ke bawah
+            $yTotal = $customHeight - 40; // posisi paling bawah (fix), disesuaikan untuk tinggi 154, digeser ke atas 6mm
             $summaryReserveLines = 5; // jumlah baris maksimal yang dipakai summary (Total, Ongkos Kirim, Diskon, Subtotal)
-            $itemsMaxY = $yTotal - ($summaryReserveLines * 2) - 2; // sisa ruang untuk items
+            $itemsMaxY = $yTotal - ($summaryReserveLines * 1.8) - 2; // sisa ruang untuk items
 
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
@@ -198,8 +198,8 @@ class PDFInvoiceNonPpnTemplate
 
             // TERBILANG - gunakan total Non PPN
 
-            // moved up by 1mm as requested
-            $pdf->SetXY(14, 117);
+            // disesuaikan untuk tinggi 154
+            $pdf->SetXY(14, 107);
             // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $totalNonPpn) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
@@ -219,12 +219,12 @@ class PDFInvoiceNonPpnTemplate
 
 
             // Garis bawah untuk tanda tangan
-            $pdf->SetXY(157, $customHeight - 15);
+            $pdf->SetXY(157, $customHeight - 10);
             $pdf->Cell(40, 0, '', 'T', 2, 'C');
             // Nama direktur (ganti sesuai kebutuhan)
-            $pdf->SetXY(157, $customHeight - 15);
+            $pdf->SetXY(157, $customHeight - 10);
             $namaDirektur = trim($namaDirektur) !== '' ? $namaDirektur : 'Ir. Arief Rahman Hamid';
-            $pdf->Cell(40, 6, $namaDirektur, 0, 2, 'C');
+            $pdf->Cell(40, 5, $namaDirektur, 0, 2, 'C');
 
             return $pdf;
         } catch (\Exception $e) {

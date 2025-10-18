@@ -144,6 +144,7 @@ class ProspekAktivitasController extends Controller
             'tanggal_followup' => 'nullable|date|required_if:perlu_followup,1',
             'status_followup' => 'nullable|string|required_if:perlu_followup,1',
             'catatan_followup' => 'nullable|string',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif|max:10240', // Max 10MB per file
         ]);
 
         // Validasi akses ke prospek berdasarkan role
@@ -166,6 +167,25 @@ class ProspekAktivitasController extends Controller
         $aktivitas->tanggal = $request->tanggal;
         $aktivitas->hasil = $request->hasil;
         $aktivitas->perlu_followup = $request->has('perlu_followup') ? 1 : 0;
+
+        // Handle file uploads
+        if ($request->hasFile('attachments')) {
+            $attachments = [];
+            foreach ($request->file('attachments') as $file) {
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('aktivitas_attachments', $filename, 'public');
+
+                $attachments[] = [
+                    'original_name' => $file->getClientOriginalName(),
+                    'filename' => $filename,
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                    'uploaded_at' => now()->toDateTimeString(),
+                ];
+            }
+            $aktivitas->attachments = $attachments;
+        }
 
         if ($aktivitas->perlu_followup) {
             $aktivitas->tanggal_followup = $request->tanggal_followup;
@@ -259,6 +279,7 @@ class ProspekAktivitasController extends Controller
             'tanggal_followup' => 'nullable|date|required_if:perlu_followup,1',
             'status_followup' => 'nullable|string|required_if:perlu_followup,1',
             'catatan_followup' => 'nullable|string',
+            'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif|max:10240', // Max 10MB per file
         ]);
 
         // Validasi akses ke prospek yang akan diubah berdasarkan role
@@ -279,6 +300,28 @@ class ProspekAktivitasController extends Controller
         $aktivita->tanggal = $request->tanggal;
         $aktivita->hasil = $request->hasil;
         $aktivita->perlu_followup = $request->has('perlu_followup') ? 1 : 0;
+
+        // Handle file uploads
+        if ($request->hasFile('attachments')) {
+            $existingAttachments = $aktivita->attachments ?? [];
+            $newAttachments = [];
+
+            foreach ($request->file('attachments') as $file) {
+                $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('aktivitas_attachments', $filename, 'public');
+
+                $newAttachments[] = [
+                    'original_name' => $file->getClientOriginalName(),
+                    'filename' => $filename,
+                    'path' => $path,
+                    'size' => $file->getSize(),
+                    'mime_type' => $file->getMimeType(),
+                    'uploaded_at' => now()->toDateTimeString(),
+                ];
+            }
+
+            $aktivita->attachments = array_merge($existingAttachments, $newAttachments);
+        }
 
         if ($aktivita->perlu_followup) {
             $aktivita->tanggal_followup = $request->tanggal_followup;
@@ -561,5 +604,75 @@ class ProspekAktivitasController extends Controller
         }
 
         $prospek->save();
+    }
+
+    /**
+     * Download attachment file
+     */
+    public function downloadAttachment($id, $attachmentIndex)
+    {
+        $aktivitas = ProspekAktivitas::with('prospek')->findOrFail($id);
+
+        // Check if user can view this activity
+        if (!$this->canAccessAllProspects() && $aktivitas->prospek->user_id !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengunduh file ini.');
+        }
+
+        $attachments = $aktivitas->attachments ?? [];
+
+        if (!isset($attachments[$attachmentIndex])) {
+            abort(404, 'File tidak ditemukan.');
+        }
+
+        $attachment = $attachments[$attachmentIndex];
+        $filePath = storage_path('app/public/' . $attachment['path']);
+
+        if (!file_exists($filePath)) {
+            abort(404, 'File tidak ditemukan di storage.');
+        }
+
+        return response()->download($filePath, $attachment['original_name']);
+    }
+
+    /**
+     * Delete specific attachment
+     */
+    public function deleteAttachment($id, $attachmentIndex)
+    {
+        $aktivitas = ProspekAktivitas::with('prospek')->findOrFail($id);
+
+        // Check if user can edit this activity
+        if (!$this->canAccessAllProspects() && $aktivitas->prospek->user_id !== Auth::id()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Anda tidak memiliki akses untuk menghapus file ini.'
+            ], 403);
+        }
+
+        $attachments = $aktivitas->attachments ?? [];
+
+        if (!isset($attachments[$attachmentIndex])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tidak ditemukan.'
+            ], 404);
+        }
+
+        // Delete file from storage
+        $attachment = $attachments[$attachmentIndex];
+        $filePath = storage_path('app/public/' . $attachment['path']);
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+
+        // Remove from array and update
+        unset($attachments[$attachmentIndex]);
+        $aktivitas->attachments = array_values($attachments); // Re-index array
+        $aktivitas->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'File berhasil dihapus.'
+        ]);
     }
 }

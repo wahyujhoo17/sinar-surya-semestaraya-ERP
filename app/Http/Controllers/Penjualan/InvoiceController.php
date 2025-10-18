@@ -48,7 +48,7 @@ class InvoiceController extends Controller
 
     private function generateNewInvoiceNumber()
     {
-        $prefix = 'INV-';
+        $prefix = get_document_prefix('invoice') . '-';
         $date = now()->format('Ymd');
         $pattern = $prefix . $date . '-';
 
@@ -259,7 +259,11 @@ class InvoiceController extends Controller
         // Get customers for uang muka lookup
         $customers = Customer::orderBy('nama')->get();
 
-        return view('penjualan.invoice.create', compact('salesOrders', 'nomor', 'customers'));
+        // Get bank accounts for invoice using helper functions
+        $bankAccounts = get_bank_accounts_for_invoice();
+        $primaryBank = get_primary_bank_account();
+
+        return view('penjualan.invoice.create', compact('salesOrders', 'nomor', 'customers', 'bankAccounts', 'primaryBank'));
     }
 
     public function getSalesOrderData($id)
@@ -693,12 +697,18 @@ class InvoiceController extends Controller
             $jatuhTempo = now()->addDays($salesOrder->terms_pembayaran_hari)->format('Y-m-d');
         }
 
+        // Get bank accounts for invoice
+        $bankAccounts = get_bank_accounts_for_invoice();
+        $primaryBank = get_primary_bank_account();
+
         return view('penjualan.invoice.create', [
             'nomor' => $nomor,
             'salesOrders' => [$salesOrder],
             'preselectedSalesOrder' => $salesOrder->id,
             'jatuhTempo' => $jatuhTempo,
             'termsPembayaran' => $salesOrder->terms_pembayaran,
+            'bankAccounts' => $bankAccounts,
+            'primaryBank' => $primaryBank,
             'invoiceInfo' => [
                 'total_sales_order' => $salesOrder->total,
                 'total_invoiced' => $totalInvoiced,
@@ -937,11 +947,18 @@ class InvoiceController extends Controller
 
             $templateConfig = $templates[$template];
 
+            // Get bank accounts for template
+            $bankAccounts = get_bank_accounts_for_invoice();
+            $primaryBank = get_primary_bank_account();
+
             // Check if this template uses FPDI service (new template system)
             if (isset($templateConfig['use_fpdi_template']) && $templateConfig['use_fpdi_template']) {
                 // Use FPDI template service for Sinar Surya
                 $serviceClass = $templateConfig['service'];
                 $pdfService = new $serviceClass();
+
+                // For Sinar Surya template, don't pass bank accounts (as per user requirement)
+                // Only pass invoice and director name
                 $pdf = $pdfService->fillInvoiceTemplate($invoice, $templateConfig['direktur_nama']);
 
                 $filename = 'Invoice-' . $invoice->nomor . '-' . $templateConfig['name'] . '.pdf';
@@ -970,6 +987,8 @@ class InvoiceController extends Controller
                 'invoice' => $invoice,
                 'template' => $templateConfig,
                 'logoBase64' => $logoBase64,
+                'bankAccounts' => $bankAccounts,
+                'primaryBank' => $primaryBank,
                 'currentDate' => now()->format('d F Y'),
                 'currentTime' => now()->format('H:i:s')
             ];

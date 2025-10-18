@@ -168,11 +168,13 @@ class PDFInvoiceTamplate
 
             // --- Summary (dari bawah ke atas) ---
             $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY(142, $yTotal);
+            // geser seluruh blok summary 3mm ke atas
+            $summaryY = $yTotal - 3;
+            $pdf->SetXY(142, $summaryY);
             $pdf->Cell(37, 4, 'Total', 0, 0, 'L');
             $pdf->Cell(25, 4, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
 
-            $y = $yTotal - 4;
+            $y = $summaryY - 4;
             if ($invoice->ongkos_kirim > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
@@ -203,7 +205,7 @@ class PDFInvoiceTamplate
             // Tambahkan garis horizontal sebelum total
             $pdf->SetDrawColor(0, 0, 0); // warna hitam
             $pdf->SetLineWidth(0.3);
-            $pdf->Line(142, $yTotal, 203, $yTotal);
+            $pdf->Line(142, $yTotal - 3, 203, $yTotal - 3);
 
             // Untuk posisi catatan, simpan $summaryY agar tidak error
             $summaryY = $yTotal;

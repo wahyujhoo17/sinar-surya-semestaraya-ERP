@@ -452,26 +452,30 @@
                                                         d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
                                             </a>
-                                            <a :href="item && item.id ? '/crm/prospek/' + item.id + '/edit' : '#'"
-                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-amber-100 text-amber-600 dark:text-amber-400 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 transition-colors border border-dashed border-amber-300"
-                                                title="Edit Prospek">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                </svg>
-                                            </a>
-                                            <button @click="item && item.id ? deleteProspek(item.id) : null"
-                                                class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-red-600 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
-                                                title="Hapus Prospek">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                            <template x-if="canEditProspect(item)">
+                                                <a :href="item && item.id ? '/crm/prospek/' + item.id + '/edit' : '#'"
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-amber-100 text-amber-600 dark:text-amber-400 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 transition-colors border border-dashed border-amber-300"
+                                                    title="Edit Prospek">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </a>
+                                            </template>
+                                            <template x-if="canEditProspect(item)">
+                                                <button @click="item && item.id ? deleteProspek(item.id) : null"
+                                                    class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-red-600 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
+                                                    title="Hapus Prospek">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2"
+                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </template>
                                         </div>
                                     </td>
                                 </tr>
@@ -521,10 +525,22 @@
                 periode: '',
                 prospekToDelete: null,
                 isLoading: false,
+                currentUserId: {{ auth()->id() }},
+                userRoles: @json(auth()->user()->roles->pluck('name')),
 
                 init() {
                     // Only use the toast notification system for all messages
                     this.loadData();
+                },
+
+                canEditProspect(prospek) {
+                    // Admin and manager_penjualan can edit all prospects
+                    if (this.userRoles.includes('admin') || this.userRoles.includes('manager_penjualan')) {
+                        return true;
+                    }
+
+                    // Sales can only edit their own prospects
+                    return prospek.user_id === this.currentUserId;
                 },
 
                 loadData() {

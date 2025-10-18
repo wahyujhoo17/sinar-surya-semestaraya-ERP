@@ -20,7 +20,7 @@
                     </h1>
                 </div>
 
-                <form action="{{ route('crm.aktivitas.store') }}" method="POST">
+                <form action="{{ route('crm.aktivitas.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -228,6 +228,15 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <!-- File Attachments Section -->
+                    <div class="mt-8">
+                        <h3
+                            class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                            Lampiran File
+                        </h3>
+                        <x-crm-file-attachments :existingAttachments="[]" model-type="aktivitas" />
                     </div>
 
                     <!-- Form Actions -->

@@ -266,6 +266,20 @@ class SettingsSeeder extends Seeder
                 'value' => '0',
                 'group' => 'system',
                 'description' => 'Mode debug'
+            ],
+
+            // Bank settings
+            [
+                'key' => 'enabled_bank_accounts',
+                'value' => '[]',
+                'group' => 'bank',
+                'description' => 'Bank rekening yang diaktifkan untuk invoice'
+            ],
+            [
+                'key' => 'primary_bank_account',
+                'value' => '',
+                'group' => 'bank',
+                'description' => 'Bank rekening utama untuk invoice'
             ]
         ];
 

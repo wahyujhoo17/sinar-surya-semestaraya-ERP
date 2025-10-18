@@ -22,7 +22,7 @@ class QuotationController extends Controller
 {
     private function generateNewQuotationNumber()
     {
-        $prefix = 'QO-';
+        $prefix = get_document_prefix('quotation') . '-';
         $date = now()->format('Ymd');
 
         $lastQuotation = DB::table('quotation')
@@ -204,6 +204,7 @@ class QuotationController extends Controller
         $nomor = $this->generateNewQuotationNumber();
         $tanggal = now()->format('Y-m-d');
         $tanggal_berlaku = now()->addDays(30)->format('Y-m-d');
+        $quotation_terms = setting('quotation_terms', "1. Penawaran berlaku selama 30 hari.\n2. Pembayaran 50% di muka, 50% setelah barang diterima.\n3. Pengiriman dilakukan setelah pembayaran pertama diterima.");
         $statuses = [
             'draft' => 'Draft',
             'dikirim' => 'Dikirim',
@@ -212,7 +213,7 @@ class QuotationController extends Controller
             'kedaluwarsa' => 'Kedaluwarsa'
         ];
 
-        return view('penjualan.quotation.create', compact('customers', 'products', 'bundles', 'satuans', 'nomor', 'tanggal', 'tanggal_berlaku', 'statuses'));
+        return view('penjualan.quotation.create', compact('customers', 'products', 'bundles', 'satuans', 'nomor', 'tanggal', 'tanggal_berlaku', 'quotation_terms', 'statuses'));
     }
 
     public function store(Request $request)
@@ -487,6 +488,7 @@ class QuotationController extends Controller
         $products = Produk::orderBy('nama', 'asc')->get();
         $bundles = ProductBundle::with(['items.produk.satuan'])->orderBy('nama', 'asc')->get();
         $satuans = Satuan::orderBy('nama', 'asc')->get();
+        $quotation_terms = setting('quotation_terms', "1. Penawaran berlaku selama 30 hari.\n2. Pembayaran 50% di muka, 50% setelah barang diterima.\n3. Pengiriman dilakukan setelah pembayaran pertama diterima.");
         $statuses = [
             'draft' => 'Draft',
             'dikirim' => 'Dikirim',
@@ -501,7 +503,7 @@ class QuotationController extends Controller
                 ->with('error', 'Hanya quotation dengan status Draft yang dapat diedit');
         }
 
-        return view('penjualan.quotation.edit', compact('quotation', 'customers', 'products', 'bundles', 'satuans', 'statuses'));
+        return view('penjualan.quotation.edit', compact('quotation', 'customers', 'products', 'bundles', 'satuans', 'quotation_terms', 'statuses'));
     }
 
     public function update(Request $request, $id)

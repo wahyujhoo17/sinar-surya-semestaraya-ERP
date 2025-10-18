@@ -65,7 +65,7 @@ class SalesOrderController extends Controller
 
     private function generateNewSalesOrderNumber()
     {
-        $prefix = 'SO-';
+        $prefix = get_document_prefix('sales_order') . '-';
         $date = now()->format('Ymd');
 
         // MySQL compatible query - use UNSIGNED instead of INTEGER

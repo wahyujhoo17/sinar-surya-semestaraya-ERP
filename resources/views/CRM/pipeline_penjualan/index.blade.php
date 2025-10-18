@@ -488,8 +488,12 @@
                             <div class="space-y-3">
                                 <template x-for="(prospek, index) in pipelineData.baru" :key="index">
                                     <div class="pipeline-card bg-white dark:bg-gray-800 rounded-lg shadow p-3 border border-gray-200 dark:border-gray-700"
-                                        draggable="true" @dragstart="handleDragStart($event, prospek)"
-                                        @dragend="$event.currentTarget.classList.remove('dragging')">
+                                        :draggable="canEditProspect(prospek)"
+                                        @dragstart="handleDragStart($event, prospek)"
+                                        @dragend="$event.currentTarget.classList.remove('dragging')"
+                                        :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
+                                                prospek) }">
+                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -553,8 +557,12 @@
                             <div class="space-y-3">
                                 <template x-for="(prospek, index) in pipelineData.tertarik" :key="index">
                                     <div class="pipeline-card bg-white dark:bg-gray-800 rounded-lg shadow p-3 border border-gray-200 dark:border-gray-700"
-                                        draggable="true" @dragstart="handleDragStart($event, prospek)"
-                                        @dragend="$event.currentTarget.classList.remove('dragging')">
+                                        :draggable="canEditProspect(prospek)"
+                                        @dragstart="handleDragStart($event, prospek)"
+                                        @dragend="$event.currentTarget.classList.remove('dragging')"
+                                        :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
+                                                prospek) }">
+                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -619,8 +627,12 @@
                             <div class="space-y-3">
                                 <template x-for="(prospek, index) in pipelineData.negosiasi" :key="index">
                                     <div class="pipeline-card bg-white dark:bg-gray-800 rounded-lg shadow p-3 border border-gray-200 dark:border-gray-700"
-                                        draggable="true" @dragstart="handleDragStart($event, prospek)"
-                                        @dragend="$event.currentTarget.classList.remove('dragging')">
+                                        :draggable="canEditProspect(prospek)"
+                                        @dragstart="handleDragStart($event, prospek)"
+                                        @dragend="$event.currentTarget.classList.remove('dragging')"
+                                        :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
+                                                prospek) }">
+                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -684,8 +696,12 @@
                             <div class="space-y-3">
                                 <template x-for="(prospek, index) in pipelineData.menolak" :key="index">
                                     <div class="pipeline-card bg-white dark:bg-gray-800 rounded-lg shadow p-3 border border-gray-200 dark:border-gray-700"
-                                        draggable="true" @dragstart="handleDragStart($event, prospek)"
-                                        @dragend="$event.currentTarget.classList.remove('dragging')">
+                                        :draggable="canEditProspect(prospek)"
+                                        @dragstart="handleDragStart($event, prospek)"
+                                        @dragend="$event.currentTarget.classList.remove('dragging')"
+                                        :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
+                                                prospek) }">
+                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -751,8 +767,12 @@
                                 <template x-for="(prospek, index) in pipelineData.menjadi_customer"
                                     :key="index">
                                     <div class="pipeline-card bg-white dark:bg-gray-800 rounded-lg shadow p-3 border border-gray-200 dark:border-gray-700"
-                                        draggable="true" @dragstart="handleDragStart($event, prospek)"
-                                        @dragend="$event.currentTarget.classList.remove('dragging')">
+                                        :draggable="canEditProspect(prospek)"
+                                        @dragstart="handleDragStart($event, prospek)"
+                                        @dragend="$event.currentTarget.classList.remove('dragging')"
+                                        :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
+                                                prospek) }">
+                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -1008,6 +1028,8 @@
                     isSearching: false,
                     searchTimeout: null,
                     showExportDropdown: false,
+                    currentUserId: {{ auth()->id() }},
+                    userRoles: @json(auth()->user()->roles->pluck('name')),
                     stats: {
                         total: 0,
                         baru: 0,
@@ -2009,7 +2031,32 @@
                     // Drag and Drop Functions
                     draggedProspek: null,
 
+                    canEditProspect(prospek) {
+                        // Admin and manager_penjualan can edit all prospects
+                        if (this.userRoles.includes('admin') || this.userRoles.includes('manager_penjualan')) {
+                            return true;
+                        }
+
+                        // Sales can only edit their own prospects
+                        return prospek.user_id === this.currentUserId;
+                    },
+
                     handleDragStart(event, prospek) {
+                        // Check if user can edit this prospect
+                        if (!this.canEditProspect(prospek)) {
+                            event.preventDefault();
+
+                            // Show notification that user cannot edit this prospect
+                            window.dispatchEvent(new CustomEvent('notify', {
+                                detail: {
+                                    type: 'warning',
+                                    message: 'Anda tidak memiliki akses untuk mengubah status prospek ini.',
+                                    duration: 3000
+                                }
+                            }));
+                            return;
+                        }
+
                         this.draggedProspek = prospek;
                         event.currentTarget.classList.add('dragging');
 

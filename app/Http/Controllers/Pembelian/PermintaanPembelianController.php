@@ -99,7 +99,8 @@ class PermintaanPembelianController extends Controller
 
         // Generate nomor permintaan pembelian
         $today = now()->format('Ymd');
-        $lastRequest = PurchaseRequest::where('nomor', 'like', "PR-{$today}%")->orderBy('nomor', 'desc')->first();
+        $prefix = get_document_prefix('purchase_request');
+        $lastRequest = PurchaseRequest::where('nomor', 'like', "{$prefix}-{$today}%")->orderBy('nomor', 'desc')->first();
 
         $sequence = '001';
         if ($lastRequest) {
@@ -107,7 +108,7 @@ class PermintaanPembelianController extends Controller
             $sequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
         }
 
-        $nomorPR = "PR-{$today}-{$sequence}";
+        $nomorPR = "{$prefix}-{$today}-{$sequence}";
 
         return view('pembelian.permintaan_pembelian.create', compact('departments', 'produks', 'satuans', 'nomorPR'));
     }

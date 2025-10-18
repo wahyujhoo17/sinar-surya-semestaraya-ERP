@@ -288,3 +288,75 @@ if (!function_exists('company_contact_info')) {
         ];
     }
 }
+
+if (!function_exists('get_enabled_bank_accounts')) {
+    /**
+     * Get enabled bank accounts for invoice
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    function get_enabled_bank_accounts()
+    {
+        $enabledIds = json_decode(setting('enabled_bank_accounts', '[]'), true);
+        
+        if (empty($enabledIds)) {
+            return collect();
+        }
+
+        return \App\Models\RekeningBank::whereIn('id', $enabledIds)
+            ->where('is_aktif', true)
+            ->where('is_perusahaan', true)
+            ->orderBy('nama_bank')
+            ->get();
+    }
+}
+
+if (!function_exists('get_primary_bank_account')) {
+    /**
+     * Get primary bank account for invoice
+     *
+     * @return \App\Models\RekeningBank|null
+     */
+    function get_primary_bank_account()
+    {
+        $primaryId = setting('primary_bank_account', '');
+        
+        if (empty($primaryId)) {
+            return null;
+        }
+
+        return \App\Models\RekeningBank::where('id', $primaryId)
+            ->where('is_aktif', true)
+            ->where('is_perusahaan', true)
+            ->first();
+    }
+}
+
+if (!function_exists('get_bank_accounts_for_invoice')) {
+    /**
+     * Get bank accounts available for invoice selection
+     * Returns enabled accounts, or primary account if none enabled
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    function get_bank_accounts_for_invoice()
+    {
+        $enabledAccounts = get_enabled_bank_accounts();
+        
+        if ($enabledAccounts->isNotEmpty()) {
+            return $enabledAccounts;
+        }
+
+        // Fallback to primary account if no accounts are specifically enabled
+        $primaryAccount = get_primary_bank_account();
+        if ($primaryAccount) {
+            return collect([$primaryAccount]);
+        }
+
+        // Last fallback to all active company accounts
+        return \App\Models\RekeningBank::where('is_aktif', true)
+            ->where('is_perusahaan', true)
+            ->orderBy('nama_bank')
+            ->get();
+    }
+}

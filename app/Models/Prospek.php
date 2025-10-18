@@ -15,6 +15,7 @@ class Prospek extends Model
     protected $casts = [
         'tanggal_kontak' => 'datetime',
         'tanggal_followup' => 'datetime',
+        'attachments' => 'array',
     ];
 
     // Relasi dengan customer jika ada

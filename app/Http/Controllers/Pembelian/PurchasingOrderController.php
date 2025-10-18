@@ -901,7 +901,7 @@ class PurchasingOrderController extends Controller
     private function generatePONumber()
     {
         $today = now();
-        $prefix = 'PO-' . $today->format('Ymd');
+        $prefix = get_document_prefix('purchase_order') . '-' . $today->format('Ymd');
 
         // Find last number with today's prefix
         $lastOrder = PurchaseOrder::where('nomor', 'like', $prefix . '%')

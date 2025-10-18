@@ -825,11 +825,15 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('crm')->name('crm.')->group(function () {
         // Prospek & Lead Routes
         Route::get('prospek/data', [ProspekLeadController::class, 'data'])->name('prospek.data');
+        Route::get('prospek/{id}/attachment/{index}/download', [ProspekLeadController::class, 'downloadAttachment'])->name('prospek.attachment.download');
+        Route::delete('prospek/{id}/attachment/{index}', [ProspekLeadController::class, 'deleteAttachment'])->name('prospek.attachment.delete');
         Route::resource('prospek', ProspekLeadController::class);
 
         // Aktivitas Routes
         Route::get('aktivitas/followups', [ProspekAktivitasController::class, 'followups'])->name('aktivitas.followups');
         Route::patch('aktivitas/{aktivita}/followup', [ProspekAktivitasController::class, 'updateFollowupStatus'])->name('aktivitas.followup.update');
+        Route::get('aktivitas/{id}/attachment/{index}/download', [ProspekAktivitasController::class, 'downloadAttachment'])->name('aktivitas.attachment.download');
+        Route::delete('aktivitas/{id}/attachment/{index}', [ProspekAktivitasController::class, 'deleteAttachment'])->name('aktivitas.attachment.delete');
         // Batch Operations
         Route::post('aktivitas/batch-delete', [ProspekAktivitasController::class, 'batchDelete'])->name('aktivitas.batch-delete');
         Route::post('aktivitas/followup/batch-update', [ProspekAktivitasController::class, 'batchUpdateFollowup'])->name('aktivitas.followup.batch-update');

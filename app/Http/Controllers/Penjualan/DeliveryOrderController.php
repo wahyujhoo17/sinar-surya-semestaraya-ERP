@@ -148,7 +148,7 @@ class DeliveryOrderController extends Controller
         $lastDO = DeliveryOrder::orderBy('created_at', 'desc')->first();
         $lastNumber = $lastDO ? intval(substr($lastDO->nomor, -5)) : 0;
         $newNumber = str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
-        $prefix = 'DO-' . Carbon::now()->format('Ymd') . '-';
+        $prefix = get_document_prefix('delivery_order') . '-' . Carbon::now()->format('Ymd') . '-';
         $nomor = $prefix . $newNumber;
 
         return view('penjualan.delivery-order.create', compact(

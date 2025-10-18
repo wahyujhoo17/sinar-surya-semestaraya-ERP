@@ -411,6 +411,62 @@
                                         <textarea name="syarat_ketentuan" id="syarat_ketentuan" rows="4"
                                             class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">{{ setting('invoice_terms', '-') }}</textarea>
                                     </div>
+
+                                    <!-- Informasi Bank -->
+                                    @if (isset($bankAccounts) && $bankAccounts->isNotEmpty())
+                                        <div
+                                            class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4">
+                                            <h4
+                                                class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-3 flex items-center">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                </svg>
+                                                Informasi Rekening Bank
+                                            </h4>
+
+                                            @if (isset($primaryBank) && $primaryBank)
+                                                <div
+                                                    class="mb-3 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-md">
+                                                    <div class="flex items-center mb-2">
+                                                        <span
+                                                            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                                                            Bank Utama
+                                                        </span>
+                                                    </div>
+                                                    <div class="text-sm text-gray-900 dark:text-gray-100">
+                                                        <div class="font-medium">{{ $primaryBank->nama_bank }} -
+                                                            {{ $primaryBank->atas_nama }}</div>
+                                                        <div class="text-gray-600 dark:text-gray-400">
+                                                            {{ $primaryBank->nomor_rekening }}</div>
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            @if ($bankAccounts->count() > 1)
+                                                <div class="space-y-2">
+                                                    <div
+                                                        class="text-xs font-medium text-blue-800 dark:text-blue-200 mb-2">
+                                                        Bank Lainnya:</div>
+                                                    @foreach ($bankAccounts as $bank)
+                                                        @if (!$primaryBank || $bank->id != $primaryBank->id)
+                                                            <div
+                                                                class="text-sm bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600">
+                                                                <div
+                                                                    class="font-medium text-gray-900 dark:text-gray-100">
+                                                                    {{ $bank->nama_bank }}</div>
+                                                                <div class="text-gray-600 dark:text-gray-400">
+                                                                    {{ $bank->nomor_rekening }} -
+                                                                    {{ $bank->atas_nama }}</div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -547,27 +603,111 @@
                                         </div>
                                         <p class="text-xs text-gray-600 dark:text-gray-400 mb-2">Pembayaran dapat
                                             dilakukan melalui transfer bank ke rekening berikut:</p>
-                                        <div
-                                            class="bg-white dark:bg-gray-800 rounded p-3 mb-3 border border-gray-200 dark:border-gray-700">
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span
-                                                    class="text-xs font-medium text-gray-500 dark:text-gray-400">Bank:</span>
-                                                <span
-                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">Mandiri</span>
+
+                                        @if (isset($primaryBank) && $primaryBank)
+                                            <!-- Primary Bank (Utama) -->
+                                            <div
+                                                class="bg-white dark:bg-gray-800 rounded p-3 mb-3 border border-gray-200 dark:border-gray-700">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Bank:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $primaryBank->nama_bank }}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">No.
+                                                        Rekening:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $primaryBank->nomor_rekening }}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
+                                                        Nama:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $primaryBank->atas_nama }}</span>
+                                                </div>
                                             </div>
-                                            <div class="flex justify-between items-center mb-1">
-                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">No.
-                                                    Rekening:</span>
-                                                <span
-                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">006.000.301.9563</span>
+                                        @elseif(isset($bankAccounts) && $bankAccounts->isNotEmpty())
+                                            <!-- First Available Bank if no primary set -->
+                                            @php $firstBank = $bankAccounts->first(); @endphp
+                                            <div
+                                                class="bg-white dark:bg-gray-800 rounded p-3 mb-3 border border-gray-200 dark:border-gray-700">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Bank:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $firstBank->nama_bank }}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">No.
+                                                        Rekening:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $firstBank->nomor_rekening }}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
+                                                        Nama:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ $firstBank->atas_nama }}</span>
+                                                </div>
                                             </div>
-                                            <div class="flex justify-between items-center">
-                                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
-                                                    Nama:</span>
-                                                <span
-                                                    class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}</span>
+                                        @else
+                                            <!-- Fallback - Original hardcoded data -->
+                                            <div
+                                                class="bg-white dark:bg-gray-800 rounded p-3 mb-3 border border-gray-200 dark:border-gray-700">
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Bank:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">Mandiri</span>
+                                                </div>
+                                                <div class="flex justify-between items-center mb-1">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">No.
+                                                        Rekening:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">006.000.301.9563</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span
+                                                        class="text-xs font-medium text-gray-500 dark:text-gray-400">Atas
+                                                        Nama:</span>
+                                                    <span
+                                                        class="text-xs font-medium text-gray-800 dark:text-gray-200">{{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        @endif
+
+                                        @if (isset($bankAccounts) && $bankAccounts->count() > 1)
+                                            <!-- Alternative Banks -->
+                                            <div class="mb-3">
+                                                <p class="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                                                    Atau transfer ke rekening lainnya:</p>
+                                                <div class="space-y-2">
+                                                    @foreach ($bankAccounts as $bank)
+                                                        @if (!$primaryBank || $bank->id != $primaryBank->id)
+                                                            <div
+                                                                class="bg-gray-50 dark:bg-gray-700 rounded p-2 border border-gray-100 dark:border-gray-600">
+                                                                <div class="flex justify-between items-center text-xs">
+                                                                    <span
+                                                                        class="font-medium text-gray-700 dark:text-gray-300">{{ $bank->nama_bank }}</span>
+                                                                    <span
+                                                                        class="text-gray-600 dark:text-gray-400">{{ $bank->nomor_rekening }}</span>
+                                                                </div>
+                                                                <div
+                                                                    class="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                                                                    a.n. {{ $bank->atas_nama }}</div>
+                                                            </div>
+                                                        @endif
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+
                                         <p class="text-xs text-gray-600 dark:text-gray-400 italic">Harap sertakan nomor
                                             invoice dalam keterangan pembayaran</p>
                                     </div>

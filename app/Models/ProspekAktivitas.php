@@ -15,6 +15,7 @@ class ProspekAktivitas extends Model
     protected $casts = [
         'tanggal' => 'datetime',
         'tanggal_followup' => 'datetime',
+        'attachments' => 'array',
     ];
 
     // Relasi dengan prospek

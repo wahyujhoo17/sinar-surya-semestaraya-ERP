@@ -101,6 +101,22 @@
                                     </div>
                                 </button>
 
+                                <button type="button" @click="activeTab = 'bank'"
+                                    :class="activeTab === 'bank' ?
+                                        'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-300' :
+                                        'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white border-transparent'"
+                                    class="w-full text-left px-3 py-2 text-sm border-l-4 rounded-md transition-colors">
+                                    <div class="flex items-center">
+                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z">
+                                            </path>
+                                        </svg>
+                                        Pengaturan Bank
+                                    </div>
+                                </button>
+
                                 <button type="button" @click="activeTab = 'system'"
                                     :class="activeTab === 'system' ?
                                         'bg-primary-50 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-300' :
@@ -632,6 +648,109 @@
                                             </label>
                                             <textarea id="invoice_footer" name="invoice_footer" rows="2"
                                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">{{ old('invoice_footer', $documentSettings['invoice_footer']) }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bank Settings -->
+                    <div x-show="activeTab === 'bank'" x-transition
+                        class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div class="p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-6">Pengaturan Bank untuk
+                                Invoice</h3>
+
+                            <div class="space-y-6">
+                                <!-- Bank Account Selection -->
+                                <div>
+                                    <h4 class="text-md font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                                        Rekening Bank yang Aktif untuk Invoice
+                                    </h4>
+                                    <div class="space-y-3">
+                                        @foreach ($bankAccounts as $account)
+                                            <label class="flex items-center">
+                                                <input type="checkbox" name="enabled_bank_accounts[]"
+                                                    value="{{ $account->id }}"
+                                                    {{ in_array($account->id, old('enabled_bank_accounts', $bankSettings['enabled_bank_accounts'])) ? 'checked' : '' }}
+                                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+                                                <span class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                                                    <strong>{{ $account->nama_bank }}</strong> -
+                                                    {{ $account->nomor_rekening }}
+                                                    <br>
+                                                    <span class="text-xs text-gray-500">
+                                                        a.n {{ $account->atas_nama }} | Saldo: Rp
+                                                        {{ number_format($account->saldo, 0, ',', '.') }}
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        @endforeach
+
+                                        @if ($bankAccounts->isEmpty())
+                                            <div
+                                                class="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 p-4 rounded-md">
+                                                <p>Belum ada rekening bank yang tersedia.</p>
+                                                <p class="mt-1">Silakan tambahkan rekening bank terlebih dahulu
+                                                    melalui menu <strong>Keuangan > Kas dan Bank</strong></p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <!-- Primary Bank Account -->
+                                @if ($bankAccounts->isNotEmpty())
+                                    <div>
+                                        <label for="primary_bank_account"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Rekening Bank Utama (Default)
+                                        </label>
+                                        <select id="primary_bank_account" name="primary_bank_account"
+                                            class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                            <option value="">-- Pilih Rekening Bank Utama --</option>
+                                            @foreach ($bankAccounts as $account)
+                                                <option value="{{ $account->id }}"
+                                                    {{ old('primary_bank_account', $bankSettings['primary_bank_account']) == $account->id ? 'selected' : '' }}>
+                                                    {{ $account->nama_bank }} - {{ $account->nomor_rekening }}
+                                                    ({{ $account->atas_nama }})
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                            Rekening bank utama akan muncul sebagai pilihan default saat membuat
+                                            invoice.
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Information -->
+                                <div
+                                    class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-md p-4">
+                                    <div class="flex">
+                                        <div class="flex-shrink-0">
+                                            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20"
+                                                fill="currentColor">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="ml-3">
+                                            <h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                                Informasi Pengaturan Bank
+                                            </h3>
+                                            <div class="mt-2 text-sm text-blue-700 dark:text-blue-200">
+                                                <ul class="list-disc pl-5 space-y-1">
+                                                    <li>Pilih rekening bank yang akan ditampilkan pada template invoice
+                                                    </li>
+                                                    <li>Rekening bank utama akan menjadi pilihan default saat membuat
+                                                        invoice baru</li>
+                                                    <li>Pengaturan ini membantu dalam modularitas dan fleksibilitas
+                                                        sistem pembayaran</li>
+                                                    <li>Hanya rekening bank yang dicentang yang akan tersedia untuk
+                                                        dipilih di invoice</li>
+                                                </ul>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

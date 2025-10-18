@@ -27,7 +27,14 @@ class PengaturanUmumController extends Controller
         $companySettings = $this->getCompanySettings($settings);
         $applicationSettings = $this->getApplicationSettings($settings);
         $documentSettings = $this->getDocumentSettings($settings);
+        $bankSettings = $this->getBankSettings($settings);
         $systemSettings = $this->getSystemSettings($settings);
+
+        // Ambil data rekening bank untuk dropdown
+        $bankAccounts = \App\Models\RekeningBank::where('is_aktif', true)
+            ->where('is_perusahaan', true)
+            ->orderBy('nama_bank')
+            ->get();
 
         return view('pengaturan.pengaturan-umum.index', compact(
             'breadcrumbs',
@@ -35,7 +42,9 @@ class PengaturanUmumController extends Controller
             'companySettings',
             'applicationSettings',
             'documentSettings',
-            'systemSettings'
+            'bankSettings',
+            'systemSettings',
+            'bankAccounts'
         ));
     }
 
@@ -79,6 +88,11 @@ class PengaturanUmumController extends Controller
             'quotation_terms' => 'nullable|string',
             'invoice_terms' => 'nullable|string',
             'invoice_footer' => 'nullable|string',
+
+            // Bank Settings for Invoice
+            'enabled_bank_accounts' => 'nullable|array',
+            'enabled_bank_accounts.*' => 'exists:rekening_bank,id',
+            'primary_bank_account' => 'nullable|exists:rekening_bank,id',
 
             // System Settings
             'session_lifetime' => 'required|integer|min:5|max:1440',
@@ -163,6 +177,17 @@ class PengaturanUmumController extends Controller
                 Setting::setValue($key, $data['value'], 'document', $data['desc']);
             }
             Log::info('Document settings updated');
+
+            // Bank Settings
+            $bankSettings = [
+                'enabled_bank_accounts' => ['value' => json_encode($request->enabled_bank_accounts ?? []), 'desc' => 'Bank rekening yang diaktifkan untuk invoice'],
+                'primary_bank_account' => ['value' => $request->primary_bank_account, 'desc' => 'Bank rekening utama untuk invoice'],
+            ];
+
+            foreach ($bankSettings as $key => $data) {
+                Setting::setValue($key, $data['value'], 'bank', $data['desc']);
+            }
+            Log::info('Bank settings updated');
 
             // System Settings
             $systemSettings = [
@@ -272,6 +297,20 @@ class PengaturanUmumController extends Controller
             'debug_mode' => $systemSettings->get('debug_mode', '0'),
             'enable_audit_log' => $systemSettings->get('enable_audit_log', '1'),
             'max_login_attempts' => $systemSettings->get('max_login_attempts', '5'),
+        ];
+    }
+
+    private function getBankSettings($settings)
+    {
+        $bank = $settings->get('bank', collect());
+        $bankSettings = $bank->pluck('value', 'key');
+
+        $enabledAccounts = $bankSettings->get('enabled_bank_accounts', '[]');
+        $enabledAccountsArray = json_decode($enabledAccounts, true) ?: [];
+
+        return [
+            'enabled_bank_accounts' => $enabledAccountsArray,
+            'primary_bank_account' => $bankSettings->get('primary_bank_account', ''),
         ];
     }
 }

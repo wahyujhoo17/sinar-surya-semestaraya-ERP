@@ -20,7 +20,8 @@
                     </h1>
                 </div>
 
-                <form action="{{ route('crm.aktivitas.update', $aktivitas->id) }}" method="POST">
+                <form action="{{ route('crm.aktivitas.update', $aktivitas->id) }}" method="POST"
+                    enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
 
@@ -255,6 +256,15 @@
                                 @enderror
                             </div>
                         </div>
+                    </div>
+
+                    <!-- File Attachments Section -->
+                    <div class="mt-8">
+                        <h3
+                            class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                            Lampiran File
+                        </h3>
+                        <x-crm-file-attachments :existingAttachments="$aktivitas->attachments ?? []" model-type="aktivitas" :model-id="$aktivitas->id" />
                     </div>
 
                     <!-- Form Actions -->

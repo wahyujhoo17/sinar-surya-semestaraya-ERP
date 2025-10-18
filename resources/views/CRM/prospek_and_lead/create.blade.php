@@ -40,7 +40,7 @@
 
         <div
             class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-            <form action="{{ route('crm.prospek.store') }}" method="POST" class="p-6">
+            <form action="{{ route('crm.prospek.store') }}" method="POST" enctype="multipart/form-data" class="p-6">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Kolom Kiri -->
@@ -228,6 +228,15 @@
                             @error('catatan')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <!-- File Attachments Section -->
+                        <div>
+                            <h3
+                                class="text-lg font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">
+                                Lampiran File
+                            </h3>
+                            <x-crm-file-attachments :existingAttachments="[]" />
                         </div>
                     </div>
                 </div>
