@@ -10,6 +10,7 @@ use App\Models\Penggajian;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderDetail;
 use App\Models\Produk;
+use App\Models\PurchaseOrder;
 use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -835,11 +836,55 @@ class PenggajianController extends Controller
             $totalNettoPenjualan = 0;
             $totalNettoBeli = 0;
 
+            // Check if sales order has PPN
+            $salesPpn = $order->ppn ?? 0;
+            $hasSalesPpn = $salesPpn > 0;
+
             foreach ($details as $detail) {
                 $produk = Produk::find($detail->produk_id);
                 if ($produk) {
-                    $totalNettoPenjualan += $detail->harga * $detail->quantity;
-                    $totalNettoBeli += $produk->harga_beli * $detail->quantity;
+                    // Calculate netto penjualan (sales value)
+                    $nettoJualItem = $detail->harga * $detail->quantity;
+
+                    // Calculate netto beli (purchase value)
+                    $nettoBeliItem = $produk->harga_beli * $detail->quantity;
+
+                    // Check if product was purchased with PPN by finding the most recent completed PO
+                    $purchasePpn = 0;
+                    $hasPurchasePpn = false;
+
+                    $lastPurchaseOrder = PurchaseOrder::join('purchase_order_detail', 'purchase_order.id', '=', 'purchase_order_detail.po_id')
+                        ->where('purchase_order_detail.produk_id', $produk->id)
+                        ->where('purchase_order.status', 'selesai')
+                        ->orderBy('purchase_order.tanggal', 'desc')
+                        ->select('purchase_order.ppn')
+                        ->first();
+
+                    if ($lastPurchaseOrder && $lastPurchaseOrder->ppn > 0) {
+                        $purchasePpn = $lastPurchaseOrder->ppn;
+                        $hasPurchasePpn = true;
+                    }
+
+                    // Apply PPN rules for commission calculation:
+                    // Rule 1: If sales has PPN and purchase is non-PPN, don't count sales PPN
+                    // Rule 2: If sales has PPN and purchase has PPN, count both PPNs
+                    // Rule 3: If sales is non-PPN and purchase has PPN, count purchase PPN
+
+                    if ($hasSalesPpn && !$hasPurchasePpn) {
+                        // Rule 1: Sales PPN, Purchase non-PPN -> Sales PPN tidak dihitung
+                        // Exclude PPN from sales value (divide by 1 + PPN rate)
+                        $nettoJualItem = $nettoJualItem / (1 + $salesPpn / 100);
+                        // Purchase value remains as is (no PPN)
+                    } elseif ($hasSalesPpn && $hasPurchasePpn) {
+                        // Rule 2: Sales PPN, Purchase PPN -> Both PPNs counted
+                        // Both values include PPN, use as is
+                    } elseif (!$hasSalesPpn && $hasPurchasePpn) {
+                        // Rule 3: Sales non-PPN, Purchase PPN -> Purchase PPN counted
+                        // Sales value as is (no PPN), purchase value includes PPN (already in harga_beli)
+                    }
+
+                    $totalNettoPenjualan += $nettoJualItem;
+                    $totalNettoBeli += $nettoBeliItem;
                 }
             }
 
@@ -984,7 +1029,7 @@ class PenggajianController extends Controller
             }
         }
 
-        // Jika margin lebih dari 4500%, gunakan rate tertinggi
+        // Jika margin di atas tier tertinggi (4500%), gunakan rate maksimum (30%)
         if ($marginPersen > 4500.00) {
             return 30.00;
         }
