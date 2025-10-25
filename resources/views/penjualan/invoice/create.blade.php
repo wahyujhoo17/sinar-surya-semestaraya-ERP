@@ -494,6 +494,11 @@
                                     Anda dapat mengubah qty produk untuk membuat partial invoice. Qty yang dapat diinput
                                     tidak boleh melebihi sisa qty dari Sales Order yang belum di-invoice.
                                 </p>
+                                <p class="text-xs text-blue-700 mt-1">
+                                    <strong>Tips:</strong> Isi qty dengan 0 untuk melewati/skip item tersebut dalam
+                                    invoice ini.
+                                    Item dengan qty 0 tidak akan dimasukkan ke dalam invoice.
+                                </p>
                             </div>
 
                             <div
@@ -534,11 +539,14 @@
                                                     <input type="number" :name="'items[' + index + '][qty]'"
                                                         x-model="item.qty" :data-original-qty="item.original_qty"
                                                         :data-max-qty="item.max_available_qty"
-                                                        @input="updateItemSubtotal(index)"
+                                                        @input="updateItemSubtotal(index)" min="0"
                                                         :max="item.max_available_qty" step="0.01"
                                                         class="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
                                                     <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                         Max: <span x-text="item.max_available_qty"></span>
+                                                    </div>
+                                                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                        Isi 0 untuk skip item ini
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
@@ -1171,6 +1179,8 @@
 
                         // Validate quantities before submission
                         let hasError = false;
+                        let itemsWithQty = 0;
+
                         this.items.forEach((item, index) => {
                             const qty = parseFloat(item.qty) || 0;
                             const maxAvailable = parseFloat(item.max_available_qty) || 0;
@@ -1181,15 +1191,38 @@
                                 );
                                 hasError = true;
                             }
+
+                            if (qty > 0) {
+                                itemsWithQty++;
+                            }
                         });
 
                         if (hasError) {
                             return;
                         }
 
-                        // Submit form
+                        // Validate at least one item has qty > 0
+                        if (itemsWithQty === 0) {
+                            alert('Minimal harus ada 1 item dengan qty lebih dari 0 untuk membuat invoice');
+                            return;
+                        }
+
+                        // Remove items with qty = 0 before submitting
+                        // We'll disable their inputs so they won't be submitted
                         const formElement = document.getElementById('invoice-form');
                         if (formElement) {
+                            // Disable inputs for items with qty = 0
+                            this.items.forEach((item, index) => {
+                                const qty = parseFloat(item.qty) || 0;
+                                if (qty === 0) {
+                                    // Disable all inputs for this item
+                                    const inputs = formElement.querySelectorAll(`[name^="items[${index}]"]`);
+                                    inputs.forEach(input => {
+                                        input.disabled = true;
+                                    });
+                                }
+                            });
+
                             formElement.submit();
                         } else {
                             console.error('Form element not found');

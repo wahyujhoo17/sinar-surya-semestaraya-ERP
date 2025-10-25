@@ -658,31 +658,6 @@
                 </div>
             </div>
 
-            @if ($salesOrder->tanggal_kirim)
-                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
-                    <strong style="color: #E74C3C; font-size: 12px;">Tanggal Pengiriman:</strong>
-                    <span style="font-weight: bold; color: #1F2A44;">
-                        {{ \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('d/m/Y') }}
-                    </span>
-                </div>
-            @endif
-
-            @if ($salesOrder->quotation_id)
-                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
-                    <strong style="color: #E74C3C; font-size: 12px;">Referensi Quotation:</strong>
-                    <span style="font-weight: bold; color: #1F2A44;">
-                        {{ $salesOrder->quotation->nomor ?? '-' }}
-                    </span>
-                </div>
-            @endif
-
-            @if ($salesOrder->alamat_pengiriman)
-                <div style="border: 2px solid #E74C3C; padding: 10px; margin: 15px 10px; background-color: #fff5f5;">
-                    <strong style="color: #E74C3C; font-size: 12px;">Alamat Pengiriman:</strong><br>
-                    <span style="font-weight: bold; color: #1F2A44;">{{ $salesOrder->alamat_pengiriman }}</span>
-                </div>
-            @endif
-
             <!-- Table Section -->
             <div class="table-section">
                 <table class="invoice-table">
@@ -863,15 +838,37 @@
             <div class="terms-signature clearfix">
                 <div class="signature-section">
                     <div class="signature-row">
-                        <div class="signature-item">
+                        <div class="signature-item" style="text-align: center;">
+                            <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                Dibuat oleh:</div>
+
+                            {{-- WhatsApp QR Code for Creator --}}
+                            @if (isset($whatsappQR) && $whatsappQR)
+                                <div style="text-align: center; margin-bottom: 10px;">
+                                    <div style="font-size: 8px; color: #64748b; margin-bottom: 5px;">Scan untuk
+                                        Verifikasi via WhatsApp</div>
+                                    <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                                        style="width: 60px; height: 60px; border: 1px solid #e5e7eb; padding: 3px;">
+                                </div>
+                            @else
+                                <div style="height: 60px; margin-bottom: 10px;"></div>
+                            @endif
+
                             <div class="signature-line"></div>
                             <p class="signature-label">{{ $salesOrder->user->name ?? 'Sales' }}</p>
                             <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
+                            <p style="font-size: 8px; margin: 2px 0; color: #94a3b8;">
+                                {{ \Carbon\Carbon::parse($salesOrder->created_at)->format('d/m/Y H:i') }}
+                            </p>
                         </div>
-                        <div class="signature-item">
+                        <div class="signature-item" style="text-align: center;">
+                            <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                Customer:</div>
+                            <div style="height: 60px; margin-bottom: 10px;"></div>
                             <div class="signature-line"></div>
-                            <p class="signature-label">{{ $template_config['direktur_nama'] ?? 'Direktur' }}</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">PT Indo Atsaka Industri</p>
+                            <p class="signature-label">
+                                {{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}</p>
+                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Tanda Tangan & Stempel</p>
                         </div>
                     </div>
                 </div>

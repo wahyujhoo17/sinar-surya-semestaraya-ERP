@@ -1314,6 +1314,18 @@ class SalesOrderController extends Controller
             // Get direktur utama dynamically
             $direkturUtama = $this->getDirekturUtama();
 
+            // Generate WhatsApp QR Code for creator (yang membuat SO)
+            $createdBy = $salesOrder->user;
+            $whatsappQR = null;
+            if ($createdBy && $createdBy->phone) {
+                $whatsappQR = generateWhatsAppQRCode(
+                    $createdBy->phone,
+                    'Sales Order',
+                    $salesOrder->nomor,
+                    120 // QR Code size
+                );
+            }
+
             // Define available templates and their configurations
             $templates = [
                 'default' => [
@@ -1346,7 +1358,8 @@ class SalesOrderController extends Controller
             // Load the PDF view with optimized settings
             $pdf = Pdf::loadView($templateConfig['view'], [
                 'salesOrder' => $salesOrder,
-                'template_config' => $templateConfig
+                'template_config' => $templateConfig,
+                'whatsappQR' => $whatsappQR
             ]);
 
             // Set paper size and orientation with optimization

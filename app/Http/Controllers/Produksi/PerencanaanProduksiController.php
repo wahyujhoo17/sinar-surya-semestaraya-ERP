@@ -76,12 +76,12 @@ class PerencanaanProduksiController extends Controller
         if ($sort === 'nomor' || $sort === 'tanggal' || $sort === 'status') {
             $query->orderBy($sort, $direction);
         } else if ($sort === 'sales_order') {
-            $query->join('sales_order', 'perencanaan_produksi.sales_order_id', '=', 'sales_order.id')
+            $query->leftJoin('sales_order', 'perencanaan_produksi.sales_order_id', '=', 'sales_order.id')
                 ->orderBy('sales_order.nomor', $direction)
                 ->select('perencanaan_produksi.*');
         } else if ($sort === 'customer') {
-            $query->join('sales_order', 'perencanaan_produksi.sales_order_id', '=', 'sales_order.id')
-                ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
+            $query->leftJoin('sales_order', 'perencanaan_produksi.sales_order_id', '=', 'sales_order.id')
+                ->leftJoin('customer', 'sales_order.customer_id', '=', 'customer.id')
                 ->orderBy('customer.nama', $direction)
                 ->select('perencanaan_produksi.*');
         } else {
@@ -104,8 +104,9 @@ class PerencanaanProduksiController extends Controller
             ->get();
         $gudangs = Gudang::orderBy('nama')->get();
         $nomor = $this->generateNomorPerencanaan();
+        $produks = Produk::with('satuan')->where('is_active', 1)->orderBy('nama')->get();
 
-        return view('produksi.perencanaan-produksi.create', compact('salesOrders', 'gudangs', 'nomor'));
+        return view('produksi.perencanaan-produksi.create', compact('salesOrders', 'gudangs', 'nomor', 'produks'));
     }
 
     /**
@@ -176,13 +177,32 @@ class PerencanaanProduksiController extends Controller
     }
 
     /**
+     * Mendapatkan stok produk di gudang tertentu
+     */
+    public function getStok(Request $request)
+    {
+        $produkId = $request->produk_id;
+        $gudangId = $request->gudang_id;
+
+        if (!$produkId || !$gudangId) {
+            return response()->json(['stok' => 0], 400);
+        }
+
+        $stok = StokProduk::where('produk_id', $produkId)
+            ->where('gudang_id', $gudangId)
+            ->sum('jumlah');
+
+        return response()->json(['stok' => $stok]);
+    }
+
+    /**
      * Menyimpan perencanaan produksi baru
      */
     public function store(Request $request)
     {
 
         $validator = Validator::make($request->all(), [
-            'sales_order_id' => 'required|exists:sales_order,id',
+            'sales_order_id' => 'nullable|exists:sales_order,id',
             'tanggal' => 'required|date',
             'catatan' => 'nullable|string',
             'detail' => 'required|array',
@@ -498,11 +518,12 @@ class PerencanaanProduksiController extends Controller
             ->orderBy('tanggal', 'desc')
             ->get();
         $gudangs = Gudang::orderBy('nama')->get();
+        $produks = Produk::with('satuan')->where('is_active', 1)->orderBy('nama')->get();
 
         // Set details property for the view
         $perencanaan->details = $perencanaan->detailPerencanaan;
 
-        return view('produksi.perencanaan-produksi.edit', compact('perencanaan', 'salesOrders', 'gudangs'));
+        return view('produksi.perencanaan-produksi.edit', compact('perencanaan', 'salesOrders', 'gudangs', 'produks'));
     }
 
     /**

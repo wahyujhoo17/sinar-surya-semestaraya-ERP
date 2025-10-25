@@ -448,7 +448,7 @@
     <div style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
         <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
         @if ($quotation->syarat_ketentuan)
-            <div style="margin-top: 5px;">{{ $quotation->syarat_ketentuan }}</div>
+            <div style="margin-top: 5px; white-space: pre-line;">{!! nl2br(e($quotation->syarat_ketentuan)) !!}</div>
         @else
             <ol style="margin-top: 5px; padding-left: 20px;">
                 <li>Penawaran ini berlaku selama periode yang tertera di atas</li>

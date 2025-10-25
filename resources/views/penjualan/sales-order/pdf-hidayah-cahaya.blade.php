@@ -30,7 +30,7 @@
             padding: 8mm 5mm;
             min-height: 100vh;
             position: relative;
-            padding-bottom: 120px;
+            padding-bottom: 60px;
         }
 
         @page {
@@ -58,7 +58,7 @@
         .custom-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 8px;
             font-size: 10px;
         }
 
@@ -86,7 +86,7 @@
 
         .total-summary {
             width: calc(100% - 60px);
-            margin: 20px 30px;
+            margin: 10px 30px;
             padding: 0;
             page-break-inside: avoid;
         }
@@ -176,9 +176,9 @@
         }
 
         .signature-section {
-            margin-top: 20px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
             display: table;
             width: 100%;
             border-collapse: separate;
@@ -276,11 +276,11 @@
         </div>
 
         <div
-            style="height: 3px; background: linear-gradient(to right, var(--hcb-blue) 0%, var(--hcb-green) 50%, var(--hcb-orange) 100%); margin: 15px 0; border-radius: 2px;">
+            style="height: 3px; background: linear-gradient(to right, var(--hcb-blue) 0%, var(--hcb-green) 50%, var(--hcb-orange) 100%); margin: 8px 0; border-radius: 2px;">
         </div>
 
         <!-- Company and Customer Info Section -->
-        <div style="display: table; width: 100%; margin-bottom: 20px; border-collapse: separate; border-spacing: 0;">
+        <div style="display: table; width: 100%; margin-bottom: 12px; border-collapse: separate; border-spacing: 0;">
             <div style="display: table-row;">
                 <!-- DARI Section -->
                 <div style="display: table-cell; vertical-align: top; width: 48%; padding-right: 30px;">
@@ -306,57 +306,30 @@
                     <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">
                         {{ $salesOrder->customer->company ?? $salesOrder->customer->nama }}
                     </div>
-                    <div style="font-size: 11px; line-height: 1.4; color: #374151;">
-                        {{ $salesOrder->customer->alamat ?? '-' }}<br>
+                    <div style="font-size: 10px; line-height: 1.35; color: #374151;">
+                        {{ $salesOrder->customer->alamat ?? '-' }}
+                        @if ($salesOrder->alamat_pengiriman && $salesOrder->alamat_pengiriman != $salesOrder->customer->alamat)
+                            <br><strong style="color: var(--hcb-orange);">Kirim:</strong>
+                            {{ $salesOrder->alamat_pengiriman }}
+                        @endif
+                        <br>
                         @if ($salesOrder->customer->telepon)
-                            Telp: {{ $salesOrder->customer->telepon }}<br>
+                            Telp: {{ $salesOrder->customer->telepon }}
                         @endif
                         @if ($salesOrder->customer->email)
-                            Email: {{ $salesOrder->customer->email }}<br>
+                            @if ($salesOrder->customer->telepon)
+                                |
+                            @endif Email: {{ $salesOrder->customer->email }}
                         @endif
                         @if ($salesOrder->customer->kontak_person)
-                            Kontak: {{ $salesOrder->customer->kontak_person }}
-                            @if ($salesOrder->customer->no_hp_kontak)
+                            <br>Kontak: {{ $salesOrder->customer->kontak_person }}@if ($salesOrder->customer->no_hp_kontak)
                                 ({{ $salesOrder->customer->no_hp_kontak }})
                             @endif
-                        @endif
-                        @if ($salesOrder->alamat_pengiriman)
-                            <br><strong>Alamat Pengiriman:</strong><br>
-                            {{ $salesOrder->alamat_pengiriman }}
                         @endif
                     </div>
                 </div>
             </div>
         </div>
-
-        @if ($salesOrder->tanggal_kirim)
-            <div
-                style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; font-size: 10px;">
-                <svg style="height: 14px; width: 14px; color: #3b82f6; margin-right: 0.5rem;" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-                    </path>
-                </svg>
-                <strong style="color: #1d4ed8; margin-right: 0.5rem;">Tanggal Pengiriman:</strong>
-                <span
-                    style="color: #2563eb;">{{ \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('d/m/Y') }}</span>
-            </div>
-        @endif
-
-        @if ($salesOrder->quotation_id)
-            <div
-                style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 0.25rem; padding: 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; font-size: 10px;">
-                <svg style="height: 14px; width: 14px; color: #3b82f6; margin-right: 0.5rem;" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
-                    </path>
-                </svg>
-                <strong style="color: #1d4ed8; margin-right: 0.5rem;">Referensi Quotation:</strong>
-                <span style="color: #2563eb;">{{ $salesOrder->quotation->nomor ?? '-' }}</span>
-            </div>
-        @endif
 
         <!-- Items Table -->
         <div
@@ -524,7 +497,7 @@
         <!-- Notes Section -->
         @if ($salesOrder->catatan)
             <div
-                style="margin: 15px 0 1rem 0; background-color: #fef3c7; border-left: 3px solid #f59e0b; padding: 0.75rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
+                style="margin: 8px 0 0.5rem 0; background-color: #fef3c7; border-left: 3px solid #f59e0b; padding: 0.5rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
                 <div style="display: flex; align-items: flex-start;">
                     <svg style="height: 14px; width: 14px; color: #d97706; margin-right: 0.5rem; margin-top: 1px; flex-shrink: 0;"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -544,7 +517,7 @@
 
         @if ($salesOrder->terms_pembayaran)
             <div
-                style="margin-bottom: 1rem; background-color: #f0fff4; border-left: 3px solid var(--hcb-green); padding: 0.75rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
+                style="margin-bottom: 0.5rem; background-color: #f0fff4; border-left: 3px solid var(--hcb-green); padding: 0.5rem; border-radius: 0 0.25rem 0.25rem 0; clear: both;">
                 <div style="font-weight: 600; color: var(--hcb-green); font-size: 10px; margin-bottom: 0.25rem;">Terms
                     Pembayaran:</div>
                 <div style="color: #27ae60; font-size: 10px; line-height: 1.4;">
@@ -558,26 +531,45 @@
 
         <!-- Signatures -->
         <div class="signature-section"
-            style="clear: both; margin-top: {{ $salesOrder->catatan || $salesOrder->terms_pembayaran ? '8px' : '5px' }};">
+            style="clear: both; margin-top: {{ $salesOrder->catatan || $salesOrder->terms_pembayaran ? '5px' : '3px' }};">
             <div style="display: table-row;">
                 <div
                     style="display: table-cell; vertical-align: top; width: 50%; padding-right: 30px; text-align: center;">
-                    <div style="height: 60px; margin-bottom: 8px;"></div>
+                    <div style="margin-bottom: 6px; font-weight: bold; color: var(--hcb-blue); font-size: 10px;">
+                        Dibuat oleh:</div>
+
+                    {{-- WhatsApp QR Code for Creator --}}
+                    @if (isset($whatsappQR) && $whatsappQR)
+                        <div style="text-align: center; margin-bottom: 6px;">
+                            <div style="font-size: 8px; color: #64748b; margin-bottom: 3px;">Scan untuk Verifikasi via
+                                WhatsApp</div>
+                            <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                                style="width: 60px; height: 60px; border: 1px solid #e5e7eb; padding: 3px;">
+                        </div>
+                    @else
+                        <div style="height: 60px; margin-bottom: 6px;"></div>
+                    @endif
+
                     <div
-                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 6px; width: 150px; margin-left: auto; margin-right: auto;">
                     </div>
-                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 3px;">
                         {{ $salesOrder->user->name ?? 'Sales Representative' }}</div>
                     <div style="font-size: 10px; color: #6b7280;">Sales Representative</div>
+                    <div style="font-size: 8px; color: #94a3b8; margin-top: 1px;">
+                        {{ \Carbon\Carbon::parse($salesOrder->created_at)->format('d/m/Y H:i') }}
+                    </div>
                 </div>
                 <div style="display: table-cell; vertical-align: top; width: 50%; text-align: center;">
-                    <div style="height: 60px; margin-bottom: 8px;"></div>
+                    <div style="margin-bottom: 6px; font-weight: bold; color: var(--hcb-blue); font-size: 10px;">
+                        Customer:</div>
+                    <div style="height: 60px; margin-bottom: 6px;"></div>
                     <div
-                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 6px; width: 150px; margin-left: auto; margin-right: auto;">
                     </div>
-                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
-                        Direktur</div>
-                    <div style="font-size: 10px; color: #6b7280;">PT Hidayah Cahaya Berkah</div>
+                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 3px;">
+                        {{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}</div>
+                    <div style="font-size: 10px; color: #6b7280;">Tanda Tangan & Stempel</div>
                 </div>
             </div>
         </div>

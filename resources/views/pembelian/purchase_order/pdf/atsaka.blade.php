@@ -742,19 +742,107 @@
                         </div>
                     @endif
                 </div>
+            </div>
 
-                <!-- Signature Section -->
-                <div style="display: table-cell; width: 40%; vertical-align: top; text-align: center;">
-                    <div
-                        style="margin-top: 30px; margin-bottom: 45px; font-weight: bold; color: #1F2A44; font-size: 10px;">
-                        Hormat Kami,
-                    </div>
-                    <div style="height: 60px; margin-bottom: 10px;"></div>
-                    <div style="border-top: 1px solid #cbd5e1; width: 80%; margin: 0 auto 10px auto;"></div>
-                    <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
-                        {{ $purchaseOrder->user->name ?? 'Purchasing Manager' }}
-                    </div>
-                    <div style="font-size: 8px; color: #64748b;">PT Indo Atsaka Industri</div>
+            <!-- Signature Section - Full Width Below -->
+            <div style="margin: 20px 10px 10px 10px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <!-- Dibuat oleh -->
+                        <td style="width: 50%; text-align: center; vertical-align: bottom; padding: 5px;">
+                            <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                Dibuat oleh:
+                            </div>
+
+                            {{-- WhatsApp QR Code for Creator --}}
+                            @if (isset($whatsappQR) && $whatsappQR)
+                                <div style="text-align: center; margin-bottom: 10px;">
+                                    <div style="font-size: 8px; color: #64748b; margin-bottom: 5px;">Scan untuk
+                                        Verifikasi via WhatsApp</div>
+                                    <img src="{{ $whatsappQR }}" alt="Creator WhatsApp QR"
+                                        style="width: 60px; height: 60px; margin: 0 auto; border: 1px solid #e5e7eb; padding: 3px;">
+                                </div>
+                            @else
+                                <div style="height: 60px; margin-bottom: 10px;"></div>
+                            @endif
+
+                            <div style="border-top: 1px solid #1F2A44; width: 60%; margin: 0 auto 8px auto;"></div>
+                            <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                {{ $purchaseOrder->user->name ?? 'Purchasing' }}
+                            </div>
+                            <div style="font-size: 8px; color: #64748b; margin-top: 2px;">Purchasing</div>
+                            <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
+                                {{ \Carbon\Carbon::parse($purchaseOrder->created_at)->format('d/m/Y H:i') }}
+                            </div>
+                            <div style="font-size: 7px; color: #94a3b8; margin-top: 2px;">
+                                {{ $purchaseOrder->user->email ?? '' }}
+                            </div>
+                        </td>
+
+                        <!-- Diproses oleh -->
+                        <td style="width: 50%; text-align: center; vertical-align: bottom; padding: 5px;">
+                            @if ($isProcessed && $processedBy)
+                                <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                    Diproses oleh:
+                                </div>
+
+                                {{-- WhatsApp QR Code for Processor --}}
+                                @if (isset($whatsappQRProcessor) && $whatsappQRProcessor)
+                                    <div style="text-align: center; margin-bottom: 10px;">
+                                        <div style="font-size: 8px; color: #64748b; margin-bottom: 5px;">Scan untuk
+                                            Verifikasi via WhatsApp</div>
+                                        <img src="{{ $whatsappQRProcessor }}" alt="Processor WhatsApp QR"
+                                            style="width: 60px; height: 60px; margin: 0 auto; border: 1px solid #e5e7eb; padding: 3px;">
+                                    </div>
+                                @else
+                                    <div style="height: 60px; margin-bottom: 10px;"></div>
+                                @endif
+
+                                <div style="border-top: 1px solid #1F2A44; width: 60%; margin: 0 auto 8px auto;"></div>
+                                <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                    {{ $processedBy->name }}
+                                </div>
+                                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">Manager/Supervisor</div>
+                                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">
+                                    {{ $processedAt ? $processedAt->format('d/m/Y H:i') : '' }}
+                                </div>
+                                <div style="font-size: 7px; color: #94a3b8; margin-top: 2px;">
+                                    {{ $processedBy->email ?? '' }}
+                                </div>
+                            @else
+                                <div style="margin-bottom: 10px; font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                    Disetujui oleh:
+                                </div>
+                                <div style="height: 60px; margin-bottom: 10px;">
+                                    <div
+                                        style="border: 1px dashed #cbd5e1; width: 60px; height: 60px; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 9px; color: #94a3b8; background-color: #f8fafc; line-height: 1.2;">
+                                        Menunggu<br>Tanda Tangan
+                                    </div>
+                                </div>
+                                <div style="border-top: 1px solid #1F2A44; width: 60%; margin: 0 auto 8px auto;"></div>
+                                <div style="font-weight: bold; color: #1F2A44; font-size: 10px;">
+                                    Direktur
+                                </div>
+                                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">PT Indo Atsaka Industri
+                                </div>
+                                <div style="font-size: 8px; color: #64748b; margin-top: 2px;">Tanggal: ___/___/______
+                                </div>
+                            @endif
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Notes and Terms Section -->
+            <div style="display: table; width: calc(100% - 20px); margin: 10px 10px;">
+                <div style="display: table-cell; width: 100%; vertical-align: top;">
+                    @if ($purchaseOrder->catatan)
+                        <div
+                            style="margin-bottom: 10px; border-left: 3px solid #E74C3C; padding-left: 10px; background-color: #f8fafc;">
+                            <strong style="color: #2c3e50; font-size: 10px;">Catatan:</strong>
+                            <p style="font-size: 9px; margin: 2px 0;">{{ $purchaseOrder->catatan }}</p>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

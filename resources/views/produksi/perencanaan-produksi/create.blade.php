@@ -61,10 +61,10 @@
                         <div>
                             <label for="sales_order_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sales Order
-                                <span class="text-red-500">*</span></label>
-                            <select id="sales_order_id" name="sales_order_id" required
+                                <span class="text-gray-500 text-xs">(Opsional)</span></label>
+                            <select id="sales_order_id" name="sales_order_id"
                                 class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md select2-sales-order">
-                                <option value="">-- Pilih Sales Order --</option>
+                                <option value="">-- Produksi untuk Stok (Tanpa SO) --</option>
                                 @foreach ($salesOrders as $so)
                                     <option value="{{ $so->id }}"
                                         {{ old('sales_order_id') == $so->id ? 'selected' : '' }}
@@ -76,6 +76,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Kosongkan jika produksi untuk kebutuhan stok saja
+                            </p>
                             @error('sales_order_id')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
                             @enderror
@@ -116,7 +119,19 @@
             <div
                 class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 mb-6">
                 <div class="p-6">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Detail Produk</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Detail Produk</h2>
+                        <button type="button" id="btn-add-manual-item"
+                            class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Produk
+                        </button>
+                    </div>
 
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="table-items">
@@ -146,14 +161,18 @@
                                         class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                         Keterangan
                                     </th>
+                                    <th scope="col" id="col-action" style="display: none;"
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                        Aksi
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"
                                 id="items-container">
                                 <tr id="empty-row">
-                                    <td colspan="6"
+                                    <td colspan="7"
                                         class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
-                                        Pilih Sales Order terlebih dahulu
+                                        Pilih Sales Order atau klik "Tambah Produk" untuk produksi stok
                                     </td>
                                 </tr>
                             </tbody>
@@ -238,12 +257,202 @@
                 const gudangId = document.getElementById('gudang_id').value;
 
                 if (soId && gudangId) {
+                    // Mode: dengan Sales Order
                     loadSalesOrderItems(soId, gudangId);
+                    document.getElementById('btn-add-manual-item').style.display = 'none';
+                    document.getElementById('col-action').style.display = 'none';
+                } else if (!soId) {
+                    // Mode: tanpa Sales Order (produksi untuk stok)
+                    document.getElementById('items-container').innerHTML =
+                        '<tr id="empty-row"><td colspan="7" class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">Klik "Tambah Produk" untuk menambahkan produk yang akan diproduksi</td></tr>';
+                    document.getElementById('btn-add-manual-item').style.display = 'inline-flex';
+                    document.getElementById('col-action').style.display = 'table-cell';
                 } else {
                     document.getElementById('items-container').innerHTML =
-                        '<tr id="empty-row"><td colspan="6" class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">Pilih Sales Order dan Gudang terlebih dahulu</td></tr>';
+                        '<tr id="empty-row"><td colspan="7" class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">Pilih Gudang terlebih dahulu</td></tr>';
                 }
             });
+
+            // Event saat gudang dipilih
+            document.getElementById('gudang_id').addEventListener('change', function() {
+                console.log('Gudang changed');
+                const soId = $('#sales_order_id').val();
+                const gudangId = this.value;
+
+                if (soId && gudangId) {
+                    loadSalesOrderItems(soId, gudangId);
+                } else if (!soId && gudangId) {
+                    // Mode manual dengan gudang sudah dipilih
+                    document.getElementById('items-container').innerHTML =
+                        '<tr id="empty-row"><td colspan="7" class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">Klik "Tambah Produk" untuk menambahkan produk yang akan diproduksi</td></tr>';
+                    document.getElementById('btn-add-manual-item').style.display = 'inline-flex';
+                    document.getElementById('col-action').style.display = 'table-cell';
+                }
+            });
+
+            // Event handler untuk tombol tambah produk manual
+            let manualItemIndex = 0;
+            document.getElementById('btn-add-manual-item').addEventListener('click', function() {
+                const gudangId = document.getElementById('gudang_id').value;
+
+                if (!gudangId) {
+                    alert('Pilih gudang terlebih dahulu');
+                    return;
+                }
+
+                addManualItem();
+            });
+
+            function addManualItem() {
+                const container = document.getElementById('items-container');
+                const emptyRow = document.getElementById('empty-row');
+
+                if (emptyRow) {
+                    emptyRow.remove();
+                }
+
+                const index = manualItemIndex++;
+                const gudangId = document.getElementById('gudang_id').value;
+
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 dark:hover:bg-gray-700';
+                row.id = `manual-row-${index}`;
+
+                row.innerHTML = `
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        ${container.querySelectorAll('tr').length + 1}
+                    </td>
+                    <td class="px-4 py-3 text-sm" style="min-width: 300px;">
+                        <select name="detail[${index}][produk_id]" id="produk-select-${index}" class="produk-select focus:ring-primary-500 focus:border-primary-500 shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" required style="width: 280px;">
+                            <option value="">-- Pilih Produk --</option>
+                            @foreach ($produks as $produk)
+                                <option value="{{ $produk->id }}" data-satuan="{{ $produk->satuan_id }}" data-satuan-nama="{{ $produk->satuan->nama ?? '' }}">{{ $produk->nama }}</option>
+                            @endforeach
+                        </select>
+                        <input type="hidden" name="detail[${index}][satuan_id]" id="satuan-${index}">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        <input type="number" name="detail[${index}][jumlah]" id="jumlah-${index}" value="0" readonly class="w-full bg-gray-100 focus:ring-primary-500 focus:border-primary-500 shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md">
+                        <span id="satuan-text-${index}" class="text-xs"></span>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        <span id="stok-${index}">-</span>
+                        <input type="hidden" name="detail[${index}][stok_tersedia]" id="stok-hidden-${index}" value="0">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        <input type="number" name="detail[${index}][jumlah_produksi]" id="jumlah-produksi-${index}" class="w-full focus:ring-primary-500 focus:border-primary-500 shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" value="0" min="0" step="0.01" required>
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        <input type="text" name="detail[${index}][keterangan]" class="w-full focus:ring-primary-500 focus:border-primary-500 shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" placeholder="Keterangan">
+                    </td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                        <button type="button" onclick="removeManualItem('manual-row-${index}')" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </td>
+                `;
+
+                container.appendChild(row);
+
+                // Initialize Select2 untuk dropdown produk yang baru ditambahkan
+                const selectElement = row.querySelector('.produk-select');
+                $(selectElement).select2({
+                    placeholder: '-- Pilih Produk --',
+                    allowClear: true,
+                    width: '280px',
+                    dropdownAutoWidth: false,
+                    templateResult: formatProdukOption,
+                    templateSelection: formatProdukSelection
+                }).on('change', function() {
+                    loadStokProduk(this, index, gudangId);
+                });
+            }
+
+            // Format option untuk Select2 produk
+            function formatProdukOption(option) {
+                if (!option.id) {
+                    return option.text;
+                }
+
+                // Check if dark mode is active
+                var isDarkMode = document.documentElement.classList.contains('dark');
+                var textColor = isDarkMode ? 'text-white' : 'text-gray-900';
+
+                var $result = $(
+                    '<div class="select2-result">' +
+                    '<div class="font-medium ' + textColor + '">' + option.text + '</div>' +
+                    '</div>'
+                );
+
+                return $result;
+            }
+
+            function formatProdukSelection(option) {
+                return option.text || '-- Pilih Produk --';
+            }
+
+            function removeManualItem(rowId) {
+                const row = document.getElementById(rowId);
+                if (row) {
+                    // Destroy Select2 sebelum menghapus row
+                    const selectElement = row.querySelector('.produk-select');
+                    if (selectElement && $(selectElement).data('select2')) {
+                        $(selectElement).select2('destroy');
+                    }
+
+                    row.remove();
+                }
+
+                // Update numbering
+                const rows = document.querySelectorAll('#items-container tr');
+                rows.forEach((row, idx) => {
+                    if (row.id !== 'empty-row') {
+                        row.querySelector('td:first-child').textContent = idx + 1;
+                    }
+                });
+
+                // Show empty row if no items
+                if (rows.length === 0) {
+                    document.getElementById('items-container').innerHTML =
+                        '<tr id="empty-row"><td colspan="7" class="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">Klik "Tambah Produk" untuk menambahkan produk yang akan diproduksi</td></tr>';
+                }
+            }
+
+            // Fungsi untuk load stok produk ketika produk dipilih
+            window.loadStokProduk = function(selectElement, index, gudangId) {
+                const produkId = selectElement.value;
+                const option = selectElement.options[selectElement.selectedIndex];
+                const satuanId = option.getAttribute('data-satuan');
+                const satuanNama = option.getAttribute('data-satuan-nama');
+
+                // Set satuan
+                document.getElementById(`satuan-${index}`).value = satuanId;
+                document.getElementById(`satuan-text-${index}`).textContent = satuanNama;
+
+                if (produkId && gudangId) {
+                    // Fetch stok dari server
+                    fetch(`{{ route('produksi.perencanaan-produksi.get-stok') }}?produk_id=${produkId}&gudang_id=${gudangId}`, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const stok = data.stok || 0;
+                            document.getElementById(`stok-${index}`).textContent = `${stok} ${satuanNama}`;
+                            document.getElementById(`stok-hidden-${index}`).value = stok;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching stok:', error);
+                            document.getElementById(`stok-${index}`).textContent = '- ' + satuanNama;
+                        });
+                }
+            };
 
             // Event saat gudang dipilih
             document.getElementById('gudang_id').addEventListener('change', function() {
@@ -347,13 +556,7 @@
                 const soId = $('#sales_order_id').val();
                 const gudangId = document.getElementById('gudang_id').value;
 
-                if (!soId) {
-                    e.preventDefault();
-                    alert('Pilih Sales Order terlebih dahulu!');
-                    console.log('Sales Order not selected');
-                    return false;
-                }
-
+                // Gudang tetap wajib dipilih
                 if (!gudangId) {
                     e.preventDefault();
                     alert('Pilih Gudang terlebih dahulu!');
@@ -365,8 +568,27 @@
                 const emptyRow = document.getElementById('empty-row');
                 if (emptyRow) {
                     e.preventDefault();
-                    alert('Tidak ada item yang dapat diproses!');
+                    alert('Tidak ada item produk yang akan diproduksi! Tambahkan minimal 1 produk.');
                     console.log('No items to process');
+                    return false;
+                }
+
+                // Validasi bahwa ada minimal 1 item dengan jumlah produksi > 0
+                const rows = document.querySelectorAll('#items-container tr:not(#empty-row)');
+                let hasValidItem = false;
+
+                rows.forEach(row => {
+                    const jumlahProduksiInput = row.querySelector(
+                        'input[name*="[jumlah_produksi]"]');
+                    if (jumlahProduksiInput && parseFloat(jumlahProduksiInput.value) > 0) {
+                        hasValidItem = true;
+                    }
+                });
+
+                if (!hasValidItem) {
+                    e.preventDefault();
+                    alert('Minimal harus ada 1 produk dengan jumlah produksi lebih dari 0!');
+                    console.log('No valid items with production quantity > 0');
                     return false;
                 }
 

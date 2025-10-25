@@ -64,13 +64,13 @@ class PDFDeliveryOrderSinarSuryaTemplate
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
-            if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
-                $userX = 130;
-                $userY = 200;
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->SetXY($userX, $userY);
-                $pdf->Cell(60, 0, $deliveryOrder->user->name, 0, 0, 'L');
-            }
+            // if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
+            //     $userX = 130;
+            //     $userY = 200;
+            //     $pdf->SetFont('helvetica', '', 8);
+            //     $pdf->SetXY($userX, $userY);
+            //     $pdf->Cell(60, 0, $deliveryOrder->user->name, 0, 0, 'L');
+            // }
 
             // Tanggal (di bawah nomor)
             $tanggalX = 120;

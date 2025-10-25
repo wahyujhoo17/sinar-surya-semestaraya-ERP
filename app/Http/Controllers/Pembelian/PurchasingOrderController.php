@@ -1011,6 +1011,28 @@ class PurchasingOrderController extends Controller
             ]
         );
 
+        // Generate WhatsApp QR Code for verification
+        $whatsappQR = null;
+        if ($createdBy && $createdBy->phone) {
+            $whatsappQR = generateWhatsAppQRCode(
+                $createdBy->phone,
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120 // QR Code size
+            );
+        }
+
+        // Generate WhatsApp QR Code for processor (yang memproses PO)
+        $whatsappQRProcessor = null;
+        if ($processedBy && $processedBy->phone) {
+            $whatsappQRProcessor = generateWhatsAppQRCode(
+                $processedBy->phone,
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120 // QR Code size
+            );
+        }
+
         // Get template parameter from request
         $template = request()->get('template', 'sinar-surya');
 
@@ -1027,7 +1049,9 @@ class PurchasingOrderController extends Controller
             'processedBy',
             'isProcessed',
             'processedAt',
-            'qrCodes'
+            'qrCodes',
+            'whatsappQR',
+            'whatsappQRProcessor'
         ));
 
         // Set paper size and orientation
@@ -1102,6 +1126,28 @@ class PurchasingOrderController extends Controller
             ]
         );
 
+        // Generate WhatsApp QR Code for verification
+        $whatsappQR = null;
+        if ($createdBy && $createdBy->phone) {
+            $whatsappQR = generateWhatsAppQRCode(
+                $createdBy->phone,
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120 // QR Code size
+            );
+        }
+
+        // Generate WhatsApp QR Code for processor (yang memproses PO)
+        $whatsappQRProcessor = null;
+        if ($processedBy && $processedBy->phone) {
+            $whatsappQRProcessor = generateWhatsAppQRCode(
+                $processedBy->phone,
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120 // QR Code size
+            );
+        }
+
         // Get template parameter from request
         $template = request()->get('template', 'sinar-surya');
 
@@ -1118,7 +1164,9 @@ class PurchasingOrderController extends Controller
             'processedBy',
             'isProcessed',
             'processedAt',
-            'qrCodes'
+            'qrCodes',
+            'whatsappQR',
+            'whatsappQRProcessor'
         ));
 
         // Set paper size and orientation

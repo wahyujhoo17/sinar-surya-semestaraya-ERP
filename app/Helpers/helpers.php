@@ -134,3 +134,87 @@ if (!function_exists('terbilang')) {
         return trim($words);
     }
 }
+
+if (!function_exists('generateWhatsAppQRUrl')) {
+    /**
+     * Generate WhatsApp URL for QR Code with document verification message
+     * 
+     * @param string $phoneNumber Phone number from user table
+     * @param string $documentType Type of document (PO, Invoice, SO, etc.)
+     * @param string $documentNumber Document number
+     * @return string WhatsApp URL
+     */
+    function generateWhatsAppQRUrl($phoneNumber, $documentType, $documentNumber)
+    {
+        // Clean phone number - remove non-numeric characters
+        $cleanPhone = preg_replace('/[^0-9]/', '', $phoneNumber);
+
+        // Convert Indonesian phone format to international format
+        if (substr($cleanPhone, 0, 1) === '0') {
+            $cleanPhone = '62' . substr($cleanPhone, 1);
+        } elseif (substr($cleanPhone, 0, 2) !== '62') {
+            $cleanPhone = '62' . $cleanPhone;
+        }
+
+        // Template message - Professional and formal
+        // Keep it simple for iPhone scanner compatibility
+        $message = "Yth. Bapak/Ibu,\n\n";
+        $message .= "Saya ingin melakukan verifikasi dokumen {$documentType} dengan nomor {$documentNumber}.\n\n";
+        $message .= "Mohon bantuan untuk dapat mengkonfirmasi keaslian dokumen ini.\n\n";
+        $message .= "Terima kasih atas perhatian dan kerjasamanya.";
+
+        // Gunakan urlencode standar (bukan rawurlencode) untuk kompatibilitas iOS
+        $encodedMessage = urlencode($message);
+
+        // PENTING: Gunakan format wa.me yang lebih pendek dan iOS-friendly
+        // Format ini paling reliable untuk iPhone camera scanner
+        $whatsappUrl = "https://wa.me/{$cleanPhone}?text={$encodedMessage}";
+
+        return $whatsappUrl;
+    }
+}
+
+if (!function_exists('generateWhatsAppQRCode')) {
+    /**
+     * Generate QR Code SVG for WhatsApp verification
+     * Optimized untuk iPhone camera scanner
+     * 
+     * @param string $phoneNumber Phone number from user table
+     * @param string $documentType Type of document
+     * @param string $documentNumber Document number
+     * @param int $size QR Code size in pixels (default 150)
+     * @return string Base64 encoded SVG QR Code
+     */
+    function generateWhatsAppQRCode($phoneNumber, $documentType, $documentNumber, $size = 150)
+    {
+        try {
+            // Generate WhatsApp URL
+            $whatsappUrl = generateWhatsAppQRUrl($phoneNumber, $documentType, $documentNumber);
+
+            // DEBUG: Log URL untuk troubleshooting
+            \Illuminate\Support\Facades\Log::info('WhatsApp QR Code URL Generated:', [
+                'phone' => $phoneNumber,
+                'type' => $documentType,
+                'number' => $documentNumber,
+                'url' => $whatsappUrl,
+                'url_length' => strlen($whatsappUrl)
+            ]);
+
+            // PENTING: Gunakan SVG karena tidak memerlukan imagick extension
+            // SVG format tetap dapat dibaca oleh iPhone camera scanner
+            // Error correction H (highest) untuk better scanning
+            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                ->size($size)
+                ->margin(2)
+                ->errorCorrection('H')
+                ->generate($whatsappUrl);
+
+            // Convert to base64 for embedding in PDF
+            $base64 = base64_encode($qrCode);
+            return 'data:image/svg+xml;base64,' . $base64;
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to generate WhatsApp QR Code: ' . $e->getMessage());
+            return null;
+        }
+    }
+}

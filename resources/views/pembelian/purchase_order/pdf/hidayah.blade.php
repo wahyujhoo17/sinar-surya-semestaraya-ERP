@@ -545,10 +545,11 @@
                     <td style="width: 45%; text-align: center; vertical-align: bottom;">
                         <div style="margin-bottom: 10px; font-weight: bold; color: var(--hcb-blue); font-size: 10px;">
                             Dibuat oleh:</div>
-                        @if (isset($qrCodes['created_qr']) && $qrCodes['created_qr'])
+                        @if (isset($whatsappQR) && $whatsappQR)
                             <div class="qr-signature">
-                                <div class="qr-label">Tanda Tangan Digital</div>
-                                <img src="{{ $qrCodes['created_qr'] }}" alt="Creator QR Code" class="qr-code-small">
+                                <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                                <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                                    class="qr-code-small">
                             </div>
                         @endif
                         <div class="signature-line-hcb"></div>
@@ -564,10 +565,10 @@
                             <div
                                 style="margin-bottom: 10px; font-weight: bold; color: var(--hcb-blue); font-size: 10px;">
                                 Diproses oleh:</div>
-                            @if (isset($qrCodes['processed_qr']) && $qrCodes['processed_qr'])
+                            @if (isset($whatsappQRProcessor) && $whatsappQRProcessor)
                                 <div class="qr-signature">
-                                    <div class="qr-label">Tanda Tangan Digital</div>
-                                    <img src="{{ $qrCodes['processed_qr'] }}" alt="Processor QR Code"
+                                    <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                                    <img src="{{ $whatsappQRProcessor }}" alt="Processor WhatsApp QR Code"
                                         class="qr-code-small">
                                 </div>
                             @endif

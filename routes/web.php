@@ -509,6 +509,7 @@ Route::middleware(['auth'])->group(function () {
         // Perencanaan Produksi Routes - with permission middleware
         Route::middleware('permission:perencanaan_produksi.view')->group(function () {
             Route::get('perencanaan-produksi/get-so-items', [PerencanaanProduksiController::class, 'getSoItems'])->name('perencanaan-produksi.get-so-items');
+            Route::get('perencanaan-produksi/get-stok', [PerencanaanProduksiController::class, 'getStok'])->name('perencanaan-produksi.get-stok');
             Route::get('perencanaan-produksi/get-sales-order/{id}', [PerencanaanProduksiController::class, 'getSalesOrderData'])->name('perencanaan-produksi.get-sales-order');
             Route::get('perencanaan-produksi/{id}/create-work-order', [PerencanaanProduksiController::class, 'createWorkOrder'])->name('perencanaan-produksi.create-work-order');
             Route::post('perencanaan-produksi/{id}/change-status', [PerencanaanProduksiController::class, 'changeStatus'])->name('perencanaan-produksi.change-status');

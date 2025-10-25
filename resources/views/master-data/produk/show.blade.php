@@ -1026,4 +1026,21 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal Component --}}
+    <x-modal-produk :kategoris="$kategoris" :satuans="$satuans" :jenisProduks="$jenisProduks" />
+
+    @push('scripts')
+        <script>
+            // Listen untuk event refresh setelah update produk berhasil
+            window.addEventListener('refresh-product-table', function(e) {
+                if (e.detail.action === 'update') {
+                    // Reload halaman setelah update berhasil
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500); // Delay 500ms untuk memberi waktu notifikasi muncul
+                }
+            });
+        </script>
+    @endpush
 </x-app-layout>

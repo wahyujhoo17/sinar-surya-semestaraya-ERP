@@ -316,7 +316,7 @@
                         <textarea id="syarat_pembayaran" name="syarat_ketentuan" rows="2"
                             class="shadow-sm block w-full focus:ring-primary-500 focus:border-primary-500 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md @error('syarat_ketentuan') border-red-500 dark:border-red-500 @enderror"
                             placeholder="Syarat pembayaran...">{{ old('syarat_ketentuan', $quotation->syarat_ketentuan ?: $quotation_terms) }}</textarea>
-                        @error('syarat_pembayaran')
+                        @error('syarat_ketentuan')
                             <div class="text-xs text-red-600 mt-1">{{ $message }}</div>
                         @enderror
                     </div>

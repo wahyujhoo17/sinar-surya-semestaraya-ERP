@@ -886,7 +886,8 @@
                     <p class="terms-title">Syarat & Ketentuan:</p>
                     <div class="terms-content">
                         @if ($quotation->syarat_ketentuan)
-                            {{ $quotation->syarat_ketentuan }}
+                            <div style="font-size: 9px; line-height: 1.4; white-space: pre-line;">
+                                {!! nl2br(e($quotation->syarat_ketentuan)) !!}</div>
                         @else
                             <div style="font-size: 9px; line-height: 1.4;">
                                 1. Penawaran berlaku sesuai periode yang tertera<br>

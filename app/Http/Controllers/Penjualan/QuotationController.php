@@ -278,7 +278,7 @@ class QuotationController extends Controller
             'tanggal_berlaku' => 'required|date',
             'status' => 'required|string|in:draft,dikirim,disetujui,ditolak,kedaluwarsa',
             'catatan' => 'nullable|string',
-            'syarat_pembayaran' => 'nullable|string',
+            'syarat_ketentuan' => 'nullable|string',
             'items' => 'required|array|min:1',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
@@ -397,7 +397,7 @@ class QuotationController extends Controller
             $quotation->status = $request->status;
             $quotation->tanggal_berlaku = $request->tanggal_berlaku;
             $quotation->catatan = $request->catatan;
-            $quotation->syarat_ketentuan = $request->syarat_pembayaran;
+            $quotation->syarat_ketentuan = $request->syarat_ketentuan;
             $quotation->save();
 
             // Create Quotation Details

@@ -654,8 +654,8 @@
             </div>
             <div style="padding: 5px 0;">
                 @if ($quotation->syarat_ketentuan)
-                    <div style="color: #374151; font-size: 9px; line-height: 1.4;">
-                        {{ $quotation->syarat_ketentuan }}
+                    <div style="color: #374151; font-size: 9px; line-height: 1.4; white-space: pre-line;">
+                        {!! nl2br(e($quotation->syarat_ketentuan)) !!}
                     </div>
                 @else
                     <div style="color: #374151; font-size: 9px; line-height: 1.4;">

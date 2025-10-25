@@ -228,15 +228,35 @@
                                     Status Saat Ini: <span
                                         class="font-semibold capitalize">{{ $purchaseOrder->status }}</span>
                                 </span>
+                                <p class="px-4 py-1 text-xs text-gray-500 dark:text-gray-400 italic">
+                                    💡 Status harus diubah secara berurutan
+                                </p>
                             </div>
 
                             <div class="py-1" role="none">
+                                @php
+                                    // Define status order mapping
+                                    $statusOrder = [
+                                        'draft' => 0,
+                                        'diproses' => 1,
+                                        'dikirim' => 2,
+                                        'selesai' => 3,
+                                        'dibatalkan' => 99, // Can be selected from any status
+                                    ];
+                                    $currentStatusOrder = $statusOrder[$purchaseOrder->status] ?? 0;
+                                @endphp
+
                                 <!-- Draft status -->
-                                <button @click="newStatus = 'draft'; confirmModal = true; statusDropdownOpen = false"
+                                @php
+                                    $canSelectDraft = $purchaseOrder->status == 'draft' || $currentStatusOrder > 0;
+                                    $isDraftDisabled = $purchaseOrder->status == 'draft' || $currentStatusOrder > 0;
+                                @endphp
+                                <button
+                                    @click="if (!{{ $isDraftDisabled ? 'true' : 'false' }}) { newStatus = 'draft'; confirmModal = true; statusDropdownOpen = false }"
                                     class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'draft' ? 'bg-gray-100 dark:bg-gray-700 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'draft' }"
-                                    role="menuitem" :disabled="currentStatus == 'draft'">
+                                    {{ $isDraftDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}
+                                    {{ $purchaseOrder->status == 'draft' ? 'bg-gray-100 dark:bg-gray-700' : '' }}"
+                                    role="menuitem" {{ $isDraftDisabled ? 'disabled' : '' }}>
                                     <span class="w-2 h-2 rounded-full bg-gray-500"></span>
                                     <span>Draft</span>
                                     @if ($purchaseOrder->status == 'draft')
@@ -246,16 +266,27 @@
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
                                         </svg>
+                                    @elseif($currentStatusOrder > 0)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-gray-400"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
                                     @endif
                                 </button>
 
                                 <!-- Diproses status -->
+                                @php
+                                    $canSelectDiproses =
+                                        $purchaseOrder->status == 'draft' || $purchaseOrder->status == 'diproses';
+                                    $isDiprosesDisabled = !$canSelectDiproses;
+                                @endphp
                                 <button
-                                    @click="newStatus = 'diproses'; confirmModal = true; statusDropdownOpen = false"
+                                    @click="if (!{{ $isDiprosesDisabled ? 'true' : 'false' }}) { newStatus = 'diproses'; confirmModal = true; statusDropdownOpen = false }"
                                     class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'diproses' ? 'bg-blue-50 dark:bg-blue-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'diproses' }"
-                                    role="menuitem" :disabled="currentStatus == 'diproses'">
+                                    {{ $isDiprosesDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}
+                                    {{ $purchaseOrder->status == 'diproses' ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}"
+                                    role="menuitem" {{ $isDiprosesDisabled ? 'disabled' : '' }}>
                                     <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                                     <span class="text-blue-600 dark:text-blue-400">Diproses</span>
                                     @if ($purchaseOrder->status == 'diproses')
@@ -265,15 +296,27 @@
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
                                         </svg>
+                                    @elseif($isDiprosesDisabled)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-gray-400"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
                                     @endif
                                 </button>
 
                                 <!-- Dikirim status -->
-                                <button @click="newStatus = 'dikirim'; confirmModal = true; statusDropdownOpen = false"
+                                @php
+                                    $canSelectDikirim =
+                                        $purchaseOrder->status == 'diproses' || $purchaseOrder->status == 'dikirim';
+                                    $isDikirimDisabled = !$canSelectDikirim;
+                                @endphp
+                                <button
+                                    @click="if (!{{ $isDikirimDisabled ? 'true' : 'false' }}) { newStatus = 'dikirim'; confirmModal = true; statusDropdownOpen = false }"
                                     class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'dikirim' ? 'bg-amber-50 dark:bg-amber-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dikirim' }"
-                                    role="menuitem" :disabled="currentStatus == 'dikirim'">
+                                    {{ $isDikirimDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}
+                                    {{ $purchaseOrder->status == 'dikirim' ? 'bg-amber-50 dark:bg-amber-900/20' : '' }}"
+                                    role="menuitem" {{ $isDikirimDisabled ? 'disabled' : '' }}>
                                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                                     <span class="text-amber-600 dark:text-amber-400">Dikirim</span>
                                     @if ($purchaseOrder->status == 'dikirim')
@@ -283,27 +326,35 @@
                                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                 clip-rule="evenodd" />
                                         </svg>
+                                    @elseif($isDikirimDisabled)
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="ml-auto h-4 w-4 text-gray-400"
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
                                     @endif
                                 </button>
 
                                 <!-- Selesai status - with conditional disabling -->
-                                <button @click="newStatus = 'selesai'; confirmModal = true; statusDropdownOpen = false"
+                                @php
+                                    $canSelectSelesai =
+                                        $purchaseOrder->status == 'dikirim' || $purchaseOrder->status == 'selesai';
+                                    $hasRequirements =
+                                        $purchaseOrder->status_pembayaran == 'lunas' &&
+                                        $purchaseOrder->status_penerimaan == 'diterima';
+                                    $isSelesaiDisabled =
+                                        !$canSelectSelesai || !$hasRequirements || $purchaseOrder->status == 'selesai';
+                                @endphp
+                                <button
+                                    @click="if (!{{ $isSelesaiDisabled ? 'true' : 'false' }}) { newStatus = 'selesai'; confirmModal = true; statusDropdownOpen = false }"
                                     class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'selesai' ? 'bg-emerald-50 dark:bg-emerald-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                    :class="{
-                                        'opacity-50 cursor-not-allowed': currentStatus == 'selesai' ||
-                                            ('{{ $purchaseOrder->status_pembayaran }}'
-                                                !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
-                                                !== 'diterima')
-                                    }"
-                                    role="menuitem"
-                                    :disabled="currentStatus == 'selesai' || ('{{ $purchaseOrder->status_pembayaran }}'
-                                        !== 'lunas' || '{{ $purchaseOrder->status_penerimaan }}'
-                                        !== 'diterima')">
+                                    {{ $isSelesaiDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}
+                                    {{ $purchaseOrder->status == 'selesai' ? 'bg-emerald-50 dark:bg-emerald-900/20' : '' }}"
+                                    role="menuitem" {{ $isSelesaiDisabled ? 'disabled' : '' }}>
                                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                                     <span class="text-emerald-600 dark:text-emerald-400">Selesai</span>
                                     <span class="ml-auto flex-shrink-0">
-                                        @if ($purchaseOrder->status_pembayaran !== 'lunas' || $purchaseOrder->status_penerimaan !== 'diterima')
+                                        @if (!$hasRequirements)
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-500"
                                                 viewBox="0 0 20 20" fill="currentColor">
                                                 <path fill-rule="evenodd"
@@ -317,17 +368,27 @@
                                                     d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
                                                     clip-rule="evenodd" />
                                             </svg>
+                                        @elseif(!$canSelectSelesai)
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400"
+                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                            </svg>
                                         @endif
                                     </span>
                                 </button>
 
-                                <!-- Dibatalkan status -->
+                                <!-- Dibatalkan status - can be selected from any status except dibatalkan itself -->
+                                @php
+                                    $isDibatalkanDisabled =
+                                        $purchaseOrder->status == 'dibatalkan' || $purchaseOrder->status == 'selesai';
+                                @endphp
                                 <button
-                                    @click="newStatus = 'dibatalkan'; confirmModal = true; statusDropdownOpen = false"
+                                    @click="if (!{{ $isDibatalkanDisabled ? 'true' : 'false' }}) { newStatus = 'dibatalkan'; confirmModal = true; statusDropdownOpen = false }"
                                     class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 
-                                {{ $purchaseOrder->status == 'dibatalkan' ? 'bg-red-50 dark:bg-red-900/20 cursor-default' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}"
-                                    :class="{ 'opacity-50 cursor-not-allowed': currentStatus == 'dibatalkan' }"
-                                    role="menuitem" :disabled="currentStatus == 'dibatalkan'">
+                                    {{ $isDibatalkanDisabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700' }}
+                                    {{ $purchaseOrder->status == 'dibatalkan' ? 'bg-red-50 dark:bg-red-900/20' : '' }}"
+                                    role="menuitem" {{ $isDibatalkanDisabled ? 'disabled' : '' }}>
                                     <span class="w-2 h-2 rounded-full bg-red-500"></span>
                                     <span class="text-red-600 dark:text-red-400">Dibatalkan</span>
                                     @if ($purchaseOrder->status == 'dibatalkan')

@@ -63,11 +63,11 @@
                         <div>
                             <label for="sales_order_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sales Order
-                                <span class="text-red-500">*</span></label>
-                            <select id="sales_order_id" name="sales_order_id" required
+                                <span class="text-gray-500 text-xs">(Opsional)</span></label>
+                            <select id="sales_order_id" name="sales_order_id"
                                 {{ $perencanaan->status != 'draft' ? 'disabled' : '' }}
                                 class="focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md select2-sales-order">
-                                <option value="">-- Pilih Sales Order --</option>
+                                <option value="">-- Produksi untuk Stok (Tanpa SO) --</option>
                                 @foreach ($salesOrders as $so)
                                     <option value="{{ $so->id }}"
                                         {{ old('sales_order_id', $perencanaan->sales_order_id) == $so->id ? 'selected' : '' }}
@@ -79,6 +79,9 @@
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                Kosongkan jika produksi untuk kebutuhan stok saja
+                            </p>
                             @error('sales_order_id')
                                 <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
                             @enderror

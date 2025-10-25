@@ -225,7 +225,11 @@ class ProdukController extends Controller
     {
         // Load relasi jika belum
         $produk->load(['kategori', 'satuan', 'jenis']);
-        $jenisProduks = JenisProduk::orderBy('nama')->get(); // Add this line
+
+        // Get data untuk modal edit
+        $kategoris = KategoriProduk::orderBy('nama')->get();
+        $satuans = Satuan::orderBy('nama')->get();
+        $jenisProduks = JenisProduk::orderBy('nama')->get();
 
         // Get riwayat pembelian dari purchase order yang mengandung produk ini
         // Hanya tampilkan PO dengan status selesai
@@ -258,7 +262,7 @@ class ProdukController extends Controller
             'Produk' => route('master.produk.index')
         ];
         $currentPage = 'Detail Produk';
-        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'jenisProduks', 'riwayatPembelian'));
+        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'kategoris', 'satuans', 'jenisProduks', 'riwayatPembelian'));
     }
 
     /**

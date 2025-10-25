@@ -513,17 +513,36 @@
     <!-- Signatures -->
     <table class="signature-table">
         <tr>
-            <td>
+            <td style="text-align: center; vertical-align: bottom;">
+                <div><strong style="color: #2c3e50; font-size: 11px;">Dibuat oleh:</strong></div>
+
+                {{-- WhatsApp QR Code for Creator --}}
+                @if (isset($whatsappQR) && $whatsappQR)
+                    <div style="text-align: center; margin: 10px 0;">
+                        <div style="font-size: 8px; color: #7f8c8d; margin-bottom: 5px;">Scan untuk Verifikasi via
+                            WhatsApp</div>
+                        <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                            style="width: 70px; height: 70px; border: 1px solid #ddd; padding: 3px;">
+                    </div>
+                @else
+                    <div style="height: 70px; margin: 10px 0;"></div>
+                @endif
+
                 <div class="signature-line"></div>
                 <div><strong style="color: #2c3e50;">{{ $salesOrder->user->name ?? 'Admin' }}</strong></div>
-                <div style="color: #7f8c8d;">Sales</div>
+                <div style="color: #7f8c8d; font-size: 9px;">Sales</div>
+                <div style="color: #95a5a6; font-size: 8px;">
+                    {{ \Carbon\Carbon::parse($salesOrder->created_at)->format('d/m/Y H:i') }}
+                </div>
             </td>
-            <td>
+            <td style="text-align: center; vertical-align: bottom;">
+                <div><strong style="color: #2c3e50; font-size: 11px;">Customer:</strong></div>
+                <div style="height: 70px; margin: 10px 0;"></div>
                 <div class="signature-line"></div>
                 <div><strong
                         style="color: #2c3e50;">{{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}</strong>
                 </div>
-                <div style="color: #7f8c8d;">Customer</div>
+                <div style="color: #7f8c8d; font-size: 9px;">Tanda Tangan & Stempel</div>
             </td>
         </tr>
     </table>

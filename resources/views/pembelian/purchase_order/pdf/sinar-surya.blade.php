@@ -419,11 +419,11 @@
             <td>
                 <div><strong style="color: #2c3e50;">Dibuat oleh:</strong></div>
 
-                {{-- QR Code for Creator --}}
-                @if (isset($qrCodes['created_qr']) && $qrCodes['created_qr'])
+                {{-- WhatsApp QR Code for Verification --}}
+                @if (isset($whatsappQR) && $whatsappQR)
                     <div class="qr-signature">
-                        <div class="qr-label">Tanda Tangan Digital</div>
-                        <img src="{{ $qrCodes['created_qr'] }}" alt="Creator QR Code" class="qr-code-small">
+                        <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                        <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code" class="qr-code-small">
                     </div>
                 @endif
 
@@ -442,11 +442,12 @@
                 <td>
                     <div><strong style="color: #2c3e50;">Diproses oleh:</strong></div>
 
-                    {{-- QR Code for Processor --}}
-                    @if (isset($qrCodes['processed_qr']) && $qrCodes['processed_qr'])
+                    {{-- WhatsApp QR Code for Processor --}}
+                    @if (isset($whatsappQRProcessor) && $whatsappQRProcessor)
                         <div class="qr-signature">
-                            <div class="qr-label">Tanda Tangan Digital</div>
-                            <img src="{{ $qrCodes['processed_qr'] }}" alt="Processor QR Code" class="qr-code-small">
+                            <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                            <img src="{{ $whatsappQRProcessor }}" alt="Processor WhatsApp QR Code"
+                                class="qr-code-small">
                         </div>
                     @endif
 
