@@ -1,8 +1,11 @@
 {
+    "$schema": "https://railway.app/railway.schema.json",
     "build": {
-        "command": "composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache"
+        "builder": "NIXPACKS"
     },
-    "start": {
-        "command": "./start.sh"
+    "deploy": {
+        "numReplicas": 1,
+        "restartPolicyType": "ON_FAILURE",
+        "restartPolicyMaxRetries": 10
     }
 }
