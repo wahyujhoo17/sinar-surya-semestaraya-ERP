@@ -11,10 +11,10 @@ Route::get('/debug-qr-render', function () {
     $phone = '081234567890';
     $docType = 'Sales Order';
     $docNumber = 'SO-TEST-001';
-    
+
     // Generate QR Code
     $whatsappQR = generateWhatsAppQRCode($phone, $docType, $docNumber, 120);
-    
+
     // Return HTML with QR Code (exactly like PDF template)
     return view('debug.qr-test', compact('whatsappQR'));
 })->name('debug.qr.render');
@@ -24,12 +24,12 @@ Route::get('/debug-qr-render', function () {
  * Test QR Code dari SO yang sebenarnya
  */
 Route::get('/debug-so-qr/{id}', function ($id) {
-    $salesOrder = \App\Models\Penjualan\SalesOrder::with('user')->findOrFail($id);
-    
+    $salesOrder = \App\Models\SalesOrder::with('user')->findOrFail($id);
+
     $createdBy = $salesOrder->user;
     $whatsappQR = null;
     $debugInfo = [];
-    
+
     if ($createdBy && $createdBy->phone) {
         $whatsappQR = generateWhatsAppQRCode(
             $createdBy->phone,
@@ -37,7 +37,7 @@ Route::get('/debug-so-qr/{id}', function ($id) {
             $salesOrder->nomor,
             120
         );
-        
+
         $debugInfo = [
             'so_number' => $salesOrder->nomor,
             'creator_name' => $createdBy->name,
@@ -55,6 +55,6 @@ Route::get('/debug-so-qr/{id}', function ($id) {
             'has_phone' => $createdBy ? !is_null($createdBy->phone) : false,
         ];
     }
-    
+
     return view('debug.qr-test', compact('whatsappQR', 'debugInfo'));
 })->name('debug.so.qr');

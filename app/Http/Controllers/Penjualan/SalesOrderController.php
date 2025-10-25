@@ -1324,7 +1324,7 @@ class SalesOrderController extends Controller
                     $salesOrder->nomor,
                     120 // QR Code size
                 );
-                
+
                 // CRITICAL DEBUG: Verify QR was generated
                 Log::info('SO PDF QR Code Status:', [
                     'so_number' => $salesOrder->nomor,
