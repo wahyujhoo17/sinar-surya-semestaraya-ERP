@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["php83", "php83Extensions.gd", "php83Extensions.zip", "php83Extensions.pdo_mysql"]
+
+[phases.build]
+cmds = [
+    "composer install --no-dev --optimize-autoloader --no-interaction",
+    "npm install",
+    "npm run build"
+]
+
+[phases.start]
+cmd = "php artisan serve --host=0.0.0.0 --port=${PORT:-8080}"
+
+[variables]
+APP_ENV = "production"

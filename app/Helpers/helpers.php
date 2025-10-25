@@ -177,30 +177,37 @@ if (!function_exists('generateWhatsAppQRUrl')) {
 if (!function_exists('generateWhatsAppQRCode')) {
     /**
      * Generate QR Code SVG for WhatsApp verification
-     * Optimized untuk iPhone camera scanner
+     * Optimized untuk iPhone camera scanner dan Railway deployment
      * 
      * @param string $phoneNumber Phone number from user table
      * @param string $documentType Type of document
      * @param string $documentNumber Document number
      * @param int $size QR Code size in pixels (default 150)
-     * @return string Base64 encoded SVG QR Code
+     * @return string|null Base64 encoded SVG QR Code or null on failure
      */
     function generateWhatsAppQRCode($phoneNumber, $documentType, $documentNumber, $size = 150)
     {
         try {
+            // Check if QR Code library is available
+            if (!class_exists('\SimpleSoftwareIO\QrCode\Facades\QrCode')) {
+                \Illuminate\Support\Facades\Log::error('QR Code library not available');
+                return null;
+            }
+
             // Generate WhatsApp URL
             $whatsappUrl = generateWhatsAppQRUrl($phoneNumber, $documentType, $documentNumber);
 
             // DEBUG: Log URL untuk troubleshooting
-            \Illuminate\Support\Facades\Log::info('WhatsApp QR Code URL Generated:', [
+            \Illuminate\Support\Facades\Log::info('WhatsApp QR Code Generation Attempt:', [
                 'phone' => $phoneNumber,
                 'type' => $documentType,
                 'number' => $documentNumber,
                 'url' => $whatsappUrl,
-                'url_length' => strlen($whatsappUrl)
+                'url_length' => strlen($whatsappUrl),
+                'environment' => app()->environment()
             ]);
 
-            // PENTING: Gunakan SVG karena tidak memerlukan imagick extension
+            // PENTING: Gunakan SVG karena tidak memerlukan imagick/gd extension
             // SVG format tetap dapat dibaca oleh iPhone camera scanner
             // Error correction H (highest) untuk better scanning
             $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
@@ -209,11 +216,28 @@ if (!function_exists('generateWhatsAppQRCode')) {
                 ->errorCorrection('H')
                 ->generate($whatsappUrl);
 
+            // Verify QR code was generated
+            if (empty($qrCode)) {
+                \Illuminate\Support\Facades\Log::error('QR Code generation returned empty result');
+                return null;
+            }
+
             // Convert to base64 for embedding in PDF
             $base64 = base64_encode($qrCode);
+
+            \Illuminate\Support\Facades\Log::info('QR Code generated successfully', [
+                'size' => strlen($base64),
+                'environment' => app()->environment()
+            ]);
+
             return 'data:image/svg+xml;base64,' . $base64;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to generate WhatsApp QR Code: ' . $e->getMessage());
+            \Illuminate\Support\Facades\Log::error('Failed to generate WhatsApp QR Code', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'phone' => $phoneNumber,
+                'environment' => app()->environment()
+            ]);
             return null;
         }
     }
