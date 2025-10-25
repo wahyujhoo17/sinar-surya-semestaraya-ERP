@@ -865,5 +865,6 @@ Route::middleware(['auth'])->group(function () {
 
 // QR Code Test Route (accessible without auth for debugging)
 require __DIR__ . '/test-qr.php';
+require __DIR__ . '/debug-qr.php';
 
 require __DIR__ . '/auth.php';

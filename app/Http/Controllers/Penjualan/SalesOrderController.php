@@ -1324,6 +1324,21 @@ class SalesOrderController extends Controller
                     $salesOrder->nomor,
                     120 // QR Code size
                 );
+                
+                // CRITICAL DEBUG: Verify QR was generated
+                Log::info('SO PDF QR Code Status:', [
+                    'so_number' => $salesOrder->nomor,
+                    'creator_phone' => $createdBy->phone,
+                    'qr_generated' => !is_null($whatsappQR),
+                    'qr_length' => $whatsappQR ? strlen($whatsappQR) : 0,
+                    'qr_preview' => $whatsappQR ? substr($whatsappQR, 0, 50) . '...' : 'NULL'
+                ]);
+            } else {
+                Log::warning('SO PDF: No creator or phone number', [
+                    'so_number' => $salesOrder->nomor,
+                    'has_user' => !is_null($createdBy),
+                    'has_phone' => $createdBy ? !is_null($createdBy->phone) : false
+                ]);
             }
 
             // Define available templates and their configurations
