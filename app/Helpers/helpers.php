@@ -176,14 +176,15 @@ if (!function_exists('generateWhatsAppQRUrl')) {
 
 if (!function_exists('generateWhatsAppQRCode')) {
     /**
-     * Generate QR Code SVG for WhatsApp verification
+     * Generate QR Code for WhatsApp verification dengan fallback format
      * Optimized untuk iPhone camera scanner dan Railway deployment
+     * Try PNG first (better DomPDF support), fallback to SVG
      * 
      * @param string $phoneNumber Phone number from user table
      * @param string $documentType Type of document
      * @param string $documentNumber Document number
      * @param int $size QR Code size in pixels (default 150)
-     * @return string|null Base64 encoded SVG QR Code or null on failure
+     * @return string|null Base64 encoded QR Code or null on failure
      */
     function generateWhatsAppQRCode($phoneNumber, $documentType, $documentNumber, $size = 150)
     {
@@ -207,14 +208,39 @@ if (!function_exists('generateWhatsAppQRCode')) {
                 'environment' => app()->environment()
             ]);
 
-            // PENTING: Gunakan SVG karena tidak memerlukan imagick/gd extension
-            // SVG format tetap dapat dibaca oleh iPhone camera scanner
-            // Error correction H (highest) untuk better scanning
-            $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
-                ->size($size)
-                ->margin(2)
-                ->errorCorrection('H')
-                ->generate($whatsappUrl);
+            // Try PNG first (better DomPDF compatibility di Railway production)
+            $qrCode = null;
+            $format = 'png';
+            $mimeType = 'image/png';
+
+            try {
+                if (extension_loaded('gd')) {
+                    $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                        ->size($size)
+                        ->margin(2)
+                        ->errorCorrection('H')
+                        ->generate($whatsappUrl);
+
+                    \Illuminate\Support\Facades\Log::info('QR Code generated with PNG format');
+                }
+            } catch (\Exception $pngError) {
+                \Illuminate\Support\Facades\Log::warning('PNG generation failed, trying SVG fallback', [
+                    'error' => $pngError->getMessage()
+                ]);
+            }
+
+            // Fallback to SVG if PNG failed or GD not available
+            if (empty($qrCode)) {
+                $format = 'svg';
+                $mimeType = 'image/svg+xml';
+                $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::format('svg')
+                    ->size($size)
+                    ->margin(2)
+                    ->errorCorrection('H')
+                    ->generate($whatsappUrl);
+
+                \Illuminate\Support\Facades\Log::info('QR Code generated with SVG fallback');
+            }
 
             // Verify QR code was generated
             if (empty($qrCode)) {
@@ -226,11 +252,13 @@ if (!function_exists('generateWhatsAppQRCode')) {
             $base64 = base64_encode($qrCode);
 
             \Illuminate\Support\Facades\Log::info('QR Code generated successfully', [
+                'format' => $format,
                 'size' => strlen($base64),
+                'has_gd' => extension_loaded('gd'),
                 'environment' => app()->environment()
             ]);
 
-            return 'data:image/svg+xml;base64,' . $base64;
+            return 'data:' . $mimeType . ';base64,' . $base64;
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Failed to generate WhatsApp QR Code', [
                 'error' => $e->getMessage(),

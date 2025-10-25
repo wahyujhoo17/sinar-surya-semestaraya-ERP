@@ -1060,7 +1060,7 @@ class PurchasingOrderController extends Controller
         $pdf->setOptions([
             'dpi' => 96,
             'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
+            'isRemoteEnabled' => true, // CRITICAL: Enable untuk base64 images (QR Code)
             'isJavascriptEnabled' => false,
             'isHtml5ParserEnabled' => true,
             'fontSubsetting' => true,
