@@ -1011,22 +1011,22 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        // Generate WhatsApp QR Code for verification
+        // Generate WhatsApp QR Code for verification (with fallback)
         $whatsappQR = null;
-        if ($createdBy && $createdBy->phone) {
-            $whatsappQR = generateWhatsAppQRCode(
-                $createdBy->phone,
-                'Purchase Order',
-                $purchaseOrder->nomor,
-                120 // QR Code size
-            );
-        }
+        $creatorPhone = ($createdBy && $createdBy->phone) ? $createdBy->phone : '081234567890';
+        $whatsappQR = generateWhatsAppQRCode(
+            $creatorPhone,
+            'Purchase Order',
+            $purchaseOrder->nomor,
+            120 // QR Code size
+        );
 
-        // Generate WhatsApp QR Code for processor (yang memproses PO)
+        // Generate WhatsApp QR Code for processor (yang memproses PO - with fallback)
         $whatsappQRProcessor = null;
-        if ($processedBy && $processedBy->phone) {
+        if ($processedBy) {
+            $processorPhone = $processedBy->phone ?? '081234567890';
             $whatsappQRProcessor = generateWhatsAppQRCode(
-                $processedBy->phone,
+                $processorPhone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size
@@ -1126,22 +1126,22 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        // Generate WhatsApp QR Code for verification
+        // Generate WhatsApp QR Code for verification (with fallback)
         $whatsappQR = null;
-        if ($createdBy && $createdBy->phone) {
-            $whatsappQR = generateWhatsAppQRCode(
-                $createdBy->phone,
-                'Purchase Order',
-                $purchaseOrder->nomor,
-                120 // QR Code size
-            );
-        }
+        $creatorPhone = ($createdBy && $createdBy->phone) ? $createdBy->phone : '081234567890';
+        $whatsappQR = generateWhatsAppQRCode(
+            $creatorPhone,
+            'Purchase Order',
+            $purchaseOrder->nomor,
+            120 // QR Code size
+        );
 
-        // Generate WhatsApp QR Code for processor (yang memproses PO)
+        // Generate WhatsApp QR Code for processor (yang memproses PO - with fallback)
         $whatsappQRProcessor = null;
-        if ($processedBy && $processedBy->phone) {
+        if ($processedBy) {
+            $processorPhone = $processedBy->phone ?? '081234567890';
             $whatsappQRProcessor = generateWhatsAppQRCode(
-                $processedBy->phone,
+                $processorPhone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size

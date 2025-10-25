@@ -1317,9 +1317,24 @@ class SalesOrderController extends Controller
             // Generate WhatsApp QR Code for creator (yang membuat SO)
             $createdBy = $salesOrder->user;
             $whatsappQR = null;
+            
+            // Try to get phone number with fallback
+            $phoneNumber = null;
             if ($createdBy && $createdBy->phone) {
+                $phoneNumber = $createdBy->phone;
+            } else {
+                // Fallback to company default phone (admin/CS)
+                // You can change this to your company WhatsApp number
+                $phoneNumber = '081234567890'; // TODO: Change to actual company phone
+                Log::info('SO PDF: Using fallback phone (user has no phone)', [
+                    'so_number' => $salesOrder->nomor,
+                    'user' => $createdBy ? $createdBy->name : 'Unknown'
+                ]);
+            }
+            
+            if ($phoneNumber) {
                 $whatsappQR = generateWhatsAppQRCode(
-                    $createdBy->phone,
+                    $phoneNumber,
                     'Sales Order',
                     $salesOrder->nomor,
                     120 // QR Code size
@@ -1328,16 +1343,11 @@ class SalesOrderController extends Controller
                 // CRITICAL DEBUG: Verify QR was generated
                 Log::info('SO PDF QR Code Status:', [
                     'so_number' => $salesOrder->nomor,
-                    'creator_phone' => $createdBy->phone,
+                    'phone_used' => $phoneNumber,
+                    'is_fallback' => !($createdBy && $createdBy->phone),
                     'qr_generated' => !is_null($whatsappQR),
                     'qr_length' => $whatsappQR ? strlen($whatsappQR) : 0,
                     'qr_preview' => $whatsappQR ? substr($whatsappQR, 0, 50) . '...' : 'NULL'
-                ]);
-            } else {
-                Log::warning('SO PDF: No creator or phone number', [
-                    'so_number' => $salesOrder->nomor,
-                    'has_user' => !is_null($createdBy),
-                    'has_phone' => $createdBy ? !is_null($createdBy->phone) : false
                 ]);
             }
 
