@@ -1308,30 +1308,38 @@ class SalesOrderController extends Controller
             // Log PDF generation start for debugging
             Log::info("PDF generation started for sales order ID: {$id}, template: {$template}");
 
-            $salesOrder = SalesOrder::with(['customer', 'user', 'details.produk', 'details.satuan'])
+            $salesOrder = SalesOrder::with(['customer', 'user.karyawan', 'details.produk', 'details.satuan'])
                 ->findOrFail($id);
 
             // Get direktur utama dynamically
             $direkturUtama = $this->getDirekturUtama();
 
             // Generate WhatsApp QR Code for creator (yang membuat SO)
+            // Ambil telepon dari table karyawan
             $createdBy = $salesOrder->user;
             $whatsappQR = null;
-            
-            // Try to get phone number with fallback
+
+            // Try to get phone number from karyawan table
             $phoneNumber = null;
-            if ($createdBy && $createdBy->phone) {
-                $phoneNumber = $createdBy->phone;
+            if ($createdBy && $createdBy->karyawan && !empty($createdBy->karyawan->telepon)) {
+                $phoneNumber = $createdBy->karyawan->telepon;
+                Log::info('SO PDF: Using karyawan phone', [
+                    'so_number' => $salesOrder->nomor,
+                    'user_name' => $createdBy->name,
+                    'karyawan_name' => $createdBy->karyawan->nama_lengkap ?? 'N/A',
+                    'karyawan_phone' => $phoneNumber
+                ]);
             } else {
                 // Fallback to company default phone (admin/CS)
-                // You can change this to your company WhatsApp number
                 $phoneNumber = '081234567890'; // TODO: Change to actual company phone
-                Log::info('SO PDF: Using fallback phone (user has no phone)', [
+                Log::warning('SO PDF: Using fallback phone (no karyawan phone)', [
                     'so_number' => $salesOrder->nomor,
-                    'user' => $createdBy ? $createdBy->name : 'Unknown'
+                    'user_name' => $createdBy ? $createdBy->name : 'Unknown',
+                    'has_karyawan' => $createdBy && $createdBy->karyawan ? true : false,
+                    'karyawan_phone' => $createdBy && $createdBy->karyawan ? $createdBy->karyawan->telepon : 'NULL'
                 ]);
             }
-            
+
             if ($phoneNumber) {
                 $whatsappQR = generateWhatsAppQRCode(
                     $phoneNumber,
@@ -1344,7 +1352,7 @@ class SalesOrderController extends Controller
                 Log::info('SO PDF QR Code Status:', [
                     'so_number' => $salesOrder->nomor,
                     'phone_used' => $phoneNumber,
-                    'is_fallback' => !($createdBy && $createdBy->phone),
+                    'is_fallback' => !($createdBy && $createdBy->karyawan && $createdBy->karyawan->telepon),
                     'qr_generated' => !is_null($whatsappQR),
                     'qr_length' => $whatsappQR ? strlen($whatsappQR) : 0,
                     'qr_preview' => $whatsappQR ? substr($whatsappQR, 0, 50) . '...' : 'NULL'

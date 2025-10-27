@@ -966,7 +966,7 @@ class PurchasingOrderController extends Controller
      */
     public function exportPdf($id)
     {
-        $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
+        $purchaseOrder = PurchaseOrder::with(['supplier', 'user.karyawan', 'purchaseRequest', 'details.produk', 'details.satuan'])
             ->findOrFail($id);
 
         // dd($purchaseOrder);
@@ -987,7 +987,7 @@ class PurchasingOrderController extends Controller
 
         if ($isProcessed) {
             // Find the log entry for processing this purchase order
-            $processLog = LogAktivitas::with('user')
+            $processLog = LogAktivitas::with('user.karyawan')
                 ->where('modul', 'purchase_order')
                 ->where('data_id', $purchaseOrder->id)
                 ->where('aktivitas', 'ubah_status')
@@ -1017,10 +1017,16 @@ class PurchasingOrderController extends Controller
         );
 
         // Generate WhatsApp QR Code for creator (Dibuat oleh)
+        // Ambil telepon dari table karyawan
         $whatsappQR = null;
-        if ($createdBy && !empty($createdBy->phone)) {
+        $creatorPhone = null;
+        if ($createdBy && $createdBy->karyawan && !empty($createdBy->karyawan->telepon)) {
+            $creatorPhone = $createdBy->karyawan->telepon;
+        }
+
+        if ($creatorPhone) {
             $whatsappQR = generateWhatsAppQRCode(
-                $createdBy->phone,
+                $creatorPhone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size
@@ -1028,7 +1034,8 @@ class PurchasingOrderController extends Controller
             Log::info('PO exportPdf - Creator QR Generated', [
                 'po_number' => $purchaseOrder->nomor,
                 'creator_name' => $createdBy->name,
-                'creator_phone' => $createdBy->phone,
+                'karyawan_name' => $createdBy->karyawan->nama_lengkap ?? 'N/A',
+                'karyawan_phone' => $creatorPhone,
                 'qr_generated' => !is_null($whatsappQR)
             ]);
         } else {
@@ -1043,16 +1050,23 @@ class PurchasingOrderController extends Controller
                 'po_number' => $purchaseOrder->nomor,
                 'creator_exists' => !is_null($createdBy),
                 'creator_name' => $createdBy ? $createdBy->name : 'NULL',
-                'creator_phone' => $createdBy ? $createdBy->phone : 'NULL'
+                'has_karyawan' => $createdBy && $createdBy->karyawan ? true : false,
+                'karyawan_phone' => $createdBy && $createdBy->karyawan ? $createdBy->karyawan->telepon : 'NULL'
             ]);
         }
 
         // Generate WhatsApp QR Code for processor (Diproses oleh) - HANYA jika sudah diproses
+        // Ambil telepon dari table karyawan
         $whatsappQRProcessor = null;
         if ($isProcessed && $processedBy) {
-            if (!empty($processedBy->phone)) {
+            $processorPhone = null;
+            if ($processedBy->karyawan && !empty($processedBy->karyawan->telepon)) {
+                $processorPhone = $processedBy->karyawan->telepon;
+            }
+
+            if ($processorPhone) {
                 $whatsappQRProcessor = generateWhatsAppQRCode(
-                    $processedBy->phone,
+                    $processorPhone,
                     'Purchase Order',
                     $purchaseOrder->nomor,
                     120 // QR Code size
@@ -1060,7 +1074,8 @@ class PurchasingOrderController extends Controller
                 Log::info('PO exportPdf - Processor QR Generated', [
                     'po_number' => $purchaseOrder->nomor,
                     'processor_name' => $processedBy->name,
-                    'processor_phone' => $processedBy->phone,
+                    'karyawan_name' => $processedBy->karyawan->nama_lengkap ?? 'N/A',
+                    'karyawan_phone' => $processorPhone,
                     'qr_generated' => !is_null($whatsappQRProcessor)
                 ]);
             } else {
@@ -1074,7 +1089,8 @@ class PurchasingOrderController extends Controller
                 Log::warning('PO exportPdf - Using fallback phone for processor', [
                     'po_number' => $purchaseOrder->nomor,
                     'processor_name' => $processedBy->name,
-                    'processor_phone' => $processedBy->phone
+                    'has_karyawan' => $processedBy->karyawan ? true : false,
+                    'karyawan_phone' => $processedBy->karyawan ? $processedBy->karyawan->telepon : 'NULL'
                 ]);
             }
         }
@@ -1126,7 +1142,7 @@ class PurchasingOrderController extends Controller
      */
     public function printPdf($id)
     {
-        $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
+        $purchaseOrder = PurchaseOrder::with(['supplier', 'user.karyawan', 'purchaseRequest', 'details.produk', 'details.satuan'])
             ->findOrFail($id);
 
         // Calculate total
@@ -1143,7 +1159,7 @@ class PurchasingOrderController extends Controller
 
         if ($isProcessed) {
             // Find the log entry for processing this purchase order
-            $processLog = LogAktivitas::with('user')
+            $processLog = LogAktivitas::with('user.karyawan')
                 ->where('modul', 'purchase_order')
                 ->where('data_id', $purchaseOrder->id)
                 ->where('aktivitas', 'ubah_status')
@@ -1173,10 +1189,16 @@ class PurchasingOrderController extends Controller
         );
 
         // Generate WhatsApp QR Code for creator (Dibuat oleh)
+        // Ambil telepon dari table karyawan
         $whatsappQR = null;
-        if ($createdBy && !empty($createdBy->phone)) {
+        $creatorPhone = null;
+        if ($createdBy && $createdBy->karyawan && !empty($createdBy->karyawan->telepon)) {
+            $creatorPhone = $createdBy->karyawan->telepon;
+        }
+
+        if ($creatorPhone) {
             $whatsappQR = generateWhatsAppQRCode(
-                $createdBy->phone,
+                $creatorPhone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size
@@ -1184,7 +1206,8 @@ class PurchasingOrderController extends Controller
             Log::info('PO printPdf - Creator QR Generated', [
                 'po_number' => $purchaseOrder->nomor,
                 'creator_name' => $createdBy->name,
-                'creator_phone' => $createdBy->phone,
+                'karyawan_name' => $createdBy->karyawan->nama_lengkap ?? 'N/A',
+                'karyawan_phone' => $creatorPhone,
                 'qr_generated' => !is_null($whatsappQR)
             ]);
         } else {
@@ -1199,16 +1222,23 @@ class PurchasingOrderController extends Controller
                 'po_number' => $purchaseOrder->nomor,
                 'creator_exists' => !is_null($createdBy),
                 'creator_name' => $createdBy ? $createdBy->name : 'NULL',
-                'creator_phone' => $createdBy ? $createdBy->phone : 'NULL'
+                'has_karyawan' => $createdBy && $createdBy->karyawan ? true : false,
+                'karyawan_phone' => $createdBy && $createdBy->karyawan ? $createdBy->karyawan->telepon : 'NULL'
             ]);
         }
 
         // Generate WhatsApp QR Code for processor (Diproses oleh) - HANYA jika sudah diproses
+        // Ambil telepon dari table karyawan
         $whatsappQRProcessor = null;
         if ($isProcessed && $processedBy) {
-            if (!empty($processedBy->phone)) {
+            $processorPhone = null;
+            if ($processedBy->karyawan && !empty($processedBy->karyawan->telepon)) {
+                $processorPhone = $processedBy->karyawan->telepon;
+            }
+
+            if ($processorPhone) {
                 $whatsappQRProcessor = generateWhatsAppQRCode(
-                    $processedBy->phone,
+                    $processorPhone,
                     'Purchase Order',
                     $purchaseOrder->nomor,
                     120 // QR Code size
@@ -1216,7 +1246,8 @@ class PurchasingOrderController extends Controller
                 Log::info('PO printPdf - Processor QR Generated', [
                     'po_number' => $purchaseOrder->nomor,
                     'processor_name' => $processedBy->name,
-                    'processor_phone' => $processedBy->phone,
+                    'karyawan_name' => $processedBy->karyawan->nama_lengkap ?? 'N/A',
+                    'karyawan_phone' => $processorPhone,
                     'qr_generated' => !is_null($whatsappQRProcessor)
                 ]);
             } else {
@@ -1230,7 +1261,8 @@ class PurchasingOrderController extends Controller
                 Log::warning('PO printPdf - Using fallback phone for processor', [
                     'po_number' => $purchaseOrder->nomor,
                     'processor_name' => $processedBy->name,
-                    'processor_phone' => $processedBy->phone
+                    'has_karyawan' => $processedBy->karyawan ? true : false,
+                    'karyawan_phone' => $processedBy->karyawan ? $processedBy->karyawan->telepon : 'NULL'
                 ]);
             }
         }
