@@ -15,6 +15,7 @@ use App\Services\BOMCostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\LogAktivitas;
 use App\Services\NotificationService;
@@ -968,6 +969,8 @@ class PurchasingOrderController extends Controller
         $purchaseOrder = PurchaseOrder::with(['supplier', 'user', 'purchaseRequest', 'details.produk', 'details.satuan'])
             ->findOrFail($id);
 
+        // dd($purchaseOrder);
+
         // Calculate total
         $total = 0;
         foreach ($purchaseOrder->details as $detail) {
@@ -976,6 +979,8 @@ class PurchasingOrderController extends Controller
 
         // Get approval/processing information from LogAktivitas
         $createdBy = $purchaseOrder->user;
+
+        // dd($createdBy);
         $processedBy = null;
         $processedAt = null;
         $isProcessed = in_array($purchaseOrder->status, ['diproses', 'dikirim', 'selesai']);
@@ -1011,26 +1016,67 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        // Generate WhatsApp QR Code for verification (with fallback)
+        // Generate WhatsApp QR Code for creator (Dibuat oleh)
         $whatsappQR = null;
-        $creatorPhone = ($createdBy && $createdBy->phone) ? $createdBy->phone : '081234567890';
-        $whatsappQR = generateWhatsAppQRCode(
-            $creatorPhone,
-            'Purchase Order',
-            $purchaseOrder->nomor,
-            120 // QR Code size
-        );
-
-        // Generate WhatsApp QR Code for processor (yang memproses PO - with fallback)
-        $whatsappQRProcessor = null;
-        if ($processedBy) {
-            $processorPhone = $processedBy->phone ?? '081234567890';
-            $whatsappQRProcessor = generateWhatsAppQRCode(
-                $processorPhone,
+        if ($createdBy && !empty($createdBy->phone)) {
+            $whatsappQR = generateWhatsAppQRCode(
+                $createdBy->phone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size
             );
+            Log::info('PO exportPdf - Creator QR Generated', [
+                'po_number' => $purchaseOrder->nomor,
+                'creator_name' => $createdBy->name,
+                'creator_phone' => $createdBy->phone,
+                'qr_generated' => !is_null($whatsappQR)
+            ]);
+        } else {
+            // Fallback: use company phone
+            $whatsappQR = generateWhatsAppQRCode(
+                '081234567890', // TODO: Ganti dengan nomor company
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120
+            );
+            Log::warning('PO exportPdf - Using fallback phone for creator', [
+                'po_number' => $purchaseOrder->nomor,
+                'creator_exists' => !is_null($createdBy),
+                'creator_name' => $createdBy ? $createdBy->name : 'NULL',
+                'creator_phone' => $createdBy ? $createdBy->phone : 'NULL'
+            ]);
+        }
+
+        // Generate WhatsApp QR Code for processor (Diproses oleh) - HANYA jika sudah diproses
+        $whatsappQRProcessor = null;
+        if ($isProcessed && $processedBy) {
+            if (!empty($processedBy->phone)) {
+                $whatsappQRProcessor = generateWhatsAppQRCode(
+                    $processedBy->phone,
+                    'Purchase Order',
+                    $purchaseOrder->nomor,
+                    120 // QR Code size
+                );
+                Log::info('PO exportPdf - Processor QR Generated', [
+                    'po_number' => $purchaseOrder->nomor,
+                    'processor_name' => $processedBy->name,
+                    'processor_phone' => $processedBy->phone,
+                    'qr_generated' => !is_null($whatsappQRProcessor)
+                ]);
+            } else {
+                // Fallback untuk processor
+                $whatsappQRProcessor = generateWhatsAppQRCode(
+                    '081234567890', // TODO: Ganti dengan nomor company
+                    'Purchase Order',
+                    $purchaseOrder->nomor,
+                    120
+                );
+                Log::warning('PO exportPdf - Using fallback phone for processor', [
+                    'po_number' => $purchaseOrder->nomor,
+                    'processor_name' => $processedBy->name,
+                    'processor_phone' => $processedBy->phone
+                ]);
+            }
         }
 
         // Get template parameter from request
@@ -1126,26 +1172,67 @@ class PurchasingOrderController extends Controller
             ]
         );
 
-        // Generate WhatsApp QR Code for verification (with fallback)
+        // Generate WhatsApp QR Code for creator (Dibuat oleh)
         $whatsappQR = null;
-        $creatorPhone = ($createdBy && $createdBy->phone) ? $createdBy->phone : '081234567890';
-        $whatsappQR = generateWhatsAppQRCode(
-            $creatorPhone,
-            'Purchase Order',
-            $purchaseOrder->nomor,
-            120 // QR Code size
-        );
-
-        // Generate WhatsApp QR Code for processor (yang memproses PO - with fallback)
-        $whatsappQRProcessor = null;
-        if ($processedBy) {
-            $processorPhone = $processedBy->phone ?? '081234567890';
-            $whatsappQRProcessor = generateWhatsAppQRCode(
-                $processorPhone,
+        if ($createdBy && !empty($createdBy->phone)) {
+            $whatsappQR = generateWhatsAppQRCode(
+                $createdBy->phone,
                 'Purchase Order',
                 $purchaseOrder->nomor,
                 120 // QR Code size
             );
+            Log::info('PO printPdf - Creator QR Generated', [
+                'po_number' => $purchaseOrder->nomor,
+                'creator_name' => $createdBy->name,
+                'creator_phone' => $createdBy->phone,
+                'qr_generated' => !is_null($whatsappQR)
+            ]);
+        } else {
+            // Fallback: use company phone
+            $whatsappQR = generateWhatsAppQRCode(
+                '081234567890', // TODO: Ganti dengan nomor company
+                'Purchase Order',
+                $purchaseOrder->nomor,
+                120
+            );
+            Log::warning('PO printPdf - Using fallback phone for creator', [
+                'po_number' => $purchaseOrder->nomor,
+                'creator_exists' => !is_null($createdBy),
+                'creator_name' => $createdBy ? $createdBy->name : 'NULL',
+                'creator_phone' => $createdBy ? $createdBy->phone : 'NULL'
+            ]);
+        }
+
+        // Generate WhatsApp QR Code for processor (Diproses oleh) - HANYA jika sudah diproses
+        $whatsappQRProcessor = null;
+        if ($isProcessed && $processedBy) {
+            if (!empty($processedBy->phone)) {
+                $whatsappQRProcessor = generateWhatsAppQRCode(
+                    $processedBy->phone,
+                    'Purchase Order',
+                    $purchaseOrder->nomor,
+                    120 // QR Code size
+                );
+                Log::info('PO printPdf - Processor QR Generated', [
+                    'po_number' => $purchaseOrder->nomor,
+                    'processor_name' => $processedBy->name,
+                    'processor_phone' => $processedBy->phone,
+                    'qr_generated' => !is_null($whatsappQRProcessor)
+                ]);
+            } else {
+                // Fallback untuk processor
+                $whatsappQRProcessor = generateWhatsAppQRCode(
+                    '081234567890', // TODO: Ganti dengan nomor company
+                    'Purchase Order',
+                    $purchaseOrder->nomor,
+                    120
+                );
+                Log::warning('PO printPdf - Using fallback phone for processor', [
+                    'po_number' => $purchaseOrder->nomor,
+                    'processor_name' => $processedBy->name,
+                    'processor_phone' => $processedBy->phone
+                ]);
+            }
         }
 
         // Get template parameter from request
