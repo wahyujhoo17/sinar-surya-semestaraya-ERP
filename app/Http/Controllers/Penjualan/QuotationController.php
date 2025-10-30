@@ -41,7 +41,7 @@ class QuotationController extends Controller
     {
         $query = null;
 
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
             $query = Quotation::query();
         } else {
             $query = Quotation::where('user_id', Auth::id());
