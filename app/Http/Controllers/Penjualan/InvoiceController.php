@@ -72,7 +72,7 @@ class InvoiceController extends Controller
     {
         $query = null;
 
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan')) {
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
             $query = Invoice::query();
         } else {
             $query = Invoice::where('user_id', Auth::id());
