@@ -512,15 +512,35 @@
         }
 
         .signature-line {
-            height: 40px;
+            height: 30px;
             border-bottom: 1px solid #cbd5e1;
             margin-bottom: 8px;
+            margin-top: 5px;
         }
 
         .signature-label {
             color: #334155;
             font-size: 10px;
             font-weight: bold;
+        }
+
+        .qr-signature {
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .qr-label {
+            font-size: 8px;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+
+        .qr-code-small {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #e5e7eb;
+            padding: 3px;
+            margin-bottom: 5px;
         }
 
         /* Thank you message - now as footer */
@@ -901,16 +921,25 @@
                 </div>
 
                 <div class="signature-section">
-                    <div class="signature-row">
-                        <div class="signature-item">
+                    <div class="signature-row" style="justify-content: center;">
+                        <div class="signature-item" style="width: 40%; margin: 0 auto;">
+                            {{-- WhatsApp QR Code for Creator --}}
+                            @if (isset($whatsappQR) && $whatsappQR)
+                                <div class="qr-signature">
+                                    <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                                    <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                                        class="qr-code-small">
+                                </div>
+                            @else
+                                <div style="height: 60px; margin: 5px 0;"></div>
+                            @endif
+
                             <div class="signature-line"></div>
                             <p class="signature-label">{{ $quotation->user->name ?? 'Sales' }}</p>
                             <p style="font-size: 8px; margin: 2px 0; color: #64748b;">Sales Representative</p>
-                        </div>
-                        <div class="signature-item">
-                            <div class="signature-line"></div>
-                            <p class="signature-label">Direktur</p>
-                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">PT Indo Atsaka Industri</p>
+                            <p style="font-size: 8px; margin: 2px 0; color: #64748b;">
+                                {{ \Carbon\Carbon::parse($quotation->created_at)->format('d/m/Y H:i') }}
+                            </p>
                         </div>
                     </div>
                 </div>

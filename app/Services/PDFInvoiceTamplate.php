@@ -13,7 +13,7 @@ class PDFInvoiceTamplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '')
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice-New.pdf');
 
         // XY = 214x 163
@@ -103,6 +103,7 @@ class PDFInvoiceTamplate
             // --- Items Table Header ---
             $itemsStartY = 61;
             $lineHeight = 6;
+            $maxItemsPerPage = 7; // Maksimal 7 item per halaman
 
             // Fixed summary position: reserve space at bottom so summary is always at the same Y
             $yTotal = $customHeight - 47; // posisi paling bawah (fix), digeser 3 unit ke bawah
@@ -117,7 +118,52 @@ class PDFInvoiceTamplate
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
             $currentY = $itemsStartY + $lineHeight;
+            $itemCount = 0;
+            $pageNumber = 1;
+            $totalItems = count($invoice->details);
+
             foreach ($invoice->details as $index => $detail) {
+                // Cek apakah perlu halaman baru
+                if ($itemCount >= $maxItemsPerPage && $index < $totalItems) {
+                    // Tambah halaman baru
+                    $pageNumber++;
+                    $pdf->AddPage($orientation, [$customWidth, $customHeight]);
+
+                    // Terapkan template jika ada
+                    if ($useTemplate && file_exists($templatePath)) {
+                        $tplId = $pdf->importPage(1);
+                        $pdf->useTemplate($tplId, 0, 0, $customWidth, $customHeight);
+                    }
+
+                    // Reset posisi dan counter
+                    $currentY = $itemsStartY + $lineHeight;
+                    $itemCount = 0;
+
+                    // Cetak ulang header untuk halaman baru
+                    $pdf->SetFont('helvetica', '', 10);
+                    $pdf->SetXY(97, 36.5);
+                    $pdf->Cell(0, 0, $invoice->nomor . ' (Hal. ' . $pageNumber . ')', 0, 0, 'L');
+                    $pdf->SetXY(156, 13.5);
+                    $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
+
+                    // Customer info
+                    $pdf->SetFont('helvetica', 'B', 9);
+                    $pdf->SetXY($customerX, $customerY);
+                    $customerNameHeight = $pdf->getStringHeight($maxCustomerWidth, $customerName);
+                    $pdf->MultiCell($maxCustomerWidth, 5, $customerName, 0, 'L');
+
+                    $alamatY = $customerY + $customerNameHeight + 1;
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY($customerX, $alamatY);
+                    $pdf->MultiCell($maxCustomerWidth, 4, $alamatText, 0, 'L');
+
+                    // Table header
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->SetXY(22.5, $itemsStartY - 2);
+                    $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 8);
+                }
+
                 if ($currentY > $itemsMaxY) break;
 
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
@@ -164,6 +210,7 @@ class PDFInvoiceTamplate
                 $pdf->SetXY($subtotalX, $yNama);
                 $pdf->Cell(26, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
                 $currentY += $namaHeight;
+                $itemCount++;
             }
 
             // --- Summary (dari bawah ke atas) ---

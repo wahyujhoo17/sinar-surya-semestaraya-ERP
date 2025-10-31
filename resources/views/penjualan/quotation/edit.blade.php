@@ -476,7 +476,7 @@
                                         <!-- Hidden fields for bundle header -->
                                         <input type="hidden" :name="`items[${index}][id]`" x-model="item.item_id_db">
                                         <input type="hidden" :name="`items[${index}][bundle_id]`"
-                                            :value="item.bundle_id">
+                                            :value="item.bundle_ref_id || item.bundle_id">
                                         <input type="hidden" :name="`items[${index}][is_bundle]`" value="1">
                                         <input type="hidden" :name="`items[${index}][kuantitas]`"
                                             :value="item.kuantitas">
@@ -665,7 +665,7 @@
                                                 <input type="hidden" :name="`items[${index}][is_bundle_item]`"
                                                     :value="item.is_bundle_item ? 1 : 0">
                                                 <input type="hidden" :name="`items[${index}][bundle_id]`"
-                                                    :value="item.bundle_id || ''">
+                                                    :value="item.bundle_ref_id || item.bundle_id || ''">
                                                 <input type="hidden" :name="`items[${index}][bundle_nama]`"
                                                     :value="item.bundle_nama || ''">
 
@@ -692,79 +692,119 @@
                                         </div>
                                     </div>
 
+                                    <!-- Bundle Child Items - Displayed right after bundle header -->
+                                    <template x-if="item.is_bundle">
+                                        <template
+                                            x-for="(childItem, childIndex) in $data.items.filter(i => i.is_bundle_item && i.bundle_id === item.bundle_id)"
+                                            :key="'child-' + childItem.id">
+                                            <div
+                                                class="ml-6 mt-2 border-l-2 border-gray-300 dark:border-gray-600 pl-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-r">
+                                                <div class="flex items-center justify-between text-sm">
+                                                    <div class="flex items-center space-x-2">
+                                                        <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                                                        <span class="font-medium text-gray-700 dark:text-gray-300"
+                                                            x-text="childItem.nama || childItem.produk_nama || 'Bundle Item'"></span>
+                                                        <span class="text-gray-500 dark:text-gray-400"
+                                                            x-text="'(' + (childItem.kode || childItem.produk_kode || '') + ')'"></span>
+                                                    </div>
+                                                    <div
+                                                        class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
+                                                        <span
+                                                            x-text="childItem.kuantitas + ' ' + (childItem.satuan_nama || 'pcs')"></span>
+                                                        <span class="text-gray-400"
+                                                            x-show="childItem.base_quantity && childItem.kuantitas !== childItem.base_quantity">
+                                                            (<span x-text="childItem.base_quantity"></span> × <span
+                                                                x-text="Math.round(childItem.kuantitas / childItem.base_quantity)"></span>
+                                                            paket)
+                                                        </span>
+                                                        <span>×</span>
+                                                        <template
+                                                            x-if="childItem.total_diskon_persen && childItem.total_diskon_persen > 0">
+                                                            <div class="flex items-center space-x-1">
+                                                                <span class="line-through text-gray-400"
+                                                                    x-text="formatRupiah(childItem.harga)"></span>
+                                                                <span class="text-green-600 font-medium"
+                                                                    x-text="formatRupiah(childItem.harga * (1 - (childItem.total_diskon_persen || 0) / 100))"></span>
+                                                            </div>
+                                                        </template>
+                                                        <template
+                                                            x-if="!childItem.total_diskon_persen || childItem.total_diskon_persen <= 0">
+                                                            <span x-text="formatRupiah(childItem.harga)"></span>
+                                                        </template>
+                                                        <template
+                                                            x-if="childItem.total_diskon_persen && childItem.total_diskon_persen > 0">
+                                                            <div class="flex items-center space-x-1">
+                                                                <span class="text-red-500">(-<span
+                                                                        x-text="childItem.total_diskon_persen.toFixed(2)"></span>%)</span>
+                                                            </div>
+                                                        </template>
+                                                        <span>=</span>
+                                                        <span class="font-semibold text-gray-700 dark:text-gray-300"
+                                                            x-text="formatRupiah(childItem.subtotal || (childItem.harga * childItem.kuantitas))"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </template>
+
                                 </div>
                             </template>
 
-                            <!-- BUNDLE CHILD ITEMS - Display child items separately (like Create Page) -->
-                            <template x-for="(item, index) in items" :key="'child-' + item.id">
-                                <div x-show="item.is_bundle_item"
-                                    class="ml-6 border-l-2 border-gray-300 dark:border-gray-600 pl-4 py-2 bg-gray-50 dark:bg-gray-800/50 rounded-r">
-                                    <div class="flex items-center justify-between text-sm">
-                                        <div class="flex items-center space-x-2">
-                                            <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
-                                            <span class="font-medium text-gray-700 dark:text-gray-300"
-                                                x-text="item.nama || item.produk_nama || 'Bundle Item'"></span>
-                                            <span class="text-gray-500 dark:text-gray-400"
-                                                x-text="'(' + (item.kode || item.produk_kode || '') + ')' "></span>
+                            <!-- Hidden inputs for ALL bundle child items (outside the visible loop) -->
+                            <template x-for="(item, index) in $data.items" :key="'hidden-' + item.id">
+                                <div x-show="false">
+                                    <template x-if="item.is_bundle_item">
+                                        <div>
+                                            <input type="hidden" :name="`items[${index}][id]`"
+                                                x-model="item.item_id_db">
+                                            <input type="hidden" :name="`items[${index}][produk_id]`"
+                                                :value="item.produk_id">
+                                            <input type="hidden" :name="`items[${index}][is_bundle_item]`"
+                                                value="1">
+                                            <input type="hidden" :name="`items[${index}][bundle_id]`"
+                                                :value="item.bundle_ref_id || item.bundle_id">
+                                            <input type="hidden" :name="`items[${index}][kuantitas]`"
+                                                :value="item.kuantitas">
+                                            <input type="hidden" :name="`items[${index}][satuan_id]`"
+                                                :value="item.satuan_id">
+                                            <input type="hidden" :name="`items[${index}][harga]`"
+                                                :value="item.harga">
+                                            <input type="hidden" :name="`items[${index}][deskripsi]`"
+                                                :value="item.deskripsi">
+                                            <input type="hidden" :name="`items[${index}][diskon_persen_item]`"
+                                                :value="item.total_diskon_persen || 0">
+                                            <input type="hidden" :name="`items[${index}][diskon_nominal_item]`"
+                                                :value="item.diskon_nominal || 0">
+                                            <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                :value="item.subtotal">
                                         </div>
-                                        <div
-                                            class="flex items-center space-x-3 text-xs text-gray-500 dark:text-gray-400">
-                                            <span x-text="item.kuantitas + ' ' + (item.satuan_nama || 'pcs')"></span>
-                                            <span class="text-gray-400"
-                                                x-show="item.base_quantity && item.kuantitas !== item.base_quantity">
-                                                (<span x-text="item.base_quantity"></span> × <span
-                                                    x-text="Math.round(item.kuantitas / item.base_quantity)"></span>
-                                                paket)
-                                            </span>
-                                            <span>×</span>
-                                            <!-- Show original price if there's discount -->
-                                            <template x-if="item.total_diskon_persen && item.total_diskon_persen > 0">
-                                                <div class="flex items-center space-x-1">
-                                                    <span class="line-through text-gray-400"
-                                                        x-text="formatRupiah(item.harga)"></span>
-                                                    <span class="text-green-600 font-medium"
-                                                        x-text="formatRupiah(item.harga * (1 - (item.total_diskon_persen || 0) / 100))"></span>
-                                                </div>
-                                            </template>
-                                            <!-- Show original price if no discount -->
-                                            <template
-                                                x-if="!item.total_diskon_persen || item.total_diskon_persen <= 0">
-                                                <span x-text="formatRupiah(item.harga)"></span>
-                                            </template>
-                                            <!-- Show total discount if applicable -->
-                                            <template x-if="item.total_diskon_persen && item.total_diskon_persen > 0">
-                                                <div class="flex items-center space-x-1">
-                                                    <span class="text-red-500">(-<span
-                                                            x-text="item.total_diskon_persen.toFixed(2)"></span>%)</span>
-                                                </div>
-                                            </template>
-                                            <span>=</span>
-                                            <span class="font-semibold text-gray-700 dark:text-gray-300"
-                                                x-text="formatRupiah(item.subtotal || (item.harga * item.kuantitas))"></span>
-                                        </div>
-                                    </div>
-                                    <!-- Hidden inputs for bundle child items -->
-                                    <input type="hidden" :name="`items[${index}][id]`" x-model="item.item_id_db">
-                                    <input type="hidden" :name="`items[${index}][produk_id]`"
-                                        :value="item.produk_id">
-                                    <input type="hidden" :name="`items[${index}][is_bundle_item]`" value="1">
-                                    <input type="hidden" :name="`items[${index}][bundle_id]`"
-                                        :value="item.bundle_id">
-                                    <input type="hidden" :name="`items[${index}][kuantitas]`"
-                                        :value="item.kuantitas">
-                                    <input type="hidden" :name="`items[${index}][satuan_id]`"
-                                        :value="item.satuan_id">
-                                    <input type="hidden" :name="`items[${index}][harga]`" :value="item.harga">
-                                    <input type="hidden" :name="`items[${index}][deskripsi]`"
-                                        :value="item.deskripsi">
-                                    <!-- Store total discount from bundle -->
-                                    <input type="hidden" :name="`items[${index}][diskon_persen_item]`"
-                                        :value="item.total_diskon_persen || 0">
-                                    <input type="hidden" :name="`items[${index}][diskon_nominal_item]`"
-                                        :value="item.diskon_nominal || 0">
-                                    <input type="hidden" :name="`items[${index}][subtotal]`" :value="item.subtotal">
+                                    </template>
                                 </div>
                             </template>
+                        </div>
+
+                        <!-- Action buttons at the bottom of items list -->
+                        <div x-show="$data.items && $data.items.length > 0" class="mt-4 flex justify-center gap-3">
+
+                            <button type="button" @click="addItem"
+                                class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-lg text-sm font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                </svg>
+                                Tambah Item
+                            </button>
+                            <button type="button" @click="showBundleModal = true"
+                                class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m-8-4l8 4m8 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                </svg>
+                                Tambah Bundle Produk
+                            </button>
+
                         </div>
                     </div>
                 </div>
@@ -1513,9 +1553,9 @@
                         this.showBundleModal = false;
                         this.bundleSearch = '';
 
-                        // Check if bundle already exists
+                        // Check if bundle already exists using bundle_ref_id
                         const existingBundleIndex = this.items.findIndex(item =>
-                            item.is_bundle && item.bundle_id === bundle.id
+                            item.is_bundle && item.bundle_ref_id === bundle.id
                         );
 
                         if (existingBundleIndex !== -1) {
@@ -1606,11 +1646,15 @@
                             const bundleDiskonNominal = (bundleSubtotalBefore * bundleDiskonPersen) / 100;
                             const bundleSubtotalAfter = bundleSubtotalBefore - bundleDiskonNominal;
 
+                            // Generate a unique bundle instance ID to separate different bundles
+                            const bundleInstanceId = `bundle_${bundleData.id}_${Date.now()}_${this.nextItemId}`;
+
                             // Add bundle as main item with bundle type
                             const bundleMainItem = {
                                 id: this.nextItemId++,
                                 produk_id: '', // Bundle doesn't have single product ID
-                                bundle_id: bundleData.id,
+                                bundle_id: bundleInstanceId, // Use unique instance ID
+                                bundle_ref_id: bundleData.id, // Store original bundle ID for reference
                                 item_type: 'bundle',
                                 deskripsi: `Bundle: ${bundleData.nama}`,
                                 kuantitas: 1,
@@ -1638,7 +1682,8 @@
                                 const childItem = {
                                     id: this.nextItemId++,
                                     produk_id: item.produk_id,
-                                    bundle_id: bundleData.id,
+                                    bundle_id: bundleInstanceId, // Use same unique instance ID
+                                    bundle_ref_id: bundleData.id, // Store original bundle ID for reference
                                     item_type: 'bundle_item',
                                     parent_bundle_name: bundleData.nama,
                                     kode: item.produk_kode || '',

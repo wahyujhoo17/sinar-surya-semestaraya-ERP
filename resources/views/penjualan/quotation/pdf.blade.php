@@ -137,7 +137,26 @@
         .signature-line {
             border-top: 1px solid #b8c4d6;
             width: 80%;
-            margin: 50px auto 10px auto;
+            margin: 10px auto 8px auto;
+        }
+
+        .qr-signature {
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .qr-label {
+            font-size: 8px;
+            color: #7f8c8d;
+            margin-bottom: 3px;
+        }
+
+        .qr-code-small {
+            width: 70px;
+            height: 70px;
+            border: 1px solid #ddd;
+            padding: 3px;
+            margin-bottom: 5px;
         }
 
         .footer {
@@ -461,17 +480,26 @@
     </div>
 
     <!-- Signatures -->
+    <!-- Signatures -->
     <table class="signature-table">
         <tr>
-            <td>
-                <div class="signature-line"></div>
+            <td style="text-align: center;">
+                {{-- WhatsApp QR Code for Creator --}}
+                @if (isset($whatsappQR) && $whatsappQR)
+                    <div class="qr-signature">
+                        <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                        <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code" class="qr-code-small">
+                    </div>
+                @else
+                    <div style="height: 70px; margin: 5px 0;"></div>
+                @endif
+
+                <div class="signature-line" style="width: 200px; margin: 10px auto 8px auto;"></div>
                 <div><strong style="color: #2c3e50;">{{ $quotation->user->name ?? 'Sales' }}</strong></div>
-                <div style="color: #7f8c8d;">Sales</div>
-            </td>
-            <td>
-                <div class="signature-line"></div>
-                <div><strong style="color: #2c3e50;">Mengetahui</strong></div>
-                <div style="color: #7f8c8d;">Direktur</div>
+                <div style="color: #7f8c8d;">Sales Representative</div>
+                <div style="font-size: 9px; color: #64748b; margin-top: 3px;">
+                    {{ \Carbon\Carbon::parse($quotation->created_at)->format('d/m/Y H:i') }}
+                </div>
             </td>
         </tr>
     </table>

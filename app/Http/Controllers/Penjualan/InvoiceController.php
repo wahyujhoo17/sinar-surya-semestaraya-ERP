@@ -872,9 +872,13 @@ class InvoiceController extends Controller
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
+            // Get bank accounts for payment information
+            $bankAccounts = get_bank_accounts_for_invoice();
+            $primaryBank = get_primary_bank_account();
+
             // Use PDF template service untuk Non PPN
             $pdfService = new \App\Services\PDFInvoiceNonPpnTemplate();
-            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $bankAccounts, $primaryBank);
 
             // Output PDF
             $filename = 'Invoice-Non-PPN-' . $invoice->nomor . '.pdf';

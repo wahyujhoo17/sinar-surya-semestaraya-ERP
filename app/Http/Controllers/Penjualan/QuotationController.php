@@ -1000,6 +1000,17 @@ class QuotationController extends Controller
             $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan', 'details.bundle'])
                 ->findOrFail($id);
 
+            // Generate WhatsApp QR Code for creator signature
+            $whatsappQR = null;
+            if ($quotation->user && $quotation->user->phone) {
+                $whatsappQR = generateWhatsAppQRCode(
+                    $quotation->user->phone,
+                    'Quotation',
+                    $quotation->nomor,
+                    120
+                );
+            }
+
             // Define available templates and their configurations
             $templates = [
                 'default' => [
@@ -1029,7 +1040,8 @@ class QuotationController extends Controller
             // Load the PDF view with optimized settings
             $pdf = Pdf::loadView($templateConfig['view'], [
                 'quotation' => $quotation,
-                'template_config' => $templateConfig
+                'template_config' => $templateConfig,
+                'whatsappQR' => $whatsappQR
             ]);
 
             // Set paper size and orientation with optimization

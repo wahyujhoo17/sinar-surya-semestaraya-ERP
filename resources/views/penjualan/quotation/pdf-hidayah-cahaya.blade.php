@@ -184,6 +184,25 @@
             }
         }
 
+        .qr-signature {
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        .qr-label {
+            font-size: 8px;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+
+        .qr-code-small {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #e5e7eb;
+            padding: 3px;
+            margin-bottom: 5px;
+        }
+
         /* Watermark background */
         .watermark-bg {
             position: fixed;
@@ -673,26 +692,27 @@
         <div class="signature-section"
             style="display: table; width: 100%; border-collapse: separate; border-spacing: 0; page-break-inside: avoid;">
             <div style="display: table-row;">
-                <div
-                    style="display: table-cell; vertical-align: top; width: 50%; padding-right: 30px; text-align: center;">
-                    <div style="height: 60px; margin-bottom: 8px;"></div>
-                    <div
-                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                <div style="display: table-cell; vertical-align: top; text-align: center;">
+                    {{-- WhatsApp QR Code for Creator --}}
+                    @if (isset($whatsappQR) && $whatsappQR)
+                        <div class="qr-signature">
+                            <div class="qr-label">Scan untuk Verifikasi via WhatsApp</div>
+                            <img src="{{ $whatsappQR }}" alt="WhatsApp Verification QR Code"
+                                class="qr-code-small">
+                        </div>
+                    @else
+                        <div style="height: 60px; margin: 5px 0;"></div>
+                    @endif
+
+                    <div style="border-bottom: 1px solid var(--hcb-blue); margin: 5px auto 8px auto; width: 200px;">
                     </div>
                     <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
                         {{ $quotation->user->name ?? 'Sales Representative' }}
                     </div>
                     <div style="font-size: 10px; color: #6b7280;">Sales Representative</div>
-                </div>
-                <div style="display: table-cell; vertical-align: top; width: 50%; text-align: center;">
-                    <div style="height: 60px; margin-bottom: 8px;"></div>
-                    <div
-                        style="border-bottom: 1px solid var(--hcb-blue); margin-bottom: 8px; width: 150px; margin-left: auto; margin-right: auto;">
+                    <div style="font-size: 8px; color: #9ca3af; margin-top: 3px;">
+                        {{ \Carbon\Carbon::parse($quotation->created_at)->format('d/m/Y H:i') }}
                     </div>
-                    <div style="font-weight: 700; color: var(--hcb-blue); font-size: 11px; margin-bottom: 4px;">
-                        Direktur
-                    </div>
-                    <div style="font-size: 10px; color: #6b7280;">PT Hidayah Cahaya Berkah</div>
                 </div>
             </div>
         </div>

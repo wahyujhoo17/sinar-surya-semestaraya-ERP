@@ -11,7 +11,7 @@ class PDFInvoiceNonPpnTemplate
     /**
      * Generate Invoice PDF untuk template Non PPN
      */
-    public function fillInvoiceTemplate($invoice, $namaDirektur = '')
+    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $bankAccounts = null, $primaryBank = null)
     {
         $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice Non PPn.pdf');
@@ -94,6 +94,7 @@ class PDFInvoiceNonPpnTemplate
             // --- Items Table Header ---
             $itemsStartY = 51;
             $lineHeight = 5.5;
+            $maxItemsPerPage = 7; // Maksimal 7 item per halaman
 
             // Fixed summary position: reserve space at bottom so summary is always at the same Y
             $yTotal = $customHeight - 40; // posisi paling bawah (fix), disesuaikan untuk tinggi 154, digeser ke atas 6mm
@@ -108,7 +109,63 @@ class PDFInvoiceNonPpnTemplate
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
             $currentY = $itemsStartY + $lineHeight;
+            $itemCount = 0;
+            $pageNumber = 1;
+            $totalItems = count($invoice->details);
+
             foreach ($invoice->details as $index => $detail) {
+                // Cek apakah perlu halaman baru
+                if ($itemCount >= $maxItemsPerPage && $index < $totalItems) {
+                    // Tambah halaman baru
+                    $pageNumber++;
+                    $pdf->AddPage($orientation, [$customWidth, $customHeight]);
+
+                    // Terapkan template jika ada
+                    if ($useTemplate && file_exists($templatePath)) {
+                        $tplId = $pdf->importPage(1);
+                        $pdf->useTemplate($tplId, 0, 0, $customWidth, $customHeight);
+                    }
+
+                    // Reset posisi dan counter
+                    $currentY = $itemsStartY + $lineHeight;
+                    $itemCount = 0;
+
+                    // Cetak ulang header untuk halaman baru
+                    $pdf->SetFont('helvetica', '', 10);
+                    $pdf->SetXY(100, 31);
+                    $pdf->Cell(0, 0, $invoice->nomor . ' (Hal. ' . $pageNumber . ')', 0, 0, 'L');
+                    $pdf->SetXY(163, 9);
+                    $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
+
+                    // Customer info
+                    $pdf->SetFont('helvetica', 'B', 9);
+                    $pdf->SetXY($customerX, $customerY);
+                    $customerNameHeight = $pdf->getStringHeight($maxCustomerWidth, $customerName);
+                    $pdf->MultiCell($maxCustomerWidth, 5, $customerName, 0, 'L');
+
+                    $alamatY = $customerY + $customerNameHeight + 1;
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY($customerX, $alamatY);
+                    $pdf->MultiCell($maxCustomerWidth, 4, $alamatText, 0, 'L');
+
+                    // DETAIL INV
+                    $pdf->SetFont('helvetica', '', 9);
+                    $pdf->SetXY($salesOrderX, $salesOrderY);
+                    $pdf->MultiCell($maxDetilWidth, 4, $nomorPOText, 0, 'L');
+
+                    $pdf->SetXY($salesOrderX, $salesOrderY + 10);
+                    $pdf->MultiCell($maxDetilWidth, 4, $nomorPembayaran, 0, align: 'L');
+
+                    $pdf->SetXY($salesOrderX, $salesOrderY + 20);
+                    $pdf->MultiCell($maxDetilWidth, 4, $salesName, 0, 'L');
+
+                    // Table header
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->SetXY(22.5, $itemsStartY - 2);
+                    $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+                    $pdf->SetFont('helvetica', '', 8);
+                }
+
                 if ($currentY > $itemsMaxY) break;
 
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
@@ -155,6 +212,7 @@ class PDFInvoiceNonPpnTemplate
                 $pdf->SetXY($subtotalX, $yNama);
                 $pdf->Cell(26, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
                 $currentY += $namaHeight;
+                $itemCount++;
             }
 
             // --- Summary (dari bawah ke atas) - UNTUK NON PPN, SKIP PPN CALCULATION ---
@@ -205,6 +263,76 @@ class PDFInvoiceNonPpnTemplate
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
             $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
+
+            // --- Informasi Pembayaran (Pojok Kiri Bawah) ---
+            $paymentInfoX = 14;
+            $paymentInfoY = 124; // Posisi di bawah terbilang, digeser ke bawah 7mm
+
+            $pdf->SetFont('helvetica', 'B', 8);
+            $pdf->SetXY($paymentInfoX, $paymentInfoY);
+            $pdf->Cell(0, 4, 'Informasi Pembayaran:', 0, 1, 'L');
+
+            $pdf->SetFont('helvetica', '', 7.5);
+            $currentPaymentY = $paymentInfoY + 4;
+
+            // Tentukan bank yang akan ditampilkan
+            $displayBank = null;
+            if ($primaryBank) {
+                $displayBank = $primaryBank;
+            } elseif ($bankAccounts && $bankAccounts->isNotEmpty()) {
+                $displayBank = $bankAccounts->first();
+            }
+
+            if ($displayBank) {
+                // Tampilkan primary/first bank
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'Bank: ' . ($displayBank->nama_bank ?? 'Mandiri'), 0, 'L');
+                $currentPaymentY = $pdf->GetY();
+
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'No. Rekening: ' . ($displayBank->nomor_rekening ?? '006.000.301.9563'), 0, 'L');
+                $currentPaymentY = $pdf->GetY();
+
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'Atas Nama: ' . ($displayBank->atas_nama ?? setting('company_name', 'PT. Sinar Surya Semestaraya')), 0, 'L');
+                $currentPaymentY = $pdf->GetY();
+
+                // Tampilkan bank alternatif jika ada
+                if ($bankAccounts && $bankAccounts->count() > 1) {
+                    $alternativeBanks = $bankAccounts->filter(function ($bank) use ($displayBank) {
+                        return $bank->id !== $displayBank->id;
+                    });
+
+                    if ($alternativeBanks->isNotEmpty()) {
+                        $currentPaymentY += 1; // spacing
+                        $pdf->SetFont('helvetica', 'B', 7);
+                        $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                        $pdf->Cell(0, 3, 'Bank Alternatif:', 0, 1, 'L');
+                        $currentPaymentY = $pdf->GetY();
+
+                        $pdf->SetFont('helvetica', '', 7);
+                        foreach ($alternativeBanks as $altBank) {
+                            $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                            $altBankText = $altBank->nama_bank . ': ' . $altBank->nomor_rekening .
+                                ' (a.n. ' . $altBank->atas_nama . ')';
+                            $pdf->MultiCell(70, 3, $altBankText, 0, 'L');
+                            $currentPaymentY = $pdf->GetY();
+                        }
+                    }
+                }
+            } else {
+                // Fallback ke hardcoded data jika tidak ada bank settings
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'Bank: ' . setting('company_bank_name', 'Mandiri'), 0, 'L');
+                $currentPaymentY = $pdf->GetY();
+
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'No. Rekening: ' . setting('company_bank_account', '006.000.301.9563'), 0, 'L');
+                $currentPaymentY = $pdf->GetY();
+
+                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                $pdf->MultiCell(70, 3, 'Atas Nama: ' . setting('company_name', 'PT. Sinar Surya Semestaraya'), 0, 'L');
+            }
 
             // --- Catatan ---
             $nomorINV = $invoice->nomor;
