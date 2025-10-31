@@ -113,6 +113,81 @@ class PDFInvoiceNonPpnTemplate
             $pageNumber = 1;
             $totalItems = count($invoice->details);
 
+            // Fungsi helper untuk menampilkan informasi pembayaran
+            $printPaymentInfo = function () use ($pdf, $bankAccounts, $primaryBank, $customHeight) {
+                $paymentInfoX = 41;
+                $paymentInfoY = 127;
+
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetXY($paymentInfoX, $paymentInfoY);
+                $pdf->Cell(0, 4, 'Informasi Pembayaran:', 0, 1, 'L');
+
+                $pdf->SetFont('helvetica', '', 7.5);
+                $currentPaymentY = $paymentInfoY + 4;
+
+                // Tentukan bank yang akan ditampilkan
+                $displayBank = null;
+                if ($primaryBank) {
+                    $displayBank = $primaryBank;
+                } elseif ($bankAccounts && $bankAccounts->isNotEmpty()) {
+                    $displayBank = $bankAccounts->first();
+                }
+
+                if ($displayBank) {
+                    // Tampilkan primary/first bank
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'Bank: ' . ($displayBank->nama_bank ?? 'Mandiri'), 0, 'L');
+                    $currentPaymentY = $pdf->GetY();
+
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'No. Rekening: ' . ($displayBank->nomor_rekening ?? '006.000.301.9563'), 0, 'L');
+                    $currentPaymentY = $pdf->GetY();
+
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'Atas Nama: ' . ($displayBank->atas_nama ?? setting('company_name', 'PT. Sinar Surya Semestaraya')), 0, 'L');
+                    $currentPaymentY = $pdf->GetY();
+
+                    // Tampilkan bank alternatif jika ada
+                    if ($bankAccounts && $bankAccounts->count() > 1) {
+                        $alternativeBanks = $bankAccounts->filter(function ($bank) use ($displayBank) {
+                            return $bank->id !== $displayBank->id;
+                        });
+
+                        if ($alternativeBanks->isNotEmpty()) {
+                            $currentPaymentY += 1;
+                            $pdf->SetFont('helvetica', 'B', 7);
+                            $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                            $pdf->Cell(0, 3, 'Bank Alternatif:', 0, 1, 'L');
+                            $currentPaymentY = $pdf->GetY();
+
+                            $pdf->SetFont('helvetica', '', 7);
+                            foreach ($alternativeBanks as $altBank) {
+                                $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                                $altBankText = $altBank->nama_bank . ': ' . $altBank->nomor_rekening .
+                                    ' (a.n. ' . $altBank->atas_nama . ')';
+                                $pdf->MultiCell(70, 3, $altBankText, 0, 'L');
+                                $currentPaymentY = $pdf->GetY();
+                            }
+                        }
+                    }
+                } else {
+                    // Fallback ke hardcoded data jika tidak ada bank settings
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'Bank: ' . setting('company_bank_name', 'Mandiri'), 0, 'L');
+                    $currentPaymentY = $pdf->GetY();
+
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'No. Rekening: ' . setting('company_bank_account', '006.000.301.9563'), 0, 'L');
+                    $currentPaymentY = $pdf->GetY();
+
+                    $pdf->SetXY($paymentInfoX, $currentPaymentY);
+                    $pdf->MultiCell(70, 3, 'Atas Nama: ' . setting('company_name', 'PT. Sinar Surya Semestaraya'), 0, 'L');
+                }
+            };
+
+            // Tampilkan informasi pembayaran di halaman pertama
+            $printPaymentInfo();
+
             foreach ($invoice->details as $index => $detail) {
                 // Cek apakah perlu halaman baru
                 if ($itemCount >= $maxItemsPerPage && $index < $totalItems) {
@@ -164,6 +239,9 @@ class PDFInvoiceNonPpnTemplate
                     $pdf->SetXY(22.5, $itemsStartY - 2);
                     $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
                     $pdf->SetFont('helvetica', '', 8);
+
+                    // Tampilkan informasi pembayaran di halaman baru
+                    $printPaymentInfo();
                 }
 
                 if ($currentY > $itemsMaxY) break;
@@ -264,75 +342,8 @@ class PDFInvoiceNonPpnTemplate
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
             $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
 
-            // --- Informasi Pembayaran (Pojok Kiri Bawah) ---
-            $paymentInfoX = 14;
-            $paymentInfoY = 124; // Posisi di bawah terbilang, digeser ke bawah 7mm
-
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY($paymentInfoX, $paymentInfoY);
-            $pdf->Cell(0, 4, 'Informasi Pembayaran:', 0, 1, 'L');
-
-            $pdf->SetFont('helvetica', '', 7.5);
-            $currentPaymentY = $paymentInfoY + 4;
-
-            // Tentukan bank yang akan ditampilkan
-            $displayBank = null;
-            if ($primaryBank) {
-                $displayBank = $primaryBank;
-            } elseif ($bankAccounts && $bankAccounts->isNotEmpty()) {
-                $displayBank = $bankAccounts->first();
-            }
-
-            if ($displayBank) {
-                // Tampilkan primary/first bank
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'Bank: ' . ($displayBank->nama_bank ?? 'Mandiri'), 0, 'L');
-                $currentPaymentY = $pdf->GetY();
-
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'No. Rekening: ' . ($displayBank->nomor_rekening ?? '006.000.301.9563'), 0, 'L');
-                $currentPaymentY = $pdf->GetY();
-
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'Atas Nama: ' . ($displayBank->atas_nama ?? setting('company_name', 'PT. Sinar Surya Semestaraya')), 0, 'L');
-                $currentPaymentY = $pdf->GetY();
-
-                // Tampilkan bank alternatif jika ada
-                if ($bankAccounts && $bankAccounts->count() > 1) {
-                    $alternativeBanks = $bankAccounts->filter(function ($bank) use ($displayBank) {
-                        return $bank->id !== $displayBank->id;
-                    });
-
-                    if ($alternativeBanks->isNotEmpty()) {
-                        $currentPaymentY += 1; // spacing
-                        $pdf->SetFont('helvetica', 'B', 7);
-                        $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                        $pdf->Cell(0, 3, 'Bank Alternatif:', 0, 1, 'L');
-                        $currentPaymentY = $pdf->GetY();
-
-                        $pdf->SetFont('helvetica', '', 7);
-                        foreach ($alternativeBanks as $altBank) {
-                            $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                            $altBankText = $altBank->nama_bank . ': ' . $altBank->nomor_rekening .
-                                ' (a.n. ' . $altBank->atas_nama . ')';
-                            $pdf->MultiCell(70, 3, $altBankText, 0, 'L');
-                            $currentPaymentY = $pdf->GetY();
-                        }
-                    }
-                }
-            } else {
-                // Fallback ke hardcoded data jika tidak ada bank settings
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'Bank: ' . setting('company_bank_name', 'Mandiri'), 0, 'L');
-                $currentPaymentY = $pdf->GetY();
-
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'No. Rekening: ' . setting('company_bank_account', '006.000.301.9563'), 0, 'L');
-                $currentPaymentY = $pdf->GetY();
-
-                $pdf->SetXY($paymentInfoX, $currentPaymentY);
-                $pdf->MultiCell(70, 3, 'Atas Nama: ' . setting('company_name', 'PT. Sinar Surya Semestaraya'), 0, 'L');
-            }
+            // --- Informasi Pembayaran (Pojok Kiri Bawah) - Tampilkan di semua halaman ---
+            $printPaymentInfo();
 
             // --- Catatan ---
             $nomorINV = $invoice->nomor;
