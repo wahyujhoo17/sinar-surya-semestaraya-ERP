@@ -1070,15 +1070,15 @@
                             $totalKredit = 0;
 
                             foreach ($invoices as $invoice) {
-                                $totalInvoice += $invoice->total;
-                                $totalOngkirInvoice += $invoice->ongkos_kirim ?? 0;
+                                $totalInvoice += $invoice->total; // Total already includes ongkir
+                                $totalOngkirInvoice += $invoice->ongkos_kirim ?? 0; // Just for display
                                 $totalDibayar += $invoice->pembayaranPiutang->sum('jumlah');
                                 $totalUangMuka += $invoice->uang_muka_terapkan ?? 0;
                                 $totalKredit += $invoice->kredit_terapkan ?? 0;
                             }
 
-                            // Total tagihan adalah invoice + ongkir
-                            $totalSeluruhTagihan = $totalInvoice + $totalOngkirInvoice;
+                            // Total tagihan adalah invoice total (sudah termasuk ongkir)
+                            $totalSeluruhTagihan = $totalInvoice;
 
                             // Total pembayaran
                             $totalSeluruhPembayaran = $totalDibayar + $totalUangMuka + $totalKredit;
