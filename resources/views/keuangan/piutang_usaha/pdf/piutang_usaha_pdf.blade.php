@@ -6,9 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laporan Piutang Usaha</title>
     <style>
+        @page {
+            size: A4 landscape;
+            margin: 15mm;
+        }
+
         body {
             font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
-            font-size: 12px;
+            font-size: 9px;
             color: #333;
         }
 
@@ -19,36 +24,101 @@
 
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .header h1 {
             margin: 0;
-            font-size: 24px;
+            font-size: 18px;
         }
 
         .header p {
-            margin: 5px 0;
-            font-size: 14px;
+            margin: 3px 0;
+            font-size: 11px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-size: 8px;
         }
 
         th,
         td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 4px 3px;
             text-align: left;
+            word-wrap: break-word;
         }
 
         th {
             background-color: #f2f2f2;
             font-weight: bold;
+            font-size: 8px;
         }
+
+        /* Column width controls */
+        th:nth-child(1),
+        td:nth-child(1) {
+            width: 3%;
+        }
+
+        /* No */
+        th:nth-child(2),
+        td:nth-child(2) {
+            width: 10%;
+        }
+
+        /* Nomor Invoice */
+        th:nth-child(3),
+        td:nth-child(3) {
+            width: 8%;
+        }
+
+        /* Tanggal Invoice */
+        th:nth-child(4),
+        td:nth-child(4) {
+            width: 10%;
+        }
+
+        /* Nomor SO */
+        th:nth-child(5),
+        td:nth-child(5) {
+            width: 15%;
+        }
+
+        /* Customer */
+        th:nth-child(6),
+        td:nth-child(6) {
+            width: 11%;
+        }
+
+        /* Total Invoice */
+        th:nth-child(7),
+        td:nth-child(7) {
+            width: 11%;
+        }
+
+        /* Total Pembayaran */
+        th:nth-child(8),
+        td:nth-child(8) {
+            width: 11%;
+        }
+
+        /* Sisa Piutang */
+        th:nth-child(9),
+        td:nth-child(9) {
+            width: 8%;
+        }
+
+        /* Jatuh Tempo */
+        th:nth-child(10),
+        td:nth-child(10) {
+            width: 8%;
+        }
+
+        /* Status */
 
         .text-right {
             text-align: right;
@@ -60,31 +130,36 @@
 
         .footer {
             text-align: right;
-            margin-top: 30px;
-            font-size: 12px;
+            margin-top: 20px;
+            font-size: 9px;
         }
 
         .summary {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 15px;
+            padding: 10px;
             border: 1px solid #ddd;
             background-color: #f9f9f9;
         }
 
         .summary p {
-            margin: 5px 0;
-            font-size: 14px;
+            margin: 3px 0;
+            font-size: 10px;
         }
 
         .summary strong {
-            font-size: 16px;
+            font-size: 11px;
         }
 
         .sorting-info {
-            margin: 10px 0;
+            margin: 8px 0;
             font-style: italic;
-            font-size: 11px;
+            font-size: 9px;
             color: #666;
+        }
+
+        tfoot th {
+            font-size: 8px;
+            font-weight: bold;
         }
     </style>
 </head>

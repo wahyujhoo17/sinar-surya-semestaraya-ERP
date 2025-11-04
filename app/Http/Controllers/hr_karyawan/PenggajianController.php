@@ -832,27 +832,36 @@ class PenggajianController extends Controller
 
             $details = SalesOrderDetail::where('sales_order_id', $order->id)->get();
 
-            // Hitung total netto penjualan dan netto beli untuk sales order ini
-            $totalNettoPenjualan = 0;
-            $totalNettoBeli = 0;
-
             // Check if sales order has PPN
             $salesPpn = $order->ppn ?? 0;
             $hasSalesPpn = $salesPpn > 0;
 
+            // Use subtotal from SO (which includes any discounts applied at item level)
+            // rather than calculating from item prices
+            $totalNettoPenjualanOriginal = floatval($order->subtotal ?? 0);
+
+            Log::info('Using subtotal from SO', [
+                'order_id' => $order->id,
+                'order_nomor' => $order->nomor,
+                'subtotal' => $totalNettoPenjualanOriginal,
+                'ppn' => $salesPpn
+            ]);
+
+            // Calculate adjusted value based on PPN Rule 1
+            $totalNettoPenjualan = $totalNettoPenjualanOriginal;
+            $totalNettoBeli = 0;
+
+            // Check if PPN Rule 1 applies: Sales PPN + Purchase non-PPN
+            // We need to check if ANY product was purchased without PPN
+            $shouldApplyRule1 = false;
+
             foreach ($details as $detail) {
                 $produk = Produk::find($detail->produk_id);
                 if ($produk) {
-                    // Calculate netto penjualan (sales value)
-                    $nettoJualItem = $detail->harga * $detail->quantity;
-
                     // Calculate netto beli (purchase value)
                     $nettoBeliItem = $produk->harga_beli * $detail->quantity;
 
                     // Check if product was purchased with PPN by finding the most recent completed PO
-                    $purchasePpn = 0;
-                    $hasPurchasePpn = false;
-
                     $lastPurchaseOrder = PurchaseOrder::join('purchase_order_detail', 'purchase_order.id', '=', 'purchase_order_detail.po_id')
                         ->where('purchase_order_detail.produk_id', $produk->id)
                         ->where('purchase_order.status', 'selesai')
@@ -860,32 +869,21 @@ class PenggajianController extends Controller
                         ->select('purchase_order.ppn')
                         ->first();
 
-                    if ($lastPurchaseOrder && $lastPurchaseOrder->ppn > 0) {
-                        $purchasePpn = $lastPurchaseOrder->ppn;
-                        $hasPurchasePpn = true;
-                    }
+                    $hasPurchasePpn = $lastPurchaseOrder && $lastPurchaseOrder->ppn > 0;
 
                     // Apply PPN rules for commission calculation:
                     // Rule 1: If sales has PPN and purchase is non-PPN, don't count sales PPN
-                    // Rule 2: If sales has PPN and purchase has PPN, count both PPNs
-                    // Rule 3: If sales is non-PPN and purchase has PPN, count purchase PPN
-
                     if ($hasSalesPpn && !$hasPurchasePpn) {
-                        // Rule 1: Sales PPN, Purchase non-PPN -> Sales PPN tidak dihitung
-                        // Exclude PPN from sales value (divide by 1 + PPN rate)
-                        $nettoJualItem = $nettoJualItem / (1 + $salesPpn / 100);
-                        // Purchase value remains as is (no PPN)
-                    } elseif ($hasSalesPpn && $hasPurchasePpn) {
-                        // Rule 2: Sales PPN, Purchase PPN -> Both PPNs counted
-                        // Both values include PPN, use as is
-                    } elseif (!$hasSalesPpn && $hasPurchasePpn) {
-                        // Rule 3: Sales non-PPN, Purchase PPN -> Purchase PPN counted
-                        // Sales value as is (no PPN), purchase value includes PPN (already in harga_beli)
+                        $shouldApplyRule1 = true;
                     }
 
-                    $totalNettoPenjualan += $nettoJualItem;
                     $totalNettoBeli += $nettoBeliItem;
                 }
+            }
+
+            // Apply Rule 1 if needed: Exclude PPN from sales value
+            if ($shouldApplyRule1) {
+                $totalNettoPenjualan = $totalNettoPenjualanOriginal / (1 + $salesPpn / 100);
             }
 
             // Apply penyesuaian untuk sales order ini
@@ -902,6 +900,13 @@ class PenggajianController extends Controller
                 // Hitung komisi untuk sales order ini
                 $orderKomisi = $nettoPenjualanAdjusted * ($komisiRate / 100);
 
+                Log::info('Commission calculation for order', [
+                    'order_id' => $order->id,
+                    'margin_persen' => $marginPersen,
+                    'komisi_rate' => $komisiRate,
+                    'order_komisi' => $orderKomisi
+                ]);
+
                 if ($orderKomisi > 0) {
                     $totalKomisi += $orderKomisi;
                     $processedSalesOrderIds[] = $order->id;
@@ -912,21 +917,14 @@ class PenggajianController extends Controller
                         'komisi' => $orderKomisi,
                         'cashback_nominal' => $cashbackNominal,
                         'overhead_persen' => $overheadPersen,
-                        'netto_penjualan_original' => $totalNettoPenjualan,
+                        'netto_penjualan_original' => $totalNettoPenjualanOriginal, // Original value before PPN adjustment
                         'netto_beli_original' => $totalNettoBeli,
-                        'netto_penjualan_adjusted' => $nettoPenjualanAdjusted,
+                        'netto_penjualan_adjusted' => $nettoPenjualanAdjusted, // Adjusted value after PPN + cashback
                         'netto_beli_adjusted' => $nettoBeliAdjusted,
                         'margin_persen' => $marginPersen,
                         'komisi_rate' => $komisiRate
                     ];
                 }
-
-                Log::info('Commission calculation for order', [
-                    'order_id' => $order->id,
-                    'margin_persen' => $marginPersen,
-                    'komisi_rate' => $komisiRate,
-                    'order_komisi' => $orderKomisi
-                ]);
             }
         }
 
@@ -1105,6 +1103,17 @@ class PenggajianController extends Controller
                 if ($detail) {
                     // Gunakan data yang sudah dihitung dengan benar dari hitungKomisiKaryawan
                     $productNames = $order->details->pluck('produk.nama')->filter()->toArray();
+
+                    // Debug log untuk cek nilai
+                    Log::info('Sales Order Detail for response', [
+                        'so_nomor' => $order->nomor,
+                        'netto_penjualan_original' => $detail['netto_penjualan_original'],
+                        'netto_penjualan_adjusted' => $detail['netto_penjualan_adjusted'],
+                        'netto_beli_original' => $detail['netto_beli_original'],
+                        'margin_persen' => $detail['margin_persen'],
+                        'komisi_rate' => $detail['komisi_rate'],
+                        'komisi' => $detail['komisi']
+                    ]);
 
                     $salesOrderDetails[] = [
                         'id' => $order->id,

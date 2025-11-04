@@ -1092,6 +1092,21 @@
                                 </div>
                             </div>
 
+                            <div class="p-4 bg-cyan-50 dark:bg-cyan-900/30 rounded-lg">
+                                <div class="text-cyan-500 dark:text-cyan-400 font-medium mb-1 text-sm">Uang Muka
+                                </div>
+                                <div class="text-gray-900 dark:text-white font-bold text-lg">
+                                    @php
+                                        // Calculate total down payment applied
+                                        $totalUangMuka = 0;
+                                        foreach ($invoices as $invoice) {
+                                            $totalUangMuka += $invoice->uang_muka_terapkan ?? 0;
+                                        }
+                                    @endphp
+                                    Rp {{ number_format($totalUangMuka, 0, ',', '.') }}
+                                </div>
+                            </div>
+
                             <div class="p-4 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
                                 <div class="text-purple-500 dark:text-purple-400 font-medium mb-1 text-sm">Total
                                     Kredit</div>
@@ -1112,8 +1127,17 @@
                                 </div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
                                     @php
-                                        $totalSeluruhPembayaran = $totalDibayar + $totalKredit;
-                                        $sisaTagihan = $salesOrder->total - $totalSeluruhPembayaran;
+                                        // Calculate total invoice amount including shipping costs
+                                        $totalInvoice = 0;
+                                        foreach ($invoices as $invoice) {
+                                            $totalInvoice += $invoice->total + ($invoice->ongkos_kirim ?? 0);
+                                        }
+
+                                        // Total all payments (cash + down payment + credit)
+                                        $totalSeluruhPembayaran = $totalDibayar + $totalUangMuka + $totalKredit;
+
+                                        // Remaining balance
+                                        $sisaTagihan = $totalInvoice - $totalSeluruhPembayaran;
                                     @endphp
                                     Rp {{ number_format($sisaTagihan, 0, ',', '.') }}
                                 </div>

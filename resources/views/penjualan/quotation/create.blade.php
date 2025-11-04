@@ -460,7 +460,7 @@
                                                     <div style="font-size: 11px; color: #dc2626;"
                                                         x-show="item.additional_diskon_persen && item.additional_diskon_persen > 0">
                                                         Diskon Tambahan: <span
-                                                            x-text="item.additional_diskon_persen.toFixed(2)"></span>%
+                                                            x-text="(item.additional_diskon_persen || 0).toFixed(2)"></span>%
                                                     </div>
                                                 </div>
                                                 <button type="button" @click="removeItem(index)"
@@ -607,7 +607,6 @@
                                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Satuan
                                                         <span class="text-red-500">*</span></label>
                                                     <select :name="`items[${index}][satuan_id]`"
-                                                        x-model="$data.items[index].satuan_id"
                                                         :required="!item.is_bundle && !item.is_bundle_item"
                                                         class="select2-dropdown-dynamic mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
                                                         <option value="">Pilih</option>
@@ -1131,9 +1130,10 @@
                                                                 this.items[idx]
                                                                     .produk_id = e
                                                                     .target.value;
+                                                                // Tunggu sebentar agar Select2 satuan sudah ter-inisialisasi
                                                                 setTimeout(() => this
                                                                     .updateItemDetails(
-                                                                        idx), 100);
+                                                                        idx), 200);
                                                             }
                                                         });
                                                     } else if (select.name.includes(
@@ -1141,8 +1141,10 @@
                                                         $(select).select2({
                                                             placeholder: 'Pilih Satuan',
                                                             width: '100%',
+                                                            minimumResultsForSearch: -1,
                                                             dropdownCssClass: 'select2-dropdown-modern'
-                                                        }).on('select2:select', e => {
+                                                        }).on('change', e => {
+                                                            // Update Alpine model when Select2 changes (both manual and programmatic)
                                                             const nameAttr = $(select)
                                                                 .attr('name');
                                                             const match = nameAttr
@@ -1151,11 +1153,28 @@
                                                             if (match && match[1]) {
                                                                 const idx = parseInt(
                                                                     match[1]);
+                                                                const newValue = $(e
+                                                                    .target).val();
                                                                 this.items[idx]
-                                                                    .satuan_id = e
-                                                                    .target.value;
+                                                                    .satuan_id =
+                                                                    newValue ? parseInt(
+                                                                        newValue) : '';
                                                             }
                                                         });
+
+                                                        // Set initial value jika sudah ada
+                                                        const nameAttr = $(select).attr('name');
+                                                        const match = nameAttr.match(
+                                                            /items\[(\d+)\]/);
+                                                        if (match && match[1]) {
+                                                            const idx = parseInt(match[1]);
+                                                            if (this.items[idx] && this.items[
+                                                                    idx].satuan_id) {
+                                                                $(select).val(this.items[idx]
+                                                                    .satuan_id).trigger(
+                                                                    'change');
+                                                            }
+                                                        }
                                                     }
                                                 }
                                             });
@@ -1168,6 +1187,39 @@
                                 subtree: true
                             });
                         }
+                    },
+                    refreshItemSelects() {
+                        const self = this;
+
+                        // Wait for Alpine's next render cycle to complete
+                        this.$nextTick(() => {
+                            // Use a delay to ensure DOM is fully rendered
+                            setTimeout(() => {
+                                // Process each item individually
+                                self.items.forEach((item, index) => {
+                                    // Handle satuan select - EXACTLY like sales-order
+                                    const satuanSelect = $(`select[name="items[${index}][satuan_id]"]`);
+                                    if (satuanSelect.length) {
+                                        // Check if already initialized
+                                        if (satuanSelect.hasClass('select2-hidden-accessible')) {
+                                            satuanSelect.select2('destroy');
+                                        }
+
+                                        // Initialize Select2
+                                        satuanSelect.select2({
+                                            placeholder: 'Pilih Satuan',
+                                            allowClear: true,
+                                            width: '100%'
+                                        });
+
+                                        // Set value if it exists
+                                        if (item.satuan_id) {
+                                            satuanSelect.val(item.satuan_id).trigger('change.select2');
+                                        }
+                                    }
+                                });
+                            }, 200);
+                        });
                     },
                     addItem() {
                         // Find the correct position to insert regular items
@@ -1282,18 +1334,48 @@
                         this.calculateTotals();
                     },
                     updateItemDetails(index) {
-                        const item = this.items[index];
-                        const produk = this.products.find(p => p.id == item.produk_id);
-                        if (produk) {
-                            item.harga = parseFloat(produk.harga_jual) || 0;
-                            item.satuan_id = produk.satuan_id || '';
-                            item.produk_nama = produk.nama || '';
-                        } else {
-                            item.harga = 0;
-                            item.satuan_id = '';
-                            item.produk_nama = '';
+                        const produkId = this.items[index].produk_id;
+                        const self = this;
+
+                        if (!produkId) {
+                            self.items[index].satuan_id = '';
+                            self.items[index].harga = 0;
+
+                            // Use refreshItemSelects to reset display - SAME AS SALES-ORDER
+                            self.refreshItemSelects();
+
+                            self.calculateSubtotal(index);
+                            return;
                         }
-                        this.calculateSubtotal(index);
+
+                        // Get product data from the selected option's data attributes IMMEDIATELY
+                        try {
+                            const produkSelect = $(`select[name="items[${index}][produk_id]"]`);
+                            const selectedOption = produkSelect.find('option:selected');
+
+                            if (selectedOption.length) {
+                                const hargaAttr = selectedOption.attr('data-harga');
+                                const satuanIdAttr = selectedOption.attr('data-satuan_id');
+
+                                if (hargaAttr) {
+                                    self.items[index].harga = parseFloat(hargaAttr) || 0;
+                                    // Directly set DOM value too
+                                    $(`input[name="items[${index}][harga]"]`).val(self.items[index].harga);
+                                }
+
+                                if (satuanIdAttr) {
+                                    // Set the value in Alpine model
+                                    self.items[index].satuan_id = satuanIdAttr ? parseInt(satuanIdAttr) : '';
+
+                                    // Use refreshItemSelects to update Select2 display - SAME AS SALES-ORDER
+                                    self.refreshItemSelects();
+                                }
+
+                                self.calculateSubtotal(index);
+                            }
+                        } catch (error) {
+                            console.error('Error in updateItemDetails:', error);
+                        }
                     },
                     calculateSubtotal(index) {
                         const item = this.items[index];
@@ -1592,15 +1674,6 @@
                         item.diskon_persen = Math.round(totalDiskonPersen * 100) / 100; // Round to match total_diskon_persen
                         item.diskon_nominal = diskonNominal;
                         item.subtotal = subtotalAfter;
-
-                        // Debug log for bundle item discount calculation
-                        console.log('Bundle item discount calculation (CREATE):', {
-                            produk_nama: item.produk_nama || item.nama,
-                            bundleDiskonPersen,
-                            additionalDiskonPersen,
-                            totalDiskonPersen: item.total_diskon_persen,
-                            finalDiskonPersen: item.diskon_persen
-                        });
 
                         // Recalculate totals
                         this.calculateTotals();
