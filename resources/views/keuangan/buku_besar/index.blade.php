@@ -254,8 +254,8 @@
             {{-- Multiple Accounts View --}}
             <div class="mb-8">
                 <div class="mb-6">
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Detail Multiple Akun</h2>
-                    <p class="text-gray-600 dark:text-gray-400">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2 ml-5">Detail Multiple Akun</h2>
+                    <p class="text-gray-600 dark:text-gray-400 ml-5">
                         Menampilkan {{ count($multipleAccountsData) }} akun terpilih untuk periode
                         {{ \Carbon\Carbon::parse($tanggalAwal)->format('d F Y') }} -
                         {{ \Carbon\Carbon::parse($tanggalAkhir)->format('d F Y') }}
@@ -265,7 +265,7 @@
                 {{-- Accounts List --}}
                 @foreach ($multipleAccountsData as $index => $bukuBesarData)
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+                        class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-4 ml-5 mr-5">
                         {{-- Account Header --}}
                         <div
                             class="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -620,6 +620,10 @@
                                         Kategori
                                     </th>
                                     <th
+                                        class="px-6 py-3.5 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                        Total Transaksi
+                                    </th>
+                                    <th
                                         class="px-6 py-3.5 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                         Total Debit
                                     </th>
@@ -667,6 +671,13 @@
                                             </span>
                                         </td>
                                         <td
+                                            class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-700 dark:text-gray-300">
+                                            <span
+                                                class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                                {{ number_format($accountData['transaction_count'] ?? 0) }} transaksi
+                                            </span>
+                                        </td>
+                                        <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-gray-900 dark:text-white">
                                             Rp {{ number_format($accountData['total_debit'], 0, ',', '.') }}
                                         </td>
@@ -682,7 +693,7 @@
                                     {{-- Detail Row (Hidden by default) --}}
                                     <tr id="account-detail-{{ $accountData['account']->id }}"
                                         class="hidden bg-gray-50 dark:bg-gray-900/50">
-                                        <td colspan="7" class="px-6 py-6">
+                                        <td colspan="8" class="px-6 py-6">
                                             <div class="text-center py-4">
                                                 <div
                                                     class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">

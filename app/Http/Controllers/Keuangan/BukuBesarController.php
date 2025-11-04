@@ -69,7 +69,7 @@ class BukuBesarController extends Controller
             $bukuBesarData = $this->getBukuBesarData($request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId);
         } else {
             // All accounts view - show accounts with balances
-            $allAccountsData = $this->getAllAccountsWithBalances($request, $tanggalAkhir, $periodeId);
+            $allAccountsData = $this->getAllAccountsWithBalances($request, $tanggalAwal, $tanggalAkhir, $periodeId);
         }
 
         return view('keuangan.buku_besar.index', compact(
@@ -177,7 +177,7 @@ class BukuBesarController extends Controller
     /**
      * Get all accounts with their balances
      */
-    private function getAllAccountsWithBalances(Request $request, $tanggalAkhir, $periodeId = null)
+    private function getAllAccountsWithBalances(Request $request, $tanggalAwal, $tanggalAkhir, $periodeId = null)
     {
         $accounts = AkunAkuntansi::where('is_active', true)
             // Include both detail and header accounts that have transactions
@@ -228,6 +228,20 @@ class BukuBesarController extends Controller
 
             $balance = $this->calculateBalance($account->kategori, $totalDebit, $totalKredit);
 
+            // Count total transactions for this account WITHIN the period (not until end date)
+            $transactionCount = JurnalUmum::where('akun_id', $account->id)
+                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir]);
+
+            if (!$includeDrafts) {
+                $transactionCount->where('is_posted', true);
+            }
+
+            if ($periodeId) {
+                $transactionCount->where('periode_id', $periodeId);
+            }
+
+            $transactionCount = $transactionCount->count();
+
             // Only include accounts with transactions or non-zero balance
             if ($totalDebit > 0 || $totalKredit > 0 || $balance != 0) {
                 $accountsWithBalances[] = [
@@ -236,7 +250,8 @@ class BukuBesarController extends Controller
                     'total_kredit' => $totalKredit,
                     'balance' => $balance,
                     'formatted_balance' => $this->formatCurrency($balance),
-                    'balance_type' => $balance >= 0 ? 'positive' : 'negative'
+                    'balance_type' => $balance >= 0 ? 'positive' : 'negative',
+                    'transaction_count' => $transactionCount
                 ];
 
                 // Add to category totals
