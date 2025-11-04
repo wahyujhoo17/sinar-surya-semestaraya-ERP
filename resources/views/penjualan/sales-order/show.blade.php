@@ -1058,20 +1058,50 @@
                         <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ringkasan Pembayaran</h2>
                     </div>
                     <div class="p-5">
+                        @php
+                            // Get all invoices for this sales order
+                            $invoices = $salesOrder->invoices;
+
+                            // Calculate totals from invoices
+                            $totalInvoice = 0;
+                            $totalOngkirInvoice = 0;
+                            $totalDibayar = 0;
+                            $totalUangMuka = 0;
+                            $totalKredit = 0;
+
+                            foreach ($invoices as $invoice) {
+                                $totalInvoice += $invoice->total;
+                                $totalOngkirInvoice += $invoice->ongkos_kirim ?? 0;
+                                $totalDibayar += $invoice->pembayaranPiutang->sum('jumlah');
+                                $totalUangMuka += $invoice->uang_muka_terapkan ?? 0;
+                                $totalKredit += $invoice->kredit_terapkan ?? 0;
+                            }
+
+                            // Total tagihan adalah invoice + ongkir
+                            $totalSeluruhTagihan = $totalInvoice + $totalOngkirInvoice;
+
+                            // Total pembayaran
+                            $totalSeluruhPembayaran = $totalDibayar + $totalUangMuka + $totalKredit;
+
+                            // Sisa tagihan
+                            $sisaTagihan = $totalSeluruhTagihan - $totalSeluruhPembayaran;
+                        @endphp
+
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div class="p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
-                                <div class="text-indigo-500 dark:text-indigo-400 font-medium mb-1 text-sm">Total Order
+                                <div class="text-indigo-500 dark:text-indigo-400 font-medium mb-1 text-sm">Total
+                                    Invoice
                                 </div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">Rp
-                                    {{ number_format($salesOrder->total, 0, ',', '.') }}</div>
+                                    {{ number_format($totalInvoice, 0, ',', '.') }}</div>
                             </div>
 
-                            @if ($salesOrder->ongkos_kirim > 0)
+                            @if ($totalOngkirInvoice > 0)
                                 <div class="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                                     <div class="text-blue-500 dark:text-blue-400 font-medium mb-1 text-sm">Ongkos Kirim
                                     </div>
                                     <div class="text-gray-900 dark:text-white font-bold text-lg">Rp
-                                        {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</div>
+                                        {{ number_format($totalOngkirInvoice, 0, ',', '.') }}</div>
                                 </div>
                             @endif
 
@@ -1079,15 +1109,6 @@
                                 <div class="text-emerald-500 dark:text-emerald-400 font-medium mb-1 text-sm">Total
                                     Dibayar</div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
-                                    @php
-                                        // Get all invoices for this sales order
-                                        $invoices = $salesOrder->invoices;
-                                        // Calculate total payments from all invoices
-                                        $totalDibayar = 0;
-                                        foreach ($invoices as $invoice) {
-                                            $totalDibayar += $invoice->pembayaranPiutang->sum('jumlah');
-                                        }
-                                    @endphp
                                     Rp {{ number_format($totalDibayar, 0, ',', '.') }}
                                 </div>
                             </div>
@@ -1096,13 +1117,6 @@
                                 <div class="text-cyan-500 dark:text-cyan-400 font-medium mb-1 text-sm">Uang Muka
                                 </div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
-                                    @php
-                                        // Calculate total down payment applied
-                                        $totalUangMuka = 0;
-                                        foreach ($invoices as $invoice) {
-                                            $totalUangMuka += $invoice->uang_muka_terapkan ?? 0;
-                                        }
-                                    @endphp
                                     Rp {{ number_format($totalUangMuka, 0, ',', '.') }}
                                 </div>
                             </div>
@@ -1111,13 +1125,6 @@
                                 <div class="text-purple-500 dark:text-purple-400 font-medium mb-1 text-sm">Total
                                     Kredit</div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
-                                    @php
-                                        // Calculate total credit notes applied
-                                        $totalKredit = 0;
-                                        foreach ($invoices as $invoice) {
-                                            $totalKredit += $invoice->kredit_terapkan ?? 0;
-                                        }
-                                    @endphp
                                     Rp {{ number_format($totalKredit, 0, ',', '.') }}
                                 </div>
                             </div>
@@ -1126,19 +1133,6 @@
                                 <div class="text-amber-500 dark:text-amber-400 font-medium mb-1 text-sm">Sisa Tagihan
                                 </div>
                                 <div class="text-gray-900 dark:text-white font-bold text-lg">
-                                    @php
-                                        // Calculate total invoice amount including shipping costs
-                                        $totalInvoice = 0;
-                                        foreach ($invoices as $invoice) {
-                                            $totalInvoice += $invoice->total + ($invoice->ongkos_kirim ?? 0);
-                                        }
-
-                                        // Total all payments (cash + down payment + credit)
-                                        $totalSeluruhPembayaran = $totalDibayar + $totalUangMuka + $totalKredit;
-
-                                        // Remaining balance
-                                        $sisaTagihan = $totalInvoice - $totalSeluruhPembayaran;
-                                    @endphp
                                     Rp {{ number_format($sisaTagihan, 0, ',', '.') }}
                                 </div>
                             </div>
