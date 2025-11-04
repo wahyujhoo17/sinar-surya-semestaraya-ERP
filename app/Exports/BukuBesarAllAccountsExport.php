@@ -19,11 +19,13 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
 {
     protected $tanggalAwal;
     protected $tanggalAkhir;
+    protected $includeDrafts;
 
-    public function __construct($tanggalAwal, $tanggalAkhir)
+    public function __construct($tanggalAwal, $tanggalAkhir, $includeDrafts = false)
     {
         $this->tanggalAwal = $tanggalAwal;
         $this->tanggalAkhir = $tanggalAkhir;
+        $this->includeDrafts = $includeDrafts;
     }
 
     public function view(): View
@@ -47,21 +49,33 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
         foreach ($accounts as $account) {
             // Get period transactions
             $periodDebit = JurnalUmum::where('akun_id', $account->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
-                ->sum('debit');
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
+            if (!$this->includeDrafts) {
+                $periodDebit->where('is_posted', true);
+            }
+            $periodDebit = $periodDebit->sum('debit');
 
             $periodKredit = JurnalUmum::where('akun_id', $account->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir])
-                ->sum('kredit');
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
+            if (!$this->includeDrafts) {
+                $periodKredit->where('is_posted', true);
+            }
+            $periodKredit = $periodKredit->sum('kredit');
 
             // Get opening balance (before start date)
             $openingDebit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<', $this->tanggalAwal)
-                ->sum('debit');
+                ->where('tanggal', '<', $this->tanggalAwal);
+            if (!$this->includeDrafts) {
+                $openingDebit->where('is_posted', true);
+            }
+            $openingDebit = $openingDebit->sum('debit');
 
             $openingKredit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<', $this->tanggalAwal)
-                ->sum('kredit');
+                ->where('tanggal', '<', $this->tanggalAwal);
+            if (!$this->includeDrafts) {
+                $openingKredit->where('is_posted', true);
+            }
+            $openingKredit = $openingKredit->sum('kredit');
 
             // Calculate balances
             $kategori = $account->kategori;
@@ -71,12 +85,18 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
 
             // Total debit and kredit (all time up to end date)
             $totalDebit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $this->tanggalAkhir)
-                ->sum('debit');
+                ->where('tanggal', '<=', $this->tanggalAkhir);
+            if (!$this->includeDrafts) {
+                $totalDebit->where('is_posted', true);
+            }
+            $totalDebit = $totalDebit->sum('debit');
 
             $totalKredit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $this->tanggalAkhir)
-                ->sum('kredit');
+                ->where('tanggal', '<=', $this->tanggalAkhir);
+            if (!$this->includeDrafts) {
+                $totalKredit->where('is_posted', true);
+            }
+            $totalKredit = $totalKredit->sum('kredit');
 
             // Only include accounts with transactions or non-zero balance
             if ($totalDebit > 0 || $totalKredit > 0 || $endingBalance != 0) {
@@ -105,7 +125,8 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
             'totalsByCategory' => $totalsByCategory,
             'tanggalAwal' => $this->tanggalAwal,
             'tanggalAkhir' => $this->tanggalAkhir,
-            'grandTotal' => array_sum($totalsByCategory)
+            'grandTotal' => array_sum($totalsByCategory),
+            'includeDrafts' => $this->includeDrafts
         ]);
     }
 

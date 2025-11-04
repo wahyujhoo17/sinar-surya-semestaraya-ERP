@@ -296,9 +296,11 @@ class BukuBesarController extends Controller
     {
         try {
             $akunId = $request->get('akun_id');
+            $akunIds = $request->get('akun_ids', []);
             $periodeId = $request->get('periode_id');
             $tanggalAwal = $request->get('tanggal_awal', now()->startOfMonth()->format('Y-m-d'));
             $tanggalAkhir = $request->get('tanggal_akhir', now()->endOfMonth()->format('Y-m-d'));
+            $includeDrafts = $request->get('include_drafts', '0') == '1';
 
             // If periode is selected, use periode dates
             if ($periodeId) {
@@ -313,19 +315,33 @@ class BukuBesarController extends Controller
                     ->withErrors(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.']);
             }
 
-            if ($akunId) {
-                // Export satu akun (pakai export lama dengan Excel format)
+            // Handle multiple accounts filter
+            if (!empty($akunIds) && is_array($akunIds)) {
+                // Export multiple selected accounts with detailed transactions
+                $filename = 'buku_besar_multiple_accounts_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.xlsx';
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\BukuBesarMultipleAccountsExport($akunIds, $tanggalAwal, $tanggalAkhir, $includeDrafts),
+                    $filename
+                );
+            } elseif ($akunId) {
+                // Export single account with detailed transactions
                 $akun = \App\Models\AkunAkuntansi::find($akunId);
                 if (!$akun) {
                     return redirect()->back()
                         ->withErrors(['error' => 'Akun tidak ditemukan.']);
                 }
                 $filename = 'buku_besar_' . $akun->kode . '_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.xlsx';
-                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\BukuBesarExport($akunId, $tanggalAwal, $tanggalAkhir), $filename);
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\BukuBesarExport($akunId, $tanggalAwal, $tanggalAkhir, $includeDrafts),
+                    $filename
+                );
             } else {
-                // Export seluruh akun dengan format Excel yang bagus
+                // Export all accounts with detailed transactions
                 $filename = 'buku_besar_semua_akun_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.xlsx';
-                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\BukuBesarAllAccountsExport($tanggalAwal, $tanggalAkhir), $filename);
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\BukuBesarAllAccountsExport($tanggalAwal, $tanggalAkhir, $includeDrafts),
+                    $filename
+                );
             }
         } catch (\Exception $e) {
             Log::error('Error exporting buku besar: ' . $e->getMessage());
