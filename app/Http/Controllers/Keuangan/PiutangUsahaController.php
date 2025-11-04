@@ -279,7 +279,7 @@ class PiutangUsahaController extends Controller
      * @param  \\Illuminate\\Http\\Request  $request
      * @return \\Illuminate\\Http\\Response
      */
-    public function pdf(Request $request)
+    public function generatePdf(Request $request)
     {
         $query = Invoice::with(['customer', 'salesOrder', 'pembayaranPiutang'])
             ->where('total', '>', 0);

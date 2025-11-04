@@ -142,7 +142,7 @@ class PiutangUsahaExport implements FromCollection, WithHeadings, WithMapping, S
             $invoice->nomor,
             Carbon::parse($invoice->tanggal)->format('d/m/Y'),
             $invoice->salesOrder ? $invoice->salesOrder->nomor : '-',
-            $invoice->customer ? $invoice->customer->nama : 'N/A',
+            $invoice->customer->company ?? ($invoice->customer->nama ?? 'N/A'),
             $invoice->total,
             $invoice->total_pembayaran_invoice,
             $invoice->sisa_piutang_invoice,

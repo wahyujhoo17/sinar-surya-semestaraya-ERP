@@ -765,20 +765,24 @@ class SalesOrderController extends Controller
 
     public function show($id)
     {
-        $salesOrder = SalesOrder::with([
-            'customer',
-            'quotation',
-            'details.produk',
-            'details.satuan',
-            'details.productBundle',
-            'logAktivitas.user',
-            'workOrders',
-            'deliveryOrders',
-            'invoices'
-        ])->findOrFail($id);
+        if (auth()->user()->hasPermission('sales_order.view')) {
+            $salesOrder = SalesOrder::with([
+                'customer',
+                'quotation',
+                'details.produk',
+                'details.satuan',
+                'details.productBundle',
+                'logAktivitas.user',
+                'workOrders',
+                'deliveryOrders',
+                'invoices'
+            ])->findOrFail($id);
 
 
-        return view('penjualan.sales-order.show', compact('salesOrder'));
+            return view('penjualan.sales-order.show', compact('salesOrder'));
+        } else {
+            abort(403, 'Anda tidak memiliki akses untuk melihat Sales Order ini.');
+        }
     }
 
     public function edit($id)

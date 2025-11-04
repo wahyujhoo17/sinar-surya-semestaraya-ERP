@@ -164,7 +164,8 @@
                         <td>{{ $invoice->nomor }}</td>
                         <td>{{ date('d/m/Y', strtotime($invoice->tanggal)) }}</td>
                         <td>{{ $invoice->salesOrder ? $invoice->salesOrder->nomor : '-' }}</td>
-                        <td>{{ $invoice->customer ? $invoice->customer->nama : 'N/A' }}</td>
+                        <td>{{ $invoice->customer->company ?? ($invoice->customer->nama ?? 'N/A') }}</td>
+                        </td>
                         <td class="text-right">{{ number_format($invoice->total, 0, ',', '.') }}</td>
                         <td class="text-right">{{ number_format($totalPayments, 0, ',', '.') }}</td>
                         <td class="text-right">{{ number_format($sisaPiutang, 0, ',', '.') }}</td>
