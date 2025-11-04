@@ -22,6 +22,7 @@ class BukuBesarController extends Controller
     {
         // Get filter parameters
         $akunId = $request->get('akun_id');
+        $akunIds = $request->get('akun_ids', []);
         $periodeId = $request->get('periode_id');
         $tanggalAwal = $request->get('tanggal_awal', Carbon::now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->get('tanggal_akhir', Carbon::now()->endOfMonth()->format('Y-m-d'));
@@ -38,6 +39,7 @@ class BukuBesarController extends Controller
         $selectedAkun = null;
         $selectedPeriode = null;
         $allAccountsData = null;
+        $multipleAccountsData = [];
 
         if ($periodeId) {
             $selectedPeriode = PeriodeAkuntansi::findOrFail($periodeId);
@@ -45,8 +47,24 @@ class BukuBesarController extends Controller
             $tanggalAkhir = $selectedPeriode->tanggal_akhir->format('Y-m-d');
         }
 
-        if ($akunId) {
-            // Single account view
+        // Handle AJAX request for single account detail
+        if ($request->get('ajax') == '1' && $akunId) {
+            $bukuBesarData = $this->getBukuBesarData($request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId);
+            $html = view('keuangan.buku_besar._transaction_detail', compact('bukuBesarData', 'tanggalAwal', 'tanggalAkhir'))->render();
+            return response()->json([
+                'success' => true,
+                'html' => $html
+            ]);
+        }
+
+        // Handle multiple accounts selection
+        if (!empty($akunIds) && is_array($akunIds)) {
+            foreach ($akunIds as $id) {
+                $accountData = $this->getBukuBesarData($request, $id, $tanggalAwal, $tanggalAkhir, $periodeId);
+                $multipleAccountsData[] = $accountData;
+            }
+        } elseif ($akunId) {
+            // Single account view (legacy support)
             $selectedAkun = AkunAkuntansi::findOrFail($akunId);
             $bukuBesarData = $this->getBukuBesarData($request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId);
         } else {
@@ -61,6 +79,7 @@ class BukuBesarController extends Controller
             'selectedPeriode',
             'bukuBesarData',
             'allAccountsData',
+            'multipleAccountsData',
             'tanggalAwal',
             'tanggalAkhir'
         ), [
