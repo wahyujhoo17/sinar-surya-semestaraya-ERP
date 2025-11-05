@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Prospek;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ProspekLeadController extends Controller
 {
@@ -213,6 +214,9 @@ class ProspekLeadController extends Controller
                 ->with('error', 'Anda tidak memiliki akses untuk mengedit prospek ini.');
         }
 
+        // Store old status for customer creation check
+        $oldStatus = $prospek->status;
+
         $data = $request->all();
 
         // Handle file uploads
@@ -239,8 +243,34 @@ class ProspekLeadController extends Controller
 
         $prospek->update($data);
 
+        // Automatic customer creation when status becomes "menjadi_customer"
+        $customerCreated = false;
+        $customerId = null;
+        if ($request->status === 'menjadi_customer' && $oldStatus !== 'menjadi_customer') {
+            $customerData = $this->createCustomerFromProspek($prospek);
+            if ($customerData) {
+                $customerCreated = true;
+                $customerId = $customerData['id'];
+
+                // Update prospek with customer_id
+                $prospek->customer_id = $customerId;
+                $prospek->save();
+
+                Log::info('Customer created automatically from prospek:', [
+                    'prospek_id' => $prospek->id,
+                    'customer_id' => $customerId,
+                    'customer_kode' => $customerData['kode']
+                ]);
+            }
+        }
+
+        $message = 'Prospek berhasil diperbarui';
+        if ($customerCreated) {
+            $message .= ' dan data customer baru telah dibuat otomatis';
+        }
+
         return redirect()->route('crm.prospek.index')
-            ->with('success', 'Prospek berhasil diperbarui');
+            ->with('success', $message);
     }
 
     public function destroy($id)
@@ -357,5 +387,106 @@ class ProspekLeadController extends Controller
             'success' => true,
             'message' => 'File berhasil dihapus.'
         ]);
+    }
+
+    /**
+     * Create customer from prospek
+     * 
+     * @param Prospek $prospek
+     * @return array|null
+     */
+    private function createCustomerFromProspek(Prospek $prospek)
+    {
+        try {
+            // Check if customer already exists for this prospek
+            if ($prospek->customer_id) {
+                Log::info('Customer already exists for prospek', [
+                    'prospek_id' => $prospek->id,
+                    'customer_id' => $prospek->customer_id
+                ]);
+                return Customer::find($prospek->customer_id)->toArray();
+            }
+
+            // Check if customer with the same email already exists
+            if ($prospek->email) {
+                $existingCustomer = Customer::where('email', $prospek->email)->first();
+                if ($existingCustomer) {
+                    Log::info('Customer with same email already exists', [
+                        'prospek_id' => $prospek->id,
+                        'existing_customer_id' => $existingCustomer->id,
+                        'email' => $prospek->email
+                    ]);
+                    return $existingCustomer->toArray();
+                }
+            }
+
+            // Generate customer code
+            $customerCode = $this->generateCustomerCode();
+
+            // Determine customer type based on whether it's individual or company
+            $customerType = $prospek->perusahaan ? 'company' : 'individual';
+
+            // Create customer data mapping from prospek
+            $customerData = [
+                'kode' => $customerCode,
+                'nama' => $prospek->nama_prospek,
+                'tipe' => $customerType,
+                'company' => $prospek->perusahaan ?: $prospek->nama_prospek,
+                'alamat' => $prospek->alamat,
+                'alamat_pengiriman' => $prospek->alamat,
+                'telepon' => $prospek->telepon,
+                'email' => $prospek->email,
+                'sales_id' => $prospek->user_id,
+                'sales_name' => $prospek->user ? $prospek->user->name : null,
+                'is_active' => true,
+                'catatan' => 'Customer dibuat otomatis dari prospek: ' . $prospek->nama_prospek
+            ];
+
+            // Create the customer
+            $customer = Customer::create($customerData);
+
+            Log::info('Customer created successfully from prospek', [
+                'prospek_id' => $prospek->id,
+                'customer_id' => $customer->id,
+                'customer_kode' => $customer->kode,
+                'customer_data' => $customerData
+            ]);
+
+            return $customer->toArray();
+        } catch (\Exception $e) {
+            Log::error('Failed to create customer from prospek', [
+                'prospek_id' => $prospek->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Generate customer code following the same pattern as CustomerController
+     * 
+     * @return string
+     */
+    private function generateCustomerCode()
+    {
+        $prefix = 'CUST';
+        $last = Customer::orderByDesc('id')->first();
+        $lastNumber = 0;
+
+        if ($last && preg_match('/^CUST(\d+)$/', $last->kode, $matches)) {
+            $lastNumber = (int)$matches[1];
+        }
+
+        $newNumber = $lastNumber + 1;
+        $code = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+
+        // Ensure the code is unique
+        while (Customer::where('kode', $code)->exists()) {
+            $newNumber++;
+            $code = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+        }
+
+        return $code;
     }
 }

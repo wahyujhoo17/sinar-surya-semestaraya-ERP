@@ -836,54 +836,32 @@ class PenggajianController extends Controller
             $salesPpn = $order->ppn ?? 0;
             $hasSalesPpn = $salesPpn > 0;
 
-            // Use subtotal from SO (which includes any discounts applied at item level)
-            // rather than calculating from item prices
+            // Use subtotal from SO (which is already EXCLUDE PPN and includes any discounts)
+            // Subtotal in sales_order table = harga items - diskon (BEFORE adding PPN)
+            // Total = subtotal + PPN
             $totalNettoPenjualanOriginal = floatval($order->subtotal ?? 0);
 
-            Log::info('Using subtotal from SO', [
+            Log::info('Using subtotal from SO (already exclude PPN)', [
                 'order_id' => $order->id,
                 'order_nomor' => $order->nomor,
                 'subtotal' => $totalNettoPenjualanOriginal,
-                'ppn' => $salesPpn
+                'ppn' => $salesPpn,
+                'total' => $order->total
             ]);
 
-            // Calculate adjusted value based on PPN Rule 1
+            // Subtotal already excludes PPN, so no need to adjust
+            // We will use subtotal as-is for commission calculation
             $totalNettoPenjualan = $totalNettoPenjualanOriginal;
             $totalNettoBeli = 0;
 
-            // Check if PPN Rule 1 applies: Sales PPN + Purchase non-PPN
-            // We need to check if ANY product was purchased without PPN
-            $shouldApplyRule1 = false;
-
+            // Calculate total purchase value
             foreach ($details as $detail) {
                 $produk = Produk::find($detail->produk_id);
                 if ($produk) {
                     // Calculate netto beli (purchase value)
                     $nettoBeliItem = $produk->harga_beli * $detail->quantity;
-
-                    // Check if product was purchased with PPN by finding the most recent completed PO
-                    $lastPurchaseOrder = PurchaseOrder::join('purchase_order_detail', 'purchase_order.id', '=', 'purchase_order_detail.po_id')
-                        ->where('purchase_order_detail.produk_id', $produk->id)
-                        ->where('purchase_order.status', 'selesai')
-                        ->orderBy('purchase_order.tanggal', 'desc')
-                        ->select('purchase_order.ppn')
-                        ->first();
-
-                    $hasPurchasePpn = $lastPurchaseOrder && $lastPurchaseOrder->ppn > 0;
-
-                    // Apply PPN rules for commission calculation:
-                    // Rule 1: If sales has PPN and purchase is non-PPN, don't count sales PPN
-                    if ($hasSalesPpn && !$hasPurchasePpn) {
-                        $shouldApplyRule1 = true;
-                    }
-
                     $totalNettoBeli += $nettoBeliItem;
                 }
-            }
-
-            // Apply Rule 1 if needed: Exclude PPN from sales value
-            if ($shouldApplyRule1) {
-                $totalNettoPenjualan = $totalNettoPenjualanOriginal / (1 + $salesPpn / 100);
             }
 
             // Apply penyesuaian untuk sales order ini
@@ -946,78 +924,78 @@ class PenggajianController extends Controller
     {
         // Tabel tier komisi berdasarkan margin
         $komisiTiers = [
-            ['min' => 18.00, 'max' => 20.00, 'rate' => 1.00],
-            ['min' => 20.50, 'max' => 25.00, 'rate' => 1.25],
-            ['min' => 25.50, 'max' => 30.00, 'rate' => 1.50],
-            ['min' => 30.50, 'max' => 35.00, 'rate' => 1.75],
-            ['min' => 35.50, 'max' => 40.00, 'rate' => 2.00],
-            ['min' => 40.50, 'max' => 45.00, 'rate' => 2.25],
-            ['min' => 45.50, 'max' => 50.00, 'rate' => 2.50],
-            ['min' => 50.50, 'max' => 55.00, 'rate' => 2.75],
-            ['min' => 55.50, 'max' => 60.00, 'rate' => 3.00],
-            ['min' => 60.50, 'max' => 65.00, 'rate' => 3.25],
-            ['min' => 65.50, 'max' => 70.00, 'rate' => 3.50],
-            ['min' => 70.50, 'max' => 75.00, 'rate' => 3.75],
-            ['min' => 75.50, 'max' => 80.00, 'rate' => 4.00],
-            ['min' => 80.50, 'max' => 85.00, 'rate' => 4.25],
-            ['min' => 85.50, 'max' => 90.00, 'rate' => 4.50],
-            ['min' => 90.50, 'max' => 95.00, 'rate' => 4.75],
-            ['min' => 95.50, 'max' => 100.00, 'rate' => 5.00],
-            ['min' => 101.00, 'max' => 110.00, 'rate' => 5.25],
-            ['min' => 111.00, 'max' => 125.00, 'rate' => 5.50],
-            ['min' => 126.00, 'max' => 140.00, 'rate' => 5.75],
-            ['min' => 141.00, 'max' => 160.00, 'rate' => 6.00],
-            ['min' => 161.00, 'max' => 180.00, 'rate' => 6.25],
-            ['min' => 181.00, 'max' => 200.00, 'rate' => 6.50],
-            ['min' => 201.00, 'max' => 225.00, 'rate' => 7.00],
-            ['min' => 226.00, 'max' => 250.00, 'rate' => 7.25],
-            ['min' => 251.00, 'max' => 275.00, 'rate' => 7.50],
-            ['min' => 276.00, 'max' => 300.00, 'rate' => 8.00],
-            ['min' => 301.00, 'max' => 325.00, 'rate' => 8.25],
-            ['min' => 326.00, 'max' => 350.00, 'rate' => 8.50],
-            ['min' => 351.00, 'max' => 400.00, 'rate' => 9.00],
-            ['min' => 401.00, 'max' => 450.00, 'rate' => 9.50],
-            ['min' => 451.00, 'max' => 500.00, 'rate' => 10.00],
-            ['min' => 501.00, 'max' => 600.00, 'rate' => 10.50],
-            ['min' => 601.00, 'max' => 700.00, 'rate' => 11.00],
-            ['min' => 701.00, 'max' => 800.00, 'rate' => 11.50],
-            ['min' => 801.00, 'max' => 900.00, 'rate' => 12.00],
-            ['min' => 901.00, 'max' => 1000.00, 'rate' => 12.50],
-            ['min' => 1001.00, 'max' => 1100.00, 'rate' => 13.00],
-            ['min' => 1101.00, 'max' => 1200.00, 'rate' => 13.50],
-            ['min' => 1201.00, 'max' => 1300.00, 'rate' => 14.00],
-            ['min' => 1301.00, 'max' => 1400.00, 'rate' => 14.50],
-            ['min' => 1401.00, 'max' => 1500.00, 'rate' => 15.00],
-            ['min' => 1501.00, 'max' => 1600.00, 'rate' => 15.50],
-            ['min' => 1601.00, 'max' => 1700.00, 'rate' => 16.00],
-            ['min' => 1701.00, 'max' => 1800.00, 'rate' => 16.50],
-            ['min' => 1801.00, 'max' => 1900.00, 'rate' => 17.00],
-            ['min' => 1901.00, 'max' => 2000.00, 'rate' => 17.50],
-            ['min' => 2001.00, 'max' => 2100.00, 'rate' => 18.00],
-            ['min' => 2101.00, 'max' => 2200.00, 'rate' => 18.50],
-            ['min' => 2201.00, 'max' => 2300.00, 'rate' => 19.00],
-            ['min' => 2301.00, 'max' => 2400.00, 'rate' => 19.50],
-            ['min' => 2401.00, 'max' => 2501.00, 'rate' => 20.00],
-            ['min' => 2501.00, 'max' => 2600.00, 'rate' => 20.50],
-            ['min' => 2601.00, 'max' => 2700.00, 'rate' => 21.00],
-            ['min' => 2701.00, 'max' => 2800.00, 'rate' => 21.50],
-            ['min' => 2801.00, 'max' => 2900.00, 'rate' => 22.00],
-            ['min' => 2901.00, 'max' => 3000.00, 'rate' => 22.50],
-            ['min' => 3001.00, 'max' => 3100.00, 'rate' => 23.00],
-            ['min' => 3101.00, 'max' => 3200.00, 'rate' => 23.50],
-            ['min' => 3201.00, 'max' => 3300.00, 'rate' => 24.00],
-            ['min' => 3301.00, 'max' => 3400.00, 'rate' => 24.50],
-            ['min' => 3401.00, 'max' => 3500.00, 'rate' => 25.00],
-            ['min' => 3501.00, 'max' => 3600.00, 'rate' => 25.50],
-            ['min' => 3601.00, 'max' => 3700.00, 'rate' => 26.00],
-            ['min' => 3701.00, 'max' => 3800.00, 'rate' => 26.50],
-            ['min' => 3801.00, 'max' => 3900.00, 'rate' => 27.00],
-            ['min' => 3901.00, 'max' => 4000.00, 'rate' => 27.50],
-            ['min' => 4001.00, 'max' => 4100.00, 'rate' => 28.00],
-            ['min' => 4101.00, 'max' => 4200.00, 'rate' => 28.50],
-            ['min' => 4201.00, 'max' => 4300.00, 'rate' => 29.00],
-            ['min' => 4301.00, 'max' => 4400.00, 'rate' => 29.50],
-            ['min' => 4401.00, 'max' => 4500.00, 'rate' => 30.00],
+            ['min' => 18.00, 'max' => 20.49, 'rate' => 1.00],
+            ['min' => 20.50, 'max' => 25.49, 'rate' => 1.25],
+            ['min' => 25.50, 'max' => 30.49, 'rate' => 1.50],
+            ['min' => 30.50, 'max' => 35.49, 'rate' => 1.75],
+            ['min' => 35.50, 'max' => 40.49, 'rate' => 2.00],
+            ['min' => 40.50, 'max' => 45.49, 'rate' => 2.25],
+            ['min' => 45.50, 'max' => 50.49, 'rate' => 2.50],
+            ['min' => 50.50, 'max' => 55.49, 'rate' => 2.75],
+            ['min' => 55.50, 'max' => 60.49, 'rate' => 3.00],
+            ['min' => 60.50, 'max' => 65.49, 'rate' => 3.25],
+            ['min' => 65.50, 'max' => 70.49, 'rate' => 3.50],
+            ['min' => 70.50, 'max' => 75.49, 'rate' => 3.75],
+            ['min' => 75.50, 'max' => 80.49, 'rate' => 4.00],
+            ['min' => 80.50, 'max' => 85.49, 'rate' => 4.25],
+            ['min' => 85.50, 'max' => 90.49, 'rate' => 4.50],
+            ['min' => 90.50, 'max' => 95.49, 'rate' => 4.75],
+            ['min' => 95.50, 'max' => 100.49, 'rate' => 5.00],
+            ['min' => 101.00, 'max' => 110.99, 'rate' => 5.25],
+            ['min' => 111.00, 'max' => 125.99, 'rate' => 5.50],
+            ['min' => 126.00, 'max' => 140.99, 'rate' => 5.75],
+            ['min' => 141.00, 'max' => 160.99, 'rate' => 6.00],
+            ['min' => 161.00, 'max' => 180.99, 'rate' => 6.25],
+            ['min' => 181.00, 'max' => 200.99, 'rate' => 6.50],
+            ['min' => 201.00, 'max' => 225.99, 'rate' => 7.00],
+            ['min' => 226.00, 'max' => 250.99, 'rate' => 7.25],
+            ['min' => 251.00, 'max' => 275.99, 'rate' => 7.50],
+            ['min' => 276.00, 'max' => 300.99, 'rate' => 8.00],
+            ['min' => 301.00, 'max' => 325.99, 'rate' => 8.25],
+            ['min' => 326.00, 'max' => 350.99, 'rate' => 8.50],
+            ['min' => 351.00, 'max' => 400.99, 'rate' => 9.00],
+            ['min' => 401.00, 'max' => 450.99, 'rate' => 9.50],
+            ['min' => 451.00, 'max' => 500.99, 'rate' => 10.00],
+            ['min' => 501.00, 'max' => 600.99, 'rate' => 10.50],
+            ['min' => 601.00, 'max' => 700.99, 'rate' => 11.00],
+            ['min' => 701.00, 'max' => 800.99, 'rate' => 11.50],
+            ['min' => 801.00, 'max' => 900.99, 'rate' => 12.00],
+            ['min' => 901.00, 'max' => 1000.99, 'rate' => 12.50],
+            ['min' => 1001.00, 'max' => 1100.99, 'rate' => 13.00],
+            ['min' => 1101.00, 'max' => 1200.99, 'rate' => 13.50],
+            ['min' => 1201.00, 'max' => 1300.99, 'rate' => 14.00],
+            ['min' => 1301.00, 'max' => 1400.99, 'rate' => 14.50],
+            ['min' => 1401.00, 'max' => 1500.99, 'rate' => 15.00],
+            ['min' => 1501.00, 'max' => 1600.99, 'rate' => 15.50],
+            ['min' => 1601.00, 'max' => 1700.99, 'rate' => 16.00],
+            ['min' => 1701.00, 'max' => 1800.99, 'rate' => 16.50],
+            ['min' => 1801.00, 'max' => 1900.99, 'rate' => 17.00],
+            ['min' => 1901.00, 'max' => 2000.99, 'rate' => 17.50],
+            ['min' => 2001.00, 'max' => 2100.99, 'rate' => 18.00],
+            ['min' => 2101.00, 'max' => 2200.99, 'rate' => 18.50],
+            ['min' => 2201.00, 'max' => 2300.99, 'rate' => 19.00],
+            ['min' => 2301.00, 'max' => 2400.99, 'rate' => 19.50],
+            ['min' => 2401.00, 'max' => 2501.99, 'rate' => 20.00],
+            ['min' => 2501.00, 'max' => 2600.99, 'rate' => 20.50],
+            ['min' => 2601.00, 'max' => 2700.99, 'rate' => 21.00],
+            ['min' => 2701.00, 'max' => 2800.99, 'rate' => 21.50],
+            ['min' => 2801.00, 'max' => 2900.99, 'rate' => 22.00],
+            ['min' => 2901.00, 'max' => 3000.99, 'rate' => 22.50],
+            ['min' => 3001.00, 'max' => 3100.99, 'rate' => 23.00],
+            ['min' => 3101.00, 'max' => 3200.99, 'rate' => 23.50],
+            ['min' => 3201.00, 'max' => 3300.99, 'rate' => 24.00],
+            ['min' => 3301.00, 'max' => 3400.99, 'rate' => 24.50],
+            ['min' => 3401.00, 'max' => 3500.99, 'rate' => 25.00],
+            ['min' => 3501.00, 'max' => 3600.99, 'rate' => 25.50],
+            ['min' => 3601.00, 'max' => 3700.99, 'rate' => 26.00],
+            ['min' => 3701.00, 'max' => 3800.99, 'rate' => 26.50],
+            ['min' => 3801.00, 'max' => 3900.99, 'rate' => 27.00],
+            ['min' => 3901.00, 'max' => 4000.99, 'rate' => 27.50],
+            ['min' => 4001.00, 'max' => 4100.99, 'rate' => 28.00],
+            ['min' => 4101.00, 'max' => 4200.99, 'rate' => 28.50],
+            ['min' => 4201.00, 'max' => 4300.99, 'rate' => 29.00],
+            ['min' => 4301.00, 'max' => 4400.99, 'rate' => 29.50],
+            ['min' => 4401.00, 'max' => 4500.99, 'rate' => 30.00],
         ];
 
         // Cari tier yang sesuai dengan margin

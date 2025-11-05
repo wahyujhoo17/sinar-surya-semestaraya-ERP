@@ -487,6 +487,34 @@ class ProspekAktivitasController extends Controller
         // Get followups
         $followups = $query->paginate(15);
 
+        // Count by status for summary
+        $baseQuery = ProspekAktivitas::query()
+            ->where('perlu_followup', 1);
+
+        // Apply same role-based access control for counts
+        if (!$this->canAccessAllProspects()) {
+            $baseQuery->whereHas('prospek', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
+
+        // Apply same filters for counts
+        if ($request->has('user_id') && $request->user_id) {
+            $baseQuery->where('user_id', $request->user_id);
+        }
+        if ($request->has('tipe') && $request->tipe) {
+            $baseQuery->where('tipe', $request->tipe);
+        }
+        if ($request->has('start_date') && $request->start_date) {
+            $baseQuery->whereDate('tanggal_followup', '>=', $request->start_date);
+        }
+        if ($request->has('end_date') && $request->end_date) {
+            $baseQuery->whereDate('tanggal_followup', '<=', $request->end_date);
+        }
+
+        $menunggu_count = (clone $baseQuery)->whereIn('status_followup', [null, ProspekAktivitas::STATUS_MENUNGGU])->count();
+        $selesai_count = (clone $baseQuery)->where('status_followup', ProspekAktivitas::STATUS_SELESAI)->count();
+
         return view('CRM.aktivitas.followups', [
             'followups' => $followups,
             'tipeList' => ProspekAktivitas::getTipeList(),
@@ -494,6 +522,8 @@ class ProspekAktivitasController extends Controller
             'userList' => User::where('is_active', true)->orderBy('name')->get(),
             'filter' => $request->all(),
             'userTimezone' => $userTimezone,
+            'menunggu_count' => $menunggu_count,
+            'selesai_count' => $selesai_count,
         ]);
     }
 

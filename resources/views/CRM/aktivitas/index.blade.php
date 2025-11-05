@@ -715,47 +715,55 @@
                                         status_followup: 'selesai'
                                     })
                                 })
-                                .then(response => response.json())
-                                .then data => {
+                                .then(response => {
                                     loading = false;
-                                    showSuccessMessage(`${data.count} follow-up berhasil ditandai selesai`);
+                                    if (response.ok) {
+                                        return response.json().catch(() => ({}));
+                                    } else {
+                                        throw new Error('Response not OK');
+                                    }
+                                })
+                                .then(data => {
+                                    const count = data.count || this.getSelectedFollowupItems().length;
+                                    showSuccessMessage(`${count} follow-up berhasil ditandai selesai`);
                                     setTimeout(() => {
                                         window.location.reload();
                                     }, 1500);
                                 })
-                        .catch(error => {
-                            loading = false;
-                            console.error('Error:', error);
-                        });
-                    }
-                },
-                executeDelete() {
-                    if (confirm('Apakah Anda yakin ingin menghapus semua aktivitas terpilih?')) {
-                        loading = true;
-                        fetch('{{ route('crm.aktivitas.batch-delete') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content
-                                },
-                                body: JSON.stringify({
-                                    ids: this.selectedItems
+                                .catch(error => {
+                                    loading = false;
+                                    console.error('Error:', error);
+                                    alert('Terjadi kesalahan: ' + error.message);
+                                });
+                        }
+                    },
+                    executeDelete() {
+                        if (confirm('Apakah Anda yakin ingin menghapus semua aktivitas terpilih?')) {
+                            loading = true;
+                            fetch('{{ route('crm.aktivitas.batch-delete') }}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').content
+                                    },
+                                    body: JSON.stringify({
+                                        ids: this.selectedItems
+                                    })
                                 })
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                loading = false;
-                                showSuccessMessage(`${data.count} aktivitas berhasil dihapus`);
-                                setTimeout(() => {
-                                    window.location.reload();
-                                }, 1500);
-                            })
-                            .catch(error => {
-                                loading = false;
-                                console.error('Error:', error);
-                            });
+                                .then(response => response.json())
+                                .then(data => {
+                                    loading = false;
+                                    showSuccessMessage(`${data.count} aktivitas berhasil dihapus`);
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 1500);
+                                })
+                                .catch(error => {
+                                    loading = false;
+                                    console.error('Error:', error);
+                                });
+                        }
                     }
-                }
                 }">
                 <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-white flex items-center">
@@ -1184,17 +1192,21 @@
                                                             status_followup: 'selesai'
                                                         })
                                                     })
-                                                    .then(response => response.json())
-                                                    .then(data => {
+                                                    .then(response => {
                                                         loading = false;
-                                                        showSuccessMessage('Follow-up berhasil ditandai selesai');
-                                                        setTimeout(() => {
-                                                            window.location.reload();
-                                                        }, 1500);
+                                                        if (response.ok) {
+                                                            showSuccessMessage('Follow-up berhasil ditandai selesai');
+                                                            setTimeout(() => {
+                                                                window.location.reload();
+                                                            }, 1500);
+                                                        } else {
+                                                            alert('Terjadi kesalahan saat memperbarui status');
+                                                        }
                                                     })
                                                     .catch(error => {
                                                         loading = false;
                                                         console.error('Error:', error);
+                                                        alert('Terjadi kesalahan: ' + error.message);
                                                     });">
                                                         @csrf
                                                         @method('PATCH')
