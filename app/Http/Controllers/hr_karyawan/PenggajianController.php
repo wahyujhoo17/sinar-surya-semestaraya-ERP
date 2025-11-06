@@ -880,7 +880,8 @@ class PenggajianController extends Controller
                 $nettoJualItem = floatval($detail->subtotal ?? 0);
 
                 // Calculate netto beli (purchase value)
-                // harga_beli in produk table should be the price we paid (include PPN if we paid PPN)
+                // IMPORTANT: harga_beli in produk table is ALWAYS exclude PPN (base price)
+                // PPN is added separately at PO level, not stored in master produk
                 $nettoBeliItem = $produk->harga_beli * $detail->quantity;
 
                 // Apply 3 PPN Rules
@@ -890,28 +891,27 @@ class PenggajianController extends Controller
 
                 // Rule 1: Sales PPN + Purchase PPN
                 // Pembelian PPN dan Penjualan PPN
-                // Dihitung dari harga non-PPN keduanya atau harga sudah PPN karena akan sama saja
-                // Sales subtotal already exclude PPN, Purchase include PPN → convert purchase to exclude PPN
+                // Kedua harga sudah exclude PPN (subtotal SO & harga_beli produk)
+                // Tidak perlu penyesuaian - langsung bandingkan
                 if ($hasSalesPpn && $hasPurchasePpn) {
                     $ppnRule = 'rule_1';
-                    // Convert purchase to exclude PPN for fair comparison
-                    $nettoBeliAdjusted = $nettoBeliItem / (1 + $purchasePpn / 100);
+                    // No adjustment needed - both already exclude PPN
                 }
                 // Rule 2: Sales PPN + Purchase Non-PPN
                 // Pembelian Non-PPN dan Penjualan PPN
-                // Penjualan dihitung dari harga non-PPN (sudah exclude PPN di subtotal)
+                // Kedua sudah exclude PPN - tidak perlu penyesuaian
                 elseif ($hasSalesPpn && !$hasPurchasePpn) {
                     $ppnRule = 'rule_2';
-                    // Sales already exclude PPN (subtotal), Purchase already exclude PPN
                     // No adjustment needed - both already exclude PPN
                 }
                 // Rule 3: Sales Non-PPN + Purchase PPN
                 // Pembelian PPN dan Penjualan Non-PPN
-                // Pembelian dihitung dari harga INCLUDE PPN (tidak disesuaikan)
+                // Pembelian dihitung dari harga INCLUDE PPN
+                // Harga beli perlu ditambah PPN untuk perhitungan yang adil
                 elseif (!$hasSalesPpn && $hasPurchasePpn) {
                     $ppnRule = 'rule_3';
-                    // Keep purchase price as is (include PPN)
-                    // No adjustment needed
+                    // Add PPN to purchase price (convert exclude to include PPN)
+                    $nettoBeliAdjusted = $nettoBeliItem * (1 + $purchasePpn / 100);
                 }
 
                 $totalNettoPenjualan += $nettoJualAdjusted;
