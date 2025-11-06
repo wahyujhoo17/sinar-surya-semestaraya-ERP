@@ -283,7 +283,7 @@ class PDFInvoiceTamplate
                 $totalPO = $invoice->salesOrder->total ?? 0;
                 $persenDP = $totalPO > 0 ? round(($invoice->uang_muka_terapkan / $totalPO) * 100, 2) : 0;
 
-                $dpNoteX = 14; // Posisi X di area kolom nama barang
+                $dpNoteX = 23; // Posisi X di area kolom nama barang, digeser 7 unit ke kanan
                 $dpNoteY = $summaryY - 15; // Sejajar dengan bagian atas summary
 
                 $pdf->SetFont('helvetica', 'B', 8);
