@@ -122,6 +122,9 @@
                         <option value="equity">Ekuitas</option>
                         <option value="income">Pendapatan</option>
                         <option value="expense">Beban</option>
+                        <option value="purchase">Pembelian</option>
+                        <option value="other_income">Pendapatan di Luar Usaha</option>
+                        <option value="other_expense">Biaya di Luar Usaha</option>
                         <option value="other">Lainnya</option>
                     </select>
                     <select id="filterStatus"
@@ -229,6 +232,27 @@
                                             <span
                                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-300">
                                                 Beban
+                                            </span>
+                                        @break
+
+                                        @case('purchase')
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300">
+                                                Pembelian
+                                            </span>
+                                        @break
+
+                                        @case('other_income')
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800 dark:bg-teal-800/30 dark:text-teal-300">
+                                                Pendapatan di Luar Usaha
+                                            </span>
+                                        @break
+
+                                        @case('other_expense')
+                                            <span
+                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-100 text-pink-800 dark:bg-pink-800/30 dark:text-pink-300">
+                                                Biaya di Luar Usaha
                                             </span>
                                         @break
 
@@ -371,6 +395,23 @@
                                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Beban</span>
                                                 @break
 
+                                                @case('purchase')
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pembelian</span>
+                                                @break
+
+                                                @case('other_income')
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">Pendapatan
+                                                        di Luar Usaha</span>
+                                                @break
+
+                                                @case('other_expense')
+                                                    <span
+                                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-100 text-pink-800">Biaya
+                                                        di Luar Usaha</span>
+                                                @break
+
                                                 @default
                                                     <span
                                                         class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Lainnya</span>
@@ -490,6 +531,23 @@
                                                         @case('expense')
                                                             <span
                                                                 class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">Beban</span>
+                                                        @break
+
+                                                        @case('purchase')
+                                                            <span
+                                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pembelian</span>
+                                                        @break
+
+                                                        @case('other_income')
+                                                            <span
+                                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-teal-100 text-teal-800">Pendapatan
+                                                                di Luar Usaha</span>
+                                                        @break
+
+                                                        @case('other_expense')
+                                                            <span
+                                                                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-pink-100 text-pink-800">Biaya
+                                                                di Luar Usaha</span>
                                                         @break
 
                                                         @default
