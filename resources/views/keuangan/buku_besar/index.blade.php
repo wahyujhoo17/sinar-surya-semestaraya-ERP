@@ -282,8 +282,19 @@
                                             @elseif($bukuBesarData['akun']->kategori == 'equity') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
                                             @elseif($bukuBesarData['akun']->kategori == 'income') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
                                             @elseif($bukuBesarData['akun']->kategori == 'expense') bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200
+                                            @elseif($bukuBesarData['akun']->kategori == 'purchase') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                            @elseif($bukuBesarData['akun']->kategori == 'other_income') bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200
+                                            @elseif($bukuBesarData['akun']->kategori == 'other_expense') bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200
                                             @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 @endif">
-                                            {{ ucfirst($bukuBesarData['akun']->kategori) }}
+                                            @if ($bukuBesarData['akun']->kategori == 'other_income')
+                                                Pendapatan di Luar Usaha
+                                            @elseif($bukuBesarData['akun']->kategori == 'other_expense')
+                                                Biaya di Luar Usaha
+                                            @elseif($bukuBesarData['akun']->kategori == 'purchase')
+                                                Pembelian
+                                            @else
+                                                {{ ucfirst($bukuBesarData['akun']->kategori) }}
+                                            @endif
                                         </span>
                                         <span class="text-xs text-gray-500 dark:text-gray-400">
                                             {{ $bukuBesarData['total_transaksi'] }} transaksi
@@ -666,8 +677,19 @@
                                                 @elseif($accountData['account']->kategori == 'equity') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
                                                 @elseif($accountData['account']->kategori == 'income') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
                                                 @elseif($accountData['account']->kategori == 'expense') bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200
+                                                @elseif($accountData['account']->kategori == 'purchase') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                                                @elseif($accountData['account']->kategori == 'other_income') bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200
+                                                @elseif($accountData['account']->kategori == 'other_expense') bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200
                                                 @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 @endif">
-                                                {{ ucfirst($accountData['account']->kategori) }}
+                                                @if ($accountData['account']->kategori == 'other_income')
+                                                    Pendapatan di Luar Usaha
+                                                @elseif($accountData['account']->kategori == 'other_expense')
+                                                    Biaya di Luar Usaha
+                                                @elseif($accountData['account']->kategori == 'purchase')
+                                                    Pembelian
+                                                @else
+                                                    {{ ucfirst($accountData['account']->kategori) }}
+                                                @endif
                                             </span>
                                         </td>
                                         <td

@@ -59,6 +59,9 @@ class COAController extends Controller
             'equity' => 'Ekuitas',
             'income' => 'Pendapatan',
             'expense' => 'Beban',
+            'purchase' => 'Pembelian',
+            'other_income' => 'Pendapatan di Luar Usaha',
+            'other_expense' => 'Biaya di Luar Usaha',
             'other' => 'Lainnya'
         ];
 
@@ -85,7 +88,7 @@ class COAController extends Controller
         $validator = Validator::make($request->all(), [
             'kode' => 'required|string|max:20|unique:akun_akuntansi,kode',
             'nama' => 'required|string|max:255',
-            'kategori' => 'required|string|in:asset,liability,equity,income,expense,other',
+            'kategori' => 'required|string|in:asset,liability,equity,income,expense,purchase,other_income,other_expense,other',
             'tipe' => 'required|string|in:header,detail',
             'parent_id' => 'nullable|exists:akun_akuntansi,id',
             'is_active' => 'boolean',
@@ -194,6 +197,9 @@ class COAController extends Controller
             'equity' => 'Ekuitas',
             'income' => 'Pendapatan',
             'expense' => 'Beban',
+            'purchase' => 'Pembelian',
+            'other_income' => 'Pendapatan di Luar Usaha',
+            'other_expense' => 'Biaya di Luar Usaha',
             'other' => 'Lainnya'
         ];
 
@@ -221,7 +227,7 @@ class COAController extends Controller
         $validator = Validator::make($request->all(), [
             'kode' => 'required|string|max:20|unique:akun_akuntansi,kode,' . $id,
             'nama' => 'required|string|max:255',
-            'kategori' => 'required|string|in:asset,liability,equity,income,expense,other',
+            'kategori' => 'required|string|in:asset,liability,equity,income,expense,purchase,other_income,other_expense,other',
             'tipe' => 'required|string|in:header,detail',
             'parent_id' => 'nullable|exists:akun_akuntansi,id',
             'is_active' => 'boolean',
@@ -350,6 +356,15 @@ class COAController extends Controller
                 break;
             case 'expense':
                 $prefix = '5';
+                break;
+            case 'purchase':
+                $prefix = '6';
+                break;
+            case 'other_income':
+                $prefix = '7';
+                break;
+            case 'other_expense':
+                $prefix = '8';
                 break;
             default:
                 $prefix = '9';
