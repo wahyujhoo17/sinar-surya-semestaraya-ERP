@@ -160,10 +160,33 @@ class ProspekLeadController extends Controller
         }
 
         // Simpan data prospek
-        Prospek::create($data);
+        $prospek = Prospek::create($data);
+
+        // Buat customer otomatis setelah prospek dibuat
+        $customerCreated = false;
+        $customerData = $this->createCustomerFromProspek($prospek);
+        if ($customerData) {
+            $customerCreated = true;
+            $customerId = $customerData['id'];
+
+            // Update prospek dengan customer_id
+            $prospek->customer_id = $customerId;
+            $prospek->save();
+
+            Log::info('Customer created automatically from new prospek:', [
+                'prospek_id' => $prospek->id,
+                'customer_id' => $customerId,
+                'customer_kode' => $customerData['kode']
+            ]);
+        }
+
+        $message = 'Prospek berhasil ditambahkan';
+        if ($customerCreated) {
+            $message .= ' dan data customer baru telah dibuat otomatis';
+        }
 
         return redirect()->route('crm.prospek.index')
-            ->with('success', 'Prospek berhasil ditambahkan');
+            ->with('success', $message);
     }
 
     public function show($id)
