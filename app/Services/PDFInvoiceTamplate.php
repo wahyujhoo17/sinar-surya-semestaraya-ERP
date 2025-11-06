@@ -222,6 +222,16 @@ class PDFInvoiceTamplate
             $pdf->Cell(25, 4, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
 
             $y = $summaryY - 4;
+
+            // Tampilkan DP jika ada yang diterapkan
+            if (!empty($invoice->uang_muka_terapkan) && $invoice->uang_muka_terapkan > 0) {
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetXY(142, $y);
+                $pdf->Cell(37, 4, 'DP Diterapkan', 0, 0, 'L');
+                $pdf->Cell(25, 4, '(' . number_format($invoice->uang_muka_terapkan, 0, ',', '.') . ')', 0, 1, 'R');
+                $y -= 4;
+            }
+
             if ($invoice->ongkos_kirim > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
@@ -267,6 +277,31 @@ class PDFInvoiceTamplate
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
             $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
 
+            // --- Catatan DP (di samping kiri summary, area kolom nama barang) ---
+            if (!empty($invoice->uang_muka_terapkan) && $invoice->uang_muka_terapkan > 0) {
+                $nomorPO = $invoice->salesOrder->nomor_po ?? '-';
+                $totalPO = $invoice->salesOrder->total ?? 0;
+                $persenDP = $totalPO > 0 ? round(($invoice->uang_muka_terapkan / $totalPO) * 100, 2) : 0;
+
+                $dpNoteX = 14; // Posisi X di area kolom nama barang
+                $dpNoteY = $summaryY - 15; // Sejajar dengan bagian atas summary
+
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $pdf->Cell(0, 4, 'Note:', 0, 1, 'L');
+
+                $pdf->SetFont('helvetica', '', 7.5);
+                $dpNoteY += 4;
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $dpText = "Pembayaran DP " . rtrim(rtrim(number_format($persenDP, 2, '.', ''), '0'), '.') . "% untuk PO: " . $nomorPO;
+                $pdf->MultiCell(120, 3.5, $dpText, 0, 'L');
+
+                $dpNoteY = $pdf->GetY();
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $dpTotalText = "Dengan total PO senilai Rp. " . number_format($totalPO, 0, ',', '.');
+                $pdf->MultiCell(120, 3.5, $dpTotalText, 0, 'L');
+            }
+
             // --- Catatan ---
             $nomorINV = $invoice->nomor;
             if (preg_match("/INV-(\\d{8}-\\d+)/", $invoice->nomor, $matches)) {
@@ -274,6 +309,7 @@ class PDFInvoiceTamplate
             }
             // Ganti <br> dengan new line agar MultiCell TCPDF bisa menampilkan baris baru
             $CatatanText = "PERHATIAN:\nMohon Dicantumkan NO. $nomorINV\nPada Berita Transfer.";
+
             $pdf->SetFont('helvetica', '', 8);
             $pdf->SetXY(90, 137);
             $pdf->MultiCell(120, 4,  $CatatanText, 0, 'L');

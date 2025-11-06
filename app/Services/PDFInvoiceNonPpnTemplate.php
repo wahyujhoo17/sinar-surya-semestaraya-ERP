@@ -13,7 +13,7 @@ class PDFInvoiceNonPpnTemplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '', $bankAccounts = null, $primaryBank = null)
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config('app.print_with_template', true); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice Non PPn.pdf');
 
         // XY = 214x 154
@@ -50,7 +50,7 @@ class PDFInvoiceNonPpnTemplate
 
             // --- Customer ---
             $customerX = 12;
-            $customerY = 24;
+            $customerY = 29;
             $maxCustomerWidth = 70;
             $pdf->SetFont('helvetica', 'B', 9);
             $pdf->SetXY($customerX, $customerY);
@@ -69,7 +69,7 @@ class PDFInvoiceNonPpnTemplate
             // DETAIL INV
             $maxDetilWidth = 45;
             $salesOrderX = 160;
-            $salesOrderY = 18;
+            $salesOrderY = 19;
             // NOMOR PO
             $pdf->SetFont('helvetica', '', 9);
             $pdf->SetXY($salesOrderX, $salesOrderY);
@@ -92,7 +92,7 @@ class PDFInvoiceNonPpnTemplate
 
 
             // --- Items Table Header ---
-            $itemsStartY = 51;
+            $itemsStartY = 54;
             $lineHeight = 5.5;
             $maxItemsPerPage = 7; // Maksimal 7 item per halaman
 
@@ -335,7 +335,7 @@ class PDFInvoiceNonPpnTemplate
             // TERBILANG - gunakan total Non PPN
 
             // disesuaikan untuk tinggi 154
-            $pdf->SetXY(14, 107);
+            $pdf->SetXY(14, 114);
             // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $totalNonPpn) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
