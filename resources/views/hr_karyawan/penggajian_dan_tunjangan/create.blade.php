@@ -692,6 +692,234 @@
                                 </tfoot>
                             </table>
                         </div>
+
+                        {{-- Detail Per Produk untuk Setiap Sales Order --}}
+                        <div class="mt-6 space-y-4">
+                            <template x-for="order in commissionData.orders" :key="order.id">
+                                <div x-data="{ expanded: false }"
+                                    class="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                                    {{-- Header yang bisa diklik untuk expand/collapse --}}
+                                    <div @click="expanded = !expanded"
+                                        class="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
+                                        <div class="flex items-center space-x-3">
+                                            <svg class="w-4 h-4 text-blue-500 transition-transform duration-200"
+                                                :class="{ 'rotate-90': expanded }" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9 5l7 7-7 7" />
+                                            </svg>
+                                            <div>
+                                                <h4 class="font-medium text-gray-900 dark:text-white"
+                                                    x-text="'Detail Produk - ' + order.nomor"></h4>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400"
+                                                    x-text="order.customer"></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center space-x-4">
+                                            <template
+                                                x-if="order.has_sales_ppn !== undefined && order.has_sales_ppn === true">
+                                                <span
+                                                    class="text-xs px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full font-medium">
+                                                    PPN <span x-text="order.sales_ppn || '11'"></span>%
+                                                </span>
+                                            </template>
+                                            <template
+                                                x-if="order.has_sales_ppn !== undefined && order.has_sales_ppn === false">
+                                                <span
+                                                    class="text-xs px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 rounded-full font-medium">
+                                                    Non-PPN
+                                                </span>
+                                            </template>
+                                            <span class="text-sm font-semibold text-green-600 dark:text-green-400"
+                                                x-text="formatRupiah(order.komisi)"></span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Content yang ditampilkan saat expanded --}}
+                                    <div x-show="expanded" x-collapse>
+                                        <div class="p-4 bg-white dark:bg-gray-800">
+                                            <template x-if="order.product_details && order.product_details.length > 0">
+                                                <div>
+                                                    <div class="overflow-x-auto">
+                                                        <table class="min-w-full text-xs">
+                                                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                                                <tr>
+                                                                    <th
+                                                                        class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                                                                        Produk</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Qty</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Harga Jual</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Harga Beli</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-center font-medium text-gray-700 dark:text-gray-300">
+                                                                        Status PPN</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Margin</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Margin %</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody
+                                                                class="divide-y divide-gray-200 dark:divide-gray-600">
+                                                                <template x-for="product in order.product_details"
+                                                                    :key="product.produk_id">
+                                                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                                                        :class="{
+                                                                            'opacity-60': product.margin_persen < 18
+                                                                        }">
+                                                                        <td class="px-3 py-2">
+                                                                            <div
+                                                                                class="font-medium text-gray-900 dark:text-white">
+                                                                                <span x-text="product.nama_produk">
+                                                                                </span>
+                                                                                <template
+                                                                                    x-if="product.margin_persen < 18">
+                                                                                    <span
+                                                                                        class="ml-1 text-xs text-red-500"
+                                                                                        title="Margin dibawah minimum (18%), tidak dapat komisi">⚠️</span>
+                                                                                </template>
+                                                                            </div>
+                                                                            <div class="text-gray-500 text-xs"
+                                                                                x-text="product.kode_produk"></div>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right text-gray-900 dark:text-white"
+                                                                            x-text="formatNumber(product.quantity)">
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <div
+                                                                                class="font-medium text-gray-900 dark:text-white">
+                                                                                <span
+                                                                                    x-text="formatRupiah(product.harga_jual_adjusted || product.harga_jual)"></span>
+                                                                            </div>
+                                                                            <template
+                                                                                x-if="product.harga_jual_adjusted && product.harga_jual_adjusted != product.harga_jual">
+                                                                                <div
+                                                                                    class="text-gray-400 text-xs line-through">
+                                                                                    <span
+                                                                                        x-text="formatRupiah(product.harga_jual)"></span>
+                                                                                </div>
+                                                                            </template>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <div
+                                                                                class="font-medium text-gray-900 dark:text-white">
+                                                                                <span
+                                                                                    x-text="formatRupiah(product.harga_beli_adjusted || product.harga_beli)"></span>
+                                                                            </div>
+                                                                            <template
+                                                                                x-if="product.harga_beli_adjusted && product.harga_beli_adjusted != product.harga_beli">
+                                                                                <div
+                                                                                    class="text-gray-400 text-xs line-through">
+                                                                                    <span
+                                                                                        x-text="formatRupiah(product.harga_beli)"></span>
+                                                                                </div>
+                                                                            </template>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-center">
+                                                                            <template x-if="product.ppn_rule">
+                                                                                <span
+                                                                                    class="inline-flex px-2 py-1 text-xs font-medium rounded-full"
+                                                                                    :class="{
+                                                                                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': product
+                                                                                            .ppn_rule === 'rule_1',
+                                                                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300': product
+                                                                                            .ppn_rule === 'rule_2',
+                                                                                        'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300': product
+                                                                                            .ppn_rule === 'rule_3'
+                                                                                    }"
+                                                                                    x-text="{
+                                                                                        'rule_1': 'PPN+PPN',
+                                                                                        'rule_2': 'PPN+Non',
+                                                                                        'rule_3': 'Non+PPN'
+                                                                                    }[product.ppn_rule] || 'Standard'">
+                                                                                </span>
+                                                                            </template>
+                                                                            <template x-if="!product.ppn_rule">
+                                                                                <span class="text-gray-400">-</span>
+                                                                            </template>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <span
+                                                                                class="font-medium text-gray-900 dark:text-white"
+                                                                                x-text="formatRupiah((product.harga_jual_adjusted || product.harga_jual) - (product.harga_beli_adjusted || product.harga_beli))"></span>
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <span class="font-medium"
+                                                                                :class="{
+                                                                                    'text-green-600 dark:text-green-400': product
+                                                                                        .margin_persen >= 18,
+                                                                                    'text-red-600 dark:text-red-400': product
+                                                                                        .margin_persen < 18
+                                                                                }"
+                                                                                x-text="formatNumber(product.margin_persen, 2) + '%'">
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </template>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    {{-- Legend --}}
+                                                    <div
+                                                        class="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                                        <h6
+                                                            class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Keterangan Aturan PPN:</h6>
+                                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                                    PPN+PPN
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Beli
+                                                                    non-PPN</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                    PPN+Non
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Harga
+                                                                    sesuai</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                                    Non+PPN
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Beli
+                                                                    include PPN</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                            <span class="font-medium">⚠️ Catatan:</span> Produk
+                                                            dengan margin &lt; 18% ditampilkan untuk informasi, tidak
+                                                            mendapat komisi
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+
+                                            <template
+                                                x-if="!order.product_details || order.product_details.length === 0">
+                                                <div class="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
+                                                    Detail produk tidak tersedia
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
 
                     {{-- Hidden commission input --}}
@@ -700,7 +928,8 @@
                     <template x-for="(adjustment, orderIndex) in Object.values(salesOrderAdjustments)"
                         :key="orderIndex">
                         <div>
-                            <input type="hidden" :name="'sales_order_adjustments[' + orderIndex + '][sales_order_id]'"
+                            <input type="hidden"
+                                :name="'sales_order_adjustments[' + orderIndex + '][sales_order_id]'"
                                 :value="adjustment.sales_order_id">
                             <input type="hidden"
                                 :name="'sales_order_adjustments[' + orderIndex + '][cashback_nominal]'"
@@ -1180,6 +1409,13 @@
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0
                         }).format(amount || 0);
+                    },
+
+                    formatNumber(value, decimals = 0) {
+                        return new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: decimals,
+                            maximumFractionDigits: decimals
+                        }).format(value || 0);
                     },
 
                     resetForm() {

@@ -575,6 +575,201 @@
                                                 </div>
                                             </div>
 
+                                            <!-- Detail Per Produk (jika ada) -->
+                                            @if (!empty($komponen->product_details) && is_array($komponen->product_details))
+                                                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                                                    <h5
+                                                        class="text-sm font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                                                        <svg class="w-4 h-4 mr-2 text-blue-500" fill="none"
+                                                            stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                                            </path>
+                                                        </svg>
+                                                        Detail Perhitungan Per Produk
+                                                        @if ($komponen->has_sales_ppn)
+                                                            <span
+                                                                class="ml-2 text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full">
+                                                                PPN {{ $komponen->sales_ppn }}%
+                                                            </span>
+                                                        @else
+                                                            <span
+                                                                class="ml-2 text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">
+                                                                Non-PPN
+                                                            </span>
+                                                        @endif
+                                                    </h5>
+                                                    <div class="overflow-x-auto">
+                                                        <table class="min-w-full text-xs">
+                                                            <thead class="bg-gray-50 dark:bg-gray-700">
+                                                                <tr>
+                                                                    <th
+                                                                        class="px-3 py-2 text-left font-medium text-gray-700 dark:text-gray-300">
+                                                                        Produk</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Qty</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Harga Jual</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Harga Beli</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-center font-medium text-gray-700 dark:text-gray-300">
+                                                                        Status PPN</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Margin</th>
+                                                                    <th
+                                                                        class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
+                                                                        Margin %</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody
+                                                                class="divide-y divide-gray-200 dark:divide-gray-600">
+                                                                @foreach ($komponen->product_details as $product)
+                                                                    @php
+                                                                        $ppnRuleBadge = '';
+                                                                        $ppnRuleText = '';
+                                                                        $ppnRuleColor = '';
+
+                                                                        if (isset($product['ppn_rule'])) {
+                                                                            switch ($product['ppn_rule']) {
+                                                                                case 'rule_1':
+                                                                                    $ppnRuleBadge =
+                                                                                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+                                                                                    $ppnRuleText = 'PPN + PPN';
+                                                                                    break;
+                                                                                case 'rule_2':
+                                                                                    $ppnRuleBadge =
+                                                                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300';
+                                                                                    $ppnRuleText = 'PPN + Non-PPN';
+                                                                                    break;
+                                                                                case 'rule_3':
+                                                                                    $ppnRuleBadge =
+                                                                                        'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300';
+                                                                                    $ppnRuleText = 'Non-PPN + PPN';
+                                                                                    break;
+                                                                                default:
+                                                                                    $ppnRuleBadge =
+                                                                                        'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300';
+                                                                                    $ppnRuleText = 'Standard';
+                                                                            }
+                                                                        }
+
+                                                                        $margin =
+                                                                            ($product['harga_jual_adjusted'] ??
+                                                                                $product['harga_jual']) -
+                                                                            ($product['harga_beli_adjusted'] ??
+                                                                                $product['harga_beli']);
+                                                                    @endphp
+                                                                    <tr
+                                                                        class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                                                                        <td
+                                                                            class="px-3 py-2 text-gray-900 dark:text-white">
+                                                                            <div class="font-medium">
+                                                                                {{ $product['nama_produk'] ?? 'N/A' }}
+                                                                            </div>
+                                                                            <div class="text-gray-500">
+                                                                                {{ $product['kode_produk'] ?? '' }}
+                                                                            </div>
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-3 py-2 text-right text-gray-900 dark:text-white">
+                                                                            {{ number_format($product['quantity'] ?? 0, 0, ',', '.') }}
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <div
+                                                                                class="text-gray-900 dark:text-white font-medium">
+                                                                                Rp
+                                                                                {{ number_format($product['harga_jual_adjusted'] ?? ($product['harga_jual'] ?? 0), 0, ',', '.') }}
+                                                                            </div>
+                                                                            @if (isset($product['harga_jual_adjusted']) && $product['harga_jual_adjusted'] != $product['harga_jual'])
+                                                                                <div
+                                                                                    class="text-gray-500 text-xs line-through">
+                                                                                    Rp
+                                                                                    {{ number_format($product['harga_jual'], 0, ',', '.') }}
+                                                                                </div>
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <div
+                                                                                class="text-gray-900 dark:text-white font-medium">
+                                                                                Rp
+                                                                                {{ number_format($product['harga_beli_adjusted'] ?? ($product['harga_beli'] ?? 0), 0, ',', '.') }}
+                                                                            </div>
+                                                                            @if (isset($product['harga_beli_adjusted']) && $product['harga_beli_adjusted'] != $product['harga_beli'])
+                                                                                <div
+                                                                                    class="text-gray-500 text-xs line-through">
+                                                                                    Rp
+                                                                                    {{ number_format($product['harga_beli'], 0, ',', '.') }}
+                                                                                </div>
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-center">
+                                                                            @if ($ppnRuleText)
+                                                                                <span
+                                                                                    class="inline-flex px-2 py-1 text-xs font-medium rounded-full {{ $ppnRuleBadge }}">
+                                                                                    {{ $ppnRuleText }}
+                                                                                </span>
+                                                                            @else
+                                                                                <span class="text-gray-400">-</span>
+                                                                            @endif
+                                                                        </td>
+                                                                        <td
+                                                                            class="px-3 py-2 text-right text-gray-900 dark:text-white font-medium">
+                                                                            Rp
+                                                                            {{ number_format($margin, 0, ',', '.') }}
+                                                                        </td>
+                                                                        <td class="px-3 py-2 text-right">
+                                                                            <span
+                                                                                class="font-medium {{ $product['margin_persen'] >= 18 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                                                                {{ number_format($product['margin_persen'] ?? 0, 2) }}%
+                                                                            </span>
+                                                                        </td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <!-- Legend PPN Rules -->
+                                                    <div class="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                                        <h6
+                                                            class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                            Keterangan Aturan PPN:</h6>
+                                                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-xs">
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                                                    PPN + PPN
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Beli
+                                                                    non-PPN</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                                                    PPN + Non-PPN
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Harga
+                                                                    sesuai</span>
+                                                            </div>
+                                                            <div class="flex items-center">
+                                                                <span
+                                                                    class="inline-flex px-2 py-0.5 mr-2 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                                    Non-PPN + PPN
+                                                                </span>
+                                                                <span class="text-gray-600 dark:text-gray-400">Beli
+                                                                    include PPN</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            @endif
+
                                             <!-- Penyesuaian (jika ada) -->
                                             @if ($hasAdjustments)
                                                 <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">

@@ -544,12 +544,12 @@
                                                             <div
                                                                 class="text-sm font-medium text-gray-900 dark:text-white">
                                                                 <span
-                                                                    x-text="detail.barang ? (detail.barang.kode + ' - ' + detail.barang.nama) : detail.nama_item"></span>
+                                                                    x-text="detail.produk ? (detail.produk.kode + ' - ' + detail.produk.nama) : detail.nama_item"></span>
                                                                 <input type="hidden" :name="`items[${index}][id]`"
                                                                     :value="detail.id">
                                                                 <input type="hidden"
                                                                     :name="`items[${index}][barang_id]`"
-                                                                    :value="detail.barang_id">
+                                                                    :value="detail.produk_id">
                                                             </div>
                                                             <div class="text-sm text-gray-500 dark:text-gray-400"
                                                                 x-text="detail.deskripsi || '-'"></div>
@@ -757,6 +757,14 @@
                                                         <!-- Enhanced fallback logic -->
                                                         <span
                                                             x-text="(() => {
+                                                            // Check produk relationship first
+                                                            if (item.produk && item.produk.kode && item.produk.nama) {
+                                                                return item.produk.kode + ' - ' + item.produk.nama;
+                                                            }
+                                                            if (item.produk && item.produk.nama) {
+                                                                return item.produk.nama;
+                                                            }
+                                                            // Check barang relationship as fallback
                                                             if (item.barang && item.barang.kode && item.barang.nama) {
                                                                 return item.barang.kode + ' - ' + item.barang.nama;
                                                             }
@@ -771,6 +779,9 @@
                                                             }
                                                             if (item.deskripsi) {
                                                                 return item.deskripsi;
+                                                            }
+                                                            if (item.produk_id) {
+                                                                return 'Produk ID: ' + item.produk_id;
                                                             }
                                                             if (item.barang_id) {
                                                                 return 'Barang ID: ' + item.barang_id;
@@ -1363,7 +1374,17 @@
                 getItemDisplayName(item) {
                     // Try multiple approaches to get item name
 
-                    // Method 1: Check barang relationship (most common)
+                    // Method 1: Check produk relationship (most common for PO)
+                    if (item.produk) {
+                        if (item.produk.kode && item.produk.nama) {
+                            return `${item.produk.kode} - ${item.produk.nama}`;
+                        }
+                        if (item.produk.nama) {
+                            return item.produk.nama;
+                        }
+                    }
+
+                    // Method 2: Check barang relationship (alternative)
                     if (item.barang) {
                         if (item.barang.kode && item.barang.nama) {
                             return `${item.barang.kode} - ${item.barang.nama}`;
@@ -1373,7 +1394,7 @@
                         }
                     }
 
-                    // Method 2: Check direct properties
+                    // Method 3: Check direct properties
                     if (item.nama_item) {
                         return item.nama_item;
                     }
@@ -1382,7 +1403,7 @@
                         return item.nama;
                     }
 
-                    // Method 3: Check if there's a kode_barang property
+                    // Method 4: Check if there's a kode_barang property
                     if (item.kode_barang && item.nama_barang) {
                         return `${item.kode_barang} - ${item.nama_barang}`;
                     }
@@ -1391,7 +1412,11 @@
                         return item.nama_barang;
                     }
 
-                    // Method 4: Try to construct from barang_id (fallback)
+                    // Method 5: Try to construct from produk_id or barang_id (fallback)
+                    if (item.produk_id) {
+                        return `Item ID: ${item.produk_id}`;
+                    }
+
                     if (item.barang_id) {
                         return `Item ID: ${item.barang_id}`;
                     }
@@ -1401,8 +1426,17 @@
                 },
 
                 getItemUnit(item) {
+                    // Check produk relationship first
+                    if (item.produk && item.produk.satuan) {
+                        return item.produk.satuan;
+                    }
+                    // Check barang relationship as fallback
                     if (item.barang && item.barang.satuan) {
                         return item.barang.satuan;
+                    }
+                    // Check satuan relationship
+                    if (item.satuan && item.satuan.nama) {
+                        return item.satuan.nama;
                     }
                     return item.satuan || '';
                 },

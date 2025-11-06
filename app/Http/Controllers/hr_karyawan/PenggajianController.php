@@ -555,7 +555,10 @@ class PenggajianController extends Controller
                         'netto_penjualan_adjusted' => $detail['netto_penjualan_adjusted'],
                         'netto_beli_adjusted' => $detail['netto_beli_adjusted'],
                         'margin_persen' => $detail['margin_persen'],
-                        'komisi_rate' => $detail['komisi_rate']
+                        'komisi_rate' => $detail['komisi_rate'],
+                        'product_details' => $detail['product_details'] ?? [],
+                        'sales_ppn' => $detail['sales_ppn'] ?? null,
+                        'has_sales_ppn' => $detail['has_sales_ppn'] ?? false
                     ]);
                 }
             }
@@ -841,32 +844,119 @@ class PenggajianController extends Controller
             // Total = subtotal + PPN
             $totalNettoPenjualanOriginal = floatval($order->subtotal ?? 0);
 
-            Log::info('Using subtotal from SO (already exclude PPN)', [
+            Log::info('Processing SO for commission', [
                 'order_id' => $order->id,
                 'order_nomor' => $order->nomor,
                 'subtotal' => $totalNettoPenjualanOriginal,
-                'ppn' => $salesPpn,
+                'sales_ppn' => $salesPpn,
+                'has_sales_ppn' => $hasSalesPpn,
                 'total' => $order->total
             ]);
 
-            // Subtotal already excludes PPN, so no need to adjust
-            // We will use subtotal as-is for commission calculation
-            $totalNettoPenjualan = $totalNettoPenjualanOriginal;
+            $totalNettoPenjualan = 0;
             $totalNettoBeli = 0;
+            $productDetails = [];
 
-            // Calculate total purchase value
+            // Calculate per product with PPN rules
             foreach ($details as $detail) {
                 $produk = Produk::find($detail->produk_id);
-                if ($produk) {
-                    // Calculate netto beli (purchase value)
-                    $nettoBeliItem = $produk->harga_beli * $detail->quantity;
-                    $totalNettoBeli += $nettoBeliItem;
+                if (!$produk) {
+                    continue;
                 }
+
+                // Get last purchase order for this product to check purchase PPN
+                $lastPO = PurchaseOrder::join('purchase_order_detail', 'purchase_order.id', '=', 'purchase_order_detail.po_id')
+                    ->where('purchase_order_detail.produk_id', $produk->id)
+                    ->where('purchase_order.status', 'selesai')
+                    ->orderBy('purchase_order.tanggal', 'desc')
+                    ->select('purchase_order.*')
+                    ->first();
+
+                $purchasePpn = $lastPO ? ($lastPO->ppn ?? 0) : 0;
+                $hasPurchasePpn = $purchasePpn > 0;
+
+                // Calculate netto jual for this item (already exclude PPN from SO subtotal)
+                // detail->subtotal already excludes PPN because SO->subtotal excludes PPN
+                $nettoJualItem = floatval($detail->subtotal ?? 0);
+
+                // Calculate netto beli (purchase value)
+                // harga_beli in produk table should be the price we paid (include PPN if we paid PPN)
+                $nettoBeliItem = $produk->harga_beli * $detail->quantity;
+
+                // Apply 3 PPN Rules
+                $ppnRule = 'none';
+                $nettoJualAdjusted = $nettoJualItem;
+                $nettoBeliAdjusted = $nettoBeliItem;
+
+                // Rule 1: Sales PPN + Purchase PPN
+                // Pembelian PPN dan Penjualan PPN
+                // Dihitung dari harga non-PPN keduanya atau harga sudah PPN karena akan sama saja
+                // Sales subtotal already exclude PPN, Purchase include PPN → convert purchase to exclude PPN
+                if ($hasSalesPpn && $hasPurchasePpn) {
+                    $ppnRule = 'rule_1';
+                    // Convert purchase to exclude PPN for fair comparison
+                    $nettoBeliAdjusted = $nettoBeliItem / (1 + $purchasePpn / 100);
+                }
+                // Rule 2: Sales PPN + Purchase Non-PPN
+                // Pembelian Non-PPN dan Penjualan PPN
+                // Penjualan dihitung dari harga non-PPN (sudah exclude PPN di subtotal)
+                elseif ($hasSalesPpn && !$hasPurchasePpn) {
+                    $ppnRule = 'rule_2';
+                    // Sales already exclude PPN (subtotal), Purchase already exclude PPN
+                    // No adjustment needed - both already exclude PPN
+                }
+                // Rule 3: Sales Non-PPN + Purchase PPN
+                // Pembelian PPN dan Penjualan Non-PPN
+                // Pembelian dihitung dari harga INCLUDE PPN (tidak disesuaikan)
+                elseif (!$hasSalesPpn && $hasPurchasePpn) {
+                    $ppnRule = 'rule_3';
+                    // Keep purchase price as is (include PPN)
+                    // No adjustment needed
+                }
+
+                $totalNettoPenjualan += $nettoJualAdjusted;
+                $totalNettoBeli += $nettoBeliAdjusted;
+
+                // Calculate margin for this product
+                $productMargin = 0;
+                if ($nettoBeliAdjusted > 0) {
+                    $productMargin = (($nettoJualAdjusted - $nettoBeliAdjusted) / $nettoBeliAdjusted) * 100;
+                }
+
+                // Store product detail
+                $productDetails[] = [
+                    'produk_id' => $produk->id,
+                    'kode_produk' => $produk->kode,
+                    'nama_produk' => $produk->nama,
+                    'quantity' => $detail->quantity,
+                    'harga_jual' => $nettoJualItem,
+                    'harga_beli' => $nettoBeliItem,
+                    'harga_jual_adjusted' => $nettoJualAdjusted,
+                    'harga_beli_adjusted' => $nettoBeliAdjusted,
+                    'sales_ppn' => $salesPpn,
+                    'purchase_ppn' => $purchasePpn,
+                    'has_sales_ppn' => $hasSalesPpn,
+                    'has_purchase_ppn' => $hasPurchasePpn,
+                    'ppn_rule' => $ppnRule,
+                    'margin_persen' => $productMargin
+                ];
+
+                Log::info('Product PPN calculation', [
+                    'produk' => $produk->kode . ' - ' . $produk->nama,
+                    'sales_ppn' => $salesPpn,
+                    'purchase_ppn' => $purchasePpn,
+                    'ppn_rule' => $ppnRule,
+                    'netto_jual_original' => $nettoJualItem,
+                    'netto_beli_original' => $nettoBeliItem,
+                    'netto_jual_adjusted' => $nettoJualAdjusted,
+                    'netto_beli_adjusted' => $nettoBeliAdjusted,
+                    'margin' => $productMargin
+                ]);
             }
 
-            // Apply penyesuaian untuk sales order ini
-            $nettoPenjualanAdjusted = $totalNettoPenjualan - $cashbackNominal; // Kurangi cashback nominal
-            $nettoBeliAdjusted = $totalNettoBeli * (1 + $overheadPersen / 100); // Tambah overhead persen
+            // Apply penyesuaian untuk sales order ini (cashback & overhead)
+            $nettoPenjualanAdjusted = $totalNettoPenjualan - $cashbackNominal;
+            $nettoBeliAdjusted = $totalNettoBeli * (1 + $overheadPersen / 100);
 
             if ($nettoBeliAdjusted > 0 && $nettoPenjualanAdjusted > 0) {
                 // Hitung margin berdasarkan nilai yang sudah disesuaikan
@@ -880,6 +970,12 @@ class PenggajianController extends Controller
 
                 Log::info('Commission calculation for order', [
                     'order_id' => $order->id,
+                    'total_netto_penjualan' => $totalNettoPenjualan,
+                    'total_netto_beli' => $totalNettoBeli,
+                    'cashback' => $cashbackNominal,
+                    'overhead_persen' => $overheadPersen,
+                    'netto_penjualan_adjusted' => $nettoPenjualanAdjusted,
+                    'netto_beli_adjusted' => $nettoBeliAdjusted,
                     'margin_persen' => $marginPersen,
                     'komisi_rate' => $komisiRate,
                     'order_komisi' => $orderKomisi
@@ -895,12 +991,15 @@ class PenggajianController extends Controller
                         'komisi' => $orderKomisi,
                         'cashback_nominal' => $cashbackNominal,
                         'overhead_persen' => $overheadPersen,
-                        'netto_penjualan_original' => $totalNettoPenjualanOriginal, // Original value before PPN adjustment
+                        'netto_penjualan_original' => $totalNettoPenjualanOriginal,
                         'netto_beli_original' => $totalNettoBeli,
-                        'netto_penjualan_adjusted' => $nettoPenjualanAdjusted, // Adjusted value after PPN + cashback
+                        'netto_penjualan_adjusted' => $nettoPenjualanAdjusted,
                         'netto_beli_adjusted' => $nettoBeliAdjusted,
                         'margin_persen' => $marginPersen,
-                        'komisi_rate' => $komisiRate
+                        'komisi_rate' => $komisiRate,
+                        'product_details' => $productDetails,
+                        'sales_ppn' => $salesPpn,
+                        'has_sales_ppn' => $hasSalesPpn
                     ];
                 }
             }
@@ -1104,7 +1203,10 @@ class PenggajianController extends Controller
                         'margin' => $detail['netto_penjualan_original'] - $detail['netto_beli_original'],
                         'margin_persen' => round($detail['margin_persen'], 2),
                         'commission_rate' => $detail['komisi_rate'],
-                        'komisi' => $detail['komisi']
+                        'komisi' => $detail['komisi'],
+                        'product_details' => $detail['product_details'] ?? [],
+                        'sales_ppn' => $detail['sales_ppn'] ?? null,
+                        'has_sales_ppn' => $detail['has_sales_ppn'] ?? false
                     ];
                 }
             }

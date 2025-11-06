@@ -25,7 +25,10 @@ class KomponenGaji extends Model
         'netto_penjualan_adjusted',
         'netto_beli_adjusted',
         'margin_persen',
-        'komisi_rate'
+        'komisi_rate',
+        'product_details',
+        'sales_ppn',
+        'has_sales_ppn'
     ];
 
     /**
@@ -40,7 +43,10 @@ class KomponenGaji extends Model
         'netto_penjualan_adjusted' => 'decimal:2',
         'netto_beli_adjusted' => 'decimal:2',
         'margin_persen' => 'decimal:4',
-        'komisi_rate' => 'decimal:2'
+        'komisi_rate' => 'decimal:2',
+        'product_details' => 'array',
+        'sales_ppn' => 'decimal:2',
+        'has_sales_ppn' => 'boolean'
     ];
 
     /**
