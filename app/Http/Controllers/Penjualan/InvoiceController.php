@@ -832,9 +832,12 @@ class InvoiceController extends Controller
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
+            // Get DP amount from request (optional, for temporary DP display only)
+            $dpAmount = request('dp_amount', 0);
+
             // Use PDF template service - Menggunakan template asli
             $pdfService = new \App\Services\PDFInvoiceTamplate();
-            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount);
 
 
 
@@ -846,7 +849,7 @@ class InvoiceController extends Controller
                 'print invoice template',
                 'invoice',
                 $invoice->id,
-                'Print invoice menggunakan Sinar Surya FPDI template'
+                'Print invoice menggunakan Sinar Surya FPDI template' . ($dpAmount > 0 ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : '')
             );
 
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download

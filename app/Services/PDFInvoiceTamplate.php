@@ -10,8 +10,11 @@ class PDFInvoiceTamplate
 {
     /**
      * Generate Invoice PDF (mirip Delivery Order, bisa pakai template atau hanya text)
+     * @param object $invoice Invoice model
+     * @param string $namaDirektur Nama direktur untuk tanda tangan
+     * @param float $dpAmount Jumlah DP yang akan ditampilkan (optional, tidak disimpan ke database)
      */
-    public function fillInvoiceTemplate($invoice, $namaDirektur = '')
+    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $dpAmount = 0)
     {
         $useTemplate = config('app.print_with_template', false); // default false, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice-New.pdf');
@@ -217,18 +220,25 @@ class PDFInvoiceTamplate
             $pdf->SetFont('helvetica', 'B', 8);
             // geser seluruh blok summary 3mm ke atas
             $summaryY = $yTotal - 3;
+
+            // Hitung grand total (jika ada DP, kurangi dari total)
+            $grandTotal = $invoice->total;
+            if ($dpAmount > 0) {
+                $grandTotal = $invoice->total - $dpAmount;
+            }
+
             $pdf->SetXY(142, $summaryY);
-            $pdf->Cell(37, 4, 'Total', 0, 0, 'L');
-            $pdf->Cell(25, 4, number_format($invoice->total, 0, ',', '.'), 0, 1, 'R');
+            $pdf->Cell(37, 4, $dpAmount > 0 ? 'Grand Total' : 'Total', 0, 0, 'L');
+            $pdf->Cell(25, 4, number_format($grandTotal, 0, ',', '.'), 0, 1, 'R');
 
             $y = $summaryY - 4;
 
-            // Tampilkan DP jika ada yang diterapkan
-            if (!empty($invoice->uang_muka_terapkan) && $invoice->uang_muka_terapkan > 0) {
+            // Tampilkan DP jika ada
+            if ($dpAmount > 0) {
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(37, 4, 'DP Diterapkan', 0, 0, 'L');
-                $pdf->Cell(25, 4, '(' . number_format($invoice->uang_muka_terapkan, 0, ',', '.') . ')', 0, 1, 'R');
+                $pdf->Cell(37, 4, 'DP', 0, 0, 'L');
+                $pdf->Cell(25, 4, '(' . number_format($dpAmount, 0, ',', '.') . ')', 0, 1, 'R');
                 $y -= 4;
             }
 
@@ -271,19 +281,20 @@ class PDFInvoiceTamplate
 
             // moved up by 1mm as requested
             $pdf->SetXY(14, 121);
-            // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
-            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $invoice->total) . ' Rupiah ') : '-';
+            // Konversi total ke terbilang (gunakan grandTotal yang sudah dihitung di summary)
+            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $grandTotal) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
             $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
 
-            // --- Catatan DP (di samping kiri summary, area kolom nama barang) ---
-            if (!empty($invoice->uang_muka_terapkan) && $invoice->uang_muka_terapkan > 0) {
+            // --- Catatan DP (di samping kiri summary, jika ada DP) ---
+            if ($dpAmount > 0) {
                 $nomorPO = $invoice->salesOrder->nomor_po ?? '-';
-                $totalPO = $invoice->salesOrder->total ?? 0;
-                $persenDP = $totalPO > 0 ? round(($invoice->uang_muka_terapkan / $totalPO) * 100, 2) : 0;
+                $totalPO = $invoice->salesOrder->total ?? $invoice->total;
+                // Hitung persentase dari total invoice, bukan dari total PO
+                $persenDP = $invoice->total > 0 ? round(($dpAmount / $invoice->total) * 100, 2) : 0;
 
-                $dpNoteX = 23; // Posisi X di area kolom nama barang, digeser 7 unit ke kanan
+                $dpNoteX = 21; // Posisi X di area kolom nama barang, sejajar dengan yang sebelumnya
                 $dpNoteY = $summaryY - 15; // Sejajar dengan bagian atas summary
 
                 $pdf->SetFont('helvetica', 'B', 8);

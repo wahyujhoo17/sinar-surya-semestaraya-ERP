@@ -131,14 +131,14 @@
                     </svg>
                     Cetak
                 </a> --}}
-                <a href="{{ route('penjualan.invoice.print-template', $invoice->id) }}" target="_blank"
+                <button type="button" onclick="openPrintModal()"
                     class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     Cetak Tamplate
-                </a>
+                </button>
                 <a href="{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -202,12 +202,14 @@
 
                     @if (auth()->user()->hasPermission('invoice.delete'))
                         <form action="{{ route('penjualan.invoice.destroy', $invoice->id) }}" method="POST"
-                            onsubmit="return confirm('Anda yakin ingin menghapus invoice ini?');" class="inline-block">
+                            onsubmit="return confirm('Anda yakin ingin menghapus invoice ini?');"
+                            class="inline-block">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
                                 class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">
-                                <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -803,5 +805,235 @@
             </div>
         @endif
     </div>
+
+    <!-- Modal Pilih Jenis Cetak -->
+    <div id="printModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Pilih Jenis Cetak Invoice
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Opsi 1: Invoice Normal -->
+                    <button type="button" onclick="printNormal()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice Normal</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Cetak tanpa DP</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <!-- Opsi 2: Invoice dengan DP -->
+                    <button type="button" onclick="showDPForm()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice dengan DP</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Cetak dengan down payment</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form DP (hidden by default) -->
+                <div id="dpForm" class="hidden mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3">Input DP</h4>
+
+                    <!-- Toggle Input Type -->
+                    <div class="flex gap-2 mb-3">
+                        <button type="button" onclick="setDPType('percent')" id="btnPercent"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white">
+                            Persentase (%)
+                        </button>
+                        <button type="button" onclick="setDPType('nominal')" id="btnNominal"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                            Nominal (Rp)
+                        </button>
+                    </div>
+
+                    <!-- Input Persentase -->
+                    <div id="percentInput" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Persentase DP
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="dpPercent" min="0" max="100" step="0.01"
+                                value="30"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 30">
+                            <span class="absolute right-3 top-2 text-gray-500">%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                        <p class="text-sm font-medium text-blue-600 dark:text-blue-400" id="dpPreview">
+                            DP: Rp <span id="dpAmount">0</span>
+                        </p>
+                    </div>
+
+                    <!-- Input Nominal -->
+                    <div id="nominalInput" class="space-y-2 hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nominal DP
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">Rp</span>
+                            <input type="text" id="dpNominal"
+                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 1.000.000">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                    </div>
+
+                    <div class="mt-4 flex gap-2">
+                        <button type="button" onclick="printWithDP()"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium">
+                            Cetak dengan DP
+                        </button>
+                        <button type="button" onclick="hideDPForm()"
+                            class="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-md text-sm font-medium">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" onclick="closePrintModal()"
+                        class="w-full px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-md text-sm font-medium">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            const invoiceId = {{ $invoice->id }};
+            const invoiceTotal = {{ $invoice->total }};
+            let dpType = 'percent'; // 'percent' or 'nominal'
+
+            function openPrintModal() {
+                document.getElementById('printModal').classList.remove('hidden');
+            }
+
+            function closePrintModal() {
+                document.getElementById('printModal').classList.add('hidden');
+                hideDPForm();
+            }
+
+            function printNormal() {
+                window.open('{{ route('penjualan.invoice.print-template', $invoice->id) }}', '_blank');
+                closePrintModal();
+            }
+
+            function showDPForm() {
+                document.getElementById('dpForm').classList.remove('hidden');
+                calculateDPAmount();
+            }
+
+            function hideDPForm() {
+                document.getElementById('dpForm').classList.add('hidden');
+            }
+
+            function setDPType(type) {
+                dpType = type;
+
+                // Update button styles
+                if (type === 'percent') {
+                    document.getElementById('btnPercent').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnNominal').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('percentInput').classList.remove('hidden');
+                    document.getElementById('nominalInput').classList.add('hidden');
+                } else {
+                    document.getElementById('btnNominal').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnPercent').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('nominalInput').classList.remove('hidden');
+                    document.getElementById('percentInput').classList.add('hidden');
+                }
+            }
+
+            function calculateDPAmount() {
+                const percent = parseFloat(document.getElementById('dpPercent').value) || 0;
+                const dpAmount = (invoiceTotal * percent) / 100;
+                // Bulatkan DP amount agar sama dengan yang tampil di PDF
+                const roundedDPAmount = Math.round(dpAmount);
+                document.getElementById('dpAmount').textContent = new Intl.NumberFormat('id-ID').format(roundedDPAmount);
+            }
+
+            function formatNominalInput(input) {
+                let value = input.value.replace(/\D/g, '');
+                input.value = new Intl.NumberFormat('id-ID').format(value);
+            }
+
+            function printWithDP() {
+                let dpAmount = 0;
+
+                if (dpType === 'percent') {
+                    const percent = parseFloat(document.getElementById('dpPercent').value);
+                    if (!percent || percent <= 0 || percent > 100) {
+                        alert('Masukkan persentase DP yang valid (1-100)');
+                        return;
+                    }
+                    dpAmount = (invoiceTotal * percent) / 100;
+                } else {
+                    const nominalStr = document.getElementById('dpNominal').value.replace(/\D/g, '');
+                    dpAmount = parseFloat(nominalStr);
+                    if (!dpAmount || dpAmount <= 0) {
+                        alert('Masukkan nominal DP yang valid');
+                        return;
+                    }
+                    if (dpAmount > invoiceTotal) {
+                        alert('Nominal DP tidak boleh lebih besar dari total invoice');
+                        return;
+                    }
+                }
+
+                // Buka URL dengan parameter DP
+                const url = '{{ route('penjualan.invoice.print-template', $invoice->id) }}' + '?dp_amount=' + Math.round(
+                    dpAmount);
+                window.open(url, '_blank');
+                closePrintModal();
+            }
+
+            // Event listeners
+            document.getElementById('dpPercent').addEventListener('input', calculateDPAmount);
+            document.getElementById('dpNominal').addEventListener('input', function() {
+                formatNominalInput(this);
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('printModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePrintModal();
+                }
+            });
+        </script>
+    @endpush
 
 </x-app-layout>
