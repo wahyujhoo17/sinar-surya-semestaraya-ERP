@@ -1090,7 +1090,12 @@ class InvoiceController extends Controller
         // Update invoice
         if ($totalAdvanceApplied > 0) {
             $invoice->uang_muka_terapkan = $totalAdvanceApplied;
-            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
+
+            // Hitung sisa tagihan dengan logika: (Subtotal - UM) + PPN 11%
+            $subtotalItems = $invoice->subtotal ?? 0;
+            $sisaSetelahUM = $subtotalItems - $totalAdvanceApplied;
+            $ppnAmount = $sisaSetelahUM * 0.11;
+            $invoice->sisa_tagihan = $sisaSetelahUM + $ppnAmount;
 
             // Update status invoice jika fully covered
             if ($invoice->sisa_tagihan <= 0) {
@@ -1152,7 +1157,12 @@ class InvoiceController extends Controller
         // Update invoice
         if ($totalAdvanceApplied > 0) {
             $invoice->uang_muka_terapkan = $totalAdvanceApplied;
-            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
+
+            // Hitung sisa tagihan dengan logika: (Subtotal - UM) + PPN 11%
+            $subtotalItems = $invoice->subtotal ?? 0;
+            $sisaSetelahUM = $subtotalItems - $totalAdvanceApplied;
+            $ppnAmount = $sisaSetelahUM * 0.11;
+            $invoice->sisa_tagihan = $sisaSetelahUM + $ppnAmount;
 
             // Update status invoice jika fully covered
             if ($invoice->sisa_tagihan <= 0) {

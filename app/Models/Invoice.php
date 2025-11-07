@@ -91,7 +91,18 @@ class Invoice extends Model
         $totalPembayaran = $this->pembayaranPiutang()->sum('jumlah');
         $totalKredit = $this->kredit_terapkan ?? 0;
         $uangMukaTerapkan = $this->uang_muka_terapkan ?? 0;
-        return $this->total - $totalPembayaran - $totalKredit - $uangMukaTerapkan;
+
+        // Jika ada uang muka, gunakan logika: (Subtotal - UM) + PPN 11% - Pembayaran - Kredit
+        if ($uangMukaTerapkan > 0) {
+            $subtotalItems = $this->subtotal ?? 0;
+            $sisaSetelahUM = $subtotalItems - $uangMukaTerapkan;
+            $ppnAmount = $sisaSetelahUM * 0.11;
+            $totalTagihan = $sisaSetelahUM + $ppnAmount;
+            return $totalTagihan - $totalPembayaran - $totalKredit;
+        }
+
+        // Tanpa uang muka: gunakan total invoice
+        return $this->total - $totalPembayaran - $totalKredit;
     }
 
     // Accessor for Status Display

@@ -508,9 +508,15 @@ class UangMukaPenjualanController extends Controller
             // Update uang muka
             $uangMuka->updateStatus();
 
-            // Update invoice
+            // Update invoice - hitung sisa dengan logika: (Subtotal - UM) + PPN 11%
             $invoice->uang_muka_terapkan += $request->jumlah_aplikasi;
-            $invoice->sisa_tagihan = $invoice->total - $invoice->uang_muka_terapkan;
+
+            // Hitung sisa tagihan dengan logika baru
+            $subtotalItems = $invoice->subtotal ?? 0;
+            $sisaSetelahUM = $subtotalItems - $invoice->uang_muka_terapkan;
+            $ppnAmount = $sisaSetelahUM * 0.11;
+            $invoice->sisa_tagihan = $sisaSetelahUM + $ppnAmount;
+
             $invoice->save();
 
             // Buat jurnal entry untuk aplikasi uang muka
