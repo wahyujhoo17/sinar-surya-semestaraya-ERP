@@ -269,6 +269,93 @@
                                         <input type="hidden" name="customer_id" x-model="customerId">
                                     </div>
 
+                                    <!-- Uang Muka Tersedia -->
+                                    <div x-show="customerAdvancePayments.length > 0" x-cloak>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Uang Muka Tersedia
+                                        </label>
+
+                                        <!-- Checkbox untuk menggunakan uang muka -->
+                                        <div class="mb-3">
+                                            <label class="flex items-center">
+                                                <input type="checkbox" name="gunakan_uang_muka" value="1"
+                                                    x-model="gunakanUangMuka"
+                                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                    Gunakan uang muka untuk invoice ini
+                                                </span>
+                                            </label>
+                                        </div>
+
+                                        <!-- Opsi pemilihan uang muka -->
+                                        <div x-show="gunakanUangMuka" x-cloak class="mb-3">
+                                            <div class="flex items-center space-x-4 mb-2">
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="cara_aplikasi_uang_muka"
+                                                        value="otomatis" x-model="caraAplikasiUangMuka"
+                                                        class="text-primary-600 focus:ring-primary-500">
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        Otomatis (gunakan semua yang tersedia)
+                                                    </span>
+                                                </label>
+                                                <label class="flex items-center">
+                                                    <input type="radio" name="cara_aplikasi_uang_muka" value="manual"
+                                                        x-model="caraAplikasiUangMuka"
+                                                        class="text-primary-600 focus:ring-primary-500">
+                                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        Pilih manual
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Daftar uang muka -->
+                                        <div
+                                            class="space-y-2 max-h-32 overflow-y-auto bg-gray-50 dark:bg-gray-800 p-3 rounded-md border border-gray-200 dark:border-gray-600">
+                                            <template x-for="advance in customerAdvancePayments" :key="advance.id">
+                                                <div
+                                                    class="flex justify-between items-center text-xs bg-white dark:bg-gray-700 p-2 rounded border">
+                                                    <!-- Checkbox untuk pemilihan manual -->
+                                                    <div class="flex items-center space-x-2">
+                                                        <input type="checkbox"
+                                                            x-show="gunakanUangMuka && caraAplikasiUangMuka === 'manual'"
+                                                            :name="'uang_muka_terpilih[]'" :value="advance.id"
+                                                            x-model="selectedAdvancePayments"
+                                                            class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                                                        <div>
+                                                            <span class="font-medium" x-text="advance.nomor"></span>
+                                                            <span class="text-gray-500 dark:text-gray-400"
+                                                                x-text="advance.tanggal"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <div class="text-green-600 dark:text-green-400 font-medium"
+                                                            x-text="advance.jumlah_tersedia_formatted"></div>
+                                                        <div class="text-gray-500 dark:text-gray-400 text-xs">dari <span
+                                                                x-text="advance.jumlah_formatted"></span></div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Info aplikasi uang muka -->
+                                        <p class="text-xs mt-2" x-show="gunakanUangMuka" x-cloak>
+                                            <svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                                    clip-rule="evenodd"></path>
+                                            </svg>
+                                            <span class="text-blue-600 dark:text-blue-400"
+                                                x-show="caraAplikasiUangMuka === 'otomatis'">
+                                                Semua uang muka yang tersedia akan otomatis diaplikasikan ke invoice ini
+                                            </span>
+                                            <span class="text-green-600 dark:text-green-400"
+                                                x-show="caraAplikasiUangMuka === 'manual'">
+                                                Hanya uang muka yang dipilih yang akan diaplikasikan ke invoice ini
+                                            </span>
+                                        </p>
+                                    </div>
+
                                     <!-- Tanggal Jatuh Tempo -->
                                     <div>
                                         <label for="jatuh_tempo"
@@ -612,6 +699,10 @@
                 return {
                     customerId: {{ $invoice->customer_id }},
                     customerName: "{{ $invoice->customer->nama }} {{ $invoice->customer->company ? '(' . $invoice->customer->company . ')' : '' }}",
+                    customerAdvancePayments: [], // Untuk advance payments
+                    gunakanUangMuka: false, // Untuk checkbox uang muka
+                    caraAplikasiUangMuka: 'otomatis', // Untuk radio button cara aplikasi
+                    selectedAdvancePayments: [], // Untuk manual selection uang muka
                     items: {!! json_encode(
                         $invoice->details->map(function ($detail) {
                                 return [
@@ -643,6 +734,30 @@
                         });
                         this.calculateSubtotal(); // Ensure subtotal is calculated on init
                         this.calculateTotal(); // Initial calculation
+                        this.fetchCustomerAdvancePayments(); // Fetch advance payments on init
+                    },
+
+                    fetchCustomerAdvancePayments() {
+                        if (!this.customerId) {
+                            this.customerAdvancePayments = [];
+                            return;
+                        }
+
+                        fetch(`/penjualan/invoice/get-customer-advance/${this.customerId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    this.customerAdvancePayments = data.data || [];
+                                    console.log('Customer advance payments:', this.customerAdvancePayments);
+                                } else {
+                                    console.error('Failed to fetch advance payments:', data.message);
+                                    this.customerAdvancePayments = [];
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching advance payments:', error);
+                                this.customerAdvancePayments = [];
+                            });
                     },
 
                     calculateSubtotal() {

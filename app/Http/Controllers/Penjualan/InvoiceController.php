@@ -500,6 +500,10 @@ class InvoiceController extends Controller
             'ppn' => 'nullable|numeric|min:0',
             'ongkos_kirim' => 'nullable|numeric|min:0',
             'total' => 'required|numeric',
+            'gunakan_uang_muka' => 'nullable|boolean',
+            'cara_aplikasi_uang_muka' => 'nullable|in:otomatis,manual',
+            'uang_muka_terpilih' => 'nullable|array',
+            'uang_muka_terpilih.*' => 'exists:uang_muka_penjualan,id',
         ]);
 
         DB::beginTransaction();
@@ -518,6 +522,43 @@ class InvoiceController extends Controller
                 'catatan' => $request->catatan,
                 'syarat_ketentuan' => $request->syarat_ketentuan,
             ]);
+
+            // Handle aplikasi uang muka jika ada perubahan
+            // Cek apakah user ingin menggunakan uang muka
+            if ($request->filled('gunakan_uang_muka') && $request->gunakan_uang_muka) {
+                // Jika sebelumnya sudah ada aplikasi uang muka, hapus dulu
+                $existingApplications = UangMukaAplikasi::where('invoice_id', $invoice->id)->get();
+
+                foreach ($existingApplications as $aplikasi) {
+                    // Hapus jurnal terkait
+                    \App\Models\JurnalUmum::where('ref_type', 'App\\Models\\UangMukaAplikasi')
+                        ->where('ref_id', $aplikasi->id)
+                        ->where('sumber', 'uang_muka_aplikasi')
+                        ->delete();
+
+                    // Hapus aplikasi
+                    $aplikasi->delete();
+
+                    // Update status uang muka
+                    $uangMuka = $aplikasi->uangMukaPenjualan;
+                    if ($uangMuka) {
+                        $uangMuka->refresh();
+                        $uangMuka->load('aplikasi');
+                        $uangMuka->updateStatus();
+                    }
+                }
+
+                // Reset uang_muka_terapkan
+                $invoice->uang_muka_terapkan = 0;
+                $invoice->save();
+
+                // Aplikasikan uang muka baru
+                if ($request->filled('uang_muka_terpilih') && !empty($request->uang_muka_terpilih)) {
+                    $this->applySelectedAdvancePayments($invoice, $request->uang_muka_terpilih);
+                } else {
+                    $this->autoApplyAdvancePayment($invoice);
+                }
+            }
 
             // Update sales order status if needed
             $this->updateSalesOrderStatus($invoice->sales_order_id);
