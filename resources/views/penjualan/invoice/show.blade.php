@@ -121,8 +121,8 @@
                 </p>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="flex flex-wrap gap-2 mt-4 md:mt-0">
+            <!-- Action Buttons - Grid Layout 3 Columns -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-4 md:mt-0">
                 {{-- <a href="{{ route('penjualan.invoice.print', $invoice->id) }}" target="_blank"
                     class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -131,16 +131,20 @@
                     </svg>
                     Cetak
                 </a> --}}
+
+                <!-- Row 1, Col 1 -->
                 <button type="button" onclick="openPrintModal()"
-                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
+                    class="inline-flex items-center justify-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     Cetak Tamplate
                 </button>
+
+                <!-- Row 1, Col 2 -->
                 <a href="{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}" target="_blank"
-                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+                    class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -148,10 +152,10 @@
                     Cetak Non PPN
                 </a>
 
-                <!-- Multi-Template PDF Export Dropdown -->
+                <!-- Row 1, Col 3 - Multi-Template PDF Export Dropdown -->
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open" type="button"
-                        class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                        class="w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
                         <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -190,24 +194,27 @@
                     </div>
                 </div>
 
+                <!-- Row 2, Col 1 - Edit Button -->
                 @if (auth()->user()->hasPermission('invoice.edit') && $invoice->status !== 'lunas')
                     <a href="{{ route('penjualan.invoice.edit', $invoice->id) }}"
-                        class="inline-flex items-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium">
+                        class="inline-flex items-center justify-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium">
                         <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                         </svg>
                         Edit
                     </a>
+                @endif
 
+                <!-- Row 2, Col 2 - Delete Button -->
+                @if (auth()->user()->hasPermission('invoice.edit') && $invoice->status !== 'lunas')
                     @if (auth()->user()->hasPermission('invoice.delete'))
                         <form action="{{ route('penjualan.invoice.destroy', $invoice->id) }}" method="POST"
-                            onsubmit="return confirm('Anda yakin ingin menghapus invoice ini?');"
-                            class="inline-block">
+                            onsubmit="return confirm('Anda yakin ingin menghapus invoice ini?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
-                                class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">
+                                class="w-full inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium">
                                 <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
