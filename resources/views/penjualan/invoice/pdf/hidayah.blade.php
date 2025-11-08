@@ -435,43 +435,127 @@
         </div>
 
         <!-- Summary Section -->
+        @php
+            $uangMuka = $invoice->uang_muka_terapkan ?? 0;
+            $grandTotal = $invoice->total;
+            $totalTagihan = $grandTotal - $uangMuka;
+            $nilaiTerbilang = $invoice->total;
+
+            // Jika ada DP dari parameter
+            if (isset($dpAmount) && $dpAmount > 0) {
+                $dpSubtotal = $dpAmount;
+                $dpPPN = 0;
+                if ($invoice->ppn > 0) {
+                    $ppnRate = $invoice->subtotal > 0 ? $invoice->ppn / $invoice->subtotal : 0;
+                    $dpPPN = $dpAmount * $ppnRate;
+                }
+                $totalDP = $dpSubtotal + $dpPPN;
+                $nilaiTerbilang = $totalDP;
+            }
+        @endphp
+
         <div class="total-summary clearfix">
             <div class="summary-section">
-                <div class="summary-item clearfix">
-                    <span class="label">Subtotal:</span>
-                    <span class="amount">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
-                </div>
-                @if ($invoice->diskon_nominal > 0)
-                    <div class="summary-item summary-highlight clearfix">
-                        <span class="label">Diskon ({{ number_format($invoice->diskon_persen, 1) }}%):</span>
-                        <span class="amount">-Rp {{ number_format($invoice->diskon_nominal, 0, ',', '.') }}</span>
+                @if (isset($dpAmount) && $dpAmount > 0)
+                    {{-- Invoice DP --}}
+                    <div class="summary-item clearfix">
+                        <span class="label">Uang Muka (DP):</span>
+                        <span class="amount">Rp {{ number_format($dpSubtotal, 0, ',', '.') }}</span>
                     </div>
-                @endif
-                @if ($invoice->ppn > 0)
+                    @if ($dpPPN > 0)
+                        <div class="summary-item clearfix">
+                            <span class="label">PPN 11%:</span>
+                            <span class="amount">Rp {{ number_format($dpPPN, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    <div class="total-final clearfix">
+                        <span class="label">Total DP:</span>
+                        <span class="amount">Rp {{ number_format($totalDP, 0, ',', '.') }}</span>
+                    </div>
+                @elseif ($uangMuka > 0)
+                    {{-- Invoice Pelunasan --}}
+                    @php
+                        $nilaiTerbilang = $totalTagihan;
+                        $sisaSetelahUM = $grandTotal - $uangMuka;
+                        $pelunasanBersih = $sisaSetelahUM / 1.11;
+                        $ppnPelunasan = $pelunasanBersih * 0.11;
+                    @endphp
+                    <div class="summary-item clearfix">
+                        <span class="label">Jmh.Total:</span>
+                        <span class="amount">Rp {{ number_format($grandTotal, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="summary-item clearfix">
+                        <span class="label">Uang Muka:</span>
+                        <span class="amount">(Rp {{ number_format($uangMuka, 0, ',', '.') }})</span>
+                    </div>
+                    <div style="border-top: 1px solid #ddd; margin: 5px 0;"></div>
+                    <div class="summary-item clearfix">
+                        <span class="label">Pelunasan:</span>
+                        <span class="amount">Rp {{ number_format($pelunasanBersih, 0, ',', '.') }}</span>
+                    </div>
                     <div class="summary-item clearfix">
                         <span class="label">PPN 11%:</span>
-                        <span class="amount">Rp {{ number_format($invoice->ppn, 0, ',', '.') }}</span>
+                        <span class="amount">Rp {{ number_format($ppnPelunasan, 0, ',', '.') }}</span>
                     </div>
-                @endif
-                @if ($invoice->ongkos_kirim > 0)
+                    <div style="border-top: 1px solid #ddd; margin: 5px 0;"></div>
+                    <div class="total-final clearfix">
+                        <span class="label">Total:</span>
+                        <span class="amount">Rp {{ number_format($totalTagihan, 0, ',', '.') }}</span>
+                    </div>
+                @else
+                    {{-- Invoice Normal --}}
                     <div class="summary-item clearfix">
-                        <span class="label">Ongkos Kirim:</span>
-                        <span class="amount">Rp {{ number_format($invoice->ongkos_kirim, 0, ',', '.') }}</span>
+                        <span class="label">Subtotal:</span>
+                        <span class="amount">Rp {{ number_format($invoice->subtotal, 0, ',', '.') }}</span>
+                    </div>
+                    @if ($invoice->diskon_nominal > 0)
+                        <div class="summary-item summary-highlight clearfix">
+                            <span class="label">Diskon ({{ number_format($invoice->diskon_persen, 1) }}%):</span>
+                            <span class="amount">-Rp {{ number_format($invoice->diskon_nominal, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    @if ($invoice->ppn > 0)
+                        <div class="summary-item clearfix">
+                            <span class="label">PPN 11%:</span>
+                            <span class="amount">Rp {{ number_format($invoice->ppn, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    @if ($invoice->ongkos_kirim > 0)
+                        <div class="summary-item clearfix">
+                            <span class="label">Ongkos Kirim:</span>
+                            <span class="amount">Rp {{ number_format($invoice->ongkos_kirim, 0, ',', '.') }}</span>
+                        </div>
+                    @endif
+                    <div class="total-final clearfix">
+                        <span class="label">TOTAL:</span>
+                        <span class="amount">Rp {{ number_format($invoice->total, 0, ',', '.') }}</span>
                     </div>
                 @endif
-                <div class="total-final clearfix">
-                    <span class="label">TOTAL:</span>
-                    <span class="amount">Rp {{ number_format($invoice->total, 0, ',', '.') }}</span>
-                </div>
             </div>
         </div>
+
+        @if (isset($dpAmount) && $dpAmount > 0)
+            {{-- Note untuk DP --}}
+            <div style="margin: 10px 10px; padding: 10px; background-color: #f8fafc; border-left: 3px solid #E74C3C;">
+                <strong style="color: #2c3e50; font-size: 10px;">Note:</strong>
+                <div style="font-size: 9px; margin-top: 5px;">
+                    @php
+                        $totalPO = $invoice->salesOrder->total ?? 0;
+                        $persenDP = $totalPO > 0 ? ($dpAmount / $totalPO) * 100 : 0;
+                        $nomorPO = $invoice->salesOrder->nomor_po ?? '-';
+                    @endphp
+                    Pembayaran DP {{ number_format($persenDP, 2) }}% untuk PO: {{ $nomorPO }}<br>
+                    Dengan total PO senilai Rp. {{ number_format($totalPO, 0, ',', '.') }}
+                </div>
+            </div>
+        @endif
 
         <!-- Clear float untuk memastikan layout yang benar -->
         <div style="clear: both;"></div>
 
         <!-- Text Terbilang -->
         <div style="margin: 15px 10px; color: #1F2A44; font-size: 11px; font-style: italic;">
-            <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $invoice->total)) }} Rupiah
+            <strong>Terbilang:</strong> {{ ucwords(terbilang((int) $nilaiTerbilang)) }} Rupiah
         </div>
 
         <!-- Notes and Signature Section -->

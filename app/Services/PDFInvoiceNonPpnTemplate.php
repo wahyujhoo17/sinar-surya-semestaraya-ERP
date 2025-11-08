@@ -10,10 +10,14 @@ class PDFInvoiceNonPpnTemplate
 {
     /**
      * Generate Invoice PDF untuk template Non PPN
+     * @param $dpAmount - Jumlah DP untuk invoice DP (tanpa PPN)
      */
-    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $bankAccounts = null, $primaryBank = null)
+    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $dpAmount = 0, $bankAccounts = null, $primaryBank = null)
     {
-        $useTemplate = config('app.print_with_template', false); // default true, bisa diatur di config/app.php
+        $useTemplate = config(
+            'app.print_with_template',
+            false
+        ); // default true, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice Non PPn.pdf');
 
         // XY = 214x 154
@@ -103,7 +107,7 @@ class PDFInvoiceNonPpnTemplate
 
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY(22.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2 and right by 1
+            $pdf->SetXY(22.5, $itemsStartY - 4); // Position for KODE BARANG column, moved up by 4
             $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
 
             // --- Items ---
@@ -236,7 +240,7 @@ class PDFInvoiceNonPpnTemplate
 
                     // Table header
                     $pdf->SetFont('helvetica', 'B', 8);
-                    $pdf->SetXY(22.5, $itemsStartY - 2);
+                    $pdf->SetXY(22.5, $itemsStartY - 4);
                     $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
                     $pdf->SetFont('helvetica', '', 8);
 
@@ -256,9 +260,12 @@ class PDFInvoiceNonPpnTemplate
                 $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
 
                 // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
-                // Geser nomor dan kode 3mm ke kanan dari origin sebelumnya (startX 8 -> 11)
-                $pdf->SetXY(11, $currentY);
+                // No column moved left 5mm total (from 11 to 6)
+                $pdf->SetXY(6, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
+
+                // Kode Barang tetap di posisi semula (X = 22.5)
+                $pdf->SetXY(22.5, $currentY);
                 $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
 
                 // Nama produk tetap mulai pada X = 54.5 (agar kolom lain tidak terpengaruh)
@@ -280,8 +287,8 @@ class PDFInvoiceNonPpnTemplate
                 $pdf->SetXY($hargaX, $yNama);
                 $pdf->Cell(29, $namaHeight, number_format($detail->harga, 0, ',', '.'), 0, 0, 'R');
 
-                // DISC keep its original starting X = baseX + 28 + 29 = baseX + 57
-                $discX = $baseX + 62;
+                // DISC moved right 5mm total (from baseX + 62 to baseX + 67)
+                $discX = $baseX + 67;
                 $pdf->SetXY($discX, $yNama);
                 $pdf->Cell(11, $namaHeight, rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '', 0, 0, 'L');
 
@@ -293,54 +300,144 @@ class PDFInvoiceNonPpnTemplate
                 $itemCount++;
             }
 
-            // --- Summary (dari bawah ke atas) - UNTUK NON PPN, SKIP PPN CALCULATION ---
+            // --- Summary (dari bawah ke atas) - UNTUK NON PPN ---
             $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY(146, $yTotal - 7);
-            $pdf->Cell(37, 4, 'Total', 0, 0, 'L');
-            // Untuk Non PPN, total = subtotal + ongkos kirim - diskon (tanpa PPN)
-            $totalNonPpn = $invoice->subtotal + $invoice->ongkos_kirim - $invoice->diskon_nominal;
-            $pdf->Cell(25, 4, number_format($totalNonPpn, 0, ',', '.'), 0, 1, 'R');
-
-            $y = $yTotal - 7 - 4;
-            if ($invoice->ongkos_kirim > 0) {
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->SetXY(146, $y);
-                $pdf->Cell(37, 4, 'Ongkos Kirim', 0, 0, 'L');
-                $pdf->Cell(25, 4, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
-                $y -= 4;
-            }
-            // SKIP PPN untuk template Non PPN
-            if ($invoice->diskon_nominal > 0) {
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->SetXY(146, $y);
-                $pdf->Cell(37, 4, 'Diskon', 0, 0, 'L');
-                $pdf->Cell(25, 4, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
-                $y -= 4;
-            }
-            // Subtotal selalu tampil
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetXY(146, $y);
-            $pdf->Cell(37, 4, 'Subtotal', 0, 0, 'L');
-            $pdf->Cell(25, 4, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
-
-            // Tambahkan garis horizontal sebelum total
-            $pdf->SetDrawColor(0, 0, 0); // warna hitam
-            $pdf->SetLineWidth(0.3);
-            $pdf->Line(144, $yTotal - 7, 205, $yTotal - 7);
-
-            // Untuk posisi catatan, simpan $summaryY agar tidak error
             $summaryY = $yTotal - 7;
 
+            // Jika ada DP (Invoice DP tanpa PPN)
+            if ($dpAmount > 0) {
+                // Total DP (tanpa PPN untuk Non-PPN)
+                $totalDP = $dpAmount;
 
-            // TERBILANG - gunakan total Non PPN
+                // Tampilkan Total DP (bold) saja, tidak perlu Uang Muka (DP) karena nilainya sama
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetXY(146, $summaryY);
+                $pdf->Cell(37, 4, 'Total DP', 0, 0, 'L');
+                $pdf->Cell(25, 4, number_format($totalDP, 0, ',', '.'), 0, 1, 'R');
 
-            // disesuaikan untuk tinggi 154
+                // Tambahkan garis horizontal sebelum total
+                $pdf->SetDrawColor(0, 0, 0);
+                $pdf->SetLineWidth(0.3);
+                $pdf->Line(144, $summaryY, 205, $summaryY);
+
+                // Tambahkan Note untuk DP (geser ke kanan 5mm: dari 14 ke 19)
+                $dpNoteX = 24;
+                $dpNoteY = $summaryY - 10;
+
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $pdf->Cell(0, 4, 'Note:', 0, 1, 'L');
+
+                // Hitung persentase DP dari total PO
+                $totalPO = $invoice->salesOrder->total ?? 0;
+                $persenDP = $totalPO > 0 ? ($dpAmount / $totalPO) * 100 : 0;
+                $nomorPO = $invoice->salesOrder->nomor_po ?? '-';
+
+                $pdf->SetFont('helvetica', '', 7.5);
+                $dpNoteY += 4;
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $dpText = "Pembayaran DP " . rtrim(rtrim(number_format($persenDP, 2, '.', ''), '0'), '.') . "% untuk PO: " . $nomorPO;
+                $pdf->MultiCell(120, 3.5, $dpText, 0, 'L');
+
+                $dpNoteY = $pdf->GetY();
+                $pdf->SetXY($dpNoteX, $dpNoteY);
+                $dpTotalText = "Dengan total PO senilai Rp. " . number_format($totalPO, 0, ',', '.');
+                $pdf->MultiCell(120, 3.5, $dpTotalText, 0, 'L');
+
+                // Gunakan totalDP untuk terbilang
+                $nilaiTerbilang = $totalDP;
+                $uangMuka = 0; // Invoice DP tidak ada uang muka terapkan
+                $totalTagihan = $totalDP;
+            } else {
+                // ===== INVOICE NORMAL SUMMARY (Non PPN) =====
+                // Untuk Non PPN, total = subtotal + ongkos kirim - diskon (tanpa PPN)
+                $totalNonPpn = $invoice->subtotal + $invoice->ongkos_kirim - $invoice->diskon_nominal;
+                $uangMukaRaw = $invoice->uang_muka_terapkan ?? 0;
+
+                // Bersihkan uang muka dari PPN jika ada (untuk Non-PPN invoice)
+                // Asumsi: uang muka di database mungkin sudah termasuk PPN 11%
+                // Untuk invoice Non-PPN, kita perlu nilai bersih tanpa PPN
+                $uangMuka = $uangMukaRaw / 1.11; // Bersihkan dari PPN 11%
+
+                // Hitung total tagihan setelah uang muka
+                $totalTagihan = $totalNonPpn - $uangMuka;
+
+                // ===== Tampilkan dengan Uang Muka (Format Akuntansi Non PPN) =====
+                if ($uangMuka > 0) {
+                    // BAGIAN ATAS: Total (Bold) - hasil akhir yang harus dibayar
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->SetXY(146, $summaryY);
+                    $pdf->Cell(37, 3, 'Total', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($totalTagihan, 0, ',', '.'), 0, 1, 'R');
+                    $y = $summaryY - 3;
+
+                    // Garis pemisah atas
+                    $pdf->SetDrawColor(200, 200, 200);
+                    $pdf->SetLineWidth(0.2);
+                    $pdf->Line(146, $y + 2, 208, $y + 2);
+                    $y -= 2;
+
+                    // Uang Muka
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY(146, $y);
+                    $pdf->Cell(37, 3, 'Uang Muka', 0, 0, 'L');
+                    $pdf->Cell(25, 3, '(' . number_format($uangMuka, 0, ',', '.') . ')', 0, 1, 'R');
+                    $y -= 3;
+
+                    // Jmh.Total (untuk invoice dengan uang muka)
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY(146, $y);
+                    $pdf->Cell(37, 3, 'Jmh.Total', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($totalNonPpn, 0, ',', '.'), 0, 1, 'R');
+
+                    // Nilai untuk terbilang
+                    $nilaiTerbilang = $totalTagihan;
+                } else {
+                    // ===== TANPA UANG MUKA: Format Normal Non PPN =====
+                    $pdf->SetXY(146, $summaryY);
+                    $pdf->Cell(37, 4, 'Total', 0, 0, 'L');
+                    $pdf->Cell(25, 4, number_format($totalNonPpn, 0, ',', '.'), 0, 1, 'R');
+
+                    $y = $summaryY - 4;
+
+                    if ($invoice->ongkos_kirim > 0) {
+                        $pdf->SetFont('helvetica', '', 8);
+                        $pdf->SetXY(146, $y);
+                        $pdf->Cell(37, 4, 'Ongkos Kirim', 0, 0, 'L');
+                        $pdf->Cell(25, 4, number_format($invoice->ongkos_kirim, 0, ',', '.'), 0, 1, 'R');
+                        $y -= 4;
+                    }
+
+                    if ($invoice->diskon_nominal > 0) {
+                        $pdf->SetFont('helvetica', '', 8);
+                        $pdf->SetXY(146, $y);
+                        $pdf->Cell(37, 4, 'Diskon', 0, 0, 'L');
+                        $pdf->Cell(25, 4, number_format($invoice->diskon_nominal, 0, ',', '.'), 0, 1, 'R');
+                        $y -= 4;
+                    }
+
+                    // Subtotal selalu tampil
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY(146, $y);
+                    $pdf->Cell(37, 4, 'Subtotal', 0, 0, 'L');
+                    $pdf->Cell(25, 4, number_format($invoice->subtotal, 0, ',', '.'), 0, 1, 'R');
+
+                    // Tambahkan garis horizontal sebelum total
+                    $pdf->SetDrawColor(0, 0, 0);
+                    $pdf->SetLineWidth(0.3);
+                    $pdf->Line(144, $summaryY, 205, $summaryY);
+
+                    // Nilai untuk terbilang
+                    $nilaiTerbilang = $totalNonPpn;
+                }
+            }
+
+            // TERBILANG - gunakan nilai yang sesuai
             $pdf->SetXY(14, 114);
-            // Konversi total ke terbilang (pastikan helper terbilang tersedia di project)
-            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $totalNonPpn) . ' Rupiah ') : '-';
-            $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
+            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $nilaiTerbilang) . ' Rupiah ') : '-';
+            $pdf->SetFont('helvetica', 'BI', 9);
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
-            $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
+            $pdf->SetFont('helvetica', '', 9);
 
             // --- Informasi Pembayaran (Pojok Kiri Bawah) - Tampilkan di semua halaman ---
             $printPaymentInfo();

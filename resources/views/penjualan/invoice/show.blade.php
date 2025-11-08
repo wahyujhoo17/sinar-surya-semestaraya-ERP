@@ -143,14 +143,14 @@
                 </button>
 
                 <!-- Row 1, Col 2 -->
-                <a href="{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}" target="_blank"
+                <button type="button" onclick="openPrintModalNonPpn()"
                     class="inline-flex items-center justify-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
                     <svg class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                     </svg>
                     Cetak Non PPN
-                </a>
+                </button>
 
                 <!-- Row 1, Col 3 - Multi-Template PDF Export Dropdown -->
                 <div class="relative" x-data="{ open: false }">
@@ -175,21 +175,21 @@
                         x-transition:leave-end="transform opacity-0 scale-95"
                         class="absolute right-0 z-50 mt-1 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
                         <div class="py-1">
-                            <a href="{{ route('penjualan.invoice.export-pdf', $invoice->id) }}?template=sinar-surya"
-                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
+                            <button type="button" onclick="openExportPdfModal('sinar-surya')"
+                                class="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20">
                                 <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                                 PT Sinar Surya Semestaraya
-                            </a>
-                            <a href="{{ route('penjualan.invoice.export-pdf', $invoice->id) }}?template=atsaka"
-                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20">
+                            </button>
+                            <button type="button" onclick="openExportPdfModal('atsaka')"
+                                class="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20">
                                 <div class="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
                                 PT Indo Atsaka Industri
-                            </a>
-                            <a href="{{ route('penjualan.invoice.export-pdf', $invoice->id) }}?template=hidayah"
-                                class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20">
+                            </button>
+                            <button type="button" onclick="openExportPdfModal('hidayah')"
+                                class="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20">
                                 <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
                                 PT Hidayah Cahaya Berkah
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -935,11 +935,263 @@
         </div>
     </div>
 
+    <!-- Modal Pilih Jenis Cetak Non-PPN -->
+    <div id="printModalNonPpn"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Pilih Jenis Cetak Invoice Non-PPN
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Opsi 1: Invoice Normal Non-PPN -->
+                    <button type="button" onclick="printNormalNonPpn()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-indigo-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice Normal</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Cetak tanpa DP (Non-PPN)</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <!-- Opsi 2: Invoice dengan DP Non-PPN -->
+                    <button type="button" onclick="showDPFormNonPpn()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice dengan DP</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Cetak dengan down payment
+                                    (Non-PPN)</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form DP Non-PPN (hidden by default) -->
+                <div id="dpFormNonPpn" class="hidden mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3">Input DP (Non-PPN)</h4>
+
+                    <!-- Toggle Input Type -->
+                    <div class="flex gap-2 mb-3">
+                        <button type="button" onclick="setDPTypeNonPpn('percent')" id="btnPercentNonPpn"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white">
+                            Persentase (%)
+                        </button>
+                        <button type="button" onclick="setDPTypeNonPpn('nominal')" id="btnNominalNonPpn"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                            Nominal (Rp)
+                        </button>
+                    </div>
+
+                    <!-- Input Persentase -->
+                    <div id="percentInputNonPpn" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Persentase DP
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="dpPercentNonPpn" min="0" max="100" step="0.01"
+                                value="30"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 30">
+                            <span class="absolute right-3 top-2 text-gray-500">%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                        <p class="text-sm font-medium text-blue-600 dark:text-blue-400" id="dpPreviewNonPpn">
+                            DP: Rp <span id="dpAmountNonPpn">0</span>
+                        </p>
+                    </div>
+
+                    <!-- Input Nominal -->
+                    <div id="nominalInputNonPpn" class="space-y-2 hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nominal DP
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">Rp</span>
+                            <input type="text" id="dpNominalNonPpn"
+                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 1.000.000">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" onclick="printWithDPNonPpn()"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium">
+                            Cetak
+                        </button>
+                        <button type="button" onclick="closePrintModalNonPpn()"
+                            class="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-white rounded-md font-medium">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tombol Close (muncul jika form DP belum ditampilkan) -->
+                <div id="closeButtonNonPpn" class="mt-4">
+                    <button type="button" onclick="closePrintModalNonPpn()"
+                        class="w-full px-4 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-white rounded-md font-medium">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Export PDF -->
+    <div id="exportPdfModal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white dark:bg-gray-800">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                    Pilih Jenis Export PDF - <span id="exportTemplateName"></span>
+                </h3>
+
+                <div class="space-y-4">
+                    <!-- Opsi 1: Invoice Normal -->
+                    <button type="button" onclick="exportPdfNormal()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-purple-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice Normal</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Export tanpa DP</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+
+                    <!-- Opsi 2: Invoice dengan DP -->
+                    <button type="button" onclick="showExportDPForm()"
+                        class="w-full flex items-center justify-between p-4 border-2 border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all">
+                        <div class="flex items-center">
+                            <svg class="h-6 w-6 text-blue-600 mr-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <div class="text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Invoice dengan DP</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">Export dengan down payment</div>
+                            </div>
+                        </div>
+                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Form DP Export (hidden by default) -->
+                <div id="exportDpForm" class="hidden mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <h4 class="font-medium text-gray-900 dark:text-white mb-3">Input DP</h4>
+
+                    <!-- Toggle Input Type -->
+                    <div class="flex gap-2 mb-3">
+                        <button type="button" onclick="setExportDPType('percent')" id="btnExportPercent"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white">
+                            Persentase (%)
+                        </button>
+                        <button type="button" onclick="setExportDPType('nominal')" id="btnExportNominal"
+                            class="flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
+                            Nominal (Rp)
+                        </button>
+                    </div>
+
+                    <!-- Input Persentase -->
+                    <div id="exportPercentInput" class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Persentase DP
+                        </label>
+                        <div class="relative">
+                            <input type="number" id="dpExportPercent" min="0" max="100" step="0.01"
+                                value="30"
+                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 30">
+                            <span class="absolute right-3 top-2 text-gray-500">%</span>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                        <p class="text-sm font-medium text-blue-600 dark:text-blue-400" id="exportDpPreview">
+                            DP: Rp <span id="dpExportAmount">0</span>
+                        </p>
+                    </div>
+
+                    <!-- Input Nominal -->
+                    <div id="exportNominalInput" class="space-y-2 hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Nominal DP
+                        </label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-gray-500">Rp</span>
+                            <input type="text" id="dpExportNominal"
+                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white"
+                                placeholder="Contoh: 1.000.000">
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Total Invoice: Rp {{ number_format($invoice->total, 0, ',', '.') }}
+                        </p>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" onclick="exportPdfWithDP()"
+                            class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-medium">
+                            Export
+                        </button>
+                        <button type="button" onclick="closeExportPdfModal()"
+                            class="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-white rounded-md font-medium">
+                            Batal
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tombol Close (muncul jika form DP belum ditampilkan) -->
+                <div id="exportCloseButton" class="mt-4">
+                    <button type="button" onclick="closeExportPdfModal()"
+                        class="w-full px-4 py-2 bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 text-gray-700 dark:text-white rounded-md font-medium">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script>
             const invoiceId = {{ $invoice->id }};
             const invoiceTotal = {{ $invoice->total }};
             let dpType = 'percent'; // 'percent' or 'nominal'
+            let dpTypeNonPpn = 'percent'; // for Non-PPN modal
+            let dpTypeExport = 'percent'; // for Export PDF modal
+            let selectedTemplate = ''; // Store selected template
 
             function openPrintModal() {
                 document.getElementById('printModal').classList.remove('hidden');
@@ -1038,6 +1290,223 @@
             document.getElementById('printModal').addEventListener('click', function(e) {
                 if (e.target === this) {
                     closePrintModal();
+                }
+            });
+
+            // ===== FUNGSI UNTUK MODAL NON-PPN =====
+
+            function openPrintModalNonPpn() {
+                document.getElementById('printModalNonPpn').classList.remove('hidden');
+            }
+
+            function closePrintModalNonPpn() {
+                document.getElementById('printModalNonPpn').classList.add('hidden');
+                hideDPFormNonPpn();
+            }
+
+            function printNormalNonPpn() {
+                window.open('{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}', '_blank');
+                closePrintModalNonPpn();
+            }
+
+            function showDPFormNonPpn() {
+                document.getElementById('dpFormNonPpn').classList.remove('hidden');
+                document.getElementById('closeButtonNonPpn').classList.add('hidden');
+                calculateDPAmountNonPpn();
+            }
+
+            function hideDPFormNonPpn() {
+                document.getElementById('dpFormNonPpn').classList.add('hidden');
+                document.getElementById('closeButtonNonPpn').classList.remove('hidden');
+            }
+
+            function setDPTypeNonPpn(type) {
+                dpTypeNonPpn = type;
+
+                // Update button styles
+                if (type === 'percent') {
+                    document.getElementById('btnPercentNonPpn').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnNominalNonPpn').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('percentInputNonPpn').classList.remove('hidden');
+                    document.getElementById('nominalInputNonPpn').classList.add('hidden');
+                } else {
+                    document.getElementById('btnNominalNonPpn').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnPercentNonPpn').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('nominalInputNonPpn').classList.remove('hidden');
+                    document.getElementById('percentInputNonPpn').classList.add('hidden');
+                }
+            }
+
+            function calculateDPAmountNonPpn() {
+                const percent = parseFloat(document.getElementById('dpPercentNonPpn').value) || 0;
+                const dpAmount = (invoiceTotal * percent) / 100;
+                // Bulatkan DP amount agar sama dengan yang tampil di PDF
+                const roundedDPAmount = Math.round(dpAmount);
+                document.getElementById('dpAmountNonPpn').textContent = new Intl.NumberFormat('id-ID').format(roundedDPAmount);
+            }
+
+            function formatNominalInputNonPpn(input) {
+                let value = input.value.replace(/\D/g, '');
+                input.value = new Intl.NumberFormat('id-ID').format(value);
+            }
+
+            function printWithDPNonPpn() {
+                let dpAmount = 0;
+
+                if (dpTypeNonPpn === 'percent') {
+                    const percent = parseFloat(document.getElementById('dpPercentNonPpn').value);
+                    if (!percent || percent <= 0 || percent > 100) {
+                        alert('Masukkan persentase DP yang valid (1-100)');
+                        return;
+                    }
+                    dpAmount = (invoiceTotal * percent) / 100;
+                } else {
+                    const nominalStr = document.getElementById('dpNominalNonPpn').value.replace(/\D/g, '');
+                    dpAmount = parseFloat(nominalStr);
+                    if (!dpAmount || dpAmount <= 0) {
+                        alert('Masukkan nominal DP yang valid');
+                        return;
+                    }
+                    if (dpAmount > invoiceTotal) {
+                        alert('Nominal DP tidak boleh lebih besar dari total invoice');
+                        return;
+                    }
+                }
+
+                // Buka URL dengan parameter DP
+                const url = '{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}' + '?dp_amount=' + Math
+                    .round(
+                        dpAmount);
+                window.open(url, '_blank');
+                closePrintModalNonPpn();
+            }
+
+            // Event listeners untuk Non-PPN
+            document.getElementById('dpPercentNonPpn').addEventListener('input', calculateDPAmountNonPpn);
+            document.getElementById('dpNominalNonPpn').addEventListener('input', function() {
+                formatNominalInputNonPpn(this);
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('printModalNonPpn').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closePrintModalNonPpn();
+                }
+            });
+
+            // ===== FUNGSI UNTUK MODAL EXPORT PDF =====
+
+            function openExportPdfModal(template) {
+                selectedTemplate = template;
+                const templateNames = {
+                    'sinar-surya': 'PT Sinar Surya Semestaraya',
+                    'atsaka': 'PT Indo Atsaka Industri',
+                    'hidayah': 'PT Hidayah Cahaya Berkah'
+                };
+                document.getElementById('exportTemplateName').textContent = templateNames[template] || template;
+                document.getElementById('exportPdfModal').classList.remove('hidden');
+            }
+
+            function closeExportPdfModal() {
+                document.getElementById('exportPdfModal').classList.add('hidden');
+                hideExportDPForm();
+            }
+
+            function exportPdfNormal() {
+                const url = '{{ route('penjualan.invoice.export-pdf', $invoice->id) }}' + '?template=' + selectedTemplate;
+                window.open(url, '_blank');
+                closeExportPdfModal();
+            }
+
+            function showExportDPForm() {
+                document.getElementById('exportDpForm').classList.remove('hidden');
+                document.getElementById('exportCloseButton').classList.add('hidden');
+                calculateExportDPAmount();
+            }
+
+            function hideExportDPForm() {
+                document.getElementById('exportDpForm').classList.add('hidden');
+                document.getElementById('exportCloseButton').classList.remove('hidden');
+            }
+
+            function setExportDPType(type) {
+                dpTypeExport = type;
+
+                // Update button styles
+                if (type === 'percent') {
+                    document.getElementById('btnExportPercent').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnExportNominal').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('exportPercentInput').classList.remove('hidden');
+                    document.getElementById('exportNominalInput').classList.add('hidden');
+                } else {
+                    document.getElementById('btnExportNominal').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white';
+                    document.getElementById('btnExportPercent').className =
+                        'flex-1 px-3 py-2 text-sm font-medium rounded-md bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+                    document.getElementById('exportNominalInput').classList.remove('hidden');
+                    document.getElementById('exportPercentInput').classList.add('hidden');
+                }
+            }
+
+            function calculateExportDPAmount() {
+                const percent = parseFloat(document.getElementById('dpExportPercent').value) || 0;
+                const dpAmount = (invoiceTotal * percent) / 100;
+                const roundedDPAmount = Math.round(dpAmount);
+                document.getElementById('dpExportAmount').textContent = new Intl.NumberFormat('id-ID').format(roundedDPAmount);
+            }
+
+            function formatExportNominalInput(input) {
+                let value = input.value.replace(/\D/g, '');
+                input.value = new Intl.NumberFormat('id-ID').format(value);
+            }
+
+            function exportPdfWithDP() {
+                let dpAmount = 0;
+
+                if (dpTypeExport === 'percent') {
+                    const percent = parseFloat(document.getElementById('dpExportPercent').value);
+                    if (!percent || percent <= 0 || percent > 100) {
+                        alert('Masukkan persentase DP yang valid (1-100)');
+                        return;
+                    }
+                    dpAmount = (invoiceTotal * percent) / 100;
+                } else {
+                    const nominalStr = document.getElementById('dpExportNominal').value.replace(/\D/g, '');
+                    dpAmount = parseFloat(nominalStr);
+                    if (!dpAmount || dpAmount <= 0) {
+                        alert('Masukkan nominal DP yang valid');
+                        return;
+                    }
+                    if (dpAmount > invoiceTotal) {
+                        alert('Nominal DP tidak boleh lebih besar dari total invoice');
+                        return;
+                    }
+                }
+
+                // Buka URL dengan parameter DP
+                const url = '{{ route('penjualan.invoice.export-pdf', $invoice->id) }}' +
+                    '?template=' + selectedTemplate +
+                    '&dp_amount=' + Math.round(dpAmount);
+                window.open(url, '_blank');
+                closeExportPdfModal();
+            }
+
+            // Event listeners untuk Export PDF
+            document.getElementById('dpExportPercent').addEventListener('input', calculateExportDPAmount);
+            document.getElementById('dpExportNominal').addEventListener('input', function() {
+                formatExportNominalInput(this);
+            });
+
+            // Close modal when clicking outside
+            document.getElementById('exportPdfModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeExportPdfModal();
                 }
             });
         </script>

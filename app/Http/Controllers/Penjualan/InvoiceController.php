@@ -920,9 +920,12 @@ class InvoiceController extends Controller
             $bankAccounts = get_bank_accounts_for_invoice();
             $primaryBank = get_primary_bank_account();
 
+            // Get DP amount from request (optional, for temporary DP display only)
+            $dpAmount = request('dp_amount', 0);
+
             // Use PDF template service untuk Non PPN
             $pdfService = new \App\Services\PDFInvoiceNonPpnTemplate();
-            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $bankAccounts, $primaryBank);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount, $bankAccounts, $primaryBank);
 
             // Output PDF
             $filename = 'Invoice-Non-PPN-' . $invoice->nomor . '.pdf';
@@ -932,7 +935,7 @@ class InvoiceController extends Controller
                 'print invoice template non ppn',
                 'invoice',
                 $invoice->id,
-                'Print invoice menggunakan template Non PPN'
+                'Print invoice menggunakan template Non PPN' . ($dpAmount > 0 ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : '')
             );
 
             return $pdf->Output($filename, 'I'); // 'I' for inline display, 'D' for download
@@ -999,15 +1002,17 @@ class InvoiceController extends Controller
             $bankAccounts = get_bank_accounts_for_invoice();
             $primaryBank = get_primary_bank_account();
 
+            // Get DP amount from request (optional, for temporary DP display only)
+            $dpAmount = request('dp_amount', 0);
+
             // Check if this template uses FPDI service (new template system)
             if (isset($templateConfig['use_fpdi_template']) && $templateConfig['use_fpdi_template']) {
                 // Use FPDI template service for Sinar Surya
                 $serviceClass = $templateConfig['service'];
                 $pdfService = new $serviceClass();
 
-                // For Sinar Surya template, don't pass bank accounts (as per user requirement)
-                // Only pass invoice and director name
-                $pdf = $pdfService->fillInvoiceTemplate($invoice, $templateConfig['direktur_nama']);
+                // For Sinar Surya template, pass invoice, director name, and DP amount
+                $pdf = $pdfService->fillInvoiceTemplate($invoice, $templateConfig['direktur_nama'], $dpAmount);
 
                 $filename = 'Invoice-' . $invoice->nomor . '-' . $templateConfig['name'] . '.pdf';
 
@@ -1016,7 +1021,7 @@ class InvoiceController extends Controller
                     'export invoice pdf',
                     'invoice',
                     $invoice->id,
-                    'Export invoice ke PDF menggunakan FPDI template: ' . $templateConfig['name']
+                    'Export invoice ke PDF menggunakan FPDI template: ' . $templateConfig['name'] . ($dpAmount > 0 ? ' dengan DP Rp ' . number_format($dpAmount, 0, ',', '.') : '')
                 );
 
                 return $pdf->Output($filename, 'I'); // 'I' for inline display
@@ -1037,6 +1042,7 @@ class InvoiceController extends Controller
                 'logoBase64' => $logoBase64,
                 'bankAccounts' => $bankAccounts,
                 'primaryBank' => $primaryBank,
+                'dpAmount' => $dpAmount, // Pass DP amount to view
                 'currentDate' => now()->format('d F Y'),
                 'currentTime' => now()->format('H:i:s')
             ];
@@ -1132,11 +1138,8 @@ class InvoiceController extends Controller
         if ($totalAdvanceApplied > 0) {
             $invoice->uang_muka_terapkan = $totalAdvanceApplied;
 
-            // Hitung sisa tagihan dengan logika: (Subtotal - UM) + PPN 11%
-            $subtotalItems = $invoice->subtotal ?? 0;
-            $sisaSetelahUM = $subtotalItems - $totalAdvanceApplied;
-            $ppnAmount = $sisaSetelahUM * 0.11;
-            $invoice->sisa_tagihan = $sisaSetelahUM + $ppnAmount;
+            // Formula: Subtotal + PPN - Uang Muka = Total - Uang Muka
+            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
 
             // Update status invoice jika fully covered
             if ($invoice->sisa_tagihan <= 0) {
@@ -1199,11 +1202,8 @@ class InvoiceController extends Controller
         if ($totalAdvanceApplied > 0) {
             $invoice->uang_muka_terapkan = $totalAdvanceApplied;
 
-            // Hitung sisa tagihan dengan logika: (Subtotal - UM) + PPN 11%
-            $subtotalItems = $invoice->subtotal ?? 0;
-            $sisaSetelahUM = $subtotalItems - $totalAdvanceApplied;
-            $ppnAmount = $sisaSetelahUM * 0.11;
-            $invoice->sisa_tagihan = $sisaSetelahUM + $ppnAmount;
+            // Formula: Subtotal + PPN - Uang Muka = Total - Uang Muka
+            $invoice->sisa_tagihan = $invoice->total - $totalAdvanceApplied;
 
             // Update status invoice jika fully covered
             if ($invoice->sisa_tagihan <= 0) {

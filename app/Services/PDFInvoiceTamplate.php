@@ -16,7 +16,10 @@ class PDFInvoiceTamplate
      */
     public function fillInvoiceTemplate($invoice, $namaDirektur = '', $dpAmount = 0)
     {
-        $useTemplate = config('app.print_with_template', false); // default false, bisa diatur di config/app.php
+        $useTemplate = config(
+            'app.print_with_template',
+            false
+        ); // default false, bisa diatur di config/app.php
         $templatePath = public_path('pdf/Invoice-New.pdf');
 
         // XY = 214x 163
@@ -256,11 +259,13 @@ class PDFInvoiceTamplate
                 // Tampilkan Subtotal DP
                 $pdf->SetFont('helvetica', '', 8);
                 $pdf->SetXY(142, $y);
-                $pdf->Cell(37, 4, 'Subtotal DP', 0, 0, 'L');
+                $pdf->Cell(37, 4, 'Uang Muka (DP)', 0, 0, 'L');
                 $pdf->Cell(25, 4, number_format($dpSubtotal, 0, ',', '.'), 0, 1, 'R');
 
-                // Gunakan totalDP untuk terbilang
+                // Gunakan totalDP untuk terbilang dan set uangMuka = 0 untuk invoice DP
                 $grandTotal = $totalDP;
+                $uangMuka = 0; // Invoice DP tidak ada uang muka terapkan
+                $totalTagihan = $totalDP;
             } else {
                 // ===== INVOICE NORMAL SUMMARY =====
                 // Hitung semua nilai yang diperlukan
@@ -269,18 +274,11 @@ class PDFInvoiceTamplate
                 $ongkosKirim = $invoice->ongkos_kirim ?? 0;
                 $diskon = $invoice->diskon_nominal ?? 0;
                 $subtotalItems = $invoice->subtotal ?? 0;
+                $ppnAmount = $invoice->ppn ?? 0;
 
-                // Hitung sisa setelah uang muka dan PPN
-                if ($uangMuka > 0) {
-                    // Subtotal dikurangi Uang Muka dulu, baru + PPN
-                    $sisaSetelahUM = $subtotalItems - $uangMuka;
-                    $ppnAmount = $sisaSetelahUM * 0.11;
-                    $totalTagihan = $sisaSetelahUM + $ppnAmount;
-                } else {
-                    $sisaSetelahUM = 0;
-                    $ppnAmount = $invoice->ppn ?? 0;
-                    $totalTagihan = $grandTotal;
-                }
+                // Hitung total tagihan setelah uang muka
+                // Formula: Subtotal + PPN - Uang Muka
+                $totalTagihan = $grandTotal - $uangMuka;
 
                 // Hitung pembayaran yang sudah diterima
                 $totalPembayaran = 0;
@@ -295,43 +293,56 @@ class PDFInvoiceTamplate
                 $y = $summaryY;
                 $subtotalItems = $invoice->subtotal ?? 0;
 
-                // ===== FORMAT B: Tampilkan alur Uang Muka =====
+                // ===== Tampilkan dengan Uang Muka (Format Akuntansi) =====
                 if ($uangMuka > 0) {
-                    // Total Tagihan Akhir (Bold)
+                    // BAGIAN ATAS: Total (Bold) - hasil akhir yang harus dibayar
                     $pdf->SetFont('helvetica', 'B', 8);
                     $pdf->SetXY(142, $y);
-                    $pdf->Cell(37, 4, 'Total Tagihan', 0, 0, 'L');
-                    $pdf->Cell(25, 4, number_format($totalTagihan, 0, ',', '.'), 0, 1, 'R');
-                    $y -= 4;
+                    $pdf->Cell(37, 3, 'Total', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($totalTagihan, 0, ',', '.'), 0, 1, 'R');
+                    $y -= 3;
 
-                    // PPN 11% (dari sisa setelah UM)
-                    if ($ppnAmount > 0) {
-                        $pdf->SetFont('helvetica', '', 8);
-                        $pdf->SetXY(142, $y);
-                        $pdf->Cell(37, 4, 'PPN 11%', 0, 0, 'L');
-                        $pdf->Cell(25, 4, number_format($ppnAmount, 0, ',', '.'), 0, 1, 'R');
-                        $y -= 4;
-                    }
+                    // Garis pemisah atas
+                    $pdf->SetDrawColor(200, 200, 200);
+                    $pdf->SetLineWidth(0.2);
+                    $y -= 1;
 
-                    // Sisa Setelah UM
-                    $pdf->SetFont('helvetica', 'B', 8);
+                    // PPN 11% dari Pelunasan
+                    $sisaSetelahUM = $grandTotal - $uangMuka; // Sisa yang harus dibayar (termasuk PPN)
+                    $pelunasanBersih = $sisaSetelahUM / 1.11; // Nilai bersih tanpa PPN
+                    $ppnPelunasan = $pelunasanBersih * 0.11; // PPN 11% dari pelunasan bersih
+
+                    $pdf->SetFont('helvetica', '', 8);
                     $pdf->SetXY(142, $y);
-                    $pdf->Cell(37, 4, 'Sisa Setelah UM', 0, 0, 'L');
-                    $pdf->Cell(25, 4, number_format($sisaSetelahUM, 0, ',', '.'), 0, 1, 'R');
-                    $y -= 4;
+                    $pdf->Cell(37, 3, 'PPN 11%', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($ppnPelunasan, 0, ',', '.'), 0, 1, 'R');
+                    $y -= 3;
+
+                    // Pelunasan (bersih tanpa PPN)
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY(142, $y);
+                    $pdf->Cell(37, 3, 'Pelunasan', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($pelunasanBersih, 0, ',', '.'), 0, 1, 'R');
+                    $y -= 2;
+
+                    // Garis pemisah tengah
+                    $pdf->SetDrawColor(200, 200, 200);
+                    $pdf->SetLineWidth(0.2);
+                    $pdf->Line(142, $y + 2, 204, $y + 2);
+                    $y -= 2;
 
                     // Uang Muka
                     $pdf->SetFont('helvetica', '', 8);
                     $pdf->SetXY(142, $y);
-                    $pdf->Cell(37, 4, 'Uang Muka', 0, 0, 'L');
-                    $pdf->Cell(25, 4, '(' . number_format($uangMuka, 0, ',', '.') . ')', 0, 1, 'R');
-                    $y -= 4;
+                    $pdf->Cell(37, 3, 'Uang Muka', 0, 0, 'L');
+                    $pdf->Cell(25, 3, '(' . number_format($uangMuka, 0, ',', '.') . ')', 0, 1, 'R');
+                    $y -= 3;
 
-                    // Subtotal Items
+                    // Jmh.Total (sudah termasuk PPN awal) - untuk invoice dengan uang muka
                     $pdf->SetFont('helvetica', '', 8);
                     $pdf->SetXY(142, $y);
-                    $pdf->Cell(37, 4, 'Subtotal', 0, 0, 'L');
-                    $pdf->Cell(25, 4, number_format($subtotalItems, 0, ',', '.'), 0, 1, 'R');
+                    $pdf->Cell(37, 3, 'Jmh.Total', 0, 0, 'L');
+                    $pdf->Cell(25, 3, number_format($grandTotal, 0, ',', '.'), 0, 1, 'R');
                 } else {
                     // ===== TANPA UANG MUKA: Format Normal =====
 
@@ -416,8 +427,9 @@ class PDFInvoiceTamplate
 
             // moved up by 1mm as requested
             $pdf->SetXY(14, 121);
-            // Konversi total ke terbilang (gunakan grandTotal yang sudah dihitung di summary)
-            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $grandTotal) . ' Rupiah ') : '-';
+            // Konversi total ke terbilang (gunakan totalTagihan jika ada uang muka, jika tidak gunakan grandTotal)
+            $nilaiTerbilang = ($uangMuka > 0) ? $totalTagihan : $grandTotal;
+            $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $nilaiTerbilang) . ' Rupiah ') : '-';
             $pdf->SetFont('helvetica', 'BI', 9); // Set font bold italic
             $pdf->MultiCell(125, 4, $Terbilang, 0, 'L');
             $pdf->SetFont('helvetica', '', 9); // Kembalikan font normal
