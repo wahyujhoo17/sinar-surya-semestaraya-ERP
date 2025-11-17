@@ -4,7 +4,7 @@
             /* Page-specific styles for Sales Order (bundle, tables, cards, dark mode) */
             .status-dropdown-item:hover {
                 transform: translateX(3px);
-                < !-- Left Column - Customer Info & Items --><div class="lg:col-span-2 space-y-6">border-color: #374151;
+                border-color: #374151;
             }
 
             .dropdown-status {
@@ -21,6 +21,25 @@
             }
 
             .dark .dropdown-status {
+                background: #1f2937;
+                border-color: #374151;
+            }
+
+            /* Print dropdown */
+            .dropdown-print {
+                position: absolute;
+                right: 0;
+                top: 100%;
+                margin-top: 0.5rem;
+                z-index: 999;
+                width: 18rem;
+                background: white;
+                border-radius: 0.5rem;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+            }
+
+            .dark .dropdown-print {
                 background: #1f2937;
                 border-color: #374151;
             }
