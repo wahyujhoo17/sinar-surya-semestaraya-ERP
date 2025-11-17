@@ -674,6 +674,7 @@ Route::middleware(['auth'])->group(function () {
         // Buku Besar Routes
         Route::get('buku-besar', [BukuBesarController::class, 'index'])->name('buku-besar.index');
         Route::get('buku-besar/export-excel', [BukuBesarController::class, 'exportExcel'])->name('buku-besar.export-excel');
+        Route::get('buku-besar/export-pdf', [BukuBesarController::class, 'exportPdf'])->name('buku-besar.export-pdf');
         Route::get('buku-besar/export', [BukuBesarController::class, 'export'])->name('buku-besar.export');
         Route::get('buku-besar/account-balance', [BukuBesarController::class, 'getAccountBalance'])->name('buku-besar.account-balance');
 

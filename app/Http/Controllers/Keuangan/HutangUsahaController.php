@@ -154,7 +154,7 @@ class HutangUsahaController extends Controller
      */
     public function generatePdf(Request $request)
     {
-        $query = PurchaseOrder::with(['supplier', 'details'])
+        $query = PurchaseOrder::with(['supplier', 'details', 'pembayaran'])
             ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
             ->where('status', '!=', 'dibatalkan')
             ->orderBy('tanggal', 'desc');
@@ -216,6 +216,22 @@ class HutangUsahaController extends Controller
             'supplier' => $supplier,
             'startDate' => $request->start_date,
             'endDate' => $request->end_date
+        ]);
+
+        // Set paper size to A4 landscape
+        $pdf->setPaper('a4', 'landscape');
+
+        // Set options for better rendering
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150,
+            'debugPng' => false,
+            'debugKeepTemp' => false,
+            'debugCss' => false,
+            'enable_php' => true,
         ]);
 
         return $pdf->stream('hutang_usaha_' . date('YmdHis') . '.pdf');

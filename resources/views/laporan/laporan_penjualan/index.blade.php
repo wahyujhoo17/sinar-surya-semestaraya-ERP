@@ -184,7 +184,31 @@
                                         <option value="">Semua Customer</option>
                                         <template x-for="customer in customerList" :key="customer.id">
                                             <option :value="customer.id"
-                                                x-text="customer.nama + ' (' + customer.kode + ')'"></option>
+                                                x-text="(customer.company || customer.nama || customer.kode) + ' (' + customer.kode + ')'">
+                                            </option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Sales Filter -->
+                            <div class="lg:col-span-6">
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full">
+                                    <label
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path
+                                                d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                        </svg>
+                                        Sales / Petugas
+                                    </label>
+                                    <select id="user_filter" x-model="filter.user_id"
+                                        class="select2-search block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white">
+                                        <option value="">Semua Sales</option>
+                                        <template x-for="user in userList" :key="user.id">
+                                            <option :value="user.id" x-text="user.name"></option>
                                         </template>
                                     </select>
                                 </div>
@@ -594,15 +618,18 @@
                     chartLoading: false,
                     penjualanData: [],
                     customerList: [],
+                    userList: [],
                     filter: {
                         tanggal_awal: '',
                         tanggal_akhir: '',
                         customer_id: '',
+                        user_id: '',
                         status_pembayaran: '',
                         search: '',
                     },
                     totalPenjualan: 0,
                     totalDibayar: 0,
+                    totalUangMuka: 0,
                     sisaPembayaran: 0,
                     totalItems: 0,
                     currentPage: 1,
@@ -654,6 +681,7 @@
                         this.filter.tanggal_akhir = this.getToday();
 
                         await this.loadCustomerData();
+                        await this.loadUserData();
                         await this.fetchData();
                         await this.loadChartData();
 
@@ -666,6 +694,14 @@
                             }).on('change', (e) => {
                                 this.filter.customer_id = $('#customer_filter').val();
                             });
+
+                            $('#user_filter').select2({
+                                placeholder: 'Pilih sales...',
+                                allowClear: true,
+                                width: '100%'
+                            }).on('change', (e) => {
+                                this.filter.user_id = $('#user_filter').val();
+                            });
                         });
                     },
 
@@ -673,6 +709,16 @@
                         try {
                             // Using direct controller access for customers instead of API
                             this.customerList = @json($customers);
+                        } catch (error) {
+                            console.error('Error loading customer data:', error);
+                            this.customerList = [];
+                        }
+                    },
+
+                    async loadUserData() {
+                        try {
+                            // Using direct controller access for users instead of API
+                            this.userList = @json($users);
                         } catch (error) {
                             console.error('Error loading customer data:', error);
                             this.customerList = [];
@@ -1157,19 +1203,21 @@
                             tanggal_awal: this.filter.tanggal_awal,
                             tanggal_akhir: this.filter.tanggal_akhir,
                             customer_id: this.filter.customer_id,
+                            user_id: this.filter.user_id,
                             status_pembayaran: this.filter.status_pembayaran,
                             search: this.filter.search
                         });
                     },
 
                     async exportPdf() {
-                        window.location.href = `/laporan/penjualan/export/pdf?` + new URLSearchParams({
+                        window.open(`/laporan/penjualan/export/pdf?` + new URLSearchParams({
                             tanggal_awal: this.filter.tanggal_awal,
                             tanggal_akhir: this.filter.tanggal_akhir,
                             customer_id: this.filter.customer_id,
+                            user_id: this.filter.user_id,
                             status_pembayaran: this.filter.status_pembayaran,
                             search: this.filter.search
-                        });
+                        }), '_blank');
                     },
 
                     resetFilter() {
@@ -1177,6 +1225,7 @@
                             tanggal_awal: this.getThisMonthStart(),
                             tanggal_akhir: this.getToday(),
                             customer_id: '',
+                            user_id: '',
                             status_pembayaran: '',
                             search: '',
                         };
@@ -1184,6 +1233,7 @@
                         // Update Select2 to reflect the reset
                         this.$nextTick(() => {
                             $('#customer_filter').val('').trigger('change');
+                            $('#user_filter').val('').trigger('change');
                         });
 
                         // Fetch data with reset filters
@@ -1191,7 +1241,6 @@
                         this.fetchData();
                         this.loadChartData();
                     },
-
                     changePage(page) {
                         this.currentPage = page;
                         this.fetchData();

@@ -364,6 +364,23 @@ class PiutangUsahaController extends Controller
 
         // Create PDF with updated view
         $pdf = Pdf::loadView('keuangan.piutang_usaha.pdf.piutang_usaha_pdf', $data);
+
+        // Set paper size to A4 landscape
+        $pdf->setPaper('a4', 'landscape');
+
+        // Set options for better rendering
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => true,
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => true,
+            'dpi' => 150,
+            'debugPng' => false,
+            'debugKeepTemp' => false,
+            'debugCss' => false,
+            'enable_php' => true,
+        ]);
+
         return $pdf->stream('laporan_piutang_usaha_' . date('YmdHis') . '.pdf');
     }
 

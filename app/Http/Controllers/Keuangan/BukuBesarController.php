@@ -366,6 +366,106 @@ class BukuBesarController extends Controller
     }
 
     /**
+     * Export buku besar ke PDF
+     */
+    public function exportPdf(Request $request)
+    {
+        try {
+            // Increase execution time for large reports
+            set_time_limit(120);
+            ini_set('memory_limit', '512M');
+
+            $akunId = $request->get('akun_id');
+            $akunIds = $request->get('akun_ids', []);
+            $periodeId = $request->get('periode_id');
+            $tanggalAwal = $request->get('tanggal_awal', now()->startOfMonth()->format('Y-m-d'));
+            $tanggalAkhir = $request->get('tanggal_akhir', now()->endOfMonth()->format('Y-m-d'));
+            $includeDrafts = $request->get('include_drafts', '0') == '1';
+
+            // If periode is selected, use periode dates
+            $selectedPeriode = null;
+            if ($periodeId) {
+                $selectedPeriode = PeriodeAkuntansi::findOrFail($periodeId);
+                $tanggalAwal = $selectedPeriode->tanggal_mulai->format('Y-m-d');
+                $tanggalAkhir = $selectedPeriode->tanggal_akhir->format('Y-m-d');
+            }
+
+            // Validate date range
+            if ($tanggalAwal > $tanggalAkhir) {
+                return redirect()->back()
+                    ->withErrors(['error' => 'Tanggal mulai tidak boleh lebih besar dari tanggal akhir.']);
+            }
+
+            $bukuBesarData = [];
+            $reportType = '';
+
+            // Handle multiple accounts filter
+            if (!empty($akunIds) && is_array($akunIds)) {
+                // Export multiple selected accounts with detailed transactions
+                foreach ($akunIds as $id) {
+                    $accountData = $this->getBukuBesarData($request, $id, $tanggalAwal, $tanggalAkhir, $periodeId);
+                    $bukuBesarData[] = $accountData;
+                }
+                $reportType = 'multiple';
+                $filename = 'buku_besar_multiple_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.pdf';
+            } elseif ($akunId) {
+                // Export single account with detailed transactions
+                $accountData = $this->getBukuBesarData($request, $akunId, $tanggalAwal, $tanggalAkhir, $periodeId);
+                $bukuBesarData = [$accountData];
+                $reportType = 'single';
+                $akun = AkunAkuntansi::find($akunId);
+                $filename = 'buku_besar_' . $akun->kode . '_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.pdf';
+            } else {
+                // Export all accounts with detailed transactions
+                $allAccountsWithBalances = $this->getAllAccountsWithBalances($request, $tanggalAwal, $tanggalAkhir, $periodeId);
+
+                // Get detailed transactions for each account
+                foreach ($allAccountsWithBalances['accounts'] as $item) {
+                    $accountData = $this->getBukuBesarData($request, $item['account']->id, $tanggalAwal, $tanggalAkhir, $periodeId);
+                    $bukuBesarData[] = $accountData;
+                }
+
+                $reportType = 'all';
+                $filename = 'buku_besar_semua_akun_' . str_replace('-', '', $tanggalAwal) . '_' . str_replace('-', '', $tanggalAkhir) . '.pdf';
+            }
+
+            // Generate PDF
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('keuangan.buku_besar.pdf', [
+                'bukuBesarData' => $bukuBesarData,
+                'allAccountsData' => $allAccountsData ?? null,
+                'reportType' => $reportType,
+                'tanggalAwal' => $tanggalAwal,
+                'tanggalAkhir' => $tanggalAkhir,
+                'selectedPeriode' => $selectedPeriode,
+                'includeDrafts' => $includeDrafts
+            ]);
+
+            // Set paper size to A4 landscape for better table view
+            $pdf->setPaper('a4', 'landscape');
+
+            // Set options optimized for speed
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'Arial',
+                'isFontSubsettingEnabled' => false,
+                'dpi' => 96,
+                'debugPng' => false,
+                'debugKeepTemp' => false,
+                'debugCss' => false,
+                'enable_php' => true,
+                'chroot' => public_path(),
+            ]);
+
+            return $pdf->stream($filename);
+        } catch (\Exception $e) {
+            Log::error('Error exporting buku besar PDF: ' . $e->getMessage());
+            return redirect()->back()
+                ->withErrors(['error' => 'Terjadi kesalahan saat export PDF: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * API endpoint to get account balance
      */
     public function getAccountBalance(Request $request)

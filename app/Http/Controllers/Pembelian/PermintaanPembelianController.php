@@ -476,7 +476,7 @@ class PermintaanPembelianController extends Controller
             'qrCodes'
         ));
 
-        return $pdf->download('Permintaan-Pembelian-' . $permintaanPembelian->nomor . '.pdf');
+        return $pdf->stream('Permintaan-Pembelian-' . $permintaanPembelian->nomor . '.pdf');
     }
 
     /**

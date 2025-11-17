@@ -36,33 +36,10 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
             ->orderBy('kode')
             ->get();
 
-        $accountsWithBalances = [];
-        $totalsByCategory = [
-            'asset' => 0,
-            'liability' => 0,
-            'equity' => 0,
-            'income' => 0,
-            'expense' => 0,
-            'other' => 0
-        ];
+        $bukuBesarData = [];
 
         foreach ($accounts as $account) {
-            // Get period transactions
-            $periodDebit = JurnalUmum::where('akun_id', $account->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
-            if (!$this->includeDrafts) {
-                $periodDebit->where('is_posted', true);
-            }
-            $periodDebit = $periodDebit->sum('debit');
-
-            $periodKredit = JurnalUmum::where('akun_id', $account->id)
-                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
-            if (!$this->includeDrafts) {
-                $periodKredit->where('is_posted', true);
-            }
-            $periodKredit = $periodKredit->sum('kredit');
-
-            // Get opening balance (before start date)
+            // Get opening balance
             $openingDebit = JurnalUmum::where('akun_id', $account->id)
                 ->where('tanggal', '<', $this->tanggalAwal);
             if (!$this->includeDrafts) {
@@ -77,55 +54,64 @@ class BukuBesarAllAccountsExport implements FromView, WithTitle, ShouldAutoSize,
             }
             $openingKredit = $openingKredit->sum('kredit');
 
-            // Calculate balances
+            // Calculate opening balance based on account category
             $kategori = $account->kategori;
             $openingBalance = $this->calculateBalance($kategori, $openingDebit, $openingKredit);
-            $periodMutation = $this->calculateBalance($kategori, $periodDebit, $periodKredit);
-            $endingBalance = $openingBalance + $periodMutation;
 
-            // Total debit and kredit (all time up to end date)
-            $totalDebit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $this->tanggalAkhir);
+            // Get period transactions with details
+            $transactions = JurnalUmum::with(['jurnal'])
+                ->where('akun_id', $account->id)
+                ->whereBetween('tanggal', [$this->tanggalAwal, $this->tanggalAkhir]);
             if (!$this->includeDrafts) {
-                $totalDebit->where('is_posted', true);
+                $transactions->where('is_posted', true);
             }
-            $totalDebit = $totalDebit->sum('debit');
+            $transactions = $transactions->orderBy('tanggal')
+                ->orderBy('id')
+                ->get();
 
-            $totalKredit = JurnalUmum::where('akun_id', $account->id)
-                ->where('tanggal', '<=', $this->tanggalAkhir);
-            if (!$this->includeDrafts) {
-                $totalKredit->where('is_posted', true);
-            }
-            $totalKredit = $totalKredit->sum('kredit');
+            // Only include accounts with opening balance or transactions
+            if ($openingBalance != 0 || $transactions->isNotEmpty()) {
+                // Calculate running balance for each transaction
+                $balance = $openingBalance;
+                $transactionsWithBalance = [];
+                $totalDebit = 0;
+                $totalKredit = 0;
 
-            // Only include accounts with transactions or non-zero balance
-            if ($totalDebit > 0 || $totalKredit > 0 || $endingBalance != 0) {
-                $accountsWithBalances[] = [
+                foreach ($transactions as $transaction) {
+                    $debit = $transaction->debit;
+                    $kredit = $transaction->kredit;
+
+                    $totalDebit += $debit;
+                    $totalKredit += $kredit;
+
+                    // Update balance based on account category
+                    if (in_array($kategori, ['asset', 'expense'])) {
+                        $balance += ($debit - $kredit);
+                    } else {
+                        $balance += ($kredit - $debit);
+                    }
+
+                    $transactionsWithBalance[] = [
+                        'transaction' => $transaction,
+                        'balance' => $balance,
+                    ];
+                }
+
+                $bukuBesarData[] = [
                     'account' => $account,
                     'opening_balance' => $openingBalance,
-                    'period_debit' => $periodDebit,
-                    'period_kredit' => $periodKredit,
-                    'period_mutation' => $periodMutation,
-                    'ending_balance' => $endingBalance,
+                    'transactions' => $transactionsWithBalance,
                     'total_debit' => $totalDebit,
                     'total_kredit' => $totalKredit,
+                    'ending_balance' => $balance,
                 ];
-
-                // Add to category totals
-                if (isset($totalsByCategory[$account->kategori])) {
-                    $totalsByCategory[$account->kategori] += $endingBalance;
-                } else {
-                    $totalsByCategory['other'] += $endingBalance;
-                }
             }
         }
 
-        return view('exports.buku_besar_all_accounts', [
-            'accounts' => $accountsWithBalances,
-            'totalsByCategory' => $totalsByCategory,
+        return view('exports.buku_besar_multiple_accounts', [
+            'bukuBesarData' => $bukuBesarData,
             'tanggalAwal' => $this->tanggalAwal,
             'tanggalAkhir' => $this->tanggalAkhir,
-            'grandTotal' => array_sum($totalsByCategory),
             'includeDrafts' => $this->includeDrafts
         ]);
     }

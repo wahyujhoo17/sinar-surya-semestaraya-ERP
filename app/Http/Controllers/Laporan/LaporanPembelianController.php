@@ -220,36 +220,28 @@ class LaporanPembelianController extends Controller
      */
     public function exportPdf(Request $request)
     {
+        // Increase execution time for large reports
+        set_time_limit(120);
+        ini_set('memory_limit', '512M');
+
         $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
         $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
         $supplierId = $request->input('supplier_id');
         $statusPembayaran = $request->input('status_pembayaran');
         $search = $request->input('search');
 
-        // Query purchase_order dengan join tabel terkait
+        // OPTIMIZED: Single query dengan eager loading langsung
         $query = PurchaseOrder::query()
+            ->with(['details.produk.satuan', 'supplier', 'user'])
             ->select(
-                'purchase_order.id',
-                'purchase_order.nomor as nomor_faktur',
-                'purchase_order.tanggal',
-                'purchase_order.supplier_id',
-                'purchase_order.status_pembayaran as status',
-                'purchase_order.total',
+                'purchase_order.*',
                 DB::raw('COALESCE(
                     (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
                     0
-                ) as total_bayar'),
-                'purchase_order.catatan as keterangan',
-                'purchase_order.created_at',
-                'purchase_order.updated_at',
-                'supplier.nama as supplier_nama',
-                'supplier.kode as supplier_kode',
-                'users.name as nama_petugas'
+                ) as total_bayar')
             )
-            ->join('supplier', 'purchase_order.supplier_id', '=', 'supplier.id')
-            ->leftJoin('users', 'purchase_order.user_id', '=', 'users.id')
             ->whereBetween('purchase_order.tanggal', [$tanggalAwal, $tanggalAkhir])
-            ->where('purchase_order.status', '!=', 'draft'); // Exclude draft POs
+            ->where('purchase_order.status', '!=', 'draft');
 
         // Filter berdasarkan supplier
         if ($supplierId) {
@@ -265,18 +257,13 @@ class LaporanPembelianController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('purchase_order.nomor', 'like', "%{$search}%")
-                    ->orWhere('supplier.nama', 'like', "%{$search}%");
+                    ->orWhereHas('supplier', function ($q) use ($search) {
+                        $q->where('nama', 'like', "%{$search}%");
+                    });
             });
         }
 
         $dataPembelian = $query->orderBy('purchase_order.tanggal', 'desc')->get();
-
-        // Transform data to ensure proper numeric values
-        $dataPembelian = $dataPembelian->map(function ($item) {
-            $item->total = (float) $item->total;
-            $item->total_bayar = (float) $item->total_bayar;
-            return $item;
-        });
 
         // Hitung total pembelian, total dibayar, dan sisa pembayaran
         $totalPembelian = $dataPembelian->sum('total');
@@ -300,11 +287,28 @@ class LaporanPembelianController extends Controller
             'sisaPembayaran' => $sisaPembayaran
         ]);
 
+        // Set paper size to A4 portrait
+        $pdf->setPaper('a4', 'portrait');
+
+        // Set options optimized for speed
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false, // Faster: disable remote resources
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => false, // Faster: disable font subsetting
+            'dpi' => 96, // Lower DPI for faster rendering (was 150)
+            'debugPng' => false,
+            'debugKeepTemp' => false,
+            'debugCss' => false,
+            'enable_php' => true,
+            'chroot' => public_path(), // Security: limit file access
+        ]);
+
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_pembelian_{$fileDate}.pdf";
+        $fileName = "laporan_pembelian_detail_{$fileDate}.pdf";
 
-        return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
 
     /**

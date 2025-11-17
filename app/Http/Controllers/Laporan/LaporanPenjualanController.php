@@ -23,6 +23,9 @@ class LaporanPenjualanController extends Controller
         $tanggalAkhir = now();
         $customers = Customer::orderBy('nama')->get();
 
+        // Get all users (sales)
+        $users = \App\Models\User::orderBy('name')->get();
+
         // Breadcrumbs
         $breadcrumbs = [
             ['name' => 'Dashboard', 'link' => route('dashboard')],
@@ -36,6 +39,7 @@ class LaporanPenjualanController extends Controller
             'tanggalAwal',
             'tanggalAkhir',
             'customers',
+            'users',
             'breadcrumbs',
             'currentPage'
         ));
@@ -53,6 +57,7 @@ class LaporanPenjualanController extends Controller
             $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
             $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
             $customerId = $request->input('customer_id');
+            $userId = $request->input('user_id');
             $statusPembayaran = $request->input('status_pembayaran');
             $search = $request->input('search');
             $perPage = $request->input('per_page', 25);
@@ -63,6 +68,7 @@ class LaporanPenjualanController extends Controller
                 'tanggal_awal' => $tanggalAwal,
                 'tanggal_akhir' => $tanggalAkhir,
                 'customer_id' => $customerId,
+                'user_id' => $userId,
                 'status_pembayaran' => $statusPembayaran,
                 'search' => $search
             ]);
@@ -87,10 +93,15 @@ class LaporanPenjualanController extends Controller
                      WHERE rp.sales_order_id = sales_order.id), 
                     0
                 ) as total_retur'),
+                    DB::raw('COALESCE(
+                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                     WHERE i.sales_order_id = sales_order.id), 
+                    0
+                ) as total_uang_muka'),
                     'sales_order.catatan as keterangan',
                     'sales_order.created_at',
                     'sales_order.updated_at',
-                    DB::raw('COALESCE(NULLIF(TRIM(customer.nama), ""), customer.company, customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
+                    DB::raw('COALESCE(NULLIF(TRIM(customer.company), ""), NULLIF(TRIM(customer.nama), ""), customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
                     'customer.kode as customer_kode',
                     'users.name as nama_petugas'
                 )
@@ -101,6 +112,11 @@ class LaporanPenjualanController extends Controller
             // Filter berdasarkan customer
             if ($customerId) {
                 $query->where('sales_order.customer_id', $customerId);
+            }
+
+            // Filter berdasarkan user/sales
+            if ($userId) {
+                $query->where('sales_order.user_id', $userId);
             }
 
             // Filter berdasarkan status pembayaran
@@ -136,10 +152,11 @@ class LaporanPenjualanController extends Controller
                 'bindings' => $query->getBindings()
             ]);
 
-            // Hitung total penjualan, total dibayar, dan sisa pembayaran
+            // Hitung total penjualan, total dibayar, total uang muka, dan sisa pembayaran
             $totalPenjualan = $dataPenjualan->sum('total');
             $totalDibayar = $dataPenjualan->sum('total_bayar');
-            $sisaPembayaran = $totalPenjualan - $totalDibayar;
+            $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
+            $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
 
             // Calculate last page
             $lastPage = ceil($totalItems / $perPage);
@@ -153,6 +170,7 @@ class LaporanPenjualanController extends Controller
                 'totals' => [
                     'total_penjualan' => $totalPenjualan,
                     'total_dibayar' => $totalDibayar,
+                    'total_uang_muka' => $totalUangMuka,
                     'sisa_pembayaran' => $sisaPembayaran
                 ],
                 'filter' => [
@@ -177,6 +195,7 @@ class LaporanPenjualanController extends Controller
                 'totals' => [
                     'total_penjualan' => 0,
                     'total_dibayar' => 0,
+                    'total_uang_muka' => 0,
                     'sisa_pembayaran' => 0
                 ]
             ], 500);
@@ -212,21 +231,22 @@ class LaporanPenjualanController extends Controller
      */
     public function exportPdf(Request $request)
     {
+        // Increase execution time for large reports
+        set_time_limit(120);
+        ini_set('memory_limit', '512M');
+
         $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
         $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
         $customerId = $request->input('customer_id');
+        $userId = $request->input('user_id');
         $statusPembayaran = $request->input('status_pembayaran');
         $search = $request->input('search');
 
-        // Query sales_order dengan join tabel terkait
+        // OPTIMIZED: Single query dengan eager loading langsung
         $query = SalesOrder::query()
+            ->with(['details.produk.satuan', 'customer', 'user'])
             ->select(
-                'sales_order.id',
-                'sales_order.nomor as nomor_faktur',
-                'sales_order.tanggal',
-                'sales_order.customer_id',
-                'sales_order.status_pembayaran as status',
-                'sales_order.total',
+                'sales_order.*',
                 DB::raw('COALESCE(
                     (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
                      JOIN invoice i ON pp.invoice_id = i.id 
@@ -238,20 +258,22 @@ class LaporanPenjualanController extends Controller
                      WHERE rp.sales_order_id = sales_order.id), 
                     0
                 ) as total_retur'),
-                'sales_order.catatan as keterangan',
-                'sales_order.created_at',
-                'sales_order.updated_at',
-                DB::raw('COALESCE(NULLIF(TRIM(customer.nama), ""), customer.company, customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
-                'customer.kode as customer_kode',
-                'users.name as nama_petugas'
+                DB::raw('COALESCE(
+                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                     WHERE i.sales_order_id = sales_order.id), 
+                    0
+                ) as total_uang_muka')
             )
-            ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-            ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
             ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
             $query->where('sales_order.customer_id', $customerId);
+        }
+
+        // Filter berdasarkan user/sales
+        if ($userId) {
+            $query->where('sales_order.user_id', $userId);
         }
 
         // Filter berdasarkan status pembayaran
@@ -263,23 +285,27 @@ class LaporanPenjualanController extends Controller
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('sales_order.nomor', 'like', "%{$search}%")
-                    ->orWhere('customer.nama', 'like', "%{$search}%")
-                    ->orWhere('customer.company', 'like', "%{$search}%")
-                    ->orWhere('customer.kode', 'like', "%{$search}%");
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('nama', 'like', "%{$search}%")
+                            ->orWhere('company', 'like', "%{$search}%")
+                            ->orWhere('kode', 'like', "%{$search}%");
+                    });
             });
         }
 
         $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')->get();
 
-        // Hitung total penjualan, total dibayar, dan sisa pembayaran
+        // Hitung total penjualan, total dibayar, total uang muka, dan sisa pembayaran
         $totalPenjualan = $dataPenjualan->sum('total');
         $totalDibayar = $dataPenjualan->sum('total_bayar');
-        $sisaPembayaran = $totalPenjualan - $totalDibayar;
+        $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
+        $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
 
         $filters = [
             'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
             'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
             'customer_id' => $customerId,
+            'user_id' => $userId,
             'status_pembayaran' => $statusPembayaran,
             'search' => $search
         ];
@@ -290,14 +316,32 @@ class LaporanPenjualanController extends Controller
             'filters' => $filters,
             'totalPenjualan' => $totalPenjualan,
             'totalDibayar' => $totalDibayar,
+            'totalUangMuka' => $totalUangMuka,
             'sisaPembayaran' => $sisaPembayaran
+        ]);
+
+        // Set paper size to A4 portrait
+        $pdf->setPaper('a4', 'portrait');
+
+        // Set options optimized for speed
+        $pdf->setOptions([
+            'isHtml5ParserEnabled' => true,
+            'isRemoteEnabled' => false, // Faster: disable remote resources
+            'defaultFont' => 'Arial',
+            'isFontSubsettingEnabled' => false, // Faster: disable font subsetting
+            'dpi' => 96, // Lower DPI for faster rendering (was 150)
+            'debugPng' => false,
+            'debugKeepTemp' => false,
+            'debugCss' => false,
+            'enable_php' => true,
+            'chroot' => public_path(), // Security: limit file access
         ]);
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_penjualan_{$fileDate}.pdf";
+        $fileName = "laporan_penjualan_detail_{$fileDate}.pdf";
 
-        return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
 
     /**
@@ -345,7 +389,7 @@ class LaporanPenjualanController extends Controller
         // Format for filename
         $fileName = "detail_penjualan_{$penjualan->nomor}_{$id}.pdf";
 
-        return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
 
     /**
@@ -360,6 +404,7 @@ class LaporanPenjualanController extends Controller
             $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
             $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
             $customerId = $request->input('customer_id');
+            $userId = $request->input('user_id');
             $statusPembayaran = $request->input('status_pembayaran');
             $chartType = $request->input('chart_type', 'monthly'); // monthly, daily, customer, status, product
 
@@ -372,6 +417,10 @@ class LaporanPenjualanController extends Controller
             // Apply filters
             if ($customerId) {
                 $query->where('sales_order.customer_id', $customerId);
+            }
+
+            if ($userId) {
+                $query->where('sales_order.user_id', $userId);
             }
 
             if ($statusPembayaran) {

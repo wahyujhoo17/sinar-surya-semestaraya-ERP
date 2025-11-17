@@ -45,7 +45,8 @@
             <td style="border: 1px solid #ccc; font-weight: bold;">Saldo Akhir:</td>
             <td
                 style="border: 1px solid #ccc; text-align: right; font-weight: bold; {{ $bukuBesarData['ending_balance'] < 0 ? 'color: red;' : 'color: green;' }}">
-                {{ $bukuBesarData['ending_balance'] < 0 ? '(' : '' }}{{ number_format(abs($bukuBesarData['ending_balance']), 0, ',', '.') }}{{ $bukuBesarData['ending_balance'] < 0 ? ')' : '' }}
+                Rp
+                {{ number_format(abs($bukuBesarData['ending_balance']), 0, ',', '.') }}{{ $bukuBesarData['ending_balance'] < 0 ? ' (-)' : '' }}
             </td>
         </tr>
 
@@ -86,7 +87,8 @@
             <td style="border: 1px solid #ccc; text-align: center;">-</td>
             <td
                 style="border: 1px solid #ccc; text-align: right; font-weight: bold; {{ $bukuBesarData['opening_balance'] < 0 ? 'color: red;' : 'color: green;' }}">
-                {{ $bukuBesarData['opening_balance'] < 0 ? '(' : '' }}{{ number_format(abs($bukuBesarData['opening_balance']), 0, ',', '.') }}{{ $bukuBesarData['opening_balance'] < 0 ? ')' : '' }}
+                Rp
+                {{ number_format(abs($bukuBesarData['opening_balance']), 0, ',', '.') }}{{ $bukuBesarData['opening_balance'] < 0 ? ' (-)' : '' }}
             </td>
         </tr>
 
@@ -104,21 +106,21 @@
                 </td>
                 <td style="border: 1px solid #ccc; text-align: right; padding-right: 5px;">
                     @if ($item['transaksi']->debit > 0)
-                        {{ number_format($item['transaksi']->debit, 0, ',', '.') }}
+                        Rp {{ number_format($item['transaksi']->debit, 0, ',', '.') }}
                     @else
-                        0
+                        -
                     @endif
                 </td>
                 <td style="border: 1px solid #ccc; text-align: right; padding-right: 5px;">
                     @if ($item['transaksi']->kredit > 0)
-                        {{ number_format($item['transaksi']->kredit, 0, ',', '.') }}
+                        Rp {{ number_format($item['transaksi']->kredit, 0, ',', '.') }}
                     @else
-                        0
+                        -
                     @endif
                 </td>
                 <td
                     style="border: 1px solid #ccc; text-align: right; padding-right: 5px; font-weight: bold; {{ $item['saldo'] < 0 ? 'color: red;' : 'color: green;' }}">
-                    {{ $item['saldo'] < 0 ? '(' : '' }}{{ number_format(abs($item['saldo']), 0, ',', '.') }}{{ $item['saldo'] < 0 ? ')' : '' }}
+                    Rp {{ number_format(abs($item['saldo']), 0, ',', '.') }}{{ $item['saldo'] < 0 ? ' (-)' : '' }}
                 </td>
             </tr>
         @endforeach
@@ -127,14 +129,15 @@
         <tr style="background-color: #E3F2FD; font-weight: bold;">
             <td colspan="3" style="border: 1px solid #000; text-align: center; font-weight: bold;">TOTAL PERIODE</td>
             <td style="border: 1px solid #000; text-align: right; padding-right: 5px; font-weight: bold;">
-                {{ number_format($bukuBesarData['period_debit'], 0, ',', '.') }}
+                Rp {{ number_format($bukuBesarData['period_debit'], 0, ',', '.') }}
             </td>
             <td style="border: 1px solid #000; text-align: right; padding-right: 5px; font-weight: bold;">
-                {{ number_format($bukuBesarData['period_kredit'], 0, ',', '.') }}
+                Rp {{ number_format($bukuBesarData['period_kredit'], 0, ',', '.') }}
             </td>
             <td
                 style="border: 1px solid #000; text-align: right; padding-right: 5px; font-weight: bold; {{ $bukuBesarData['ending_balance'] < 0 ? 'color: red;' : 'color: green;' }}">
-                {{ $bukuBesarData['ending_balance'] < 0 ? '(' : '' }}{{ number_format(abs($bukuBesarData['ending_balance']), 0, ',', '.') }}{{ $bukuBesarData['ending_balance'] < 0 ? ')' : '' }}
+                Rp
+                {{ number_format(abs($bukuBesarData['ending_balance']), 0, ',', '.') }}{{ $bukuBesarData['ending_balance'] < 0 ? ' (-)' : '' }}
             </td>
         </tr>
 
