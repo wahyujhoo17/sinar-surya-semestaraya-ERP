@@ -16,28 +16,117 @@
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button @click="exportExcel()"
-                        class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <path d="M12 18v-6"></path>
-                            <path d="M8 15l4 4 4-4"></path>
-                        </svg>
-                        Unduh Excel
-                    </button>
-                    <button @click="exportPdf()"
-                        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <path d="M12 18v-6"></path>
-                            <path d="M8 15l4 4 4-4"></path>
-                        </svg>
-                        Unduh PDF
-                    </button>
+                    <!-- Excel Dropdown Button -->
+                    <div class="relative" x-data="{ excelOpen: false }">
+                        <button @click="excelOpen = !excelOpen" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M12 18v-6"></path>
+                                <path d="M8 15l4 4 4-4"></path>
+                            </svg>
+                            Unduh Excel
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="excelOpen" @click.away="excelOpen = false"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50">
+                            <div class="py-1" role="menu">
+                                <button @click="detailLevel = 'simple'; exportExcel(); excelOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Ringkas</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Ringkasan per
+                                            supplier</div>
+                                    </div>
+                                </button>
+                                <button @click="detailLevel = 'detail'; exportExcel(); excelOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Detail</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Daftar transaksi
+                                            pembelian</div>
+                                    </div>
+                                </button>
+                                <button @click="detailLevel = 'sangat_detail'; exportExcel(); excelOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Sangat Detail</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan detail item
+                                            produk</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PDF Dropdown Button -->
+                    <div class="relative" x-data="{ pdfOpen: false }">
+                        <button @click="pdfOpen = !pdfOpen" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-all duration-200 shadow-sm focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <path d="M12 18v-6"></path>
+                                <path d="M8 15l4 4 4-4"></path>
+                            </svg>
+                            Unduh PDF
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                fill="currentColor">
+                                <path fill-rule="evenodd"
+                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <div x-show="pdfOpen" @click.away="pdfOpen = false"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 z-50">
+                            <div class="py-1" role="menu">
+                                <button @click="detailLevel = 'simple'; exportPdf(); pdfOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Ringkas</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Ringkasan per
+                                            supplier</div>
+                                    </div>
+                                </button>
+                                <button @click="detailLevel = 'detail'; exportPdf(); pdfOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Detail</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Daftar transaksi
+                                            pembelian</div>
+                                    </div>
+                                </button>
+                                <button @click="detailLevel = 'sangat_detail'; exportPdf(); pdfOpen = false"
+                                    class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                    <div>
+                                        <div class="font-medium">Sangat Detail</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan detail item
+                                            produk</div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -613,6 +702,8 @@
                         status_pembayaran: '',
                         search: '',
                     },
+                    detailLevel: 'detail', // simple, detail, sangat_detail
+                    detailLevelLabel: 'Detail',
                     totalPembelian: 0,
                     totalDibayar: 0,
                     sisaPembayaran: 0,
@@ -732,7 +823,8 @@
                             tanggal_akhir: this.filter.tanggal_akhir,
                             supplier_id: this.filter.supplier_id,
                             status_pembayaran: this.filter.status_pembayaran,
-                            search: this.filter.search
+                            search: this.filter.search,
+                            detail_level: this.detailLevel
                         });
                     },
 
@@ -742,7 +834,8 @@
                             tanggal_akhir: this.filter.tanggal_akhir,
                             supplier_id: this.filter.supplier_id,
                             status_pembayaran: this.filter.status_pembayaran,
-                            search: this.filter.search
+                            search: this.filter.search,
+                            detail_level: this.detailLevel
                         });
                     },
 

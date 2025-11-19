@@ -212,15 +212,26 @@ class LaporanPenjualanController extends Controller
     {
         $tanggalAwal = $request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', now()->format('Y-m-d'));
+        $detailLevel = $request->input('detail_level', 'detail'); // simple, detail, sangat_detail
+
+        // Pilih export class berdasarkan detail level
+        $exportClass = match ($detailLevel) {
+            'simple' => new \App\Exports\LaporanPenjualanSimpleExport($request->all()),
+            'sangat_detail' => new \App\Exports\LaporanPenjualanSangatDetailExport($request->all()),
+            default => new \App\Exports\LaporanPenjualanExport($request->all()),
+        };
+
+        $fileLabel = match ($detailLevel) {
+            'simple' => 'ringkas',
+            'sangat_detail' => 'sangat_detail',
+            default => 'detail',
+        };
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_penjualan_{$fileDate}.xlsx";
+        $fileName = "laporan_penjualan_{$fileLabel}_{$fileDate}.xlsx";
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\LaporanPenjualanExport($request->all()),
-            $fileName
-        );
+        return \Maatwebsite\Excel\Facades\Excel::download($exportClass, $fileName);
     }
 
     /**
@@ -241,29 +252,10 @@ class LaporanPenjualanController extends Controller
         $userId = $request->input('user_id');
         $statusPembayaran = $request->input('status_pembayaran');
         $search = $request->input('search');
+        $detailLevel = $request->input('detail_level', 'detail'); // simple, detail, sangat_detail
 
-        // OPTIMIZED: Single query dengan eager loading langsung
+        // Base query
         $query = SalesOrder::query()
-            ->with(['details.produk.satuan', 'customer', 'user'])
-            ->select(
-                'sales_order.*',
-                DB::raw('COALESCE(
-                    (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
-                     JOIN invoice i ON pp.invoice_id = i.id 
-                     WHERE i.sales_order_id = sales_order.id), 
-                    0
-                ) as total_bayar'),
-                DB::raw('COALESCE(
-                    (SELECT SUM(rp.total) FROM retur_penjualan rp 
-                     WHERE rp.sales_order_id = sales_order.id), 
-                    0
-                ) as total_retur'),
-                DB::raw('COALESCE(
-                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
-                     WHERE i.sales_order_id = sales_order.id), 
-                    0
-                ) as total_uang_muka')
-            )
             ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
@@ -293,53 +285,179 @@ class LaporanPenjualanController extends Controller
             });
         }
 
-        $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')->get();
+        // Tentukan view dan data berdasarkan detail level
+        if ($detailLevel === 'simple') {
+            // Level Simple: Ringkasan per Customer
+            $dataPenjualan = $query->with(['customer', 'user'])
+                ->select(
+                    'sales_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
+                         JOIN invoice i ON pp.invoice_id = i.id 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_bayar'),
+                    DB::raw('COALESCE(
+                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_uang_muka')
+                )
+                ->orderBy('sales_order.tanggal', 'desc')
+                ->get();
 
-        // Hitung total penjualan, total dibayar, total uang muka, dan sisa pembayaran
-        $totalPenjualan = $dataPenjualan->sum('total');
-        $totalDibayar = $dataPenjualan->sum('total_bayar');
-        $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
-        $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
+            // Group by customer
+            $groupedData = $dataPenjualan->groupBy('customer_id')->map(function ($group) {
+                return [
+                    'customer' => $group->first()->customer,
+                    'total_transaksi' => $group->count(),
+                    'total_penjualan' => $group->sum('total'),
+                    'total_dibayar' => $group->sum('total_bayar'),
+                    'total_uang_muka' => $group->sum('total_uang_muka'),
+                    'sisa_pembayaran' => $group->sum('total') - $group->sum('total_bayar') - $group->sum('total_uang_muka'),
+                ];
+            });
 
-        $filters = [
-            'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
-            'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
-            'customer_id' => $customerId,
-            'user_id' => $userId,
-            'status_pembayaran' => $statusPembayaran,
-            'search' => $search
-        ];
+            $totalPenjualan = $dataPenjualan->sum('total');
+            $totalDibayar = $dataPenjualan->sum('total_bayar');
+            $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
+            $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
+
+            $viewData = [
+                'groupedData' => $groupedData,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'customer_id' => $customerId,
+                    'user_id' => $userId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPenjualan' => $totalPenjualan,
+                'totalDibayar' => $totalDibayar,
+                'totalUangMuka' => $totalUangMuka,
+                'sisaPembayaran' => $sisaPembayaran,
+            ];
+
+            $viewName = 'laporan.laporan_penjualan.pdf_simple';
+            $fileLabel = 'ringkas';
+            $orientation = 'portrait';
+        } elseif ($detailLevel === 'sangat_detail') {
+            // Level Sangat Detail: Dengan detail item produk dan history pembayaran
+            $dataPenjualan = $query->with([
+                'details.produk.satuan',
+                'customer',
+                'user',
+                'invoices.pembayaranPiutang' => function ($query) {
+                    $query->orderBy('tanggal', 'asc');
+                }
+            ])
+                ->select(
+                    'sales_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
+                         JOIN invoice i ON pp.invoice_id = i.id 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_bayar'),
+                    DB::raw('COALESCE(
+                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_uang_muka')
+                )
+                ->orderBy('sales_order.tanggal', 'desc')
+                ->get();
+
+            $viewData = [
+                'dataPenjualan' => $dataPenjualan,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'customer_id' => $customerId,
+                    'user_id' => $userId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPenjualan' => $dataPenjualan->sum('total'),
+                'totalDibayar' => $dataPenjualan->sum('total_bayar'),
+                'totalUangMuka' => $dataPenjualan->sum('total_uang_muka'),
+                'sisaPembayaran' => $dataPenjualan->sum('total') - $dataPenjualan->sum('total_bayar') - $dataPenjualan->sum('total_uang_muka'),
+            ];
+
+            $viewName = 'laporan.laporan_penjualan.pdf_sangat_detail';
+            $fileLabel = 'sangat_detail';
+            $orientation = 'landscape';
+        } else {
+            // Level Detail (default): Daftar transaksi tanpa detail item
+            $dataPenjualan = $query->with(['details.produk.satuan', 'customer', 'user'])
+                ->select(
+                    'sales_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
+                         JOIN invoice i ON pp.invoice_id = i.id 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_bayar'),
+                    DB::raw('COALESCE(
+                        (SELECT SUM(rp.total) FROM retur_penjualan rp 
+                         WHERE rp.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_retur'),
+                    DB::raw('COALESCE(
+                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                         WHERE i.sales_order_id = sales_order.id), 
+                        0
+                    ) as total_uang_muka')
+                )
+                ->orderBy('sales_order.tanggal', 'desc')
+                ->get();
+
+            $viewData = [
+                'dataPenjualan' => $dataPenjualan,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'customer_id' => $customerId,
+                    'user_id' => $userId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPenjualan' => $dataPenjualan->sum('total'),
+                'totalDibayar' => $dataPenjualan->sum('total_bayar'),
+                'totalRetur' => $dataPenjualan->sum('total_retur'),
+                'totalUangMuka' => $dataPenjualan->sum('total_uang_muka'),
+                'sisaPembayaran' => $dataPenjualan->sum('total') - $dataPenjualan->sum('total_bayar') - $dataPenjualan->sum('total_uang_muka'),
+            ];
+
+            $viewName = 'laporan.laporan_penjualan.pdf_detail';
+            $fileLabel = 'detail';
+            $orientation = 'portrait';
+        }
 
         // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_penjualan.pdf', [
-            'dataPenjualan' => $dataPenjualan,
-            'filters' => $filters,
-            'totalPenjualan' => $totalPenjualan,
-            'totalDibayar' => $totalDibayar,
-            'totalUangMuka' => $totalUangMuka,
-            'sisaPembayaran' => $sisaPembayaran
-        ]);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $viewData);
 
-        // Set paper size to A4 portrait
-        $pdf->setPaper('a4', 'portrait');
+        // Set paper size
+        $pdf->setPaper('a4', $orientation);
 
         // Set options optimized for speed
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false, // Faster: disable remote resources
+            'isRemoteEnabled' => false,
             'defaultFont' => 'Arial',
-            'isFontSubsettingEnabled' => false, // Faster: disable font subsetting
-            'dpi' => 96, // Lower DPI for faster rendering (was 150)
+            'isFontSubsettingEnabled' => false,
+            'dpi' => 96,
             'debugPng' => false,
             'debugKeepTemp' => false,
             'debugCss' => false,
             'enable_php' => true,
-            'chroot' => public_path(), // Security: limit file access
+            'chroot' => public_path(),
         ]);
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_penjualan_detail_{$fileDate}.pdf";
+        $fileName = "laporan_penjualan_{$fileLabel}_{$fileDate}.pdf";
 
         return $pdf->stream($fileName);
     }

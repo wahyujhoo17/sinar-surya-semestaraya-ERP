@@ -59,7 +59,7 @@ class LaporanPembelianController extends Controller
             $page = $request->input('page', 1);
 
             // Debug filter values
-            \Log::info('Laporan Pembelian Filter', [
+            Log::info('Laporan Pembelian Filter', [
                 'tanggal_awal' => $tanggalAwal,
                 'tanggal_akhir' => $tanggalAkhir,
                 'supplier_id' => $supplierId,
@@ -135,7 +135,7 @@ class LaporanPembelianController extends Controller
             });
 
             // Debug results
-            \Log::info('Purchase data results', [
+            Log::info('Purchase data results', [
                 'count' => $dataPembelian->count(),
                 'total_items' => $totalItems,
                 'total_pembelian' => $totalPembelian,
@@ -169,7 +169,7 @@ class LaporanPembelianController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error in Laporan Pembelian getData: ' . $e->getMessage(), [
+            Log::error('Error in Laporan Pembelian getData: ' . $e->getMessage(), [
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
@@ -201,15 +201,26 @@ class LaporanPembelianController extends Controller
     {
         $tanggalAwal = $request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d'));
         $tanggalAkhir = $request->input('tanggal_akhir', now()->format('Y-m-d'));
+        $detailLevel = $request->input('detail_level', 'detail'); // simple, detail, sangat_detail
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_pembelian_{$fileDate}.xlsx";
+        $levelLabel = [
+            'simple' => 'ringkas',
+            'detail' => 'detail',
+            'sangat_detail' => 'sangat_detail'
+        ][$detailLevel] ?? 'detail';
 
-        return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\LaporanPembelianExport($request->all()),
-            $fileName
-        );
+        $fileName = "laporan_pembelian_{$levelLabel}_{$fileDate}.xlsx";
+
+        // Pilih export class berdasarkan level detail
+        $exportClass = match ($detailLevel) {
+            'simple' => new \App\Exports\LaporanPembelianSimpleExport($request->all()),
+            'sangat_detail' => new \App\Exports\LaporanPembelianSangatDetailExport($request->all()),
+            default => new \App\Exports\LaporanPembelianExport($request->all()),
+        };
+
+        return \Maatwebsite\Excel\Facades\Excel::download($exportClass, $fileName);
     }
 
     /**
@@ -229,17 +240,10 @@ class LaporanPembelianController extends Controller
         $supplierId = $request->input('supplier_id');
         $statusPembayaran = $request->input('status_pembayaran');
         $search = $request->input('search');
+        $detailLevel = $request->input('detail_level', 'detail'); // simple, detail, sangat_detail
 
-        // OPTIMIZED: Single query dengan eager loading langsung
+        // Base query
         $query = PurchaseOrder::query()
-            ->with(['details.produk.satuan', 'supplier', 'user'])
-            ->select(
-                'purchase_order.*',
-                DB::raw('COALESCE(
-                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
-                    0
-                ) as total_bayar')
-            )
             ->whereBetween('purchase_order.tanggal', [$tanggalAwal, $tanggalAkhir])
             ->where('purchase_order.status', '!=', 'draft');
 
@@ -263,50 +267,143 @@ class LaporanPembelianController extends Controller
             });
         }
 
-        $dataPembelian = $query->orderBy('purchase_order.tanggal', 'desc')->get();
+        // Pilih view dan data berdasarkan level detail
+        if ($detailLevel === 'simple') {
+            // Level Simple: Ringkasan per supplier atau per bulan
+            $dataPembelian = $query->with(['supplier'])
+                ->select(
+                    'purchase_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                        0
+                    ) as total_bayar')
+                )
+                ->orderBy('purchase_order.tanggal', 'desc')
+                ->get();
 
-        // Hitung total pembelian, total dibayar, dan sisa pembayaran
-        $totalPembelian = $dataPembelian->sum('total');
-        $totalDibayar = $dataPembelian->sum('total_bayar');
-        $sisaPembayaran = $totalPembelian - $totalDibayar;
+            // Group data per supplier untuk ringkasan
+            $groupedData = $dataPembelian->groupBy('supplier_id')->map(function ($items) {
+                $totalPembelian = $items->sum('total');
+                $totalDibayar = $items->sum('total_bayar');
+                return [
+                    'supplier' => $items->first()->supplier,
+                    'total_transaksi' => $items->count(),
+                    'total_pembelian' => $totalPembelian,
+                    'total_dibayar' => $totalDibayar,
+                    'sisa_pembayaran' => $totalPembelian - $totalDibayar,
+                ];
+            });
 
-        $filters = [
-            'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
-            'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
-            'supplier_id' => $supplierId,
-            'status_pembayaran' => $statusPembayaran,
-            'search' => $search
-        ];
+            $totalPembelian = $dataPembelian->sum('total');
+            $totalDibayar = $dataPembelian->sum('total_bayar');
+
+            $viewData = [
+                'groupedData' => $groupedData,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'supplier_id' => $supplierId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPembelian' => $totalPembelian,
+                'totalDibayar' => $totalDibayar,
+                'sisaPembayaran' => $totalPembelian - $totalDibayar,
+            ];
+
+            $viewName = 'laporan.laporan_pembelian.pdf_simple';
+            $fileLabel = 'ringkas';
+        } elseif ($detailLevel === 'sangat_detail') {
+            // Level Sangat Detail: Dengan detail item produk dan history pembayaran
+            $dataPembelian = $query->with([
+                'details.produk.satuan',
+                'supplier',
+                'user',
+                'pembayaran' => function ($query) {
+                    $query->orderBy('tanggal', 'asc');
+                }
+            ])
+                ->select(
+                    'purchase_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                        0
+                    ) as total_bayar')
+                )
+                ->orderBy('purchase_order.tanggal', 'desc')
+                ->get();
+
+            $viewData = [
+                'dataPembelian' => $dataPembelian,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'supplier_id' => $supplierId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPembelian' => $dataPembelian->sum('total'),
+                'totalDibayar' => $dataPembelian->sum('total_bayar'),
+                'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
+            ];
+
+            $viewName = 'laporan.laporan_pembelian.pdf_sangat_detail';
+            $fileLabel = 'sangat_detail';
+        } else {
+            // Level Detail (default): Daftar transaksi tanpa detail item
+            $dataPembelian = $query->with(['supplier', 'user'])
+                ->select(
+                    'purchase_order.*',
+                    DB::raw('COALESCE(
+                        (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
+                        0
+                    ) as total_bayar')
+                )
+                ->orderBy('purchase_order.tanggal', 'desc')
+                ->get();
+
+            $viewData = [
+                'dataPembelian' => $dataPembelian,
+                'filters' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
+                    'supplier_id' => $supplierId,
+                    'status_pembayaran' => $statusPembayaran,
+                    'search' => $search
+                ],
+                'totalPembelian' => $dataPembelian->sum('total'),
+                'totalDibayar' => $dataPembelian->sum('total_bayar'),
+                'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
+            ];
+
+            $viewName = 'laporan.laporan_pembelian.pdf_detail';
+            $fileLabel = 'detail';
+        }
 
         // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_pembelian.pdf', [
-            'dataPembelian' => $dataPembelian,
-            'filters' => $filters,
-            'totalPembelian' => $totalPembelian,
-            'totalDibayar' => $totalDibayar,
-            'sisaPembayaran' => $sisaPembayaran
-        ]);
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($viewName, $viewData);
 
-        // Set paper size to A4 portrait
-        $pdf->setPaper('a4', 'portrait');
+        // Set paper size to A4 portrait (or landscape untuk sangat detail)
+        $orientation = ($detailLevel === 'sangat_detail') ? 'landscape' : 'portrait';
+        $pdf->setPaper('a4', $orientation);
 
         // Set options optimized for speed
         $pdf->setOptions([
             'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => false, // Faster: disable remote resources
+            'isRemoteEnabled' => false,
             'defaultFont' => 'Arial',
-            'isFontSubsettingEnabled' => false, // Faster: disable font subsetting
-            'dpi' => 96, // Lower DPI for faster rendering (was 150)
+            'isFontSubsettingEnabled' => false,
+            'dpi' => 96,
             'debugPng' => false,
             'debugKeepTemp' => false,
             'debugCss' => false,
             'enable_php' => true,
-            'chroot' => public_path(), // Security: limit file access
+            'chroot' => public_path(),
         ]);
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
-        $fileName = "laporan_pembelian_detail_{$fileDate}.pdf";
+        $fileName = "laporan_pembelian_{$fileLabel}_{$fileDate}.pdf";
 
         return $pdf->stream($fileName);
     }
@@ -545,7 +642,7 @@ class LaporanPembelianController extends Controller
         $yearLabel = $startYear === $endYear ? $endYear : "{$startYear}-{$endYear}";
 
         // Debug log for year calculation
-        \Log::info('Monthly Chart Year Calculation', [
+        Log::info('Monthly Chart Year Calculation', [
             'start_date' => $tanggalAwal,
             'end_date' => $tanggalAkhir,
             'start_year' => $startYear,
@@ -569,7 +666,7 @@ class LaporanPembelianController extends Controller
             ->get();
 
         // Debug log
-        \Log::info('Monthly Chart Data Query', [
+        Log::info('Monthly Chart Data Query', [
             'start_date' => $tanggalAwal,
             'end_date' => $tanggalAkhir,
             'target_year' => $targetYear,
@@ -790,7 +887,7 @@ class LaporanPembelianController extends Controller
 
         // Debug log to check status data
         $totalStatusCount = $statusData->sum('count_orders');
-        \Log::info('Status Chart Data', [
+        Log::info('Status Chart Data', [
             'data' => $statusData->toArray(),
             'total_count' => $totalStatusCount,
             'query_sql' => $query->toSql(),

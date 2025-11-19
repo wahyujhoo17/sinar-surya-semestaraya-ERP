@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Laporan Pembelian Rincian</title>
+    <title>Laporan Penjualan Rincian</title>
     <style>
         * {
             margin: 0;
@@ -107,47 +107,47 @@
             text-align: center;
         }
 
-        .po-section {
+        .so-section {
             margin-bottom: 15px;
             page-break-inside: avoid;
         }
 
-        .po-header {
+        .so-header {
             background: #f1f5f9;
             padding: 6px 8px;
             margin-bottom: 4px;
             border-left: 3px solid #3b82f6;
         }
 
-        .po-header table {
+        .so-header table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .po-main-info {
+        .so-main-info {
             width: 65%;
             vertical-align: top;
         }
 
-        .po-number {
+        .so-number {
             font-size: 9px;
             font-weight: bold;
             color: #1e293b;
             margin-bottom: 3px;
         }
 
-        .po-supplier {
+        .so-customer {
             font-size: 8px;
             color: #334155;
             margin-bottom: 1px;
         }
 
-        .po-meta {
+        .so-meta {
             font-size: 7px;
             color: #64748b;
         }
 
-        .po-status-cell {
+        .so-status-cell {
             width: 35%;
             text-align: right;
             vertical-align: top;
@@ -162,19 +162,27 @@
             margin-bottom: 3px;
         }
 
-        .status-lunas {
+        .status-lunas,
+        .badge-success {
             background: #d1fae5;
             color: #065f46;
         }
 
-        .status-sebagian {
+        .status-sebagian,
+        .badge-warning {
             background: #fef3c7;
             color: #92400e;
         }
 
-        .status-belum {
+        .status-belum,
+        .badge-danger {
             background: #fee2e2;
             color: #b91c1c;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
         }
 
         .items-table {
@@ -229,11 +237,11 @@
             color: #1e293b;
         }
 
-        .po-summary {
+        .so-summary {
             margin-top: 6px;
         }
 
-        .po-summary table {
+        .so-summary table {
             width: 100%;
             border-collapse: collapse;
         }
@@ -357,6 +365,14 @@
             color: #94a3b8;
             font-size: 8px;
         }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
     </style>
 </head>
 
@@ -375,7 +391,7 @@
                 </td>
                 <td class="header-text">
                     <h1 class="company-name">SINAR SURYA SEMESTARAYA</h1>
-                    <h2 class="report-title">LAPORAN PEMBELIAN RINCIAN</h2>
+                    <h2 class="report-title">LAPORAN PENJUALAN RINCIAN</h2>
                     <p class="report-period">
                         Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'])->format('d M Y') }} -
                         {{ \Carbon\Carbon::parse($filters['tanggal_akhir'])->format('d M Y') }}
@@ -395,12 +411,19 @@
     <div class="filter-info">
         <table>
             <tr>
-                <td class="filter-label">Supplier</td>
+                <td class="filter-label">Customer</td>
                 <td class="filter-separator">:</td>
-                <td>{{ $filters['supplier_id'] ? 'Filter diterapkan' : 'Semua Supplier' }}</td>
-                <td class="filter-label" style="width: 110px;">Status Pembayaran</td>
+                <td>{{ $filters['customer_id'] ? 'Filter diterapkan' : 'Semua Customer' }}</td>
+                <td class="filter-label" style="width: 110px;">Sales</td>
                 <td class="filter-separator">:</td>
-                <td>{{ $filters['status_pembayaran'] ? ucfirst($filters['status_pembayaran']) : 'Semua Status' }}</td>
+                <td>{{ $filters['user_id'] ? 'Filter diterapkan' : 'Semua Sales' }}</td>
+            </tr>
+            <tr>
+                <td class="filter-label">Status Pembayaran</td>
+                <td class="filter-separator">:</td>
+                <td colspan="4">
+                    {{ $filters['status_pembayaran'] ? ucfirst(str_replace('_', ' ', $filters['status_pembayaran'])) : 'Semua Status' }}
+                </td>
             </tr>
             @if ($filters['search'])
                 <tr>
@@ -412,28 +435,31 @@
         </table>
     </div>
 
-    @forelse($dataPembelian as $index => $po)
-        <div class="po-section">
-            <div class="po-header">
+    @forelse($dataPenjualan as $index => $penjualan)
+        <div class="so-section">
+            <div class="so-header">
                 <table>
                     <tr>
-                        <td class="po-main-info">
-                            <div class="po-number">{{ $po->nomor }}</div>
-                            <div class="po-supplier">Supplier: {{ $po->supplier->nama ?? 'N/A' }}
-                                ({{ $po->supplier->kode ?? '-' }})
+                        <td class="so-main-info">
+                            <div class="so-number">{{ $penjualan->nomor }}</div>
+                            <div class="so-customer">Customer:
+                                {{ $penjualan->customer->company ?: $penjualan->customer->nama }}
+                                ({{ $penjualan->customer->kode ?? '-' }})
                             </div>
-                            <div class="po-meta">
-                                Tanggal: {{ \Carbon\Carbon::parse($po->tanggal)->format('d/m/Y') }} |
-                                Petugas: {{ $po->user->name ?? '-' }}
+                            <div class="so-meta">
+                                Tanggal: {{ \Carbon\Carbon::parse($penjualan->tanggal)->format('d/m/Y') }} |
+                                Sales: {{ $penjualan->user->name ?? '-' }}
                             </div>
                         </td>
-                        <td class="po-status-cell">
-                            @if ($po->status_pembayaran == 'lunas')
+                        <td class="so-status-cell">
+                            @if ($penjualan->status_pembayaran == 'lunas')
                                 <div class="status-badge status-lunas">LUNAS</div>
-                            @elseif($po->status_pembayaran == 'sebagian')
+                            @elseif($penjualan->status_pembayaran == 'sebagian')
                                 <div class="status-badge status-sebagian">SEBAGIAN</div>
-                            @else
+                            @elseif($penjualan->status_pembayaran == 'belum_bayar')
                                 <div class="status-badge status-belum">BELUM BAYAR</div>
+                            @elseif($penjualan->status_pembayaran == 'kelebihan_bayar')
+                                <div class="status-badge badge-info">KELEBIHAN</div>
                             @endif
                         </td>
                     </tr>
@@ -457,7 +483,7 @@
                     @php
                         $itemSubtotal = 0;
                     @endphp
-                    @foreach ($po->details as $detailIndex => $detail)
+                    @foreach ($penjualan->details as $detailIndex => $detail)
                         @php
                             $qty = floatval($detail->quantity ?? 0);
                             $harga = floatval($detail->harga ?? 0);
@@ -483,7 +509,7 @@
                 </tbody>
             </table>
 
-            <div class="po-summary">
+            <div class="so-summary">
                 <table>
                     <tr>
                         <td class="summary-left"></td>
@@ -493,18 +519,18 @@
                                     <td class="summary-label">Subtotal Item</td>
                                     <td class="summary-value">Rp {{ number_format($itemSubtotal, 0, ',', '.') }}</td>
                                 </tr>
-                                @if ($po->ongkos_kirim > 0)
+                                @if ($penjualan->ongkos_kirim > 0)
                                     <tr>
                                         <td class="summary-label">Ongkos Kirim</td>
                                         <td class="summary-value">Rp
-                                            {{ number_format($po->ongkos_kirim, 0, ',', '.') }}</td>
+                                            {{ number_format($penjualan->ongkos_kirim, 0, ',', '.') }}</td>
                                     </tr>
                                 @endif
-                                @if ($po->ppn > 0)
+                                @if ($penjualan->ppn > 0)
                                     @php
                                         // PPN adalah persentase (0-100), bukan nominal
-                                        $ppnPercentage = floatval($po->ppn);
-                                        $ppnNominal = ($ppnPercentage / 100) * $po->subtotal;
+                                        $ppnPercentage = floatval($penjualan->ppn);
+                                        $ppnNominal = ($ppnPercentage / 100) * $penjualan->subtotal;
                                     @endphp
                                     <tr>
                                         <td class="summary-label">PPN ({{ number_format($ppnPercentage, 0) }}%)</td>
@@ -512,19 +538,28 @@
                                     </tr>
                                 @endif
                                 <tr class="summary-total">
-                                    <td class="summary-label">Total Pembelian</td>
-                                    <td class="summary-value">Rp {{ number_format($po->total, 0, ',', '.') }}</td>
+                                    <td class="summary-label">Total Penjualan</td>
+                                    <td class="summary-value">Rp {{ number_format($penjualan->total, 0, ',', '.') }}
+                                    </td>
                                 </tr>
                                 <tr class="summary-paid">
                                     <td class="summary-label">Total Dibayar</td>
-                                    <td class="summary-value">Rp {{ number_format($po->total_bayar, 0, ',', '.') }}
-                                    </td>
+                                    <td class="summary-value">Rp
+                                        {{ number_format($penjualan->total_bayar, 0, ',', '.') }}</td>
                                 </tr>
-                                @if ($po->total - $po->total_bayar > 0)
+                                @if ($penjualan->total_uang_muka > 0)
+                                    <tr class="summary-paid">
+                                        <td class="summary-label">Uang Muka</td>
+                                        <td class="summary-value">Rp
+                                            {{ number_format($penjualan->total_uang_muka, 0, ',', '.') }}</td>
+                                    </tr>
+                                @endif
+                                @if ($penjualan->total - $penjualan->total_bayar - $penjualan->total_uang_muka > 0)
                                     <tr class="summary-remaining">
                                         <td class="summary-label">Sisa</td>
                                         <td class="summary-value">Rp
-                                            {{ number_format($po->total - $po->total_bayar, 0, ',', '.') }}</td>
+                                            {{ number_format($penjualan->total - $penjualan->total_bayar - $penjualan->total_uang_muka, 0, ',', '.') }}
+                                        </td>
                                     </tr>
                                 @endif
                             </table>
@@ -535,31 +570,38 @@
         </div>
     @empty
         <div class="no-data">
-            Tidak ada data pembelian untuk periode yang dipilih
+            Tidak ada data penjualan untuk periode yang dipilih
         </div>
     @endforelse
 
-    @if ($dataPembelian->count() > 0)
+    @if (count($dataPenjualan) > 0)
         <div class="grand-summary">
             <table>
                 <tr>
                     <td class="grand-summary-left">
                         <strong style="font-size: 8.5px; color: #475569;">RINGKASAN KESELURUHAN</strong>
                         <div style="font-size: 7px; color: #64748b; margin-top: 2px;">
-                            Total {{ $dataPembelian->count() }} transaksi pembelian
+                            Total {{ $dataPenjualan->count() }} transaksi penjualan
                         </div>
                     </td>
                     <td class="grand-summary-right">
                         <table class="grand-summary-table">
                             <tr>
-                                <td class="grand-label">Total Pembelian</td>
-                                <td class="grand-value">Rp {{ number_format($totalPembelian, 0, ',', '.') }}</td>
+                                <td class="grand-label">Total Penjualan</td>
+                                <td class="grand-value">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
                             </tr>
                             <tr>
                                 <td class="grand-label">Total Dibayar</td>
                                 <td class="grand-value" style="color: #059669;">Rp
                                     {{ number_format($totalDibayar, 0, ',', '.') }}</td>
                             </tr>
+                            @if ($totalUangMuka > 0)
+                                <tr>
+                                    <td class="grand-label">Uang Muka</td>
+                                    <td class="grand-value" style="color: #059669;">Rp
+                                        {{ number_format($totalUangMuka, 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
                             @if ($sisaPembayaran > 0)
                                 <tr>
                                     <td class="grand-label">Sisa Pembayaran</td>
@@ -571,6 +613,10 @@
                     </td>
                 </tr>
             </table>
+        </div>
+    @else
+        <div class="no-data">
+            Tidak ada data penjualan untuk periode yang dipilih
         </div>
     @endif
 
