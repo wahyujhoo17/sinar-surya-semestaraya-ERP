@@ -167,88 +167,94 @@ class LaporanKeuanganController extends Controller
             $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
 
             // === REVENUE SECTION ===
-            // 1. Sales Revenue from Sales Orders with enhanced validation
+            // 1. Sales Revenue from Sales Orders - HANYA yang sudah ada invoice
             $salesRevenue = DB::table('sales_order')
                 ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
-                ->where('status_pembayaran', '!=', 'belum_bayar')
+                ->whereExists(function ($query) {
+                    $query->select(DB::raw(1))
+                        ->from('invoice')
+                        ->whereColumn('invoice.sales_order_id', 'sales_order.id')
+                        ->whereNotNull('invoice.nomor');
+                })
                 ->whereNotNull('total')
                 ->where('total', '>', 0)
                 ->sum('total');
 
-            // 2. Other Income from income accounts with filtering
-            $otherIncome = $this->getAccountBalanceForPeriod('income', $tanggalAwal, $tanggalAkhir)
-                ->filter(function ($account) {
-                    // Exclude main sales revenue accounts to avoid double counting
-                    $nama = strtolower($account['nama']);
-                    return !str_contains($nama, 'penjualan') && !str_contains($nama, 'sales');
-                });
-            $totalOtherIncome = $otherIncome->sum('balance');
+            // 2. Get ALL income from journal entries (proper accrual accounting)
+            $allIncome = $this->getAccountBalanceForPeriod('income', $tanggalAwal, $tanggalAkhir);
 
-            $totalRevenue = $salesRevenue + $totalOtherIncome;
+            // Log income accounts for debugging
+            Log::info('Income Accounts from Journal', [
+                'period' => [$tanggalAwal->format('Y-m-d'), $tanggalAkhir->format('Y-m-d')],
+                'accounts' => $allIncome->map(function ($acc) {
+                    return [
+                        'kode' => $acc['kode'],
+                        'nama' => $acc['nama'],
+                        'balance' => $acc['balance']
+                    ];
+                })->toArray(),
+                'total' => $allIncome->sum('balance')
+            ]);
+
+            // 3. Separate main sales vs other income
+            $mainSalesAccounts = $allIncome->filter(function ($account) {
+                $nama = strtolower($account['nama']);
+                $kode = $account['kode'];
+                // Account codes 4-1xxx or names containing 'penjualan'/'sales'
+                return preg_match('/^4[- ]?1/', $kode) ||
+                    str_contains($nama, 'penjualan') ||
+                    str_contains($nama, 'sales') ||
+                    str_contains($nama, 'revenue from sales');
+            });
+
+            $otherIncome = $allIncome->filter(function ($account) use ($mainSalesAccounts) {
+                return !$mainSalesAccounts->contains('id', $account['id']);
+            });
+
+            // Use journal entry as source of truth if exists, otherwise use SO total
+            $totalSalesFromJournal = $mainSalesAccounts->sum('balance');
+            $finalSalesRevenue = $totalSalesFromJournal > 0 ? $totalSalesFromJournal : $salesRevenue;
+
+            $totalOtherIncome = $otherIncome->sum('balance');
+            $totalRevenue = $finalSalesRevenue + $totalOtherIncome;
 
             // === COST OF GOODS SOLD ===
-            // 1. Purchase Costs from Purchase Orders with validation
-            $purchaseCosts = DB::table('purchase_order')
-                ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
-                ->whereNotNull('total')
-                ->where('total', '>', 0)
-                ->sum('total');
-
-            // 2. Additional COGS from specific accounts with enhanced filtering
+            // Get ONLY COGS from journal entries (proper accounting)
             $cogsAccounts = AkunAkuntansi::where('kategori', 'expense')
+                ->where('is_active', true)
                 ->where(function ($q) {
                     $q->where('nama', 'LIKE', '%harga pokok%')
                         ->orWhere('nama', 'LIKE', '%cost of goods%')
                         ->orWhere('nama', 'LIKE', '%cogs%')
                         ->orWhere('nama', 'LIKE', '%hpp%')
                         ->orWhere('kode', 'LIKE', '51%') // Standard COGS account codes
+                        ->orWhere('kode', 'LIKE', '5-1%')
                         ->orWhere('kode', 'LIKE', '5100%')
                         ->orWhere('kode', 'LIKE', '5110%')
                         ->orWhere('kode', 'LIKE', '5120%')
                         ->orWhere('kode', 'LIKE', '5130%');
                 })
-                ->where('is_active', true)
                 ->pluck('id');
 
-            $additionalCogs = 0;
+            $totalCogs = 0;
             if ($cogsAccounts->isNotEmpty()) {
-                $additionalCogs = JurnalUmum::whereIn('akun_id', $cogsAccounts)
+                $totalCogs = JurnalUmum::whereIn('akun_id', $cogsAccounts)
                     ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
                     ->sum(DB::raw('debit - kredit'));
             }
 
-            $totalCogs = $purchaseCosts + $additionalCogs;
+            // Log COGS calculation
+            Log::info('COGS Calculation', [
+                'period' => [$tanggalAwal->format('Y-m-d'), $tanggalAkhir->format('Y-m-d')],
+                'cogs_accounts_count' => $cogsAccounts->count(),
+                'total_cogs' => $totalCogs
+            ]);
 
             // === GROSS PROFIT ===
             $grossProfit = $totalRevenue - $totalCogs;
 
             // === OPERATING EXPENSES ===
-            // 1. Employee Salary Expenses from Payroll with enhanced filtering
-            $salaryExpenses = DB::table('penggajian')
-                ->where(function ($q) use ($tanggalAwal, $tanggalAkhir) {
-                    $startMonth = $tanggalAwal->month;
-                    $startYear = $tanggalAwal->year;
-                    $endMonth = $tanggalAkhir->month;
-                    $endYear = $tanggalAkhir->year;
-
-                    if ($startYear == $endYear) {
-                        $q->where('tahun', $startYear)
-                            ->whereBetween('bulan', [$startMonth, $endMonth]);
-                    } else {
-                        $q->where(function ($q2) use ($startYear, $startMonth) {
-                            $q2->where('tahun', $startYear)
-                                ->where('bulan', '>=', $startMonth);
-                        })->orWhere(function ($q2) use ($endYear, $endMonth) {
-                            $q2->where('tahun', $endYear)
-                                ->where('bulan', '<=', $endMonth);
-                        });
-                    }
-                })
-                ->where('status', '!=', 'draft')
-                ->whereNotNull('total_gaji')
-                ->sum('total_gaji');
-
-            // 2. Get all expense accounts from journal entries (excluding COGS)
+            // Get all expense accounts from journal entries (excluding COGS)
             $allExpenseAccounts = $this->getAccountBalanceForPeriod('expense', $tanggalAwal, $tanggalAkhir);
 
             // Filter out COGS accounts and ensure only active operational expense accounts
@@ -258,11 +264,26 @@ class LaporanKeuanganController extends Controller
 
                 // Additional filtering for operational expenses based on account code patterns
                 $kode = $expense['kode'];
-                $isOperationalByCode = preg_match('/^(5[2-9]|6[1-9])/', $kode); // Starting with 52-59 or 61-69
+                $isOperationalByCode = preg_match('/^(5[2-9]|6[1-9]|5-[2-9]|6-[1-9])/', $kode); // Starting with 52-59 or 61-69
 
                 // Include if not COGS and matches operational patterns or has balance
                 return $isNotCogs && ($isOperationalByCode || $expense['balance'] > 0);
             });
+
+            // Log expense accounts for debugging
+            Log::info('Operating Expenses Accounts', [
+                'period' => [$tanggalAwal->format('Y-m-d'), $tanggalAkhir->format('Y-m-d')],
+                'total_expense_accounts' => $allExpenseAccounts->count(),
+                'cogs_accounts' => $cogsAccounts->count(),
+                'operational_accounts' => $operationalExpenseAccounts->count(),
+                'accounts' => $operationalExpenseAccounts->map(function ($acc) {
+                    return [
+                        'kode' => $acc['kode'],
+                        'nama' => $acc['nama'],
+                        'balance' => $acc['balance']
+                    ];
+                })->toArray()
+            ]);
 
             // 3. Enhanced categorization based on account code and name patterns with comprehensive filtering
             $salaryRelatedAccounts = $operationalExpenseAccounts->filter(function ($expense) {
@@ -633,9 +654,8 @@ class LaporanKeuanganController extends Controller
                 ]
             ]);
 
-            // Total operating expenses (combine payroll system with all journal entries)
-            // Ensure no double counting by carefully separating payroll system data from journal salary entries
-            $totalOperatingExpenses = $salaryExpenses + $totalSalaryFromJournal + $totalUtilities +
+            // Total operating expenses (all from journal - no double counting with payroll system)
+            $totalOperatingExpenses = $totalSalaryFromJournal + $totalUtilities +
                 $totalRent + $totalAdmin + $totalTransport + $totalMaintenance +
                 $totalMarketing + $totalProfessional + $totalInsurance + $totalOtherExpenses;
 
@@ -650,11 +670,7 @@ class LaporanKeuanganController extends Controller
                 'total_accounts_processed' => $totalExpenseAccountsProcessed,
                 'total_operational_accounts' => $operationalExpenseAccounts->count(),
                 'total_operating_expenses' => $totalOperatingExpenses,
-                'payroll_vs_journal_comparison' => [
-                    'payroll_system' => $salaryExpenses,
-                    'journal_salary' => $totalSalaryFromJournal,
-                    'potential_overlap' => $salaryExpenses > 0 && $totalSalaryFromJournal > 0
-                ]
+                'salary_from_journal' => $totalSalaryFromJournal
             ]);
 
             // === NET INCOME ===
@@ -674,9 +690,9 @@ class LaporanKeuanganController extends Controller
                 $expenseData[] = $totalCogs;
             }
 
-            if ($salaryExpenses + $totalSalaryFromJournal > 0) {
+            if ($totalSalaryFromJournal > 0) {
                 $expenseCategories[] = 'Gaji';
-                $expenseData[] = $salaryExpenses + $totalSalaryFromJournal;
+                $expenseData[] = $totalSalaryFromJournal;
             }
 
             if ($totalUtilities > 0) {
@@ -762,17 +778,16 @@ class LaporanKeuanganController extends Controller
                 'success' => true,
                 'data' => [
                     'revenue' => [
-                        'sales_revenue' => $salesRevenue,
-                        'other_income' => $otherIncome,
+                        'sales_revenue' => $finalSalesRevenue,
+                        'sales_accounts' => $mainSalesAccounts->values(),
+                        'other_income' => $otherIncome->values(),
                         'total_revenue' => $totalRevenue
                     ],
                     'cogs' => [
-                        'purchase_costs' => $purchaseCosts,
-                        'additional_cogs' => $additionalCogs,
+                        'cogs_accounts' => $cogsAccounts,
                         'total_cogs' => $totalCogs
                     ],
                     'operating_expenses' => [
-                        'salary_expenses' => $salaryExpenses,
                         'salary_from_journal' => $salaryRelatedAccounts->values(),
                         'salary_from_journal_total' => $totalSalaryFromJournal,
                         'utility_expenses' => $utilityAccounts->values(),

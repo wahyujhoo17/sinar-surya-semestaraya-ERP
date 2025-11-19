@@ -516,6 +516,65 @@
                                 class="text-lg font-semibold text-green-600 dark:text-green-400 mb-4 border-b border-green-200 dark:border-green-800 pb-2">
                                 PENDAPATAN</h4>
                             <div class="space-y-3">
+                                <!-- Sales Revenue from Journal -->
+                                <template x-if="incomeStatementData.revenue?.sales_accounts?.length > 0">
+                                    <div
+                                        class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                        <div class="flex justify-between items-center mb-3">
+                                            <div>
+                                                <span
+                                                    class="text-sm font-semibold text-gray-900 dark:text-white">Pendapatan
+                                                    Penjualan</span>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">Dari akun
+                                                    penjualan</div>
+                                            </div>
+                                            <span class="text-sm font-bold text-green-600 dark:text-green-400"
+                                                x-text="formatCurrency(incomeStatementData.revenue?.sales_revenue || 0)"></span>
+                                        </div>
+                                        <div class="space-y-1 pl-4 border-l-2 border-green-300 dark:border-green-700">
+                                            <template x-for="account in incomeStatementData.revenue.sales_accounts"
+                                                :key="account.id">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-xs text-gray-600 dark:text-gray-400"
+                                                        x-text="account.nama + ' (' + account.kode + ')'"></span>
+                                                    <span
+                                                        class="text-xs font-medium text-green-500 dark:text-green-400"
+                                                        x-text="formatCurrency(account.balance)"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- Other Income -->
+                                <template x-if="incomeStatementData.revenue?.other_income?.length > 0">
+                                    <div
+                                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                        <div class="flex justify-between items-center mb-3">
+                                            <div>
+                                                <span
+                                                    class="text-sm font-semibold text-gray-900 dark:text-white">Pendapatan
+                                                    Lain-lain</span>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">Pendapatan di
+                                                    luar penjualan utama</div>
+                                            </div>
+                                            <span class="text-sm font-bold text-blue-600 dark:text-blue-400"
+                                                x-text="formatCurrency(incomeStatementData.revenue?.other_income?.reduce((sum, item) => sum + item.balance, 0) || 0)"></span>
+                                        </div>
+                                        <div class="space-y-1 pl-4 border-l-2 border-blue-300 dark:border-blue-700">
+                                            <template x-for="income in incomeStatementData.revenue.other_income"
+                                                :key="income.id">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-xs text-gray-600 dark:text-gray-400"
+                                                        x-text="income.nama + ' (' + income.kode + ')'"></span>
+                                                    <span class="text-xs font-medium text-blue-500 dark:text-blue-400"
+                                                        x-text="formatCurrency(income.balance)"></span>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <div class="flex justify-between items-center py-2">
                                     <span class="text-sm font-medium text-gray-900 dark:text-white">Penjualan</span>
                                     <span class="text-sm font-semibold text-green-600 dark:text-green-400"
@@ -544,6 +603,12 @@
                                 class="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-4 border-b border-orange-200 dark:border-orange-800 pb-2">
                                 HARGA POKOK PENJUALAN</h4>
                             <div class="space-y-3">
+                                <div class="flex justify-between items-center py-2">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Harga Pokok
+                                        Penjualan (dari jurnal)</span>
+                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
+                                        x-text="formatCurrency(incomeStatementData.cogs?.total_cogs || 0)"></span>
+                                </div>
                                 <div class="flex justify-between items-center py-2">
                                     <span class="text-sm font-medium text-gray-900 dark:text-white">Pembelian</span>
                                     <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
@@ -582,32 +647,17 @@
                                 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-4 border-b border-red-200 dark:border-red-800 pb-2">
                                 BEBAN OPERASIONAL</h4>
                             <div class="space-y-4">
-                                <!-- Salary from Payroll System -->
-                                <div
-                                    class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                    <div class="flex justify-between items-center">
-                                        <div>
-                                            <span class="text-sm font-semibold text-gray-900 dark:text-white">Gaji
-                                                Karyawan (Sistem Payroll)</span>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">Dari sistem
-                                                penggajian</div>
-                                        </div>
-                                        <span class="text-sm font-bold text-red-600 dark:text-red-400"
-                                            x-text="formatCurrency(incomeStatementData.operating_expenses?.salary_expenses || 0)"></span>
-                                    </div>
-                                </div>
-
-                                <!-- Additional Salary from Journal -->
+                                <!-- Salary from Journal ONLY -->
                                 <template
                                     x-if="incomeStatementData.operating_expenses?.salary_from_journal?.length > 0">
                                     <div
                                         class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                                         <div class="flex justify-between items-center mb-3">
                                             <div>
-                                                <span class="text-sm font-semibold text-gray-900 dark:text-white">Gaji
-                                                    & Tunjangan (Jurnal)</span>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400">Dari jurnal umum
-                                                </div>
+                                                <span class="text-sm font-semibold text-gray-900 dark:text-white">Biaya
+                                                    Gaji & Tunjangan</span>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400">Dari jurnal beban
+                                                    gaji</div>
                                             </div>
                                             <span class="text-sm font-bold text-red-600 dark:text-red-400"
                                                 x-text="formatCurrency(incomeStatementData.operating_expenses?.salary_from_journal_total || 0)"></span>
