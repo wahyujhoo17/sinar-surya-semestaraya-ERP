@@ -128,27 +128,27 @@
                     <td style="border: 1px solid #D1D5DB; text-align: center;">
                         {{ $detail->produk->satuan->nama ?? '-' }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->harga }}</td>
+                        {{ number_format($detail->harga ?? 0, 2, ',', '.') }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->diskon_persen ? $detail->diskon_persen / 100 : 0 }}</td>
+                        {{ $detail->diskon_persen ? number_format($detail->diskon_persen, 2, ',', '.') : 0 }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->subtotal }}</td>
+                        {{ number_format($detail->subtotal ?? 0, 2, ',', '.') }}</td>
                     @php
                         $ppnPercentage = $so->ppn > 0 ? floatval($so->ppn) : 0;
                         $subtotalAfterDisc = ($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0);
                         $itemPpnNominal = $so->ppn > 0 ? ($ppnPercentage / 100) * $subtotalAfterDisc : 0;
                     @endphp
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $ppnPercentage > 0 ? $ppnPercentage / 100 : '-' }}</td>
+                        {{ $ppnPercentage > 0 ? number_format($ppnPercentage, 2, ',', '.') : '-' }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $itemPpnNominal > 0 ? $itemPpnNominal : '' }}</td>
+                        {{ $itemPpnNominal > 0 ? '   ' . number_format($itemPpnNominal, 2, ',', '.') : '' }}</td>
                     @if ($index === 0)
                         <td rowspan="{{ $so->details->count() }}"
                             style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $total }}</td>
+                            {{ number_format($total, 2, ',', '.') }}</td>
                         <td rowspan="{{ $so->details->count() }}"
                             style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $totalBayar }}</td>
+                            {{ number_format($totalBayar, 2, ',', '.') }}</td>
                         <td rowspan="{{ $so->details->count() }}"
                             style="border: 1px solid #666666; vertical-align: top; text-align: center;">
                             {{ $statusLabel }}</td>
@@ -158,6 +158,43 @@
                     @endif
                 </tr>
             @endforeach
+            {{-- Tambahkan baris summary jika ada diskon global --}}
+            @if ($so->diskon_nominal > 0 || $so->diskon_persen > 0)
+                <tr style="background-color: #FEF3C7; border-top: 2px solid #F59E0B;">
+                    <td colspan="9"
+                        style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #92400E; padding-right: 10px;">
+                        Subtotal Item:
+                    </td>
+                    <td colspan="3" style="border: 1px solid #F59E0B; text-align: right; font-weight: 600;">
+                        {{ number_format($itemSubtotal, 2, ',', '.') }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                </tr>
+                <tr style="background-color: #FEF3C7;">
+                    <td colspan="9"
+                        style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #DC2626; padding-right: 10px;">
+                        Diskon Global
+                        @if ($so->diskon_persen > 0)
+                            ({{ number_format($so->diskon_persen, 2, ',', '.') }}%)
+                        @endif:
+                    </td>
+                    <td colspan="3"
+                        style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #DC2626;">
+                        - {{ number_format($so->diskon_nominal ?? 0, 2, ',', '.') }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                </tr>
+                <tr style="background-color: #FEF3C7; border-bottom: 2px solid #F59E0B;">
+                    <td colspan="9"
+                        style="border: 1px solid #F59E0B; text-align: right; font-weight: bold; color: #92400E; padding-right: 10px;">
+                        Subtotal Setelah Diskon:
+                    </td>
+                    <td colspan="3" style="border: 1px solid #F59E0B; text-align: right; font-weight: bold;">
+                        {{ number_format($itemSubtotal - ($so->diskon_nominal ?? 0), 2, ',', '.') }}
+                    </td>
+                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                </tr>
+            @endif
         @else
             <tr>
                 <td style="border: 1px solid #D1D5DB;">{{ $so->nomor_faktur ?? $so->nomor }}</td>
@@ -171,26 +208,26 @@
                     {{ $so->customer_nama ?? '-' }}<br>{{ $so->customer_kode ?? '-' }}</td>
                 <td colspan="9" style="border: 1px solid #D1D5DB; text-align: center; color: #94A3B8;">Tidak ada
                     detail item</td>
-                <td style="border: 1px solid #D1D5DB; text-align: right;">{{ $total }}</td>
-                <td style="border: 1px solid #D1D5DB; text-align: right;">{{ $totalBayar }}</td>
+                <td style="border: 1px solid #D1D5DB; text-align: right;">
+                    {{ number_format($total, 2, ',', '.') }}</td>
+                <td style="border: 1px solid #D1D5DB; text-align: right;">
+                    {{ number_format($totalBayar, 2, ',', '.') }}</td>
                 <td style="border: 1px solid #D1D5DB; text-align: center;">{{ $statusLabel }}</td>
                 <td style="border: 1px solid #D1D5DB;">{{ $so->nama_petugas ?? '-' }}</td>
             </tr>
         @endif
     @endforeach
     <tr style="background-color: #DBEAFE;">
-        <td colspan="12" style="border: 1px solid #000000; text-align: right; font-weight: bold;">TOTAL KESELURUHAN
+        <td colspan="14" style="border: 1px solid #000000; text-align: right; font-weight: bold;">TOTAL KESELURUHAN
         </td>
         <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ $totalPenjualan }}</td>
-        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ $totalDibayar }}</td>
-        <td colspan="2" style="border: 1px solid #000000;"></td>
+            {{ number_format($totalPenjualan, 2, ',', '.') }}</td>
+        <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
     <tr style="background-color: #DBEAFE;">
-        <td colspan="12" style="border: 1px solid #000000; text-align: right; font-weight: bold;">SISA PEMBAYARAN</td>
-        <td colspan="2" style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ $sisaPembayaran }}</td>
-        <td colspan="2" style="border: 1px solid #000000;"></td>
+        <td colspan="14" style="border: 1px solid #000000; text-align: right; font-weight: bold;">SISA PEMBAYARAN</td>
+        <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
+            {{ number_format($sisaPembayaran, 2, ',', '.') }}</td>
+        <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
 </table>

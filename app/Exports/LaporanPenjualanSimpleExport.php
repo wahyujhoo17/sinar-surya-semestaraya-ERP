@@ -188,11 +188,11 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
                 $sheet = $event->sheet->getDelegate();
                 $highestRow = $sheet->getHighestRow();
 
-                // Set number format for currency columns
-                $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('I6:I' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                // Set text format for currency columns to prevent percentage issue
+                $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('I6:I' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('@');
 
                 // Bold and background for total row
                 if ($highestRow > 6) {

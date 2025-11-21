@@ -51,7 +51,7 @@
             PPN (%)</td>
         <td
             style="font-weight: bold; background-color: #1F2937; color: #FFFFFF; border: 2px solid #000000; text-align: center; padding: 8px;">
-            PPN (Rp)</td>
+            PPN (  )</td>
         <td
             style="font-weight: bold; background-color: #1F2937; color: #FFFFFF; border: 2px solid #000000; text-align: center; padding: 8px;">
             Total PO</td>
@@ -102,20 +102,20 @@
                     <td style="border: 1px solid #D1D5DB; text-align: center;">
                         {{ $detail->produk->satuan->nama ?? '-' }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->harga }}</td>
+                           {{ number_format($detail->harga, 2, ',', '.') }}</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->diskon_persen ?? 0 }}</td>
+                        {{ number_format($detail->diskon_persen ?? 0, 2, ',', '.') }}%</td>
                     <td style="border: 1px solid #D1D5DB; text-align: right;">
-                        {{ $detail->subtotal }}</td>
+                           {{ number_format($detail->subtotal, 2, ',', '.') }}</td>
                     @if ($index === 0)
                         <td style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $ppnPersen > 0 ? $ppnPersen / 100 : 0 }}</td>
+                            {{ number_format($ppnPersen, 2, ',', '.') }}%</td>
                         <td style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $ppnNominal > 0 ? $ppnNominal : 0 }}</td>
+                               {{ number_format($ppnNominal, 2, ',', '.') }}</td>
                         <td style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $po->total }}</td>
+                               {{ number_format($po->total, 2, ',', '.') }}</td>
                         <td style="border: 1px solid #666666; vertical-align: top; text-align: right;">
-                            {{ $po->total_bayar }}</td>
+                               {{ number_format($po->total_bayar, 2, ',', '.') }}</td>
                         <td style="border: 1px solid #666666; vertical-align: top; text-align: center;">
                             {{ $statusLabel }}</td>
                         <td style="border: 1px solid #666666; vertical-align: top; border-right: 2px solid #000000;">
@@ -137,9 +137,26 @@
                 <td colspan="6" style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">Subtotal
                     Item:</td>
                 <td style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">
-                    {{ $itemSubtotal }}</td>
+                       {{ number_format($itemSubtotal, 2, ',', '.') }}</td>
                 <td colspan="6" style="border: 1px solid #D1D5DB; border-right: 2px solid #000000;"></td>
             </tr>
+
+            {{-- Diskon Global --}}
+            @if ($po->diskon_nominal > 0 || $po->diskon_persen > 0)
+                <tr style="background-color: #FEF3C7;">
+                    <td colspan="3" style="border: 1px solid #D1D5DB; border-left: 2px solid #000000;"></td>
+                    <td colspan="6"
+                        style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #DC2626;">
+                        Diskon Global
+                        @if ($po->diskon_persen > 0)
+                            ({{ number_format($po->diskon_persen, 2, ',', '.') }}%)
+                        @endif:
+                    </td>
+                    <td style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #DC2626;">
+                        -    {{ number_format($po->diskon_nominal ?? 0, 2, ',', '.') }}</td>
+                    <td colspan="6" style="border: 1px solid #D1D5DB; border-right: 2px solid #000000;"></td>
+                </tr>
+            @endif
 
             {{-- Ongkos Kirim --}}
             <tr style="background-color: #F9FAFB;">
@@ -147,7 +164,7 @@
                 <td colspan="6" style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">Ongkos Kirim:
                 </td>
                 <td style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">
-                    {{ $po->ongkos_kirim > 0 ? $po->ongkos_kirim : 0 }}</td>
+                       {{ number_format($po->ongkos_kirim ?? 0, 2, ',', '.') }}</td>
                 <td colspan="6" style="border: 1px solid #D1D5DB; border-right: 2px solid #000000;"></td>
             </tr>
 
@@ -157,7 +174,7 @@
                 <td colspan="6" style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">
                     PPN {{ $ppnPersen > 0 ? '(' . number_format($ppnPersen, 0) . '%)' : '' }}:</td>
                 <td style="border: 1px solid #D1D5DB; text-align: right; font-weight: 600;">
-                    {{ $ppnNominal > 0 ? $ppnNominal : 0 }}</td>
+                       {{ number_format($ppnNominal, 2, ',', '.') }}</td>
                 <td colspan="6" style="border: 1px solid #D1D5DB; border-right: 2px solid #000000;"></td>
             </tr>
 
@@ -165,7 +182,8 @@
             <tr style="background-color: #E0E7FF; font-weight: bold; border-bottom: 2px solid #000000;">
                 <td colspan="3" style="border: 1px solid #D1D5DB; border-left: 2px solid #000000;"></td>
                 <td colspan="6" style="border: 1px solid #D1D5DB; text-align: right;">TOTAL PEMBELIAN:</td>
-                <td style="border: 1px solid #D1D5DB; text-align: right;">{{ $po->total }}
+                <td style="border: 1px solid #D1D5DB; text-align: right;">
+                       {{ number_format($po->total, 2, ',', '.') }}
                 </td>
                 <td colspan="6" style="border: 1px solid #D1D5DB; border-right: 2px solid #000000;"></td>
             </tr>
@@ -221,7 +239,7 @@
                             {{ \Carbon\Carbon::parse($bayar->tanggal)->format('d M Y') }}
                         </td>
                         <td colspan="3" style="border: 1px solid #D1D5DB; text-align: right;">
-                            {{ $bayar->jumlah }}
+                               {{ number_format($bayar->jumlah, 2, ',', '.') }}
                         </td>
                         <td colspan="2" style="border: 1px solid #D1D5DB;">
                             {{ ucfirst($bayar->metode_pembayaran ?? '-') }}
@@ -238,13 +256,14 @@
                 <td colspan="7" style="border: 1px solid #D1D5DB; text-align: center; color: #94A3B8;">Tidak ada
                     detail item</td>
                 <td style="border: 1px solid #D1D5DB; text-align: right;">
-                    {{ $ppnPersen > 0 ? $ppnPersen / 100 : 0 }}</td>
+                    {{ number_format($ppnPersen, 2, ',', '.') }}%</td>
                 <td style="border: 1px solid #D1D5DB; text-align: right;">
-                    {{ $ppnNominal > 0 ? $ppnNominal : 0 }}</td>
-                <td style="border: 1px solid #D1D5DB; text-align: right;">{{ $po->total }}
+                       {{ number_format($ppnNominal, 2, ',', '.') }}</td>
+                <td style="border: 1px solid #D1D5DB; text-align: right;">
+                       {{ number_format($po->total, 2, ',', '.') }}
                 </td>
                 <td style="border: 1px solid #D1D5DB; text-align: right;">
-                    {{ $po->total_bayar }}</td>
+                       {{ number_format($po->total_bayar, 2, ',', '.') }}</td>
                 <td style="border: 1px solid #D1D5DB; text-align: center;">{{ $statusLabel }}</td>
                 <td style="border: 1px solid #D1D5DB;">{{ $po->user->name ?? '-' }}</td>
             </tr>
@@ -253,7 +272,8 @@
     {{-- Grand Total --}}
     <tr style="background-color: #DBEAFE; font-weight: bold;">
         <td colspan="12" style="border: 1px solid #000000; text-align: right;">TOTAL KESELURUHAN:</td>
-        <td style="border: 1px solid #000000; text-align: right;">{{ $totalPembelian }}
+        <td style="border: 1px solid #000000; text-align: right;">
+               {{ number_format($totalPembelian, 2, ',', '.') }}
         </td>
         <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
@@ -261,14 +281,14 @@
         <td colspan="12" style="border: 1px solid #000000; text-align: right; font-weight: bold;">Total Dibayar:
         </td>
         <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ $totalDibayar }}</td>
+               {{ number_format($totalDibayar, 2, ',', '.') }}</td>
         <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
     <tr style="background-color: #DBEAFE;">
         <td colspan="12" style="border: 1px solid #000000; text-align: right; font-weight: bold;">Sisa Pembayaran:
         </td>
         <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
-            {{ $sisaPembayaran }}</td>
+               {{ number_format($sisaPembayaran, 2, ',', '.') }}</td>
         <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
 </table>

@@ -166,10 +166,12 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
                 ]);
 
                 // Set number format for currency columns (I, K, L, M, N, O)
+                // But apply text format to prevent percentage issue
                 $currencyColumns = ['I', 'K', 'L', 'M', 'N', 'O'];
                 foreach ($currencyColumns as $col) {
                     if ($sheet->cellExists($col . '6')) {
-                        $sheet->getStyle($col . '6:' . $col . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                        // Apply text format to all cells in these columns first
+                        $sheet->getStyle($col . '6:' . $col . $highestRow)->getNumberFormat()->setFormatCode('@');
                     }
                 }
 

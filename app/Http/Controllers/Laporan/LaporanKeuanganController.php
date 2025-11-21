@@ -629,7 +629,7 @@ class LaporanKeuanganController extends Controller
             // Log expense categorization for monitoring
             Log::info('Enhanced Operating Expenses Categorization', [
                 'period' => [$tanggalAwal->format('Y-m-d'), $tanggalAkhir->format('Y-m-d')],
-                'salary_from_payroll' => $salaryExpenses,
+                'salary_from_payroll' => 0, // Currently using journal entries only
                 'salary_from_journal' => $totalSalaryFromJournal,
                 'utilities' => $totalUtilities,
                 'rent' => $totalRent,

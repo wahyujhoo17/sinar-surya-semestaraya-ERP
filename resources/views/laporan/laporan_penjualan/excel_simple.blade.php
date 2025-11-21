@@ -36,17 +36,18 @@
             <td style="text-align: center;">{{ $data->nomor_po ?: '-' }}</td>
             <td>{{ $data->customer->company ?? ($data->customer->nama ?? 'Unknown') }}<br>{{ $data->customer->kode ?? '-' }}
             </td>
-            <td style="text-align: right;">{{ $data->total }}</td>
-            <td style="text-align: right;">{{ $data->total_bayar }}</td>
-            <td style="text-align: right;">{{ $data->total_uang_muka }}</td>
-            <td style="text-align: right;">{{ $data->total - $data->total_bayar }}</td>
+            <td style="text-align: right;">   {{ number_format($data->total, 2, ',', '.') }}</td>
+            <td style="text-align: right;">   {{ number_format($data->total_bayar, 2, ',', '.') }}</td>
+            <td style="text-align: right;">   {{ number_format($data->total_uang_muka, 2, ',', '.') }}</td>
+            <td style="text-align: right;">   {{ number_format($data->total - $data->total_bayar, 2, ',', '.') }}
+            </td>
         </tr>
     @endforeach
     <tr style="background-color: #DBEAFE; font-weight: bold;">
         <td colspan="6" style="text-align: right;">TOTAL</td>
-        <td style="text-align: right;">{{ $totalPenjualan }}</td>
-        <td style="text-align: right;">{{ $totalDibayar }}</td>
-        <td style="text-align: right;">{{ $totalUangMuka }}</td>
-        <td style="text-align: right;">{{ $sisaPembayaran }}</td>
+        <td style="text-align: right;">   {{ number_format($totalPenjualan, 2, ',', '.') }}</td>
+        <td style="text-align: right;">   {{ number_format($totalDibayar, 2, ',', '.') }}</td>
+        <td style="text-align: right;">   {{ number_format($totalUangMuka, 2, ',', '.') }}</td>
+        <td style="text-align: right;">   {{ number_format($sisaPembayaran, 2, ',', '.') }}</td>
     </tr>
 </table>

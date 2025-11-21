@@ -212,14 +212,15 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
                 $sheet = $event->sheet->getDelegate();
                 $highestRow = $sheet->getHighestRow();
 
-                // Set number format for currency columns (J, L, N, O, P) to show numbers with thousand separators
-                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('L6:L' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('N6:P' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                // Set text format for all currency and number columns to prevent percentage issue
+                // Columns: J (Harga), L (Subtotal), N (PPN Nominal), O (Total SO), P (Dibayar)
+                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('L6:L' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('N6:P' . $highestRow)->getNumberFormat()->setFormatCode('@');
 
-                // Set percentage format for discount column (K) and PPN percentage column (M)
-                $sheet->getStyle('K6:K' . $highestRow)->getNumberFormat()->setFormatCode('0%');
-                $sheet->getStyle('M6:M' . $highestRow)->getNumberFormat()->setFormatCode('0%');
+                // Set text format for percentage columns too
+                $sheet->getStyle('K6:K' . $highestRow)->getNumberFormat()->setFormatCode('@');
+                $sheet->getStyle('M6:M' . $highestRow)->getNumberFormat()->setFormatCode('@');
             },
         ];
     }

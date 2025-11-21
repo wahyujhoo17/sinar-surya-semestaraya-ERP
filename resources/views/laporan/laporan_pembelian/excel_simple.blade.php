@@ -48,20 +48,23 @@
             <td style="text-align: center; border: 1px solid #D1D5DB;">
                 {{ \Carbon\Carbon::parse($po->tanggal)->format('d/m/Y') }}</td>
             <td style="border: 1px solid #D1D5DB;">{{ $po->supplier->nama ?? '-' }}</td>
-            <td style="text-align: right; border: 1px solid #D1D5DB;">{{ number_format($po->total, 0, ',', '.') }}</td>
-            <td style="text-align: right; border: 1px solid #D1D5DB;">{{ number_format($po->total_bayar, 0, ',', '.') }}
+            <td style="text-align: right; border: 1px solid #D1D5DB;">   {{ number_format($po->total, 2, ',', '.') }}
+            </td>
+            <td style="text-align: right; border: 1px solid #D1D5DB;">  
+                {{ number_format($po->total_bayar, 2, ',', '.') }}
             </td>
             <td style="text-align: right; border: 1px solid #D1D5DB;">
-                {{ number_format($po->total - $po->total_bayar, 0, ',', '.') }}</td>
+                   {{ number_format($po->total - $po->total_bayar, 2, ',', '.') }}</td>
             <td style="border: 1px solid #D1D5DB;">{{ $po->user->name ?? '-' }}</td>
         </tr>
     @endforeach
     <tr style="background-color: #DBEAFE; font-weight: bold;">
         <td colspan="4" style="text-align: right; border: 2px solid #000000;">TOTAL</td>
-        <td style="text-align: right; border: 2px solid #000000;">{{ number_format($totalPembelian, 0, ',', '.') }}
+        <td style="text-align: right; border: 2px solid #000000;">   {{ number_format($totalPembelian, 2, ',', '.') }}
         </td>
-        <td style="text-align: right; border: 2px solid #000000;">{{ number_format($totalDibayar, 0, ',', '.') }}</td>
-        <td style="text-align: right; border: 2px solid #000000;">{{ number_format($sisaPembayaran, 0, ',', '.') }}
+        <td style="text-align: right; border: 2px solid #000000;">   {{ number_format($totalDibayar, 2, ',', '.') }}
+        </td>
+        <td style="text-align: right; border: 2px solid #000000;">   {{ number_format($sisaPembayaran, 2, ',', '.') }}
         </td>
         <td style="border: 2px solid #000000;"></td>
     </tr>
