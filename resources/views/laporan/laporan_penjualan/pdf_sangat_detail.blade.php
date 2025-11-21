@@ -414,7 +414,7 @@
                         <td style="width: 60%; vertical-align: top;">
                             <div class="so-number">{{ $so->nomor }}</div>
                             <div class="so-customer">
-                                <strong>{{ $so->customer->nama ?? '-' }}</strong>
+                                <strong>{{ $so->customer->company ?? $so->customer->nama }}</strong>
                                 @if ($so->customer && $so->customer->kode)
                                     <span style="color: #94a3b8;"> ({{ $so->customer->kode }})</span>
                                 @endif
@@ -459,19 +459,27 @@
                 <thead>
                     <tr>
                         <th style="width: 3%;" class="text-center">No</th>
-                        <th style="width: 12%;">Kode Produk</th>
-                        <th style="width: 25%;">Nama Produk</th>
-                        <th style="width: 8%;" class="text-center">Qty</th>
-                        <th style="width: 8%;" class="text-center">Satuan</th>
-                        <th style="width: 12%;" class="text-right">Harga Satuan</th>
-                        <th style="width: 8%;" class="text-right">Disc (%)</th>
-                        <th style="width: 12%;" class="text-right">Subtotal</th>
-                        <th style="width: 12%;" class="text-right">Total</th>
+                        <th style="width: 10%;">Kode Produk</th>
+                        <th style="width: 20%;">Nama Produk</th>
+                        <th style="width: 6%;" class="text-center">Qty</th>
+                        <th style="width: 6%;" class="text-center">Satuan</th>
+                        <th style="width: 10%;" class="text-right">Harga Satuan</th>
+                        <th style="width: 6%;" class="text-right">Disc (%)</th>
+                        <th style="width: 10%;" class="text-right">Subtotal</th>
+                        <th style="width: 6%;" class="text-right">PPN %</th>
+                        <th style="width: 10%;" class="text-right">PPN Rp</th>
+                        <th style="width: 13%;" class="text-right">Total</th>
                     </tr>
                 </thead>
                 <tbody>
                     @php $no = 1; @endphp
                     @forelse($so->details as $detail)
+                        @php
+                            $subtotalAfterDisc = ($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0);
+                            $ppnPercentage = $so->ppn > 0 ? floatval($so->ppn) : 0;
+                            $itemPpnNominal = $so->ppn > 0 ? ($ppnPercentage / 100) * $subtotalAfterDisc : 0;
+                            $totalWithPpn = $subtotalAfterDisc + $itemPpnNominal;
+                        @endphp
                         <tr>
                             <td class="text-center">{{ $no++ }}</td>
                             <td>{{ $detail->produk->kode ?? '-' }}</td>
@@ -479,15 +487,19 @@
                             <td class="text-center">{{ number_format($detail->quantity, 0, ',', '.') }}</td>
                             <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
                             <td class="text-right">{{ number_format($detail->harga ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-right">{{ number_format($detail->diskon_persen ?? 0, 2, ',', '.') }}</td>
-                            <td class="text-right">{{ number_format($detail->subtotal ?? 0, 0, ',', '.') }}</td>
-                            <td class="text-right font-bold">
-                                {{ number_format(($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0), 0, ',', '.') }}
+                            <td class="text-right">
+                                {{ ($detail->diskon_persen ?? 0) == intval($detail->diskon_persen ?? 0) ? number_format($detail->diskon_persen ?? 0, 0, ',', '.') : number_format($detail->diskon_persen ?? 0, 2, ',', '.') }}
                             </td>
+                            <td class="text-right">{{ number_format($detail->subtotal ?? 0, 0, ',', '.') }}</td>
+                            <td class="text-right">
+                                {{ $ppnPercentage > 0 ? number_format($ppnPercentage, 0) . '%' : '-' }}</td>
+                            <td class="text-right">
+                                {{ $itemPpnNominal > 0 ? number_format($itemPpnNominal, 0, ',', '.') : '-' }}</td>
+                            <td class="text-right font-bold">{{ number_format($totalWithPpn, 0, ',', '.') }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center" style="padding: 10px; color: #94a3b8;">
+                            <td colspan="11" class="text-center" style="padding: 10px; color: #94a3b8;">
                                 Tidak ada detail item
                             </td>
                         </tr>
@@ -506,6 +518,16 @@
                                     $itemSubtotal = $so->details->sum(function ($detail) {
                                         return ($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0);
                                     });
+                                    $totalPpnNominal = 0;
+                                    if ($so->ppn > 0) {
+                                        $ppnPercentage = floatval($so->ppn);
+                                        foreach ($so->details as $detail) {
+                                            $subtotalAfterDisc =
+                                                ($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0);
+                                            $itemPpn = ($ppnPercentage / 100) * $subtotalAfterDisc;
+                                            $totalPpnNominal += $itemPpn;
+                                        }
+                                    }
                                 @endphp
                                 <tr>
                                     <td
@@ -528,7 +550,6 @@
                                 @if ($so->ppn > 0)
                                     @php
                                         $ppnPercentage = floatval($so->ppn);
-                                        $ppnNominal = ($ppnPercentage / 100) * $so->subtotal;
                                     @endphp
                                     <tr>
                                         <td
@@ -536,7 +557,7 @@
                                             PPN ({{ number_format($ppnPercentage, 0) }}%)</td>
                                         <td
                                             style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #1e293b;">
-                                            Rp {{ number_format($ppnNominal, 0, ',', '.') }}</td>
+                                            Rp {{ number_format($totalPpnNominal, 0, ',', '.') }}</td>
                                     </tr>
                                 @endif
                                 <tr style="border-top: 2px solid #cbd5e1;">
@@ -589,16 +610,16 @@
                 @if ($allPayments->count() > 0)
                     <div
                         style="margin-top: 10px; background: #f0f9ff; border-left: 4px solid #0284c7; border: 1px solid #bae6fd;">
-                        <div style="background: #0369a1; padding: 5px 8px; border-bottom: 2px solid #0284c7;">
+                        <div style="background: #f9fafb; padding: 5px 8px; border-bottom: 2px solid #d1d5db;">
                             <table style="width: 100%; border-collapse: collapse;">
                                 <tr>
                                     <td style="width: 60%;">
-                                        <span style="font-size: 7.5px; font-weight: 700; color: #ffffff;">
+                                        <span style="font-size: 7.5px; font-weight: 700; color: #374151;">
                                             RIWAYAT PEMBAYARAN
                                         </span>
                                     </td>
                                     <td style="width: 40%; text-align: right;">
-                                        <span style="font-size: 6px; color: #e0f2fe; font-weight: 600;">
+                                        <span style="font-size: 6px; color: #64748b; font-weight: 600;">
                                             {{ $allPayments->count() }} transaksi pembayaran
                                         </span>
                                     </td>

@@ -443,11 +443,13 @@
                         <td class="so-main-info">
                             <div class="so-number">{{ $penjualan->nomor }}</div>
                             <div class="so-customer">Customer:
-                                {{ $penjualan->customer->company ?: $penjualan->customer->nama }}
+                                {{ $penjualan->customer->company ?? $penjualan->customer->nama }}
                                 ({{ $penjualan->customer->kode ?? '-' }})
                             </div>
                             <div class="so-meta">
                                 Tanggal: {{ \Carbon\Carbon::parse($penjualan->tanggal)->format('d/m/Y') }} |
+                                No. Inv: {{ $penjualan->nomor_invoice ?: '-' }} |
+                                No. PO: {{ $penjualan->nomor_po ?: '-' }} |
                                 Sales: {{ $penjualan->user->name ?? '-' }}
                             </div>
                         </td>
@@ -470,18 +472,21 @@
                 <thead>
                     <tr>
                         <th style="width: 4%;" class="text-center">No</th>
-                        <th style="width: 35%;">Produk</th>
-                        <th style="width: 10%;" class="text-center">Satuan</th>
-                        <th style="width: 8%;" class="text-right">Qty</th>
-                        <th style="width: 13%;" class="text-right">Harga</th>
-                        <th style="width: 8%;" class="text-right">Disc %</th>
-                        <th style="width: 11%;" class="text-right">Disc Rp</th>
-                        <th style="width: 15%;" class="text-right">Subtotal</th>
+                        <th style="width: 30%;">Produk</th>
+                        <th style="width: 8%;" class="text-center">Satuan</th>
+                        <th style="width: 6%;" class="text-right">Qty</th>
+                        <th style="width: 10%;" class="text-right">Harga</th>
+                        <th style="width: 6%;" class="text-right">Disc %</th>
+                        <th style="width: 8%;" class="text-right">Disc Rp</th>
+                        <th style="width: 10%;" class="text-right">Subtotal</th>
+                        <th style="width: 6%;" class="text-right">PPN %</th>
+                        <th style="width: 10%;" class="text-right">PPN Rp</th>
                     </tr>
                 </thead>
                 <tbody>
                     @php
                         $itemSubtotal = 0;
+                        $totalPpnNominal = 0;
                     @endphp
                     @foreach ($penjualan->details as $detailIndex => $detail)
                         @php
@@ -492,6 +497,11 @@
 
                             $subtotalItem = $qty * $harga - (($qty * $harga * $discPersen) / 100 + $discRp);
                             $itemSubtotal += $subtotalItem;
+
+                            // Hitung PPN per item dan akumulasikan
+                            $ppnPercentage = $penjualan->ppn > 0 ? floatval($penjualan->ppn) : 0;
+                            $itemPpnNominal = $penjualan->ppn > 0 ? ($ppnPercentage / 100) * $subtotalItem : 0;
+                            $totalPpnNominal += $itemPpnNominal;
                         @endphp
                         <tr>
                             <td class="text-center">{{ $detailIndex + 1 }}</td>
@@ -501,9 +511,15 @@
                             <td class="text-center">{{ $detail->produk->satuan->nama ?? '-' }}</td>
                             <td class="text-right">{{ number_format($qty, 2, ',', '.') }}</td>
                             <td class="text-right">{{ number_format($harga, 0, ',', '.') }}</td>
-                            <td class="text-right">{{ number_format($discPersen, 2, ',', '.') }}%</td>
+                            <td class="text-right">
+                                {{ $discPersen == intval($discPersen) ? number_format($discPersen, 0, ',', '.') : number_format($discPersen, 2, ',', '.') }}%
+                            </td>
                             <td class="text-right">{{ number_format($discRp, 0, ',', '.') }}</td>
                             <td class="text-right">{{ number_format($subtotalItem, 0, ',', '.') }}</td>
+                            <td class="text-right">
+                                {{ $ppnPercentage > 0 ? number_format($ppnPercentage, 0) . '%' : '-' }}</td>
+                            <td class="text-right">
+                                {{ $itemPpnNominal > 0 ? number_format($itemPpnNominal, 0, ',', '.') : '-' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -528,13 +544,12 @@
                                 @endif
                                 @if ($penjualan->ppn > 0)
                                     @php
-                                        // PPN adalah persentase (0-100), bukan nominal
                                         $ppnPercentage = floatval($penjualan->ppn);
-                                        $ppnNominal = ($ppnPercentage / 100) * $penjualan->subtotal;
                                     @endphp
                                     <tr>
                                         <td class="summary-label">PPN ({{ number_format($ppnPercentage, 0) }}%)</td>
-                                        <td class="summary-value">Rp {{ number_format($ppnNominal, 0, ',', '.') }}</td>
+                                        <td class="summary-value">Rp {{ number_format($totalPpnNominal, 0, ',', '.') }}
+                                        </td>
                                     </tr>
                                 @endif
                                 <tr class="summary-total">

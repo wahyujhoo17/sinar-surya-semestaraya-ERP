@@ -48,24 +48,24 @@
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Ringkas</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Ringkasan per
-                                            supplier</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Per transaksi dengan nomor
+                                            faktur</div>
                                     </div>
                                 </button>
                                 <button @click="detailLevel = 'detail'; exportExcel(); excelOpen = false"
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Detail</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Daftar transaksi
-                                            pembelian</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan rincian item produk
+                                        </div>
                                     </div>
                                 </button>
                                 <button @click="detailLevel = 'sangat_detail'; exportExcel(); excelOpen = false"
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Sangat Detail</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan detail item
-                                            produk</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan history penerimaan
+                                            & pembayaran</div>
                                     </div>
                                 </button>
                             </div>
@@ -104,24 +104,24 @@
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Ringkas</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Ringkasan per
-                                            supplier</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Per transaksi dengan nomor
+                                            faktur</div>
                                     </div>
                                 </button>
                                 <button @click="detailLevel = 'detail'; exportPdf(); pdfOpen = false"
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Detail</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Daftar transaksi
-                                            pembelian</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan rincian item produk
+                                        </div>
                                     </div>
                                 </button>
                                 <button @click="detailLevel = 'sangat_detail'; exportPdf(); pdfOpen = false"
                                     class="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
                                     <div>
                                         <div class="font-medium">Sangat Detail</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan detail item
-                                            produk</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400">Dengan history penerimaan
+                                            & pembayaran</div>
                                     </div>
                                 </button>
                             </div>

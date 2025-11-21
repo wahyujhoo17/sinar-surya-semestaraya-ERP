@@ -33,9 +33,9 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
         $statusPembayaran = $this->filters['status_pembayaran'] ?? null;
         $search = $this->filters['search'] ?? null;
 
-        // Query sales_order
+        // Query sales_order dengan invoice dan PO info
         $query = SalesOrder::query()
-            ->with(['customer'])
+            ->with(['customer', 'invoices'])
             ->select(
                 'sales_order.*',
                 DB::raw('COALESCE(
@@ -44,10 +44,17 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
                      INNER JOIN invoice ON invoice.id = pembayaran_piutang.invoice_id 
                      WHERE invoice.sales_order_id = sales_order.id), 
                     0
-                ) as total_bayar')
+                ) as total_bayar'),
+                DB::raw('COALESCE(
+                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                     WHERE i.sales_order_id = sales_order.id), 
+                    0
+                ) as total_uang_muka'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ") 
+                         FROM invoice i 
+                         WHERE i.sales_order_id = sales_order.id) as nomor_invoice')
             )
-            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir])
-            ->where('sales_order.status', '!=', 'draft');
+            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
@@ -71,21 +78,6 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
 
         $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')->get();
 
-        // Group data per customer untuk ringkasan
-        $groupedData = $dataPenjualan->groupBy('customer_id')->map(function ($items) {
-            $totalPenjualan = $items->sum('total');
-            $totalDibayar = $items->sum('total_bayar');
-            $totalUangMuka = $items->sum('total_uang_muka');
-            return [
-                'customer' => $items->first()->customer,
-                'total_transaksi' => $items->count(),
-                'total_penjualan' => $totalPenjualan,
-                'total_dibayar' => $totalDibayar,
-                'total_uang_muka' => $totalUangMuka,
-                'sisa_pembayaran' => $totalPenjualan - $totalDibayar,
-            ];
-        });
-
         // Hitung total
         $totalPenjualan = $dataPenjualan->sum('total');
         $totalDibayar = $dataPenjualan->sum('total_bayar');
@@ -93,7 +85,7 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
         $sisaPembayaran = $totalPenjualan - $totalDibayar;
 
         return view('laporan.laporan_penjualan.excel_simple', [
-            'groupedData' => $groupedData,
+            'dataPenjualan' => $dataPenjualan,
             'filters' => $this->filters,
             'totalPenjualan' => $totalPenjualan,
             'totalDibayar' => $totalDibayar,
@@ -116,7 +108,7 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
     public function styles(Worksheet $sheet)
     {
         // Set style untuk header
-        $sheet->getStyle('A5:G5')->applyFromArray([
+        $sheet->getStyle('A5:J5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -137,7 +129,7 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A6:G' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:J' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -160,7 +152,7 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
         ]);
 
         // Auto size columns
-        foreach (range('A', 'G') as $col) {
+        foreach (range('A', 'J') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -174,12 +166,15 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
     {
         return [
             'A' => 5,  // No
-            'B' => 30, // Customer
-            'C' => 15, // Jumlah Transaksi
-            'D' => 20, // Total Penjualan
-            'E' => 20, // Total Dibayar
-            'F' => 20, // Uang Muka
-            'G' => 20, // Sisa
+            'B' => 12, // Tanggal
+            'C' => 15, // No SO
+            'D' => 20, // No Inv
+            'E' => 15, // No PO
+            'F' => 25, // Customer
+            'G' => 20, // Total Penjualan
+            'H' => 20, // Total Dibayar
+            'I' => 20, // Uang Muka
+            'J' => 20, // Sisa Pembayaran
         ];
     }
 
@@ -194,14 +189,14 @@ class LaporanPenjualanSimpleExport implements FromView, WithTitle, WithStyles, W
                 $highestRow = $sheet->getHighestRow();
 
                 // Set number format for currency columns
-                $sheet->getStyle('D6:D' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('E6:E' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('F6:F' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
                 $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('I6:I' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
 
                 // Bold and background for total row
                 if ($highestRow > 6) {
-                    $sheet->getStyle('A' . $highestRow . ':G' . $highestRow)->applyFromArray([
+                    $sheet->getStyle('A' . $highestRow . ':J' . $highestRow)->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,

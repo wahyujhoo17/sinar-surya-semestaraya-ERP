@@ -13,7 +13,7 @@ use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Illuminate\Support\Facades\DB;
 
-class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithStyles, WithColumnWidths, WithEvents
+class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithStyles, WithEvents
 {
     protected $filters;
 
@@ -33,9 +33,19 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
         $statusPembayaran = $this->filters['status_pembayaran'] ?? null;
         $search = $this->filters['search'] ?? null;
 
-        // Query sales_order dengan detail produk
+        // Query sales_order dengan detail produk, payment history, dan delivery orders
         $query = SalesOrder::query()
-            ->with(['details.produk.satuan', 'customer', 'user'])
+            ->with([
+                'details.produk.satuan',
+                'customer',
+                'user',
+                'invoices.pembayaranPiutang' => function ($query) {
+                    $query->orderBy('tanggal', 'asc');
+                },
+                'deliveryOrders' => function ($query) {
+                    $query->orderBy('tanggal', 'asc');
+                }
+            ])
             ->select(
                 'sales_order.*',
                 DB::raw('COALESCE(
@@ -46,8 +56,7 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
                     0
                 ) as total_bayar')
             )
-            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir])
-            ->where('sales_order.status', '!=', 'draft');
+            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
@@ -92,7 +101,7 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
      */
     public function title(): string
     {
-        return 'Laporan Penjualan Detail';
+        return 'Laporan Penjualan Sangat Detail';
     }
 
     /**
@@ -102,7 +111,7 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
     {
         // Set style untuk header
         $headerRow = 5;
-        $sheet->getStyle("A{$headerRow}:P{$headerRow}")->applyFromArray([
+        $sheet->getStyle("A{$headerRow}:Q{$headerRow}")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -123,7 +132,7 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
         ]);
 
         // Set style untuk judul laporan
-        $sheet->getStyle('A1:P3')->applyFromArray([
+        $sheet->getStyle('A1:Q3')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 16,
@@ -139,40 +148,16 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
     /**
      * @return array
      */
-    public function columnWidths(): array
-    {
-        return [
-            'A' => 20, // No SO
-            'B' => 12, // Tanggal
-            'C' => 25, // Customer
-            'D' => 15, // Kode Produk
-            'E' => 30, // Nama Produk
-            'F' => 10, // Qty
-            'G' => 10, // Satuan
-            'H' => 15, // Harga Satuan
-            'I' => 10, // Disc (%)
-            'J' => 18, // Subtotal
-            'K' => 18, // Total Item
-            'L' => 18, // Total SO
-            'M' => 18, // Uang Muka
-            'N' => 18, // Dibayar
-            'O' => 15, // Status
-            'P' => 20, // Petugas
-        ];
-    }
-
-    /**
-     * @return array
-     */
     public function registerEvents(): array
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 $highestRow = $sheet->getHighestRow();
+                $highestColumn = $sheet->getHighestColumn();
 
                 // Set borders for all data
-                $sheet->getStyle('A6:P' . $highestRow)->applyFromArray([
+                $sheet->getStyle('A6:' . $highestColumn . $highestRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -180,9 +165,45 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
                     ],
                 ]);
 
-                // Set number format for currency columns
-                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('J6:N' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                // Set number format for currency columns (I, K, L, M, N, O)
+                $currencyColumns = ['I', 'K', 'L', 'M', 'N', 'O'];
+                foreach ($currencyColumns as $col) {
+                    if ($sheet->cellExists($col . '6')) {
+                        $sheet->getStyle($col . '6:' . $col . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                    }
+                }
+
+                // Auto-size columns for better readability
+                foreach (range('A', $highestColumn) as $column) {
+                    $sheet->getColumnDimension($column)->setAutoSize(true);
+                }
+
+                // Set minimum widths for certain columns
+                $minWidths = [
+                    'A' => 8,  // No
+                    'B' => 15, // No SO
+                    'C' => 12, // Tanggal
+                    'D' => 25, // Customer
+                    'E' => 15, // Kode Produk
+                    'F' => 30, // Nama Produk
+                    'G' => 10, // Qty
+                    'H' => 10, // Satuan
+                    'I' => 15, // Harga Satuan
+                    'J' => 10, // Disc (%)
+                    'K' => 18, // Subtotal
+                    'L' => 18, // Total Item
+                    'M' => 18, // Total SO
+                    'N' => 18, // Uang Muka
+                    'O' => 18, // Dibayar
+                    'P' => 15, // Status
+                    'Q' => 20, // Petugas
+                ];
+
+                foreach ($minWidths as $column => $width) {
+                    if ($sheet->getColumnDimension($column)->getWidth() < $width) {
+                        $sheet->getColumnDimension($column)->setWidth($width);
+                    }
+                }
             },
         ];
     }

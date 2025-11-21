@@ -9,10 +9,12 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Illuminate\Support\Facades\DB;
 
-class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithColumnWidths, WithCustomStartCell
+class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithColumnWidths, WithCustomStartCell, WithEvents
 {
     protected $filters;
 
@@ -32,15 +34,11 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
         $statusPembayaran = $this->filters['status_pembayaran'] ?? null;
         $search = $this->filters['search'] ?? null;
 
-        // Query sales_order dengan join tabel terkait
+        // Query sales_order dengan detail produk dan invoice info
         $query = SalesOrder::query()
+            ->with(['details.produk.satuan', 'customer', 'user', 'invoices'])
             ->select(
-                'sales_order.id',
-                'sales_order.nomor as nomor_faktur',
-                'sales_order.tanggal',
-                'sales_order.customer_id',
-                'sales_order.status_pembayaran as status',
-                'sales_order.total',
+                'sales_order.*',
                 DB::raw('COALESCE(
                     (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
                      JOIN invoice i ON pp.invoice_id = i.id 
@@ -52,10 +50,18 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
                      WHERE rp.sales_order_id = sales_order.id), 
                     0
                 ) as total_retur'),
+                DB::raw('COALESCE(
+                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
+                     WHERE i.sales_order_id = sales_order.id), 
+                    0
+                ) as total_uang_muka'),
+                DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ")
+                         FROM invoice i
+                         WHERE i.sales_order_id = sales_order.id) as nomor_invoice'),
                 'sales_order.catatan as keterangan',
                 'sales_order.created_at',
                 'sales_order.updated_at',
-                'customer.nama as customer_nama',
+                DB::raw('COALESCE(NULLIF(TRIM(customer.company), ""), NULLIF(TRIM(customer.nama), ""), customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
                 'customer.kode as customer_kode',
                 'users.name as nama_petugas'
             )
@@ -110,20 +116,8 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
      */
     public function styles(Worksheet $sheet)
     {
-        // Set style untuk judul laporan
-        $sheet->getStyle('A1:K3')->applyFromArray([
-            'font' => [
-                'bold' => true,
-                'size' => 14,
-            ],
-            'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-                'vertical' => \PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER,
-            ],
-        ]);
-
         // Set style untuk header
-        $sheet->getStyle('A4:K4')->applyFromArray([
+        $sheet->getStyle('A5:R5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -134,7 +128,8 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => ['rgb' => '000000'],
                 ],
             ],
             'alignment' => [
@@ -144,10 +139,11 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A5:K' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:R' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D1D5DB'],
                 ],
             ],
             'alignment' => [
@@ -155,51 +151,46 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
             ],
         ]);
 
-        // Set auto size untuk semua kolom
-        foreach (range('A', 'K') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        // Style untuk total row
-        $lastRow = $sheet->getHighestRow();
-        $sheet->getStyle('A' . ($lastRow) . ':K' . ($lastRow))->applyFromArray([
+        // Set style untuk judul laporan
+        $sheet->getStyle('A1:A3')->applyFromArray([
             'font' => [
                 'bold' => true,
+                'size' => 16,
             ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'F3F4F6'],
-            ],
-            'borders' => [
-                'top' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                ],
-                'bottom' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
-                ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
             ],
         ]);
+
+        // Set auto size untuk semua kolom
+        foreach (range('A', 'R') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
 
         return $sheet;
     }
 
-    /**
-     * @return array
-     */
     public function columnWidths(): array
     {
         return [
-            'A' => 5,  // No
-            'B' => 20, // Nomor Faktur
-            'C' => 15, // Tanggal
-            'D' => 25, // Customer
-            'E' => 15, // Status
-            'F' => 20, // Total
-            'G' => 20, // Total Bayar
-            'H' => 20, // Retur
-            'I' => 20, // Sisa
-            'J' => 25, // Petugas
-            'K' => 25, // Keterangan
+            'A' => 20, // No Faktur
+            'B' => 12, // Tanggal
+            'C' => 15, // No Inv
+            'D' => 15, // No PO
+            'E' => 25, // Customer
+            'F' => 15, // Kode Produk
+            'G' => 30, // Nama Produk
+            'H' => 10, // Qty
+            'I' => 10, // Satuan
+            'J' => 15, // Harga Satuan
+            'K' => 10, // Disc (%)
+            'L' => 18, // Subtotal
+            'M' => 10, // PPN (%)
+            'N' => 15, // PPN Nominal
+            'O' => 18, // Total SO
+            'P' => 18, // Dibayar
+            'Q' => 15, // Status
+            'R' => 20, // Petugas
         ];
     }
 
@@ -208,6 +199,28 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
      */
     public function startCell(): string
     {
-        return 'A1';
+        return 'A5';
+    }
+
+    /**
+     * @return array
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+                $highestRow = $sheet->getHighestRow();
+
+                // Set number format for currency columns (J, L, N, O, P) to show numbers with thousand separators
+                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('L6:L' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('N6:P' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+
+                // Set percentage format for discount column (K) and PPN percentage column (M)
+                $sheet->getStyle('K6:K' . $highestRow)->getNumberFormat()->setFormatCode('0%');
+                $sheet->getStyle('M6:M' . $highestRow)->getNumberFormat()->setFormatCode('0%');
+            },
+        ];
     }
 }

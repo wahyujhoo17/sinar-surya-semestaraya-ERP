@@ -35,29 +35,18 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         $statusPembayaran = $this->filters['status_pembayaran'] ?? null;
         $search = $this->filters['search'] ?? null;
 
-        // Query purchase_order dengan join tabel terkait
+        // Query purchase_order dengan detail produk
         $query = PurchaseOrder::query()
+            ->with(['details.produk.satuan', 'supplier', 'user'])
             ->select(
-                'purchase_order.id',
-                'purchase_order.nomor as nomor_faktur',
-                'purchase_order.tanggal',
-                'purchase_order.supplier_id',
-                'purchase_order.status_pembayaran as status',
-                'purchase_order.total',
+                'purchase_order.*',
                 DB::raw('COALESCE(
                     (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) FROM pembayaran_hutang WHERE purchase_order_id = purchase_order.id), 
                     0
-                ) as total_bayar'),
-                'purchase_order.catatan as keterangan',
-                'purchase_order.created_at',
-                'purchase_order.updated_at',
-                'supplier.nama as supplier_nama',
-                'supplier.kode as supplier_kode',
-                'users.name as nama_petugas'
+                ) as total_bayar')
             )
-            ->join('supplier', 'purchase_order.supplier_id', '=', 'supplier.id')
-            ->leftJoin('users', 'purchase_order.user_id', '=', 'users.id')
-            ->whereBetween('purchase_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+            ->whereBetween('purchase_order.tanggal', [$tanggalAwal, $tanggalAkhir])
+            ->where('purchase_order.status', '!=', 'draft');
 
         // Filter berdasarkan supplier
         if ($supplierId) {
@@ -73,7 +62,9 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('purchase_order.nomor', 'like', "%{$search}%")
-                    ->orWhere('supplier.nama', 'like', "%{$search}%");
+                    ->orWhereHas('supplier', function ($q) use ($search) {
+                        $q->where('nama', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -83,6 +74,18 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         $dataPembelian = $dataPembelian->map(function ($item) {
             $item->total = (float) $item->total;
             $item->total_bayar = (float) $item->total_bayar;
+
+            // Ensure detail prices are also properly formatted
+            if ($item->details) {
+                $item->details = $item->details->map(function ($detail) {
+                    $detail->harga = (float) $detail->harga;
+                    $detail->diskon_persen = (float) $detail->diskon_persen;
+                    $detail->quantity = (float) $detail->quantity;
+                    $detail->subtotal = (float) $detail->subtotal;
+                    return $detail;
+                });
+            }
+
             return $item;
         });
 
@@ -114,18 +117,19 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
     public function styles(Worksheet $sheet)
     {
         // Set style untuk header
-        $sheet->getStyle('A5:J5')->applyFromArray([
+        $sheet->getStyle('A5:P5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5'],
+                'startColor' => ['rgb' => '1F2937'],
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => ['rgb' => '000000'],
                 ],
             ],
             'alignment' => [
@@ -135,10 +139,11 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A6:J' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:P' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'D1D5DB'],
                 ],
             ],
             'alignment' => [
@@ -158,7 +163,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         ]);
 
         // Set auto size untuk semua kolom
-        foreach (range('A', 'J') as $col) {
+        foreach (range('A', 'P') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -171,16 +176,22 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
     public function columnWidths(): array
     {
         return [
-            'A' => 5,  // No
-            'B' => 20, // Nomor Faktur
-            'C' => 15, // Tanggal
-            'D' => 25, // Supplier
-            'E' => 15, // Status
-            'F' => 20, // Total
-            'G' => 20, // Total Bayar
-            'H' => 20, // Sisa
-            'I' => 25, // Petugas
-            'J' => 25, // Keterangan
+            'A' => 20, // No Faktur
+            'B' => 12, // Tanggal
+            'C' => 25, // Supplier
+            'D' => 15, // Kode Produk
+            'E' => 30, // Nama Produk
+            'F' => 10, // Qty
+            'G' => 10, // Satuan
+            'H' => 15, // Harga Satuan
+            'I' => 10, // Disc (%)
+            'J' => 18, // Subtotal
+            'K' => 10, // PPN (%)
+            'L' => 18, // PPN (Rp)
+            'M' => 18, // Total PO
+            'N' => 18, // Dibayar
+            'O' => 15, // Status
+            'P' => 20, // Petugas
         ];
     }
 
@@ -202,13 +213,18 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
                 $sheet = $event->sheet->getDelegate();
                 $highestRow = $sheet->getHighestRow();
 
-                // Set number format for currency columns (F, G, H) to show numbers with thousand separators
-                $sheet->getStyle('F6:F' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
-                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                // Set number format for currency columns (H, J, L, M, N) to show numbers with thousand separators
+                // Use more explicit format code for better Excel compatibility
+                $sheet->getStyle('H6:H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0_);(#,##0)');
+                $sheet->getStyle('J6:J' . $highestRow)->getNumberFormat()->setFormatCode('#,##0_);(#,##0)');
+                $sheet->getStyle('L6:N' . $highestRow)->getNumberFormat()->setFormatCode('#,##0_);(#,##0)');
+                
+                // Set percentage format for discount and PPN percentage columns (I, K)
+                $sheet->getStyle('I6:I' . $highestRow)->getNumberFormat()->setFormatCode('0.00%');
+                $sheet->getStyle('K6:K' . $highestRow)->getNumberFormat()->setFormatCode('0%');
 
                 // Also apply to total row
-                $sheet->getStyle('F' . $highestRow . ':H' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('M' . $highestRow . ':N' . $highestRow)->getNumberFormat()->setFormatCode('#,##0_);(#,##0)');
             },
         ];
     }

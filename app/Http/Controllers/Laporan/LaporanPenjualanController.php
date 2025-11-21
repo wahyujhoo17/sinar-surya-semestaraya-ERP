@@ -287,36 +287,27 @@ class LaporanPenjualanController extends Controller
 
         // Tentukan view dan data berdasarkan detail level
         if ($detailLevel === 'simple') {
-            // Level Simple: Ringkasan per Customer
-            $dataPenjualan = $query->with(['customer', 'user'])
+            // Level Simple: Ringkasan per transaksi dengan detail tambahan
+            $dataPenjualan = $query->with(['customer', 'user', 'invoices'])
                 ->select(
                     'sales_order.*',
                     DB::raw('COALESCE(
-                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
-                         JOIN invoice i ON pp.invoice_id = i.id 
-                         WHERE i.sales_order_id = sales_order.id), 
+                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp
+                         JOIN invoice i ON pp.invoice_id = i.id
+                         WHERE i.sales_order_id = sales_order.id),
                         0
                     ) as total_bayar'),
                     DB::raw('COALESCE(
-                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
-                         WHERE i.sales_order_id = sales_order.id), 
+                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i
+                         WHERE i.sales_order_id = sales_order.id),
                         0
-                    ) as total_uang_muka')
+                    ) as total_uang_muka'),
+                    DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ")
+                             FROM invoice i
+                             WHERE i.sales_order_id = sales_order.id) as nomor_invoice')
                 )
                 ->orderBy('sales_order.tanggal', 'desc')
                 ->get();
-
-            // Group by customer
-            $groupedData = $dataPenjualan->groupBy('customer_id')->map(function ($group) {
-                return [
-                    'customer' => $group->first()->customer,
-                    'total_transaksi' => $group->count(),
-                    'total_penjualan' => $group->sum('total'),
-                    'total_dibayar' => $group->sum('total_bayar'),
-                    'total_uang_muka' => $group->sum('total_uang_muka'),
-                    'sisa_pembayaran' => $group->sum('total') - $group->sum('total_bayar') - $group->sum('total_uang_muka'),
-                ];
-            });
 
             $totalPenjualan = $dataPenjualan->sum('total');
             $totalDibayar = $dataPenjualan->sum('total_bayar');
@@ -324,7 +315,7 @@ class LaporanPenjualanController extends Controller
             $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
 
             $viewData = [
-                'groupedData' => $groupedData,
+                'dataPenjualan' => $dataPenjualan,
                 'filters' => [
                     'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
                     'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
@@ -389,8 +380,10 @@ class LaporanPenjualanController extends Controller
             $fileLabel = 'sangat_detail';
             $orientation = 'landscape';
         } else {
-            // Level Detail (default): Daftar transaksi tanpa detail item
-            $dataPenjualan = $query->with(['details.produk.satuan', 'customer', 'user'])
+            // Level Detail (default): Daftar transaksi dengan detail produk dan invoice info
+            $dataPenjualan = $query->join('customer', 'sales_order.customer_id', '=', 'customer.id')
+                ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
+                ->with(['details.produk.satuan', 'customer', 'user', 'invoices'])
                 ->select(
                     'sales_order.*',
                     DB::raw('COALESCE(
@@ -408,7 +401,16 @@ class LaporanPenjualanController extends Controller
                         (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
                          WHERE i.sales_order_id = sales_order.id), 
                         0
-                    ) as total_uang_muka')
+                    ) as total_uang_muka'),
+                    DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ")
+                             FROM invoice i
+                             WHERE i.sales_order_id = sales_order.id) as nomor_invoice'),
+                    'sales_order.catatan as keterangan',
+                    'sales_order.created_at',
+                    'sales_order.updated_at',
+                    DB::raw('COALESCE(NULLIF(TRIM(customer.company), ""), NULLIF(TRIM(customer.nama), ""), customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
+                    'customer.kode as customer_kode',
+                    'users.name as nama_petugas'
                 )
                 ->orderBy('sales_order.tanggal', 'desc')
                 ->get();

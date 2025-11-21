@@ -269,8 +269,8 @@ class LaporanPembelianController extends Controller
 
         // Pilih view dan data berdasarkan level detail
         if ($detailLevel === 'simple') {
-            // Level Simple: Ringkasan per supplier atau per bulan
-            $dataPembelian = $query->with(['supplier'])
+            // Level Simple: Per transaksi dengan nomor faktur dan pembuat
+            $dataPembelian = $query->with(['supplier', 'user'])
                 ->select(
                     'purchase_order.*',
                     DB::raw('COALESCE(
@@ -281,24 +281,8 @@ class LaporanPembelianController extends Controller
                 ->orderBy('purchase_order.tanggal', 'desc')
                 ->get();
 
-            // Group data per supplier untuk ringkasan
-            $groupedData = $dataPembelian->groupBy('supplier_id')->map(function ($items) {
-                $totalPembelian = $items->sum('total');
-                $totalDibayar = $items->sum('total_bayar');
-                return [
-                    'supplier' => $items->first()->supplier,
-                    'total_transaksi' => $items->count(),
-                    'total_pembelian' => $totalPembelian,
-                    'total_dibayar' => $totalDibayar,
-                    'sisa_pembayaran' => $totalPembelian - $totalDibayar,
-                ];
-            });
-
-            $totalPembelian = $dataPembelian->sum('total');
-            $totalDibayar = $dataPembelian->sum('total_bayar');
-
             $viewData = [
-                'groupedData' => $groupedData,
+                'dataPembelian' => $dataPembelian,
                 'filters' => [
                     'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
                     'tanggal_akhir' => $tanggalAkhir->format('Y-m-d'),
@@ -306,9 +290,9 @@ class LaporanPembelianController extends Controller
                     'status_pembayaran' => $statusPembayaran,
                     'search' => $search
                 ],
-                'totalPembelian' => $totalPembelian,
-                'totalDibayar' => $totalDibayar,
-                'sisaPembayaran' => $totalPembelian - $totalDibayar,
+                'totalPembelian' => $dataPembelian->sum('total'),
+                'totalDibayar' => $dataPembelian->sum('total_bayar'),
+                'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
             ];
 
             $viewName = 'laporan.laporan_pembelian.pdf_simple';

@@ -35,7 +35,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
 
         // Query purchase_order
         $query = PurchaseOrder::query()
-            ->with(['supplier'])
+            ->with(['supplier', 'user'])
             ->select(
                 'purchase_order.*',
                 DB::raw('COALESCE(
@@ -68,26 +68,13 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
 
         $dataPembelian = $query->orderBy('purchase_order.tanggal', 'desc')->get();
 
-        // Group data per supplier untuk ringkasan
-        $groupedData = $dataPembelian->groupBy('supplier_id')->map(function ($items) {
-            $totalPembelian = $items->sum('total');
-            $totalDibayar = $items->sum('total_bayar');
-            return [
-                'supplier' => $items->first()->supplier,
-                'total_transaksi' => $items->count(),
-                'total_pembelian' => $totalPembelian,
-                'total_dibayar' => $totalDibayar,
-                'sisa_pembayaran' => $totalPembelian - $totalDibayar,
-            ];
-        });
-
         // Hitung total
         $totalPembelian = $dataPembelian->sum('total');
         $totalDibayar = $dataPembelian->sum('total_bayar');
         $sisaPembayaran = $totalPembelian - $totalDibayar;
 
         return view('laporan.laporan_pembelian.excel_simple', [
-            'groupedData' => $groupedData,
+            'dataPembelian' => $dataPembelian,
             'filters' => $this->filters,
             'totalPembelian' => $totalPembelian,
             'totalDibayar' => $totalDibayar,
@@ -109,18 +96,19 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
     public function styles(Worksheet $sheet)
     {
         // Set style untuk header
-        $sheet->getStyle('A5:F5')->applyFromArray([
+        $sheet->getStyle('A5:H5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
             ],
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5'],
+                'startColor' => ['rgb' => '1F2937'],
             ],
             'borders' => [
                 'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                    'color' => ['rgb' => '000000'],
                 ],
             ],
             'alignment' => [
@@ -130,7 +118,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A6:F' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:H' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -152,11 +140,6 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
             ],
         ]);
 
-        // Auto size columns
-        foreach (range('A', 'F') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
         return $sheet;
     }
 
@@ -167,11 +150,13 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
     {
         return [
             'A' => 5,  // No
-            'B' => 30, // Supplier
-            'C' => 15, // Jumlah Transaksi
-            'D' => 20, // Total Pembelian
-            'E' => 20, // Total Dibayar
-            'F' => 20, // Sisa
+            'B' => 20, // No Faktur
+            'C' => 12, // Tanggal
+            'D' => 30, // Supplier
+            'E' => 18, // Total Pembelian
+            'F' => 18, // Total Dibayar
+            'G' => 18, // Sisa
+            'H' => 20, // Pembuat
         ];
     }
 
@@ -186,17 +171,23 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
                 $highestRow = $sheet->getHighestRow();
 
                 // Set number format for currency columns
-                $sheet->getStyle('D6:D' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
                 $sheet->getStyle('E6:E' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
                 $sheet->getStyle('F6:F' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
+                $sheet->getStyle('G6:G' . $highestRow)->getNumberFormat()->setFormatCode('#,##0');
 
                 // Bold and background for total row
                 if ($highestRow > 6) {
-                    $sheet->getStyle('A' . $highestRow . ':F' . $highestRow)->applyFromArray([
+                    $sheet->getStyle('A' . $highestRow . ':H' . $highestRow)->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                             'startColor' => ['rgb' => 'DBEAFE'],
+                        ],
+                        'borders' => [
+                            'allBorders' => [
+                                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_MEDIUM,
+                                'color' => ['rgb' => '000000'],
+                            ],
                         ],
                     ]);
                 }

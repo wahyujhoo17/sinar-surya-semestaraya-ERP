@@ -354,47 +354,52 @@
         </div>
     </div>
 
-    <!-- Data Table - Ringkasan Per Customer -->
+    <!-- Data Table - Detail Per Transaksi -->
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 5%;">No</th>
-                <th style="width: 30%;">Customer</th>
-                <th style="width: 10%;" class="text-center">Jumlah Transaksi</th>
-                <th style="width: 18%;" class="text-right">Total Penjualan</th>
-                <th style="width: 15%;" class="text-right">Total Dibayar</th>
-                <th style="width: 12%;" class="text-right">Uang Muka</th>
-                <th style="width: 15%;" class="text-right">Sisa Pembayaran</th>
+                <th style="width: 4%;">No</th>
+                <th style="width: 8%;">Tanggal</th>
+                <th style="width: 10%;">No SO</th>
+                <th style="width: 12%;">No Inv</th>
+                <th style="width: 10%;">No PO</th>
+                <th style="width: 20%;">Customer</th>
+                <th style="width: 12%;" class="text-right">Total Penjualan</th>
+                <th style="width: 12%;" class="text-right">Total Dibayar</th>
+                <th style="width: 10%;" class="text-right">Uang Muka</th>
+                <th style="width: 12%;" class="text-right">Sisa Pembayaran</th>
             </tr>
         </thead>
         <tbody>
             @php $no = 1; @endphp
-            @forelse($groupedData as $data)
+            @forelse($dataPenjualan as $data)
                 <tr>
                     <td class="text-center">{{ $no++ }}</td>
+                    <td class="text-center">{{ \Carbon\Carbon::parse($data->tanggal)->format('d/m/Y') }}</td>
+                    <td class="text-center">{{ $data->nomor }}</td>
+                    <td class="text-center">{{ $data->nomor_invoice ?: '-' }}</td>
+                    <td class="text-center">{{ $data->nomor_po ?: '-' }}</td>
                     <td>
-                        <strong>{{ $data['customer']->company ?? ($data['customer']->nama ?? 'Unknown') }}</strong><br>
-                        <span style="font-size: 7px; color: #64748b;">{{ $data['customer']->kode ?? '-' }}</span>
+                        <strong>{{ $data->customer->company ?? ($data->customer->nama ?? 'Unknown') }}</strong><br>
+                        <span style="font-size: 7px; color: #64748b;">{{ $data->customer->kode ?? '-' }}</span>
                     </td>
-                    <td class="text-center font-bold">{{ $data['total_transaksi'] }}</td>
-                    <td class="text-right">Rp {{ number_format($data['total_penjualan'], 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($data['total_dibayar'], 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($data['total_uang_muka'], 0, ',', '.') }}</td>
-                    <td class="text-right">Rp {{ number_format($data['sisa_pembayaran'], 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($data->total, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($data->total_bayar, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($data->total_uang_muka, 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($data->total - $data->total_bayar, 0, ',', '.') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" class="text-center" style="padding: 20px; color: #94a3b8;">
+                    <td colspan="10" class="text-center" style="padding: 20px; color: #94a3b8;">
                         Tidak ada data penjualan untuk periode ini
                     </td>
                 </tr>
             @endforelse
         </tbody>
-        @if ($groupedData->count() > 0)
+        @if ($dataPenjualan->count() > 0)
             <tfoot>
                 <tr class="total-row">
-                    <td colspan="2" class="text-right font-bold">TOTAL</td>
-                    <td class="text-center font-bold">{{ $groupedData->sum('total_transaksi') }}</td>
+                    <td colspan="6" class="text-right font-bold">TOTAL</td>
                     <td class="text-right font-bold">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
                     <td class="text-right font-bold">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</td>
                     <td class="text-right font-bold">Rp {{ number_format($totalUangMuka, 0, ',', '.') }}</td>
