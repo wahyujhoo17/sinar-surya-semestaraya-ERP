@@ -110,18 +110,68 @@
                         </div>
 
                         <!-- Parent Akun -->
-                        <div class="col-span-1">
+                        <div class="col-span-2">
                             <label for="parent_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300">Akun Induk</label>
                             <div class="mt-1">
                                 <select name="parent_id" id="parent_id"
-                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white @error('parent_id') border-red-500 @enderror">
+                                    class="select2-parent-akun block w-full rounded-md sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white @error('parent_id') border-red-500 @enderror"
+                                    data-placeholder="Pilih Akun Induk (Opsional)">
                                     <option value="">Tidak Ada (Akun Level Atas)</option>
-                                    @foreach ($allAccounts as $account)
-                                        <option value="{{ $account->id }}"
-                                            {{ old('parent_id') == $account->id ? 'selected' : '' }}>
-                                            {{ $account->kode }} - {{ $account->nama }}
-                                        </option>
+
+                                    @php
+                                        $groupedAccounts = $allAccounts->groupBy('kategori');
+                                        $kategoriLabels = [
+                                            'asset' => '💰 ASET',
+                                            'liability' => '📋 KEWAJIBAN',
+                                            'equity' => '🏦 EKUITAS',
+                                            'income' => '💵 PENDAPATAN',
+                                            'expense' => '💸 BEBAN',
+                                            'purchase' => '🛒 PEMBELIAN',
+                                            'other_income' => '💎 PENDAPATAN LAIN',
+                                            'other_expense' => '💳 BIAYA LAIN',
+                                            'other' => '📦 LAINNYA',
+                                        ];
+
+                                        function renderAllAccountOptions($accounts, $parent_id = null, $level = 0)
+                                        {
+                                            $result = '';
+                                            foreach ($accounts as $account) {
+                                                // Hanya tampilkan akun HEADER sebagai parent
+                                                if ($account->parent_id == $parent_id && $account->tipe == 'header') {
+                                                    $indent = str_repeat('&nbsp;&nbsp;&nbsp;', $level);
+                                                    $prefix = $level > 0 ? '├─ ' : '';
+                                                    $result .=
+                                                        '<option value="' .
+                                                        $account->id .
+                                                        '" data-tipe="' .
+                                                        $account->tipe .
+                                                        '" data-level="' .
+                                                        $level .
+                                                        '">' .
+                                                        $indent .
+                                                        $prefix .
+                                                        $account->kode .
+                                                        ' - ' .
+                                                        $account->nama .
+                                                        '</option>';
+                                                    $result .= renderAllAccountOptions(
+                                                        $accounts,
+                                                        $account->id,
+                                                        $level + 1,
+                                                    );
+                                                }
+                                            }
+                                            return $result;
+                                        }
+                                    @endphp
+
+                                    @foreach ($kategoriLabels as $kategori => $label)
+                                        @if ($groupedAccounts->has($kategori))
+                                            <optgroup label="{{ $label }}">
+                                                {!! renderAllAccountOptions($groupedAccounts[$kategori], null, 0) !!}
+                                            </optgroup>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
@@ -129,7 +179,8 @@
                                 <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                             @enderror
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pilih akun induk jika ini adalah
-                                sub-akun</p>
+                                sub-akun. Hanya akun tipe Header yang ditampilkan karena hanya akun Header yang bisa
+                                menjadi induk.</p>
                         </div>
 
                         <!-- Reference Type (Kas/Rekening) -->
@@ -223,9 +274,129 @@
         </div>
     </div>
 
+    @push('styles')
+        <!-- Select2 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+            rel="stylesheet" />
+        <style>
+            /* Select2 Dark Mode Support */
+            .dark .select2-container--bootstrap-5 .select2-selection {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            .dark .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+                color: white;
+            }
+
+            .dark .select2-dropdown {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+            }
+
+            .dark .select2-container--bootstrap-5 .select2-results__option {
+                color: white;
+            }
+
+            .dark .select2-container--bootstrap-5 .select2-results__option--highlighted {
+                background-color: rgb(59 130 246);
+            }
+
+            .dark .select2-search--dropdown .select2-search__field {
+                background-color: rgb(31 41 55);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            /* Indentation visual */
+            .select2-results__option[data-level="1"] {
+                padding-left: 30px !important;
+            }
+
+            .select2-results__option[data-level="2"] {
+                padding-left: 50px !important;
+            }
+
+            .select2-results__option[data-level="3"] {
+                padding-left: 70px !important;
+            }
+
+            /* Header styling */
+            .select2-results__option[data-tipe="header"] {
+                font-weight: 600;
+                background-color: #f3f4f6;
+            }
+
+            .dark .select2-results__option[data-tipe="header"] {
+                background-color: rgb(31 41 55);
+            }
+        </style>
+    @endpush
+
     @push('scripts')
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <style>
+            /* Styling untuk dropdown akun induk */
+            #parent_id option[disabled] {
+                font-weight: 700;
+                font-size: 0.875rem;
+                color: #1f2937;
+                background-color: #f3f4f6;
+                padding: 8px 12px;
+                margin-top: 4px;
+            }
+
+            .dark #parent_id option[disabled] {
+                color: #d1d5db;
+                background-color: #1f2937;
+            }
+
+            #parent_id option:not([disabled]) {
+                padding: 6px 12px;
+            }
+
+            #parent_id option:not([disabled]):hover {
+                background-color: #e5e7eb;
+            }
+
+            .dark #parent_id option:not([disabled]):hover {
+                background-color: #374151;
+            }
+        </style>
         <script>
             document.addEventListener('DOMContentLoaded', function() {
+                // Initialize Select2 for parent akun
+                $('.select2-parent-akun').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Pilih Akun Induk (Opsional)',
+                    allowClear: true,
+                    templateResult: formatAccountOption,
+                    templateSelection: formatAccountSelection
+                });
+
+                // Format option display in dropdown
+                function formatAccountOption(option) {
+                    if (!option.id) {
+                        return option.text;
+                    }
+
+                    var $option = $(option.element);
+                    var level = $option.data('level') || 0;
+                    var indent = '&nbsp;&nbsp;&nbsp;'.repeat(level);
+                    var icon = '📁 '; // Semua adalah header
+
+                    return $('<span>' + indent + icon + option.text + '</span>');
+                }
+
+                // Format selected display
+                function formatAccountSelection(option) {
+                    return option.text || 'Tidak Ada (Akun Level Atas)';
+                }
+
                 const generateCodeBtn = document.getElementById('generateCodeBtn');
                 const parentIdField = document.getElementById('parent_id');
                 const kategoriField = document.getElementById('kategori');

@@ -104,4 +104,9 @@ return [
         'bank' => env('AKUN_BANK_ID', 22),                  // Bank
         'beban_gaji' => env('AKUN_BEBAN_GAJI_ID', 162),     // BIAYA GAJI BAG. KANTOR (60301)
     ],
+
+    // Saldo Awal / Opening Balance
+    'saldo_awal' => [
+        'modal_pemilik' => env('AKUN_MODAL_PEMILIK_ID', null),  // Modal Pemilik / Ekuitas
+    ],
 ];

@@ -8,6 +8,7 @@ use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
 use App\Models\AkunAkuntansi;
+use App\Models\AccountingConfiguration;
 use App\Services\JournalEntryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -356,8 +357,12 @@ class KasDanBankController extends Controller
                 'is_aktif' => $request->is_aktif ? true : false,
             ]);
 
-            // Jika saldo awal > 0, buat transaksi kas masuk untuk saldo awal
+            // Auto-create akun COA untuk kas ini
+            $akunKas = $this->createAkunKas($kas);
+
+            // Jika saldo awal > 0, buat jurnal pembukaan
             if ($request->saldo > 0) {
+                // Buat transaksi kas masuk untuk riwayat
                 TransaksiKas::create([
                     'kas_id' => $kas->id,
                     'tanggal' => now(),
@@ -366,6 +371,64 @@ class KasDanBankController extends Controller
                     'jenis' => 'masuk',
                     'user_id' => Auth::id(),
                 ]);
+
+                // Buat jurnal pembukaan (Debit: Kas, Kredit: Modal)
+                $journalService = app(JournalEntryService::class);
+
+                // PRIORITAS 1: Ambil dari Accounting Configuration (Kalibrasi)
+                $modalConfig = AccountingConfiguration::where('transaction_type', 'saldo_awal')
+                    ->where('account_key', 'modal_pemilik')
+                    ->first();
+
+                $akunModal = $modalConfig && $modalConfig->akun_id
+                    ? AkunAkuntansi::find($modalConfig->akun_id)
+                    : null;
+
+                // PRIORITAS 2: Jika tidak dikonfigurasi, cari akun Modal/Ekuitas
+                if (!$akunModal) {
+                    $akunModal = AkunAkuntansi::whereIn('kategori', ['equity', 3])
+                        ->where('nama', 'LIKE', '%Modal%')
+                        ->where('tipe', 'detail')
+                        ->first();
+                }
+
+                // PRIORITAS 3: Cari akun Ekuitas lainnya
+                if (!$akunModal) {
+                    $akunModal = AkunAkuntansi::whereIn('kategori', ['equity', 3])
+                        ->where('tipe', 'detail')
+                        ->first();
+                }
+
+                // PRIORITAS 4: Buat akun Modal default
+                if (!$akunModal) {
+                    $akunModal = $this->createDefaultModalAccount();
+                }
+
+                if ($akunKas && $akunModal) {
+                    $entries = [
+                        [
+                            'akun_id' => $akunKas->id,  // Debit: Kas
+                            'debit' => $request->saldo,
+                            'kredit' => 0,
+                        ],
+                        [
+                            'akun_id' => $akunModal->id,  // Kredit: Modal
+                            'debit' => 0,
+                            'kredit' => $request->saldo,
+                        ]
+                    ];
+
+                    $noReferensi = 'SALDO-AWAL-KAS-' . $kas->id . '-' . now()->format('YmdHis');
+                    $keterangan = 'Jurnal pembukaan saldo awal kas: ' . $kas->nama;
+
+                    $journalService->createJournalEntries(
+                        $entries,
+                        $noReferensi,
+                        $keterangan,
+                        now()->format('Y-m-d'),
+                        $kas
+                    );
+                }
             }
 
             DB::commit();
@@ -495,8 +558,12 @@ class KasDanBankController extends Controller
                 'is_perusahaan' => true, // Selalu set true karena ini rekening perusahaan
             ]);
 
-            // Jika saldo awal > 0, buat transaksi bank masuk untuk saldo awal
+            // Auto-create akun COA untuk rekening ini
+            $akunBank = $this->createAkunBank($rekening);
+
+            // Jika saldo awal > 0, buat jurnal pembukaan
             if ($request->saldo > 0) {
+                // Buat transaksi bank masuk untuk riwayat
                 TransaksiBank::create([
                     'rekening_id' => $rekening->id,
                     'tanggal' => now(),
@@ -505,6 +572,64 @@ class KasDanBankController extends Controller
                     'jenis' => 'masuk',
                     'user_id' => Auth::id(),
                 ]);
+
+                // Buat jurnal pembukaan (Debit: Bank, Kredit: Modal)
+                $journalService = app(JournalEntryService::class);
+
+                // PRIORITAS 1: Ambil dari Accounting Configuration (Kalibrasi)
+                $modalConfig = AccountingConfiguration::where('transaction_type', 'saldo_awal')
+                    ->where('account_key', 'modal_pemilik')
+                    ->first();
+
+                $akunModal = $modalConfig && $modalConfig->akun_id
+                    ? AkunAkuntansi::find($modalConfig->akun_id)
+                    : null;
+
+                // PRIORITAS 2: Jika tidak dikonfigurasi, cari akun Modal/Ekuitas
+                if (!$akunModal) {
+                    $akunModal = AkunAkuntansi::whereIn('kategori', ['equity', 3])
+                        ->where('nama', 'LIKE', '%Modal%')
+                        ->where('tipe', 'detail')
+                        ->first();
+                }
+
+                // PRIORITAS 3: Cari akun Ekuitas lainnya
+                if (!$akunModal) {
+                    $akunModal = AkunAkuntansi::whereIn('kategori', ['equity', 3])
+                        ->where('tipe', 'detail')
+                        ->first();
+                }
+
+                // PRIORITAS 4: Buat akun Modal default
+                if (!$akunModal) {
+                    $akunModal = $this->createDefaultModalAccount();
+                }
+
+                if ($akunBank && $akunModal) {
+                    $entries = [
+                        [
+                            'akun_id' => $akunBank->id,  // Debit: Bank
+                            'debit' => $request->saldo,
+                            'kredit' => 0,
+                        ],
+                        [
+                            'akun_id' => $akunModal->id,  // Kredit: Modal
+                            'debit' => 0,
+                            'kredit' => $request->saldo,
+                        ]
+                    ];
+
+                    $noReferensi = 'SALDO-AWAL-BANK-' . $rekening->id . '-' . now()->format('YmdHis');
+                    $keterangan = 'Jurnal pembukaan saldo awal rekening: ' . $rekening->nama_bank . ' - ' . $rekening->nomor_rekening;
+
+                    $journalService->createJournalEntries(
+                        $entries,
+                        $noReferensi,
+                        $keterangan,
+                        now()->format('Y-m-d'),
+                        $rekening
+                    );
+                }
             }
 
             DB::commit();
@@ -1099,5 +1224,143 @@ class KasDanBankController extends Controller
                 'message' => 'Gagal memuat data rekening bank: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Helper: Create akun COA untuk Kas
+     */
+    private function createAkunKas($kas)
+    {
+        // Cari parent akun "Kas dan Bank" atau "Kas" 
+        $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
+            ->where('tipe', 'header')
+            ->where(function ($query) {
+                $query->where('nama', 'LIKE', '%Kas dan Bank%')
+                    ->orWhere('nama', 'LIKE', '%Kas & Bank%')
+                    ->orWhere('kode', 'LIKE', '11%');
+            })
+            ->first();
+
+        // Jika tidak ada parent, buat parent default
+        if (!$parentAkun) {
+            $parentAkun = AkunAkuntansi::create([
+                'kode' => '1100',
+                'nama' => 'KAS DAN BANK',
+                'kategori' => 'asset',
+                'tipe' => 'header',
+                'is_active' => true,
+            ]);
+        }
+
+        // Generate kode akun untuk kas ini
+        $lastKas = AkunAkuntansi::where('ref_type', 'App\\Models\\Kas')
+            ->where('kode', 'LIKE', '1101%')
+            ->orderBy('kode', 'desc')
+            ->first();
+
+        $newKode = $lastKas ? (intval($lastKas->kode) + 1) : 110101;
+
+        // Buat akun COA untuk kas ini
+        $akunKas = AkunAkuntansi::create([
+            'kode' => (string) $newKode,
+            'nama' => 'KAS - ' . strtoupper($kas->nama),
+            'kategori' => 'asset',
+            'tipe' => 'detail',
+            'parent_id' => $parentAkun->id,
+            'ref_type' => 'App\\Models\\Kas',
+            'ref_id' => $kas->id,
+            'is_active' => true,
+        ]);
+
+        return $akunKas;
+    }
+
+    /**
+     * Helper: Create akun COA untuk Rekening Bank
+     */
+    private function createAkunBank($rekening)
+    {
+        // Cari parent akun "Kas dan Bank" atau "Bank"
+        $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
+            ->where('tipe', 'header')
+            ->where(function ($query) {
+                $query->where('nama', 'LIKE', '%Kas dan Bank%')
+                    ->orWhere('nama', 'LIKE', '%Kas & Bank%')
+                    ->orWhere('nama', 'LIKE', '%Bank%')
+                    ->orWhere('kode', 'LIKE', '11%');
+            })
+            ->first();
+
+        // Jika tidak ada parent, buat parent default
+        if (!$parentAkun) {
+            $parentAkun = AkunAkuntansi::create([
+                'kode' => '1100',
+                'nama' => 'KAS DAN BANK',
+                'kategori' => 'asset',
+                'tipe' => 'header',
+                'is_active' => true,
+            ]);
+        }
+
+        // Generate kode akun untuk bank ini
+        $lastBank = AkunAkuntansi::where('ref_type', 'App\\Models\\RekeningBank')
+            ->where('kode', 'LIKE', '1105%')
+            ->orderBy('kode', 'desc')
+            ->first();
+
+        $newKode = $lastBank ? (intval($lastBank->kode) + 1) : 110501;
+
+        // Buat akun COA untuk rekening ini
+        $akunBank = AkunAkuntansi::create([
+            'kode' => (string) $newKode,
+            'nama' => 'BANK - ' . strtoupper($rekening->nama_bank) . ' - ' . $rekening->nomor_rekening,
+            'kategori' => 'asset',
+            'tipe' => 'detail',
+            'parent_id' => $parentAkun->id,
+            'ref_type' => 'App\\Models\\RekeningBank',
+            'ref_id' => $rekening->id,
+            'is_active' => true,
+        ]);
+
+        return $akunBank;
+    }
+
+    /**
+     * Helper: Create akun Modal default jika belum ada
+     */
+    private function createDefaultModalAccount()
+    {
+        // Cari parent akun "Ekuitas" atau "Modal"
+        $parentAkun = AkunAkuntansi::whereIn('kategori', ['equity', 3])
+            ->where('tipe', 'header')
+            ->where(function ($query) {
+                $query->where('nama', 'LIKE', '%Ekuitas%')
+                    ->orWhere('nama', 'LIKE', '%Modal%')
+                    ->orWhere('kode', 'LIKE', '3%');
+            })
+            ->first();
+
+        // Jika tidak ada parent, buat parent default
+        if (!$parentAkun) {
+            $parentAkun = AkunAkuntansi::create([
+                'kode' => '3000',
+                'nama' => 'EKUITAS',
+                'kategori' => 'equity',
+                'tipe' => 'header',
+                'is_active' => true,
+            ]);
+        }
+
+        // Buat akun Modal
+        $akunModal = AkunAkuntansi::create([
+            'kode' => '3100',
+            'nama' => 'MODAL PEMILIK',
+            'kategori' => 'equity',
+            'tipe' => 'detail',
+            'parent_id' => $parentAkun->id,
+            'is_active' => true,
+        ]);
+
+        return $akunModal;
     }
 }

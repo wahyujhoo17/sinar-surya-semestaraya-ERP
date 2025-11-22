@@ -61,16 +61,18 @@
                     <div class="mb-4">
                         <label for="kas_saldo"
                             class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Saldo Awal <span
-                                class="text-red-600">*</span></label>
+                                class="text-red-600" x-show="!isEdit">*</span></label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="saldo" id="kas_saldo" x-model="formData.saldo" required
-                                placeholder="0" :readonly="isEdit"
+                            <input type="number" name="saldo" id="kas_saldo" x-model="formData.saldo"
+                                :required="!isEdit" placeholder="0" :readonly="isEdit"
                                 class="w-full pl-12 pr-4 py-2 rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm"
                                 :class="{ 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed': isEdit }">
                         </div>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" x-show="!isEdit">Input saldo kas saat
+                            ini. Sistem akan otomatis membuat jurnal pembukaan.</p>
                         <p class="mt-1 text-xs text-gray-500 dark:text-gray-400" x-show="isEdit">Saldo hanya dapat
                             diubah melalui transaksi</p>
                         <p class="mt-1 text-xs text-red-600 dark:text-red-400" x-show="errors.saldo"

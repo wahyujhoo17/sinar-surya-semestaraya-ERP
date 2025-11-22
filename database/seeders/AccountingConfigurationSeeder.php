@@ -158,6 +158,16 @@ class AccountingConfigurationSeeder extends Seeder
                 'is_required' => false,
                 'description' => 'Akun bank yang akan didebit saat penerimaan pembayaran transfer'
             ],
+
+            // Saldo Awal (Opening Balance)
+            [
+                'transaction_type' => 'saldo_awal',
+                'account_key' => 'modal_pemilik',
+                'account_name' => 'Modal Pemilik / Ekuitas',
+                'akun_id' => config('accounting.saldo_awal.modal_pemilik'),
+                'is_required' => true,
+                'description' => 'Akun modal/ekuitas yang akan dikredit saat membuat jurnal pembukaan saldo awal kas/bank'
+            ],
         ];
 
         foreach ($configurations as $config) {

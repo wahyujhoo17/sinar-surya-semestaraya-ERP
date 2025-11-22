@@ -432,8 +432,21 @@
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
                                 <tr>
-                                    <td style="padding-left: 20px;">- {{ strtoupper($account['nama']) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
+                                    <td style="padding-left: 20px;">
+                                        - {{ strtoupper($account['nama']) }}
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                ABNORMAL</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right"
+                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                        @else
+                                            {{ number_format($account['balance'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
 
@@ -487,8 +500,21 @@
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
                                 <tr>
-                                    <td style="padding-left: 20px;">- {{ strtoupper($account['nama']) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
+                                    <td style="padding-left: 20px;">
+                                        - {{ strtoupper($account['nama']) }}
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                ABNORMAL</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right"
+                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                        @else
+                                            {{ number_format($account['balance'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
 
@@ -530,8 +556,21 @@
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
                                 <tr>
-                                    <td style="padding-left: 20px;">- {{ strtoupper($account['nama']) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
+                                    <td style="padding-left: 20px;">
+                                        - {{ strtoupper($account['nama']) }}
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                ABNORMAL</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right"
+                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                        @else
+                                            {{ number_format($account['balance'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
 
@@ -600,8 +639,21 @@
                         @if (count($grouped['revenue']['penjualan']) > 0)
                             @foreach ($grouped['revenue']['penjualan'] as $account)
                                 <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
+                                    <td style="padding-left: 20px;">
+                                        {{ ucwords(strtolower($account['nama'])) }}
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                ABNORMAL</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-right"
+                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
+                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
+                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                        @else
+                                            {{ number_format($account['balance'], 0, ',', '.') }}
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @else

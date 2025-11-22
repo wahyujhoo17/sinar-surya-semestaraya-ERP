@@ -1623,8 +1623,10 @@ class LaporanKeuanganController extends Controller
             // Calculate balance based on account category
             if (in_array($account->kategori, ['asset', 'expense'])) {
                 $balance = $totalDebit - $totalKredit;
+                $isAbnormal = $balance < 0; // Asset/Expense shouldn't be negative
             } else {
                 $balance = $totalKredit - $totalDebit;
+                $isAbnormal = $balance < 0; // Liability/Equity/Income shouldn't be negative
             }
 
             return [
@@ -1635,7 +1637,8 @@ class LaporanKeuanganController extends Controller
                 'kategori' => $account->kategori,
                 'debit' => $totalDebit,
                 'kredit' => $totalKredit,
-                'balance' => $balance
+                'balance' => $balance,
+                'is_abnormal' => $isAbnormal
             ];
         })->filter(function ($account) {
             return $account['balance'] != 0; // Only show accounts with balance

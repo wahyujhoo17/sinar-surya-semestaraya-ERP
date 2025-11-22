@@ -285,14 +285,24 @@
                                 <template x-for="asset in balanceSheetData.assets" :key="asset.id">
                                     <div
                                         class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                        <div>
-                                            <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                                x-text="asset.nama"></span>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400" x-text="asset.kode">
+                                        <div class="flex items-center gap-2">
+                                            <div>
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                                    x-text="asset.nama"></span>
+                                                <div class="text-xs text-gray-500 dark:text-gray-400"
+                                                    x-text="asset.kode">
+                                                </div>
                                             </div>
+                                            <span x-show="asset.is_abnormal"
+                                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                                title="Saldo tidak normal - mungkin ada kesalahan jurnal">
+                                                ⚠️
+                                            </span>
                                         </div>
-                                        <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                                            x-text="formatCurrency(asset.balance)"></span>
+                                        <span class="text-sm font-semibold"
+                                            :class="asset.is_abnormal ? 'text-red-600 dark:text-red-400' :
+                                                'text-gray-900 dark:text-white'"
+                                            x-text="asset.is_abnormal ? '(' + formatCurrency(Math.abs(asset.balance)) + ')' : formatCurrency(asset.balance)"></span>
                                     </div>
                                 </template>
                                 <div class="pt-4 mt-4 border-t-2 border-gray-200 dark:border-gray-600">
@@ -336,14 +346,23 @@
                                     <template x-for="liability in balanceSheetData.liabilities" :key="liability.id">
                                         <div
                                             class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                            <div>
-                                                <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                                    x-text="liability.nama"></span>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                    x-text="liability.kode"></div>
+                                            <div class="flex items-center gap-2">
+                                                <div>
+                                                    <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                                        x-text="liability.nama"></span>
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400"
+                                                        x-text="liability.kode"></div>
+                                                </div>
+                                                <span x-show="liability.is_abnormal"
+                                                    class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                                    title="Saldo tidak normal - mungkin ada kesalahan jurnal">
+                                                    ⚠️
+                                                </span>
                                             </div>
-                                            <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                                                x-text="formatCurrency(liability.balance)"></span>
+                                            <span class="text-sm font-semibold"
+                                                :class="liability.is_abnormal ? 'text-red-600 dark:text-red-400' :
+                                                    'text-gray-900 dark:text-white'"
+                                                x-text="liability.is_abnormal ? '(' + formatCurrency(Math.abs(liability.balance)) + ')' : formatCurrency(liability.balance)"></span>
                                         </div>
                                     </template>
                                     <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
