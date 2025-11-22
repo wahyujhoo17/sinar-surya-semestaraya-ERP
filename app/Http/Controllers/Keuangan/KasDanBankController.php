@@ -1231,17 +1231,26 @@ class KasDanBankController extends Controller
      */
     private function createAkunKas($kas)
     {
-        // Cari parent akun "Kas dan Bank" atau "Kas" 
-        $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
-            ->where('tipe', 'header')
-            ->where(function ($query) {
-                $query->where('nama', 'LIKE', '%Kas dan Bank%')
-                    ->orWhere('nama', 'LIKE', '%Kas & Bank%')
-                    ->orWhere('kode', 'LIKE', '11%');
-            })
+        // PRIORITAS 1: Ambil dari Accounting Configuration (Kalibrasi)
+        $headerConfig = AccountingConfiguration::where('transaction_type', 'header')
+            ->where('account_key', 'kas_bank')
             ->first();
+        $parentAkun = $headerConfig && $headerConfig->akun_id ? AkunAkuntansi::find($headerConfig->akun_id) : null;
 
-        // Jika tidak ada parent, buat parent default
+        // PRIORITAS 2: Cari parent akun "Kas dan Bank" atau "Bank" secara dinamis
+        if (!$parentAkun) {
+            $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
+                ->where('tipe', 'header')
+                ->where(function ($query) {
+                    $query->where('nama', 'LIKE', '%Kas dan Bank%')
+                        ->orWhere('nama', 'LIKE', '%Kas & Bank%')
+                        ->orWhere('nama', 'LIKE', '%KAS DI BANK%')
+                        ->orWhere('kode', 'LIKE', '11%');
+                })
+                ->first();
+        }
+
+        // PRIORITAS 3: Jika tidak ada parent, buat parent default
         if (!$parentAkun) {
             $parentAkun = AkunAkuntansi::create([
                 'kode' => '1100',
@@ -1280,18 +1289,26 @@ class KasDanBankController extends Controller
      */
     private function createAkunBank($rekening)
     {
-        // Cari parent akun "Kas dan Bank" atau "Bank"
-        $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
-            ->where('tipe', 'header')
-            ->where(function ($query) {
-                $query->where('nama', 'LIKE', '%Kas dan Bank%')
-                    ->orWhere('nama', 'LIKE', '%Kas & Bank%')
-                    ->orWhere('nama', 'LIKE', '%Bank%')
-                    ->orWhere('kode', 'LIKE', '11%');
-            })
+        // PRIORITAS 1: Ambil dari Accounting Configuration (Kalibrasi)
+        $headerConfig = AccountingConfiguration::where('transaction_type', 'header')
+            ->where('account_key', 'kas_bank')
             ->first();
+        $parentAkun = $headerConfig && $headerConfig->akun_id ? AkunAkuntansi::find($headerConfig->akun_id) : null;
 
-        // Jika tidak ada parent, buat parent default
+        // PRIORITAS 2: Cari parent akun "Kas dan Bank" atau "Bank" secara dinamis
+        if (!$parentAkun) {
+            $parentAkun = AkunAkuntansi::whereIn('kategori', ['asset', 1])
+                ->where('tipe', 'header')
+                ->where(function ($query) {
+                    $query->where('nama', 'LIKE', '%Kas dan Bank%')
+                        ->orWhere('nama', 'LIKE', '%Kas & Bank%')
+                        ->orWhere('nama', 'LIKE', '%KAS DI BANK%')
+                        ->orWhere('kode', 'LIKE', '11%');
+                })
+                ->first();
+        }
+
+        // PRIORITAS 3: Jika tidak ada parent, buat parent default
         if (!$parentAkun) {
             $parentAkun = AkunAkuntansi::create([
                 'kode' => '1100',

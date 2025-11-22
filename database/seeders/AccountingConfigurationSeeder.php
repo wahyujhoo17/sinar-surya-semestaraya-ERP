@@ -168,6 +168,16 @@ class AccountingConfigurationSeeder extends Seeder
                 'is_required' => true,
                 'description' => 'Akun modal/ekuitas yang akan dikredit saat membuat jurnal pembukaan saldo awal kas/bank'
             ],
+
+            // Header/Parent untuk Auto-Create COA
+            [
+                'transaction_type' => 'header',
+                'account_key' => 'kas_bank',
+                'account_name' => 'Header Kas & Bank',
+                'akun_id' => config('accounting.headers.kas_bank'),
+                'is_required' => true,
+                'description' => 'Akun header yang menjadi parent untuk semua akun kas dan bank yang dibuat otomatis'
+            ],
         ];
 
         foreach ($configurations as $config) {

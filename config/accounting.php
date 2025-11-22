@@ -109,4 +109,9 @@ return [
     'saldo_awal' => [
         'modal_pemilik' => env('AKUN_MODAL_PEMILIK_ID', null),  // Modal Pemilik / Ekuitas
     ],
+
+    // Header/Parent untuk Auto-Create COA
+    'headers' => [
+        'kas_bank' => env('AKUN_HEADER_KAS_BANK_ID', null),  // Header untuk Kas & Bank (default: 11050 - KAS DI BANK)
+    ],
 ];
