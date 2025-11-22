@@ -107,8 +107,9 @@ class Penggajian extends Model
                 return false;
             }
 
-            // Mendapatkan ID akun dari konfigurasi
-            $akunBebanGaji = config('accounting.penggajian.beban_gaji');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunBebanGaji = \App\Models\AccountingConfiguration::get('penggajian.beban_gaji')
+                ?? config('accounting.penggajian.beban_gaji');
 
             if (!$akunBebanGaji) {
                 Log::error("Akun beban gaji untuk jurnal penggajian belum dikonfigurasi", [
@@ -164,8 +165,10 @@ class Penggajian extends Model
 
             // Fallback ke akun default jika tidak ada akun spesifik
             if (!$akunSumber) {
-                $akunKasDefault = config('accounting.penggajian.kas');
-                $akunBankDefault = config('accounting.penggajian.bank');
+                $akunKasDefault = \App\Models\AccountingConfiguration::get('penggajian.kas')
+                    ?? config('accounting.penggajian.kas');
+                $akunBankDefault = \App\Models\AccountingConfiguration::get('penggajian.bank')
+                    ?? config('accounting.penggajian.bank');
                 $akunSumber = $akunKasDefault ?: $akunBankDefault;
 
                 Log::info("Menggunakan akun default untuk penggajian", [
@@ -191,7 +194,8 @@ class Penggajian extends Model
 
             // Buat jurnal otomatis
             $noReferensi = 'GAJI-' . $this->id . '-' . $this->bulan . '/' . $this->tahun;
-            $keterangan = 'Pembayaran gaji ' . $this->karyawan->nama . ' bulan ' . $this->bulan . '/' . $this->tahun;
+            $keterangan = 'Pembayaran gaji ' . $this->karyawan->nama_lengkap . ' periode ' .
+                $this->getNamaBulan($this->bulan) . ' ' . $this->tahun;
 
             return $this->createJournalEntries(
                 $entries,
@@ -206,5 +210,28 @@ class Penggajian extends Model
             ]);
             return false;
         }
+    }
+
+    /**
+     * Helper method to get Indonesian month name
+     */
+    private function getNamaBulan($bulan)
+    {
+        $namaBulan = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
+
+        return $namaBulan[$bulan] ?? 'Bulan Tidak Valid';
     }
 }

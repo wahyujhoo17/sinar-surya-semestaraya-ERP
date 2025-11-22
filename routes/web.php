@@ -643,6 +643,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/coa/generate-code', [App\Http\Controllers\Keuangan\COAController::class, 'generateCode'])->name('coa.generate-code');
         Route::resource('coa', App\Http\Controllers\Keuangan\COAController::class);
 
+        // Accounting Configuration (Kalibrasi Akun) Routes
+        Route::get('accounting-configuration', [App\Http\Controllers\AccountingConfigurationController::class, 'index'])->name('accounting-configuration.index');
+        Route::put('accounting-configuration/bulk-update', [App\Http\Controllers\AccountingConfigurationController::class, 'bulkUpdate'])->name('accounting-configuration.bulk-update');
+        Route::resource('accounting-configuration', App\Http\Controllers\AccountingConfigurationController::class)->except(['index']);
+
         // Jurnal Umum Routes
         Route::get('jurnal-umum/export-excel', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'exportExcel'])->name('jurnal-umum.export-excel');
         Route::post('jurnal-umum/post', [App\Http\Controllers\Keuangan\JurnalUmumController::class, 'post'])->name('jurnal-umum.post');

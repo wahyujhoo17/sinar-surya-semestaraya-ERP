@@ -143,6 +143,26 @@
                                                 </button>
                                             </template>
                                         </div>
+
+                                        <!-- Custom Date Range Input -->
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                                            x-show="dateType === 'custom'">
+                                            <div>
+                                                <label for="tanggal_awal"
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
+                                                    Awal</label>
+                                                <input type="date" id="tanggal_awal" x-model="filter.tanggal_awal"
+                                                    class="block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white" />
+                                            </div>
+                                            <div>
+                                                <label for="tanggal_akhir"
+                                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
+                                                    Akhir</label>
+                                                <input type="date" id="tanggal_akhir"
+                                                    x-model="filter.tanggal_akhir"
+                                                    class="block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white" />
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

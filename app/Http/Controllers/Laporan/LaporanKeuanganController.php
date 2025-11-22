@@ -10,6 +10,7 @@ use App\Models\Kas;
 use App\Models\RekeningBank;
 use App\Models\TransaksiKas;
 use App\Models\TransaksiBank;
+use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -68,6 +69,11 @@ class LaporanKeuanganController extends Controller
 
             // Get equity (Ekuitas)
             $equity = $this->getAccountBalance('equity', $tanggalAkhir);
+
+            // Group accounts into detailed categories
+            $assetsGrouped = $this->groupBalanceSheetAccounts($assets, 'asset');
+            $liabilitiesGrouped = $this->groupBalanceSheetAccounts($liabilities, 'liability');
+            $equityGrouped = $this->groupBalanceSheetAccounts($equity, 'equity');
 
             // Calculate totals
             $totalAssets = $assets->sum('balance');
@@ -128,6 +134,9 @@ class LaporanKeuanganController extends Controller
                     'assets' => $assets,
                     'liabilities' => $liabilities,
                     'equity' => $equity,
+                    'assets_grouped' => $assetsGrouped,
+                    'liabilities_grouped' => $liabilitiesGrouped,
+                    'equity_grouped' => $equityGrouped,
                     'totals' => [
                         'total_assets' => $totalAssets,
                         'total_liabilities' => $totalLiabilities,
@@ -1029,6 +1038,247 @@ class LaporanKeuanganController extends Controller
     }
 
     /**
+     * Group balance sheet accounts into detailed categories
+     *
+     * @param \Illuminate\Support\Collection $accounts
+     * @param string $mainCategory (asset, liability, equity)
+     * @return array
+     */
+    private function groupBalanceSheetAccounts($accounts, $mainCategory)
+    {
+        $grouped = [
+            'groups' => [],
+            'total' => 0
+        ];
+
+        if ($mainCategory === 'asset') {
+            // Aset Lancar: 1-1xxx
+            $currentAssets = $accounts->filter(function ($acc) {
+                return preg_match('/^1[- ]?1/', $acc['kode']);
+            });
+
+            // Aset Tetap: 1-2xxx or 1-3xxx
+            $fixedAssets = $accounts->filter(function ($acc) {
+                return preg_match('/^1[- ]?[23]/', $acc['kode']);
+            });
+
+            // Aset lainnya (yang tidak masuk kategori di atas)
+            $otherAssets = $accounts->filter(function ($acc) use ($currentAssets, $fixedAssets) {
+                $isInCurrent = $currentAssets->contains('id', $acc['id']);
+                $isInFixed = $fixedAssets->contains('id', $acc['id']);
+                return !$isInCurrent && !$isInFixed;
+            });
+
+            if ($currentAssets->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'AKTIVA LANCAR',
+                    'accounts' => $currentAssets->values()->all(),
+                    'subtotal' => $currentAssets->sum('balance')
+                ];
+            }
+
+            if ($fixedAssets->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'AKTIVA TETAP',
+                    'accounts' => $fixedAssets->values()->all(),
+                    'subtotal' => $fixedAssets->sum('balance'),
+                    'show_depreciation' => true
+                ];
+            }
+
+            if ($otherAssets->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'AKTIVA LAINNYA',
+                    'accounts' => $otherAssets->values()->all(),
+                    'subtotal' => $otherAssets->sum('balance')
+                ];
+            }
+
+            $grouped['total'] = $accounts->sum('balance');
+        } elseif ($mainCategory === 'liability') {
+            // Kewajiban Jangka Pendek: 2-1xxx
+            $currentLiabilities = $accounts->filter(function ($acc) {
+                return preg_match('/^2[- ]?1/', $acc['kode']);
+            });
+
+            // Kewajiban Jangka Panjang: 2-2xxx
+            $longTermLiabilities = $accounts->filter(function ($acc) {
+                return preg_match('/^2[- ]?2/', $acc['kode']);
+            });
+
+            // Kewajiban lainnya (yang tidak masuk kategori di atas)
+            $otherLiabilities = $accounts->filter(function ($acc) use ($currentLiabilities, $longTermLiabilities) {
+                $isInCurrent = $currentLiabilities->contains('id', $acc['id']);
+                $isInLongTerm = $longTermLiabilities->contains('id', $acc['id']);
+                return !$isInCurrent && !$isInLongTerm;
+            });
+
+            if ($currentLiabilities->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'KEWAJIBAN JANGKA PENDEK',
+                    'accounts' => $currentLiabilities->values()->all(),
+                    'subtotal' => $currentLiabilities->sum('balance')
+                ];
+            }
+
+            if ($longTermLiabilities->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'KEWAJIBAN JANGKA PANJANG',
+                    'accounts' => $longTermLiabilities->values()->all(),
+                    'subtotal' => $longTermLiabilities->sum('balance')
+                ];
+            }
+
+            if ($otherLiabilities->count() > 0) {
+                $grouped['groups'][] = [
+                    'name' => 'KEWAJIBAN LAINNYA',
+                    'accounts' => $otherLiabilities->values()->all(),
+                    'subtotal' => $otherLiabilities->sum('balance')
+                ];
+            }
+
+            $grouped['total'] = $accounts->sum('balance');
+        } elseif ($mainCategory === 'equity') {
+            // All equity accounts without sub-grouping (Modal, Laba Ditahan, Prive, Laba Tahun Berjalan)
+            $grouped['groups'][] = [
+                'name' => 'EKUITAS',
+                'accounts' => $accounts->values()->all(),
+                'subtotal' => $accounts->sum('balance')
+            ];
+
+            $grouped['total'] = $accounts->sum('balance');
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Group income statement accounts into detailed categories
+     *
+     * @param \Illuminate\Support\Collection $income
+     * @param \Illuminate\Support\Collection $expenses
+     * @return array
+     */
+    private function groupIncomeStatementAccounts($income, $expenses)
+    {
+        $grouped = [
+            'revenue' => [
+                'penjualan' => [],
+                'harga_pokok' => [],
+                'laba_kotor' => 0
+            ],
+            'operational' => [
+                'biaya_umum' => [],
+                'biaya_pemasaran' => [],
+                'biaya_penyusutan' => [],
+                'total_operasional' => 0,
+                'laba_operasi' => 0
+            ],
+            'other' => [
+                'pendapatan_lain' => [],
+                'biaya_lain' => [],
+                'total_other' => 0
+            ],
+            'tax' => [
+                'laba_sebelum_pajak' => 0,
+                'pajak' => 0,
+                'laba_bersih' => 0
+            ]
+        ];
+
+        // Revenue section
+        $penjualan = $income->filter(function ($acc) {
+            return preg_match('/^4[- ]?1/', $acc['kode']) ||
+                stripos($acc['nama'], 'penjualan') !== false ||
+                stripos($acc['nama'], 'trading') !== false;
+        });
+
+        $grouped['revenue']['penjualan'] = $penjualan->values()->all();
+        $totalPenjualan = $penjualan->sum('balance');
+
+        // Harga Pokok Penjualan (HPP) - dari expenses dengan kode 5-1xxx
+        $hpp = $expenses->filter(function ($acc) {
+            return preg_match('/^5[- ]?1/', $acc['kode']) ||
+                stripos($acc['nama'], 'harga pokok') !== false ||
+                stripos($acc['nama'], 'persediaan awal') !== false ||
+                stripos($acc['nama'], 'pembelian') !== false ||
+                stripos($acc['nama'], 'persediaan akhir') !== false;
+        });
+
+        $grouped['revenue']['harga_pokok'] = $hpp->values()->all();
+        $totalHPP = $hpp->sum('balance');
+        $grouped['revenue']['laba_kotor'] = $totalPenjualan - $totalHPP;
+
+        // Operational expenses
+        $biayaOperasional = $expenses->filter(function ($acc) use ($hpp) {
+            // Exclude HPP and tax
+            $isHPP = $hpp->contains('id', $acc['id']);
+            $isTax = preg_match('/^5[- ]?9/', $acc['kode']) ||
+                stripos($acc['nama'], 'pajak') !== false;
+            $isOther = preg_match('/^5[- ]?8/', $acc['kode']) ||
+                stripos($acc['nama'], 'biaya lain') !== false;
+
+            return !$isHPP && !$isTax && !$isOther;
+        });
+
+        // Group operational by type
+        $biayaUmum = $biayaOperasional->filter(function ($acc) {
+            return preg_match('/^5[- ]?2/', $acc['kode']) ||
+                stripos($acc['nama'], 'umum') !== false ||
+                stripos($acc['nama'], 'administrasi') !== false;
+        });
+
+        $biayaPemasaran = $biayaOperasional->filter(function ($acc) {
+            return preg_match('/^5[- ]?3/', $acc['kode']) ||
+                stripos($acc['nama'], 'pemasaran') !== false ||
+                stripos($acc['nama'], 'marketing') !== false;
+        });
+
+        $biayaPenyusutan = $biayaOperasional->filter(function ($acc) {
+            return preg_match('/^5[- ]?4/', $acc['kode']) ||
+                stripos($acc['nama'], 'penyusutan') !== false ||
+                stripos($acc['nama'], 'depresiasi') !== false;
+        });
+
+        $grouped['operational']['biaya_umum'] = $biayaUmum->values()->all();
+        $grouped['operational']['biaya_pemasaran'] = $biayaPemasaran->values()->all();
+        $grouped['operational']['biaya_penyusutan'] = $biayaPenyusutan->values()->all();
+        $grouped['operational']['total_operasional'] = $biayaOperasional->sum('balance');
+        $grouped['operational']['laba_operasi'] = $grouped['revenue']['laba_kotor'] - $grouped['operational']['total_operasional'];
+
+        // Other income and expenses
+        $pendapatanLain = $income->filter(function ($acc) use ($penjualan) {
+            return !$penjualan->contains('id', $acc['id']);
+        });
+
+        $biayaLain = $expenses->filter(function ($acc) use ($hpp, $biayaOperasional) {
+            $isHPP = $hpp->contains('id', $acc['id']);
+            $isOper = $biayaOperasional->contains('id', $acc['id']);
+            $isTax = preg_match('/^5[- ]?9/', $acc['kode']) ||
+                stripos($acc['nama'], 'pajak') !== false;
+
+            return !$isHPP && !$isOper && !$isTax;
+        });
+
+        $grouped['other']['pendapatan_lain'] = $pendapatanLain->values()->all();
+        $grouped['other']['biaya_lain'] = $biayaLain->values()->all();
+        $grouped['other']['total_other'] = $pendapatanLain->sum('balance') - $biayaLain->sum('balance');
+
+        // Tax calculation
+        $pajak = $expenses->filter(function ($acc) {
+            return preg_match('/^5[- ]?9/', $acc['kode']) ||
+                stripos($acc['nama'], 'pajak') !== false;
+        });
+
+        $grouped['tax']['laba_sebelum_pajak'] = $grouped['operational']['laba_operasi'] + $grouped['other']['total_other'];
+        $grouped['tax']['pajak'] = $pajak->sum('balance');
+        $grouped['tax']['laba_bersih'] = $grouped['tax']['laba_sebelum_pajak'] - $grouped['tax']['pajak'];
+        $grouped['tax']['pajak_accounts'] = $pajak->values()->all();
+
+        return $grouped;
+    }
+
+    /**
      * Export laporan keuangan ke PDF
      *
      * @param  Request $request
@@ -1040,6 +1290,9 @@ class LaporanKeuanganController extends Controller
         $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
         $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
 
+        // Get company information
+        $company = Company::first();
+
         $data = [];
 
         switch ($reportType) {
@@ -1048,10 +1301,18 @@ class LaporanKeuanganController extends Controller
                 $liabilities = $this->getAccountBalance('liability', $tanggalAkhir);
                 $equity = $this->getAccountBalance('equity', $tanggalAkhir);
 
+                // Group accounts into detailed categories
+                $assetsGrouped = $this->groupBalanceSheetAccounts($assets, 'asset');
+                $liabilitiesGrouped = $this->groupBalanceSheetAccounts($liabilities, 'liability');
+                $equityGrouped = $this->groupBalanceSheetAccounts($equity, 'equity');
+
                 $data = [
                     'assets' => $assets,
                     'liabilities' => $liabilities,
                     'equity' => $equity,
+                    'assets_grouped' => $assetsGrouped,
+                    'liabilities_grouped' => $liabilitiesGrouped,
+                    'equity_grouped' => $equityGrouped,
                     'total_assets' => $assets->sum('balance'),
                     'total_liabilities' => $liabilities->sum('balance'),
                     'total_equity' => $equity->sum('balance')
@@ -1062,9 +1323,13 @@ class LaporanKeuanganController extends Controller
                 $income = $this->getAccountBalanceForPeriod('income', $tanggalAwal, $tanggalAkhir);
                 $expenses = $this->getAccountBalanceForPeriod('expense', $tanggalAwal, $tanggalAkhir);
 
+                // Group income and expenses into detailed categories
+                $incomeGrouped = $this->groupIncomeStatementAccounts($income, $expenses);
+
                 $data = [
                     'income' => $income,
                     'expenses' => $expenses,
+                    'income_grouped' => $incomeGrouped,
                     'total_income' => $income->sum('balance'),
                     'total_expenses' => $expenses->sum('balance'),
                     'net_income' => $income->sum('balance') - $expenses->sum('balance')
@@ -1116,7 +1381,8 @@ class LaporanKeuanganController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_keuangan.pdf', [
             'data' => $data,
             'filters' => $filters,
-            'reportType' => $reportType
+            'reportType' => $reportType,
+            'company' => $company
         ]);
 
         // Format tanggal untuk nama file

@@ -318,30 +318,67 @@
                                     {{ number_format($item->jumlah_setelah, 0, ',', '.') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    @if ($item->referensi_tipe == 'transfer_barang' && $item->referensi_id)
-                                        <a href="{{ url('inventaris/transfer/' . $item->referensi_id) }}"
-                                            class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors">
+                                    @if ($item->referensi_tipe == 'work_order' && $item->referensi_id)
+                                        <a href="{{ route('produksi.work-order.show', $item->referensi_id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-indigo-100 text-indigo-800 hover:bg-indigo-200 border border-indigo-300 dark:bg-indigo-800 dark:text-indigo-100 dark:border-indigo-600 dark:hover:bg-indigo-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                                <path fill-rule="evenodd"
+                                                    d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            Work Order #{{ $item->nomor_referensi ?? $item->referensi_id }}
+                                        </a>
+                                    @elseif ($item->referensi_tipe == 'transfer_barang' && $item->referensi_id)
+                                        <a href="{{ route('inventaris.transfer-gudang.show', $item->referensi_id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-300 dark:bg-blue-800 dark:text-blue-100 dark:border-blue-600 dark:hover:bg-blue-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                                            </svg>
                                             Transfer #{{ $item->nomor_referensi ?? $item->referensi_id }}
                                         </a>
                                     @elseif ($item->referensi_tipe == 'penerimaan_barang' && $item->referensi_id)
-                                        <a href="{{ url('inventaris/penerimaan/' . $item->referensi_id) }}"
-                                            class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors">
+                                        <a href="{{ route('pembelian.penerimaan-barang.show', $item->referensi_id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-green-100 text-green-800 hover:bg-green-200 border border-green-300 dark:bg-green-800 dark:text-green-100 dark:border-green-600 dark:hover:bg-green-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                                <path
+                                                    d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                                            </svg>
                                             Penerimaan #{{ $item->nomor_referensi ?? $item->referensi_id }}
                                         </a>
                                     @elseif ($item->referensi_tipe == 'delivery_order' && $item->referensi_id)
-                                        <a href="{{ url('inventaris/delivery-order/' . $item->referensi_id) }}"
-                                            class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-50 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:hover:bg-amber-900/40 transition-colors">
+                                        <a href="{{ route('penjualan.delivery-order.show', $item->referensi_id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:border-amber-600 dark:hover:bg-amber-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+                                                <path
+                                                    d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
+                                            </svg>
                                             DO #{{ $item->nomor_referensi ?? $item->referensi_id }}
                                         </a>
                                     @elseif ($item->referensi_tipe == 'penyesuaian_stok' && $item->referensi_id)
-                                        <a href="{{ url('inventaris/penyesuaian/' . $item->referensi_id) }}"
-                                            class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-400 dark:hover:bg-purple-900/40 transition-colors">
+                                        <a href="{{ route('inventaris.penyesuaian-stok.show', $item->referensi_id) }}"
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-purple-100 text-purple-800 hover:bg-purple-200 border border-purple-300 dark:bg-purple-800 dark:text-purple-100 dark:border-purple-600 dark:hover:bg-purple-700 transition-colors shadow-sm">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5"
+                                                viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z" />
+                                            </svg>
                                             Penyesuaian #{{ $item->nomor_referensi ?? $item->referensi_id }}
                                         </a>
                                     @elseif ($item->referensi_tipe && $item->referensi_id)
                                         <span
-                                            class="inline-flex items-center px-2.5 py-1.5 rounded-lg text-xs font-medium bg-gray-50 text-gray-700 dark:bg-gray-900/20 dark:text-gray-400">
-                                            {{ ucfirst($item->referensi_tipe) }} #{{ $item->referensi_id }}
+                                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-semibold bg-gray-100 text-gray-800 border border-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600">
+                                            {{ ucfirst(str_replace('_', ' ', $item->referensi_tipe)) }}
+                                            #{{ $item->referensi_id }}
                                         </span>
                                     @else
                                         <span class="text-sm text-gray-400 dark:text-gray-500">-</span>

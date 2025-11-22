@@ -89,10 +89,13 @@ class PembayaranHutang extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunHutangUsaha = config('accounting.pembayaran_hutang.hutang_usaha');
-            $akunKasDefault = config('accounting.pembayaran_hutang.kas');
-            $akunBankDefault = config('accounting.pembayaran_hutang.bank');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunHutangUsaha = \App\Models\AccountingConfiguration::get('pembayaran_hutang.hutang_usaha')
+                ?? config('accounting.pembayaran_hutang.hutang_usaha');
+            $akunKasDefault = \App\Models\AccountingConfiguration::get('pembayaran_hutang.kas')
+                ?? config('accounting.pembayaran_hutang.kas');
+            $akunBankDefault = \App\Models\AccountingConfiguration::get('pembayaran_hutang.bank')
+                ?? config('accounting.pembayaran_hutang.bank');
 
             if (!$akunHutangUsaha) {
                 Log::error("Akun hutang usaha untuk jurnal pembayaran hutang belum dikonfigurasi", [
@@ -105,14 +108,7 @@ class PembayaranHutang extends Model
             // Menyiapkan entri jurnal
             $entries = [];
 
-            // Debit: Hutang Usaha
-            $entries[] = [
-                'akun_id' => $akunHutangUsaha,
-                'debit' => $this->jumlah,
-                'kredit' => 0
-            ];
-
-            // Kredit: Kas atau Bank tergantung metode pembayaran
+            // Debit: Kas atau Bank tergantung metode pembayaran (asset berkurang)
             $akunSumber = null;
 
             if ($this->metode_pembayaran == 'kas' || $this->metode_pembayaran == 'tunai') {
@@ -151,6 +147,13 @@ class PembayaranHutang extends Model
 
             $entries[] = [
                 'akun_id' => $akunSumber,
+                'debit' => $this->jumlah,
+                'kredit' => 0
+            ];
+
+            // Kredit: Hutang Usaha (liability berkurang)
+            $entries[] = [
+                'akun_id' => $akunHutangUsaha,
                 'debit' => 0,
                 'kredit' => $this->jumlah
             ];

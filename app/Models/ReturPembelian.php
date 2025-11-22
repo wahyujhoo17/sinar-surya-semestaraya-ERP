@@ -68,10 +68,13 @@ class ReturPembelian extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunHutangUsaha = config('accounting.retur_pembelian.hutang_usaha');
-            $akunPersediaan = config('accounting.retur_pembelian.persediaan');
-            $akunPpnMasukan = config('accounting.retur_pembelian.ppn_masukan');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunHutangUsaha = \App\Models\AccountingConfiguration::get('retur_pembelian.hutang_usaha')
+                ?? config('accounting.retur_pembelian.hutang_usaha');
+            $akunPersediaan = \App\Models\AccountingConfiguration::get('retur_pembelian.persediaan')
+                ?? config('accounting.retur_pembelian.persediaan');
+            $akunPpnMasukan = \App\Models\AccountingConfiguration::get('retur_pembelian.ppn_masukan')
+                ?? config('accounting.retur_pembelian.ppn_masukan');
 
             if (!$akunHutangUsaha || !$akunPersediaan) {
                 Log::error("Akun untuk jurnal retur pembelian belum dikonfigurasi", [

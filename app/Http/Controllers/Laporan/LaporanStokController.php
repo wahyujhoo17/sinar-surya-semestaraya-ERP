@@ -73,30 +73,35 @@ class LaporanStokController extends Controller
             'riwayat_stok.*',
             'gudang.nama as nama_gudang',
             DB::raw('CASE 
-                WHEN riwayat_stok.referensi_tipe = \'transfer_barang\' AND riwayat_stok.jenis = \'transfer\' THEN tb.nomor
-                WHEN riwayat_stok.referensi_tipe = \'penerimaan_barang\' AND riwayat_stok.jenis = \'masuk\' THEN pb.nomor
-                WHEN riwayat_stok.referensi_tipe = \'delivery_order\' AND riwayat_stok.jenis = \'keluar\' THEN delivery_o.nomor
+                WHEN riwayat_stok.referensi_tipe = \'work_order\' THEN wo.nomor
+                WHEN riwayat_stok.referensi_tipe = \'transfer_barang\' THEN tb.nomor
+                WHEN riwayat_stok.referensi_tipe = \'penerimaan_barang\' THEN pb.nomor
+                WHEN riwayat_stok.referensi_tipe = \'delivery_order\' THEN delivery_o.nomor
                 WHEN riwayat_stok.referensi_tipe = \'penyesuaian_stok\' THEN ps.nomor
                 ELSE NULL
                 END as nomor_referensi')
         )
-            ->where('produk_id', $produkId)
+            ->where('riwayat_stok.produk_id', $produkId)
             ->join('gudang', 'riwayat_stok.gudang_id', '=', 'gudang.id')
+            ->leftJoin('work_order as wo', function ($join) {
+                $join->on('riwayat_stok.referensi_id', '=', 'wo.id')
+                    ->whereColumn('riwayat_stok.referensi_tipe', DB::raw("'work_order'"));
+            })
             ->leftJoin('transfer_barang as tb', function ($join) {
                 $join->on('riwayat_stok.referensi_id', '=', 'tb.id')
-                    ->where('riwayat_stok.referensi_tipe', '=', 'transfer_barang');
+                    ->whereColumn('riwayat_stok.referensi_tipe', DB::raw("'transfer_barang'"));
             })
             ->leftJoin('penerimaan_barang as pb', function ($join) {
                 $join->on('riwayat_stok.referensi_id', '=', 'pb.id')
-                    ->where('riwayat_stok.referensi_tipe', '=', 'penerimaan_barang');
+                    ->whereColumn('riwayat_stok.referensi_tipe', DB::raw("'penerimaan_barang'"));
             })
             ->leftJoin('delivery_order as delivery_o', function ($join) {
                 $join->on('riwayat_stok.referensi_id', '=', 'delivery_o.id')
-                    ->where('riwayat_stok.referensi_tipe', '=', 'delivery_order');
+                    ->whereColumn('riwayat_stok.referensi_tipe', DB::raw("'delivery_order'"));
             })
             ->leftJoin('penyesuaian_stok as ps', function ($join) {
                 $join->on('riwayat_stok.referensi_id', '=', 'ps.id')
-                    ->where('riwayat_stok.referensi_tipe', '=', 'penyesuaian_stok');
+                    ->whereColumn('riwayat_stok.referensi_tipe', DB::raw("'penyesuaian_stok'"));
             })
             ->whereBetween('riwayat_stok.created_at', [$tanggalMulai, $tanggalAkhir])
             ->orderBy('riwayat_stok.created_at', 'desc');

@@ -88,10 +88,13 @@ class Pembelian extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunHutangUsaha = config('accounting.pembelian.hutang_usaha');
-            $akunPersediaan = config('accounting.pembelian.persediaan');
-            $akunPpnMasukan = config('accounting.pembelian.ppn_masukan');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunHutangUsaha = \App\Models\AccountingConfiguration::get('pembelian.hutang_usaha') 
+                ?? config('accounting.pembelian.hutang_usaha');
+            $akunPersediaan = \App\Models\AccountingConfiguration::get('pembelian.persediaan') 
+                ?? config('accounting.pembelian.persediaan');
+            $akunPpnMasukan = \App\Models\AccountingConfiguration::get('pembelian.ppn_masuk') 
+                ?? config('accounting.pembelian.ppn_masukan');
 
             if (!$akunHutangUsaha || !$akunPersediaan) {
                 Log::error("Akun untuk jurnal pembelian belum dikonfigurasi", [

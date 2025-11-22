@@ -91,7 +91,7 @@ class Invoice extends Model
         $totalPembayaran = $this->pembayaranPiutang()->sum('jumlah');
         $totalKredit = $this->kredit_terapkan ?? 0;
         $uangMukaTerapkan = $this->uang_muka_terapkan ?? 0;
-        
+
         // Formula: Subtotal + PPN - Uang Muka - Pembayaran - Kredit
         // Atau: Total - Uang Muka - Pembayaran - Kredit
         return $this->total - $totalPembayaran - $totalKredit - $uangMukaTerapkan;
@@ -219,10 +219,14 @@ class Invoice extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunPiutangUsaha = config('accounting.penjualan.piutang_usaha');
-            $akunPendapatanPenjualan = config('accounting.penjualan.pendapatan_penjualan');
-            $akunPpnKeluaran = config('accounting.penjualan.ppn_keluaran');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunPiutangUsaha = \App\Models\AccountingConfiguration::get('penjualan.piutang_usaha')
+                ?? config('accounting.penjualan.piutang_usaha');
+            $akunPendapatanPenjualan = \App\Models\AccountingConfiguration::get('penjualan.penjualan')
+                ?? \App\Models\AccountingConfiguration::get('penjualan.pendapatan_penjualan')
+                ?? config('accounting.penjualan.pendapatan_penjualan');
+            $akunPpnKeluaran = \App\Models\AccountingConfiguration::get('penjualan.ppn_keluaran')
+                ?? config('accounting.penjualan.ppn_keluaran');
 
             if (!$akunPiutangUsaha || !$akunPendapatanPenjualan) {
                 Log::error("Akun untuk jurnal penjualan belum dikonfigurasi", [

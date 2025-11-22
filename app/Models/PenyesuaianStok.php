@@ -53,9 +53,11 @@ class PenyesuaianStok extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunPersediaan = config('accounting.penyesuaian_stok.persediaan');
-            $akunPenyesuaianPersediaan = config('accounting.penyesuaian_stok.penyesuaian_persediaan');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunPersediaan = \App\Models\AccountingConfiguration::get('penyesuaian_stok.persediaan')
+                ?? config('accounting.penyesuaian_stok.persediaan');
+            $akunPenyesuaianPersediaan = \App\Models\AccountingConfiguration::get('penyesuaian_stok.penyesuaian_persediaan')
+                ?? config('accounting.penyesuaian_stok.penyesuaian_persediaan');
 
             if (!$akunPersediaan || !$akunPenyesuaianPersediaan) {
                 Log::error("Akun untuk jurnal penyesuaian stok belum dikonfigurasi", [

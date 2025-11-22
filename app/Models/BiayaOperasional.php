@@ -63,17 +63,21 @@ class BiayaOperasional extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunKas = config('accounting.beban_operasional.kas');
-            $akunBank = config('accounting.beban_operasional.bank');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunKas = \App\Models\AccountingConfiguration::get('beban_operasional.kas') 
+                ?? config('accounting.beban_operasional.kas');
+            $akunBank = \App\Models\AccountingConfiguration::get('beban_operasional.bank') 
+                ?? config('accounting.beban_operasional.bank');
 
             // Mendapatkan akun beban berdasarkan kategori
             $kategori = $this->kategoriBiaya ? strtolower(str_replace(' ', '_', $this->kategoriBiaya->nama)) : 'lainnya';
-            $akunBeban = config("accounting.beban_operasional.beban_{$kategori}");
+            $akunBeban = \App\Models\AccountingConfiguration::get("beban_operasional.beban_{$kategori}") 
+                ?? config("accounting.beban_operasional.beban_{$kategori}");
 
             // Jika tidak ada akun beban spesifik, gunakan akun beban lainnya
             if (!$akunBeban) {
-                $akunBeban = config('accounting.beban_operasional.beban_lainnya');
+                $akunBeban = \App\Models\AccountingConfiguration::get('beban_operasional.beban_lainnya') 
+                    ?? config('accounting.beban_operasional.beban_lainnya');
             }
 
             if (!$akunBeban || (!$akunKas && !$akunBank)) {

@@ -93,12 +93,17 @@ class ReturPenjualan extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunPiutangUsaha = config('accounting.retur_penjualan.piutang_usaha');
-            $akunPendapatanPenjualan = config('accounting.retur_penjualan.pendapatan_penjualan');
-            $akunPersediaan = config('accounting.retur_penjualan.persediaan');
-            $akunHpp = config('accounting.retur_penjualan.hpp');
-            $akunPpnKeluaran = config('accounting.retur_penjualan.ppn_keluaran');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunPiutangUsaha = \App\Models\AccountingConfiguration::get('retur_penjualan.piutang_usaha')
+                ?? config('accounting.retur_penjualan.piutang_usaha');
+            $akunPendapatanPenjualan = \App\Models\AccountingConfiguration::get('retur_penjualan.pendapatan_penjualan')
+                ?? config('accounting.retur_penjualan.pendapatan_penjualan');
+            $akunPersediaan = \App\Models\AccountingConfiguration::get('retur_penjualan.persediaan')
+                ?? config('accounting.retur_penjualan.persediaan');
+            $akunHpp = \App\Models\AccountingConfiguration::get('retur_penjualan.hpp')
+                ?? config('accounting.retur_penjualan.hpp');
+            $akunPpnKeluaran = \App\Models\AccountingConfiguration::get('retur_penjualan.ppn_keluaran')
+                ?? config('accounting.retur_penjualan.ppn_keluaran');
 
             if (!$akunPiutangUsaha || !$akunPendapatanPenjualan || !$akunPersediaan || !$akunHpp) {
                 Log::error("Akun untuk jurnal retur penjualan belum dikonfigurasi", [

@@ -170,7 +170,7 @@
 
                                         <!-- Custom Date Range -->
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                                            x-show="filter.report_type !== 'balance_sheet'">
+                                            x-show="dateType === 'custom' && filter.report_type !== 'balance_sheet'">
                                             <div>
                                                 <label for="tanggal_awal"
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
@@ -189,7 +189,7 @@
                                         </div>
 
                                         <!-- Single Date for Balance Sheet -->
-                                        <div x-show="filter.report_type === 'balance_sheet'">
+                                        <div x-show="dateType === 'custom' && filter.report_type === 'balance_sheet'">
                                             <label for="tanggal_neraca"
                                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
                                                 Neraca</label>

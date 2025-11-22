@@ -91,10 +91,13 @@ class PembayaranPiutang extends Model
     public function createAutomaticJournal()
     {
         try {
-            // Mendapatkan ID akun dari konfigurasi
-            $akunPiutangUsaha = config('accounting.pembayaran_piutang.piutang_usaha');
-            $akunKasDefault = config('accounting.pembayaran_piutang.kas');
-            $akunBankDefault = config('accounting.pembayaran_piutang.bank');
+            // Mendapatkan ID akun dari konfigurasi database (fallback ke config file)
+            $akunPiutangUsaha = \App\Models\AccountingConfiguration::get('pembayaran_piutang.piutang_usaha')
+                ?? config('accounting.pembayaran_piutang.piutang_usaha');
+            $akunKasDefault = \App\Models\AccountingConfiguration::get('pembayaran_piutang.kas')
+                ?? config('accounting.pembayaran_piutang.kas');
+            $akunBankDefault = \App\Models\AccountingConfiguration::get('pembayaran_piutang.bank')
+                ?? config('accounting.pembayaran_piutang.bank');
 
             if (!$akunPiutangUsaha) {
                 Log::error("Akun piutang usaha untuk jurnal pembayaran piutang belum dikonfigurasi", [
