@@ -17,14 +17,9 @@ class COAController extends Controller
      */
     public function index()
     {
-        // Mengambil data akun dengan relasi parent dan children
+        // Mengambil data akun dengan relasi parent dan children (recursive unlimited depth)
         $akunRootLevel = AkunAkuntansi::whereNull('parent_id')
-            ->with(['children' => function ($query) {
-                $query->orderBy('kode', 'asc')
-                    ->with(['children' => function ($q) {
-                        $q->orderBy('kode', 'asc');
-                    }]);
-            }])
+            ->with('childrenRecursive') // Load semua level children
             ->orderBy('kode', 'asc')
             ->get();
 
@@ -43,7 +38,8 @@ class COAController extends Controller
 
     /**
      * Menampilkan form untuk membuat akun baru
-     */    public function create()
+     */
+    public function create()
     {
         // Mengambil semua akun untuk digunakan sebagai parent
         $allAccounts = AkunAkuntansi::orderBy('kode', 'asc')->get();

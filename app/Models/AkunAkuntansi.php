@@ -27,7 +27,12 @@ class AkunAkuntansi extends Model
 
     public function children()
     {
-        return $this->hasMany(AkunAkuntansi::class, 'parent_id');
+        return $this->hasMany(AkunAkuntansi::class, 'parent_id')->orderBy('kode');
+    }
+
+    public function childrenRecursive()
+    {
+        return $this->children()->with('childrenRecursive');
     }
 
     public function jurnalEntries()
