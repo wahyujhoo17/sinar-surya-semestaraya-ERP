@@ -20,7 +20,16 @@
                     Kelola jurnal penyesuaian akhir periode dan koreksi pencatatan akuntansi
                 </p>
             </div>
-            <div class="mt-4 md:mt-0 flex space-x-2">
+            <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                <a href="{{ route('keuangan.jurnal-penyesuaian-persediaan.index') }}"
+                    class="inline-flex items-center px-4 py-2 border-2 border-green-600 dark:border-green-500 rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200">
+                    <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Kalibrasi Persediaan
+                </a>
                 <a href="{{ route('keuangan.jurnal-penyesuaian.create') }}"
                     class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
                     <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
@@ -30,6 +39,39 @@
                     </svg>
                     Buat Jurnal Penyesuaian
                 </a>
+            </div>
+        </div>
+
+        {{-- Info Box for Kalibrasi Persediaan --}}
+        <div class="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 p-4 mb-6 rounded-r-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <p class="text-sm font-medium text-green-800 dark:text-green-400">
+                        💡 Perlu kalibrasi nilai persediaan (1120)?
+                    </p>
+                    <p class="mt-1 text-sm text-green-700 dark:text-green-300">
+                        Gunakan fitur <strong>Kalibrasi Persediaan</strong> untuk sinkronisasi otomatis nilai persediaan
+                        akuntansi dengan nilai fisik di gudang.
+                        Cocok untuk setup awal sistem atau koreksi setelah stock opname.
+                    </p>
+                    <div class="mt-2">
+                        <a href="{{ route('keuangan.jurnal-penyesuaian-persediaan.index') }}"
+                            class="inline-flex items-center text-sm font-medium text-green-700 dark:text-green-400 hover:text-green-600 dark:hover:text-green-300 underline">
+                            <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                            Buka Kalibrasi Persediaan
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 

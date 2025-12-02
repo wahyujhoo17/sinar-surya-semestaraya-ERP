@@ -665,6 +665,13 @@ Route::middleware(['auth'])->group(function () {
         Route::put('jurnal-penyesuaian/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'update'])->name('jurnal-penyesuaian.update');
         Route::delete('jurnal-penyesuaian/{no_referensi}', [App\Http\Controllers\Keuangan\JurnalPenyesuaianController::class, 'destroy'])->name('jurnal-penyesuaian.destroy');
 
+        // Jurnal Penyesuaian Persediaan Routes (Kalibrasi Persediaan)
+        // Note: More specific routes must come before general routes
+        Route::get('jurnal-penyesuaian-persediaan/history', [App\Http\Controllers\Keuangan\JurnalPenyesuaianPersediaanController::class, 'history'])->name('jurnal-penyesuaian-persediaan.history');
+        Route::get('jurnal-penyesuaian-persediaan/export', [App\Http\Controllers\Keuangan\JurnalPenyesuaianPersediaanController::class, 'export'])->name('jurnal-penyesuaian-persediaan.export');
+        Route::post('jurnal-penyesuaian-persediaan/sync', [App\Http\Controllers\Keuangan\JurnalPenyesuaianPersediaanController::class, 'sync'])->name('jurnal-penyesuaian-persediaan.sync');
+        Route::get('jurnal-penyesuaian-persediaan', [App\Http\Controllers\Keuangan\JurnalPenyesuaianPersediaanController::class, 'index'])->name('jurnal-penyesuaian-persediaan.index');
+
         // Jurnal Penutup Routes
         Route::get('jurnal-penutup', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'index'])->name('jurnal-penutup.index');
         Route::get('jurnal-penutup/create', [App\Http\Controllers\Keuangan\JurnalPenutupController::class, 'create'])->name('jurnal-penutup.create');
