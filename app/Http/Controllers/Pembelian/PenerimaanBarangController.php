@@ -12,9 +12,13 @@ use App\Models\Supplier;
 use App\Models\StokProduk;
 use App\Models\RiwayatStok;
 use App\Models\LogAktivitas;
+use App\Models\JurnalUmum;
+use App\Models\AkunAkuntansi;
+use App\Models\AccountingConfiguration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PenerimaanBarangController extends Controller
 {
@@ -233,6 +237,158 @@ class PenerimaanBarangController extends Controller
     }
 
     /**
+     * Create automatic journal entry for purchase receipt
+     * 
+     * Jurnal yang dibuat:
+     * Debit: 50001 - Pembelian (untuk HPP)
+     * Debit: 1130 - PPN Masukan (jika ada PPN)
+     * Kredit: 2111 - Hutang Usaha
+     */
+    private function createJournalForPurchaseReceipt($penerimaan, $po)
+    {
+        try {
+            // Get accounting configurations for PERPETUAL system
+            $configPersediaan = AccountingConfiguration::where('transaction_type', 'pembelian')
+                ->where('account_key', 'persediaan_pembelian')
+                ->first();
+
+            // Fallback to old 'pembelian' key if new key not found
+            if (!$configPersediaan || !$configPersediaan->akun_id) {
+                $configPersediaan = AccountingConfiguration::where('transaction_type', 'pembelian')
+                    ->where('account_key', 'pembelian')
+                    ->first();
+            }
+
+            $configHutang = AccountingConfiguration::where('transaction_type', 'pembelian')
+                ->where('account_key', 'hutang_usaha')
+                ->first();
+
+            $configPPN = AccountingConfiguration::where('transaction_type', 'pembelian')
+                ->where('account_key', 'ppn_masuk')
+                ->first();
+
+            // Validate required accounts
+            if (!$configPersediaan || !$configPersediaan->akun_id) {
+                Log::warning('Akun Persediaan/Pembelian tidak dikonfigurasi, skip auto-journal', [
+                    'penerimaan_id' => $penerimaan->id
+                ]);
+                return;
+            }
+
+            if (!$configHutang || !$configHutang->akun_id) {
+                Log::warning('Akun Hutang Usaha tidak dikonfigurasi, skip auto-journal', [
+                    'penerimaan_id' => $penerimaan->id
+                ]);
+                return;
+            }
+
+            // Calculate total for this receipt
+            $totalPembelian = 0;
+            foreach ($penerimaan->details as $detail) {
+                // Get harga from PO detail
+                $poDetail = $po->details->where('id', $detail->po_detail_id)->first();
+                if ($poDetail) {
+                    $totalPembelian += $detail->quantity * $poDetail->harga;
+                }
+            }
+
+            // Calculate PPN if applicable
+            $totalPPN = 0;
+            if ($po->ppn > 0) {
+                // Calculate PPN proportional to received items
+                $ppnPersentase = $po->ppn / 100;
+                $totalPPN = $totalPembelian * $ppnPersentase;
+            }
+
+            $totalHutang = $totalPembelian + $totalPPN;
+
+            // Generate journal reference number
+            $noReferensi = 'GR-' . $penerimaan->nomor . '-' . date('YmdHis');
+
+            $keterangan = "Penerimaan Barang {$penerimaan->nomor} dari PO {$po->nomor} - Supplier: " . ($po->supplier ? $po->supplier->nama : 'N/A');
+
+            // Create journal entries
+            $journalEntries = [];
+
+            // 1. DEBIT: Persediaan (PERPETUAL SYSTEM)
+            $journalEntries[] = [
+                'tanggal' => $penerimaan->tanggal,
+                'no_referensi' => $noReferensi,
+                'akun_id' => $configPersediaan->akun_id,
+                'debit' => $totalPembelian,
+                'kredit' => 0,
+                'keterangan' => $keterangan,
+                'jenis_jurnal' => 'umum',
+                'sumber' => 'penerimaan_barang',
+                'ref_type' => 'App\Models\PenerimaanBarang',
+                'ref_id' => $penerimaan->id,
+                'user_id' => Auth::id(),
+                'is_posted' => true,
+                'posted_at' => now(),
+                'posted_by' => Auth::id(),
+            ];
+
+            // 2. DEBIT: PPN Masukan (if applicable)
+            if ($totalPPN > 0 && $configPPN && $configPPN->akun_id) {
+                $journalEntries[] = [
+                    'tanggal' => $penerimaan->tanggal,
+                    'no_referensi' => $noReferensi,
+                    'akun_id' => $configPPN->akun_id,
+                    'debit' => $totalPPN,
+                    'kredit' => 0,
+                    'keterangan' => "PPN Masukan {$po->ppn}% - " . $keterangan,
+                    'jenis_jurnal' => 'umum',
+                    'sumber' => 'penerimaan_barang',
+                    'ref_type' => 'App\Models\PenerimaanBarang',
+                    'ref_id' => $penerimaan->id,
+                    'user_id' => Auth::id(),
+                    'is_posted' => true,
+                    'posted_at' => now(),
+                    'posted_by' => Auth::id(),
+                ];
+            }
+
+            // 3. KREDIT: Hutang Usaha
+            $journalEntries[] = [
+                'tanggal' => $penerimaan->tanggal,
+                'no_referensi' => $noReferensi,
+                'akun_id' => $configHutang->akun_id,
+                'debit' => 0,
+                'kredit' => $totalHutang,
+                'keterangan' => $keterangan,
+                'jenis_jurnal' => 'umum',
+                'sumber' => 'penerimaan_barang',
+                'ref_type' => 'App\Models\PenerimaanBarang',
+                'ref_id' => $penerimaan->id,
+                'user_id' => Auth::id(),
+                'is_posted' => true,
+                'posted_at' => now(),
+                'posted_by' => Auth::id(),
+            ];
+
+            // Insert all journal entries
+            foreach ($journalEntries as $entry) {
+                JurnalUmum::create($entry);
+            }
+
+            Log::info('Auto-journal created for purchase receipt', [
+                'penerimaan_id' => $penerimaan->id,
+                'no_referensi' => $noReferensi,
+                'total_pembelian' => $totalPembelian,
+                'total_ppn' => $totalPPN,
+                'total_hutang' => $totalHutang
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create auto-journal for purchase receipt', [
+                'penerimaan_id' => $penerimaan->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't throw exception, just log it - transaction should continue
+        }
+    }
+
+    /**
      * Tampilkan form penerimaan barang (pilih PO yang belum selesai)
      */
     public function create(Request $request)
@@ -357,6 +513,11 @@ class PenerimaanBarangController extends Controller
 
             $this->logUserAktivitas('tambah', 'penerimaan_barang', $penerimaan->id, 'Membuat penerimaan barang: ' . $penerimaan->nomor);
             $this->logUserAktivitas('tambah', 'purchase_order', $po->id, 'Membuat penerimaan barang: ' . $penerimaan->nomor);
+
+            // Create automatic journal entry for this purchase receipt
+            // Load details relation for journal creation
+            $penerimaan->load('details');
+            $this->createJournalForPurchaseReceipt($penerimaan, $po);
 
             DB::commit();
 

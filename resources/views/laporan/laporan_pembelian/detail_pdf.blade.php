@@ -16,6 +16,46 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
+            padding-bottom: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .company-logo {
+            max-width: 100px;
+            max-height: 80px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .company-info {
+            text-align: center;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 3px;
+        }
+
+        .report-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .header h1 {

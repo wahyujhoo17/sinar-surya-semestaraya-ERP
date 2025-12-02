@@ -21,54 +21,42 @@
 
         .header {
             margin-bottom: 10px;
+            text-align: center;
         }
 
-        .header table {
-            width: 100%;
-            border-collapse: collapse;
+        .logo-container {
+            margin-bottom: 5px;
         }
 
-        .logo-cell {
-            width: 50px;
-            vertical-align: middle;
-            padding-right: 8px;
-        }
-
-        .logo {
-            width: 45px;
+        .company-logo {
+            max-width: 60px;
+            max-height: 50px;
             height: auto;
-        }
-
-        .header-text {
-            vertical-align: middle;
         }
 
         .company-name {
             font-size: 12px;
             font-weight: bold;
             color: #1e293b;
-            margin: 0 0 2px 0;
+            margin: 0;
         }
 
         .report-title {
             font-size: 10px;
             font-weight: bold;
             color: #334155;
-            margin: 0;
+            margin: 2px 0;
         }
 
         .report-period {
             font-size: 7px;
             color: #64748b;
-            margin: 2px 0 0 0;
         }
 
         .print-info {
-            text-align: right;
-            vertical-align: middle;
-        }
-
-        .print-date {
+            position: absolute;
+            top: 0;
+            right: 0;
             font-size: 6.5px;
             color: #64748b;
         }
@@ -330,30 +318,41 @@
 <body>
     <!-- Header -->
     <div class="header">
-        <table>
-            <tr>
-                <td class="logo-cell">
-                    @php
-                        $logoPath = public_path('img/SemestaPro.PNG');
-                        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
-                    @endphp
-                    @if ($logoData)
-                        <img src="data:image/png;base64,{{ $logoData }}" alt="Logo" class="logo">
-                    @endif
-                </td>
-                <td class="header-text">
-                    <h1 class="company-name">SINAR SURYA SEMESTARAYA</h1>
-                    <h2 class="report-title">LAPORAN PENJUALAN SANGAT DETAIL</h2>
-                    <p class="report-period">
-                        Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'])->format('d M Y') }} -
-                        {{ \Carbon\Carbon::parse($filters['tanggal_akhir'])->format('d M Y') }}
-                    </p>
-                </td>
-                <td class="print-info">
-                    <div class="print-date">Dicetak: {{ now()->format('d/m/Y H:i') }}</div>
-                </td>
-            </tr>
-        </table>
+        @php
+            $logoSrc = null;
+            if (isset($company) && $company && $company->logo) {
+                $logoPath = public_path('storage/' . $company->logo);
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoMimeType = mime_content_type($logoPath);
+                    $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
+                }
+            }
+
+            if (!$logoSrc) {
+                $defaultLogoPath = public_path('img/logo-sinar-surya.png');
+                if (file_exists($defaultLogoPath)) {
+                    $logoData = base64_encode(file_get_contents($defaultLogoPath));
+                    $logoSrc = 'data:image/png;base64,' . $logoData;
+                }
+            }
+        @endphp
+
+        @if ($logoSrc)
+            <div class="logo-container">
+                <img src="{{ $logoSrc }}" alt="Logo" class="company-logo">
+            </div>
+        @endif
+
+        <h1 class="company-name">{{ $company->nama ?? 'SINAR SURYA SEMESTARAYA' }}</h1>
+        <h2 class="report-title">LAPORAN PENJUALAN SANGAT DETAIL</h2>
+        <p class="report-period">
+            Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'])->format('d M Y') }} -
+            {{ \Carbon\Carbon::parse($filters['tanggal_akhir'])->format('d M Y') }}
+        </p>
+        <div class="print-info">
+            Dicetak: {{ now()->format('d/m/Y H:i') }}
+        </div>
     </div>
 
     <div class="divider"></div>

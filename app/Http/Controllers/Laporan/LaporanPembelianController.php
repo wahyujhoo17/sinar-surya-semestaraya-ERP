@@ -267,6 +267,9 @@ class LaporanPembelianController extends Controller
             });
         }
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Pilih view dan data berdasarkan level detail
         if ($detailLevel === 'simple') {
             // Level Simple: Per transaksi dengan nomor faktur dan pembuat
@@ -293,6 +296,7 @@ class LaporanPembelianController extends Controller
                 'totalPembelian' => $dataPembelian->sum('total'),
                 'totalDibayar' => $dataPembelian->sum('total_bayar'),
                 'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_pembelian.pdf_simple';
@@ -329,6 +333,7 @@ class LaporanPembelianController extends Controller
                 'totalPembelian' => $dataPembelian->sum('total'),
                 'totalDibayar' => $dataPembelian->sum('total_bayar'),
                 'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_pembelian.pdf_sangat_detail';
@@ -358,6 +363,7 @@ class LaporanPembelianController extends Controller
                 'totalPembelian' => $dataPembelian->sum('total'),
                 'totalDibayar' => $dataPembelian->sum('total_bayar'),
                 'sisaPembayaran' => $dataPembelian->sum('total') - $dataPembelian->sum('total_bayar'),
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_pembelian.pdf_detail';
@@ -431,8 +437,14 @@ class LaporanPembelianController extends Controller
         $pembelian = PurchaseOrder::with(['supplier', 'details.produk.satuan', 'user'])
             ->findOrFail($id);
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_pembelian.detail_pdf', compact('pembelian'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_pembelian.detail_pdf', [
+            'pembelian' => $pembelian,
+            'company' => $company
+        ]);
 
         // Format for filename
         $fileName = "detail_pembelian_{$pembelian->nomor}_{$id}.pdf";

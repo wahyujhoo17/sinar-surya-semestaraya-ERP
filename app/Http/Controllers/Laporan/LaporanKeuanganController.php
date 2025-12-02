@@ -227,37 +227,224 @@ class LaporanKeuanganController extends Controller
             $totalOtherIncome = $otherIncome->sum('balance');
             $totalRevenue = $finalSalesRevenue + $totalOtherIncome;
 
-            // === COST OF GOODS SOLD ===
-            // Get ONLY COGS from journal entries (proper accounting)
-            $cogsAccounts = AkunAkuntansi::where('kategori', 'expense')
+            // === COST OF GOODS SOLD (HARGA POKOK PENJUALAN) ===
+            // Detailed breakdown: Persediaan Awal + Pembelian - Persediaan Akhir
+
+            // 1. Get Persediaan (Inventory) accounts from database configuration first
+            $persediaanConfig = \App\Models\AccountingConfiguration::where('transaction_type', 'laporan_keuangan')
+                ->where('account_key', 'persediaan')
+                ->first();
+
+            $persediaanAccounts = collect();
+
+            if ($persediaanConfig && $persediaanConfig->akun_id) {
+                // Use configured account from database
+                $persediaanAkun = AkunAkuntansi::find($persediaanConfig->akun_id);
+                if ($persediaanAkun && $persediaanAkun->is_active) {
+                    $persediaanAccounts->push($persediaanAkun);
+                }
+            }
+
+            // If no configuration or account not found, fallback to pattern matching
+            if ($persediaanAccounts->isEmpty()) {
+                $persediaanAccounts = AkunAkuntansi::where('kategori', 'asset')
+                    ->where('is_active', true)
+                    ->where(function ($q) {
+                        $q->where('nama', 'LIKE', '%persediaan%')
+                            ->orWhere('nama', 'LIKE', '%inventory%')
+                            ->orWhere('kode', 'LIKE', '112%')
+                            ->orWhere('kode', 'LIKE', '1120%')
+                            ->orWhere('kode', 'LIKE', '11200%');
+                    })
+                    ->get();
+            }
+
+            // Calculate Persediaan Awal (Beginning Inventory)
+            $persediaanAwal = 0;
+            $persediaanAwalDetails = [];
+            foreach ($persediaanAccounts as $akun) {
+                // Get balance before period start
+                $saldoAwal = JurnalUmum::where('akun_id', $akun->id)
+                    ->where('tanggal', '<', $tanggalAwal)
+                    ->where('is_posted', true)
+                    ->sum(DB::raw('debit - kredit'));
+
+                if ($saldoAwal != 0) {
+                    $persediaanAwal += $saldoAwal;
+                    $persediaanAwalDetails[] = [
+                        'id' => $akun->id,
+                        'kode' => $akun->kode,
+                        'nama' => $akun->nama,
+                        'balance' => $saldoAwal
+                    ];
+                }
+            }
+
+            Log::info('Persediaan Accounts Used', [
+                'configured_from_db' => $persediaanConfig ? 'Yes (ID: ' . $persediaanConfig->akun_id . ')' : 'No',
+                'accounts_found' => $persediaanAccounts->map(function ($a) {
+                    return ['id' => $a->id, 'kode' => $a->kode, 'nama' => $a->nama];
+                })->toArray(),
+                'persediaan_awal' => $persediaanAwal
+            ]);
+
+            // 2. Calculate Pembelian during period
+            // Check system type from configuration
+            $pembelianConfig = \App\Models\AccountingConfiguration::where('transaction_type', 'pembelian')
+                ->whereIn('account_key', ['persediaan_pembelian', 'pembelian'])
+                ->first();
+
+            $pembelian = 0;
+            $pembelianDetails = [];
+            $pembelianAccounts = collect();
+            $usePurchaseAccount = false;
+            $isPerpetual = false;
+
+            // Determine if using Perpetual or Periodic system
+            if ($pembelianConfig && $pembelianConfig->account_key === 'persediaan_pembelian') {
+                $isPerpetual = true;
+            }
+
+            // PERPETUAL SYSTEM: Show only DEBIT (purchases) for display purposes
+            // In perpetual system, purchases increase inventory (DEBIT)
+            // COGS/HPP is recorded separately in account 5100
+            if ($isPerpetual) {
+                foreach ($persediaanAccounts as $akun) {
+                    // Get only DEBIT (purchases) during period for display
+                    $pembelianDebit = JurnalUmum::where('akun_id', $akun->id)
+                        ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+                        ->where('is_posted', true)
+                        ->sum('debit');
+
+                    // Add to total pembelian
+                    $pembelian += $pembelianDebit;
+
+                    // Show pembelian line if there are purchases
+                    if ($pembelianDebit > 0) {
+                        $pembelianDetails[] = [
+                            'id' => $akun->id,
+                            'kode' => $akun->kode,
+                            'nama' => 'Pembelian',
+                            'balance' => $pembelianDebit
+                        ];
+                    }
+                }
+            }
+            // PERIODIC SYSTEM: Use dedicated Purchase account (50001)
+            else if ($pembelianConfig && $pembelianConfig->akun_id) {
+                $pembelianAkun = AkunAkuntansi::find($pembelianConfig->akun_id);
+                if ($pembelianAkun) {
+                    $pembelianAccounts->push($pembelianAkun);
+
+                    $jumlahPembelian = JurnalUmum::where('akun_id', $pembelianAkun->id)
+                        ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+                        ->where('is_posted', true)
+                        ->sum(DB::raw('debit - kredit'));
+
+                    if ($jumlahPembelian > 0) {
+                        $pembelian = $jumlahPembelian;
+                        $pembelianDetails[] = [
+                            'id' => $pembelianAkun->id,
+                            'kode' => $pembelianAkun->kode,
+                            'nama' => $pembelianAkun->nama . ' (Sistem Periodik)',
+                            'balance' => $jumlahPembelian
+                        ];
+                        $usePurchaseAccount = true;
+                    }
+                }
+            }
+
+            // 3. Calculate Persediaan Akhir (Ending Inventory)
+            $persediaanAkhir = 0;
+            $persediaanAkhirDetails = [];
+            foreach ($persediaanAccounts as $akun) {
+                // Get balance up to period end
+                $saldoAkhir = JurnalUmum::where('akun_id', $akun->id)
+                    ->where('tanggal', '<=', $tanggalAkhir)
+                    ->where('is_posted', true)
+                    ->sum(DB::raw('debit - kredit'));
+
+                if ($saldoAkhir != 0) {
+                    $persediaanAkhir += $saldoAkhir;
+                    $persediaanAkhirDetails[] = [
+                        'id' => $akun->id,
+                        'kode' => $akun->kode,
+                        'nama' => $akun->nama,
+                        'balance' => $saldoAkhir
+                    ];
+                }
+            }
+
+            // 4. Calculate HPP Lainnya (Other COGS from journal)
+            $hppLainAccounts = AkunAkuntansi::where('kategori', 'expense')
                 ->where('is_active', true)
                 ->where(function ($q) {
                     $q->where('nama', 'LIKE', '%harga pokok%')
                         ->orWhere('nama', 'LIKE', '%cost of goods%')
                         ->orWhere('nama', 'LIKE', '%cogs%')
                         ->orWhere('nama', 'LIKE', '%hpp%')
-                        ->orWhere('kode', 'LIKE', '51%') // Standard COGS account codes
-                        ->orWhere('kode', 'LIKE', '5-1%')
+                        ->orWhere('nama', 'LIKE', '%biaya produksi%')
+                        ->orWhere('kode', 'LIKE', '510%')
                         ->orWhere('kode', 'LIKE', '5100%')
-                        ->orWhere('kode', 'LIKE', '5110%')
-                        ->orWhere('kode', 'LIKE', '5120%')
-                        ->orWhere('kode', 'LIKE', '5130%');
+                        ->orWhere('kode', 'LIKE', '5101%')
+                        ->orWhere('kode', 'LIKE', '5102%');
                 })
-                ->pluck('id');
+                ->whereNotIn('id', $pembelianAccounts->pluck('id'))
+                ->get();
 
-            $totalCogs = 0;
-            if ($cogsAccounts->isNotEmpty()) {
-                $totalCogs = JurnalUmum::whereIn('akun_id', $cogsAccounts)
+            $hppLain = 0;
+            $hppLainDetails = [];
+            foreach ($hppLainAccounts as $akun) {
+                $jumlahHppLain = JurnalUmum::where('akun_id', $akun->id)
                     ->whereBetween('tanggal', [$tanggalAwal, $tanggalAkhir])
+                    ->where('is_posted', true)
                     ->sum(DB::raw('debit - kredit'));
+
+                if ($jumlahHppLain != 0) {
+                    $hppLain += $jumlahHppLain;
+                    $hppLainDetails[] = [
+                        'id' => $akun->id,
+                        'kode' => $akun->kode,
+                        'nama' => $akun->nama,
+                        'balance' => $jumlahHppLain
+                    ];
+                }
+            }
+
+            // 5. Calculate totals
+            $jumlahPersediaan = $persediaanAwal + $pembelian;
+
+            // For Perpetual System: HPP comes directly from HPP account (5100)
+            // The formula (Persediaan Awal + Pembelian - Persediaan Akhir) should equal HPP from journal
+            $totalCogs = $hppLain; // HPP from journal (akun 5100 - Harga Pokok Penjualan)
+
+            // Alternative calculation for verification (should match $hppLain in perpetual system)
+            $calculatedCogs = $persediaanAwal + $pembelian - $persediaanAkhir;
+
+            // Fix floating point -0 issue
+            if (abs($totalCogs) < 0.01) {
+                $totalCogs = 0;
             }
 
             // Log COGS calculation
-            Log::info('COGS Calculation', [
+            Log::info('COGS Calculation (Detailed)', [
                 'period' => [$tanggalAwal->format('Y-m-d'), $tanggalAkhir->format('Y-m-d')],
-                'cogs_accounts_count' => $cogsAccounts->count(),
-                'total_cogs' => $totalCogs
+                'persediaan_awal' => $persediaanAwal,
+                'pembelian' => $pembelian,
+                'jumlah_persediaan' => $jumlahPersediaan,
+                'persediaan_akhir' => $persediaanAkhir,
+                'hpp_from_journal' => $hppLain,
+                'calculated_cogs_formula' => $calculatedCogs,
+                'total_cogs' => $totalCogs,
+                'note' => 'Perpetual System: HPP taken from journal account 5100'
             ]);
+
+            // For backward compatibility, collect all COGS account IDs
+            $cogsAccounts = collect(array_merge(
+                $persediaanAccounts->pluck('id')->toArray(),
+                $pembelianAccounts->pluck('id')->toArray(),
+                $hppLainAccounts->pluck('id')->toArray()
+            ))->unique();
 
             // === GROSS PROFIT ===
             $grossProfit = $totalRevenue - $totalCogs;
@@ -793,7 +980,15 @@ class LaporanKeuanganController extends Controller
                         'total_revenue' => $totalRevenue
                     ],
                     'cogs' => [
-                        'cogs_accounts' => $cogsAccounts,
+                        'persediaan_awal' => $persediaanAwalDetails,
+                        'persediaan_awal_total' => $persediaanAwal,
+                        'pembelian' => $pembelianDetails,
+                        'pembelian_total' => $pembelian,
+                        'jumlah_persediaan' => $jumlahPersediaan,
+                        'persediaan_akhir' => $persediaanAkhirDetails,
+                        'persediaan_akhir_total' => $persediaanAkhir,
+                        'hpp_lain' => $hppLainDetails,
+                        'hpp_lain_total' => $hppLain,
                         'total_cogs' => $totalCogs
                     ],
                     'operating_expenses' => [
@@ -1320,20 +1515,28 @@ class LaporanKeuanganController extends Controller
                 break;
 
             case 'income_statement':
-                $income = $this->getAccountBalanceForPeriod('income', $tanggalAwal, $tanggalAkhir);
-                $expenses = $this->getAccountBalanceForPeriod('expense', $tanggalAwal, $tanggalAkhir);
+                // Use the SAME logic as getIncomeStatement() method to ensure consistency
+                $incomeStatementResponse = $this->getIncomeStatement($request);
+                $incomeStatementData = json_decode($incomeStatementResponse->getContent(), true);
 
-                // Group income and expenses into detailed categories
-                $incomeGrouped = $this->groupIncomeStatementAccounts($income, $expenses);
-
-                $data = [
-                    'income' => $income,
-                    'expenses' => $expenses,
-                    'income_grouped' => $incomeGrouped,
-                    'total_income' => $income->sum('balance'),
-                    'total_expenses' => $expenses->sum('balance'),
-                    'net_income' => $income->sum('balance') - $expenses->sum('balance')
-                ];
+                if ($incomeStatementData['success']) {
+                    $data = $incomeStatementData['data'];
+                } else {
+                    // Fallback if there's an error
+                    $data = [
+                        'revenue' => [],
+                        'cogs' => [],
+                        'operating_expenses' => [],
+                        'totals' => [
+                            'total_revenue' => 0,
+                            'total_cogs' => 0,
+                            'gross_profit' => 0,
+                            'total_operating_expenses' => 0,
+                            'operating_income' => 0,
+                            'net_income' => 0
+                        ]
+                    ];
+                }
                 break;
 
             case 'cash_flow':

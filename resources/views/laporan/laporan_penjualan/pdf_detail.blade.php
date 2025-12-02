@@ -382,15 +382,34 @@
             <tr>
                 <td class="logo-cell">
                     @php
-                        $logoPath = public_path('img/SemestaPro.PNG');
-                        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+                        $logoSrc = null;
+
+                        // Try company logo first
+                        if (isset($company) && $company && $company->logo) {
+                            $logoPath = public_path('storage/' . $company->logo);
+                            if (file_exists($logoPath)) {
+                                $logoData = base64_encode(file_get_contents($logoPath));
+                                $logoMimeType = mime_content_type($logoPath);
+                                $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
+                            }
+                        }
+
+                        // Fallback to default logo
+                        if (!$logoSrc) {
+                            $defaultLogoPath = public_path('img/logo-sinar-surya.png');
+                            if (file_exists($defaultLogoPath)) {
+                                $defaultLogoData = base64_encode(file_get_contents($defaultLogoPath));
+                                $defaultLogoMimeType = mime_content_type($defaultLogoPath);
+                                $logoSrc = 'data:' . $defaultLogoMimeType . ';base64,' . $defaultLogoData;
+                            }
+                        }
                     @endphp
-                    @if ($logoData)
-                        <img src="data:image/png;base64,{{ $logoData }}" alt="Logo" class="logo">
+                    @if ($logoSrc)
+                        <img src="{{ $logoSrc }}" alt="Logo {{ $company->nama ?? 'Perusahaan' }}" class="logo">
                     @endif
                 </td>
                 <td class="header-text">
-                    <h1 class="company-name">SINAR SURYA SEMESTARAYA</h1>
+                    <h1 class="company-name">{{ $company->nama ?? 'PT SINAR SURYA SEMESTARAYA' }}</h1>
                     <h2 class="report-title">LAPORAN PENJUALAN RINCIAN</h2>
                     <p class="report-period">
                         Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'])->format('d M Y') }} -

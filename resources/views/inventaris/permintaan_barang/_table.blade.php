@@ -43,14 +43,18 @@
                     <td
                         class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-200 border-b border-gray-200 dark:border-gray-700">
                         @if ($pb->salesOrder)
-                            @if (auth()->user()->hasPermission('sales_order.view'))
+                            @if (auth()->user()->hasPermission('sales_order.view') ||
+                                    auth()->user()->hasRole('admin') ||
+                                    auth()->user()->hasRole('manager_penjualan') ||
+                                    auth()->user()->hasRole('admin_penjualan'))
                                 <a href="{{ route('penjualan.sales-order.show', $pb->sales_order_id) }}"
                                     class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 font-medium hover:underline transition-all duration-300"
                                     data-tooltip="Lihat Sales Order">
                                     {{ $pb->salesOrder->nomor }}
                                 </a>
                             @else
-                                <span class="text-gray-400 dark:text-gray-500 cursor-not-allowed" data-tooltip="Tidak Ada Akses">
+                                <span class="text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                    data-tooltip="Tidak Ada Akses">
                                     {{ $pb->salesOrder->nomor }}
                                 </span>
                             @endif

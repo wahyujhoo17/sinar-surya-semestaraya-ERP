@@ -16,8 +16,52 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #ddd;
+            padding-bottom: 20px;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            gap: 15px;
+            flex-wrap: nowrap;
+        }
+
+        .company-logo {
+            max-width: 100px;
+            max-height: 80px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            flex-shrink: 0;
+        }
+
+        .company-info {
+            text-align: center;
+        }
+
+        .company-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a202c;
+            margin-bottom: 3px;
+        }
+
+        .company-tagline {
+            font-size: 11px;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .report-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #2d3748;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .header h1 {
@@ -146,8 +190,42 @@
 
 <body>
     <div class="header">
-        <h1>LAPORAN PRODUKSI</h1>
-        <p>PT SINAR SURYA</p>
+        @php
+            $logoSrc = null;
+
+            // Try company logo first
+            if (isset($company) && $company && $company->logo) {
+                $logoPath = public_path('storage/' . $company->logo);
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoMimeType = mime_content_type($logoPath);
+                    $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
+                }
+            }
+
+            // Fallback to default logo
+            if (!$logoSrc) {
+                $defaultLogoPath = public_path('img/logo-sinar-surya.png');
+                if (file_exists($defaultLogoPath)) {
+                    $defaultLogoData = base64_encode(file_get_contents($defaultLogoPath));
+                    $defaultLogoMimeType = mime_content_type($defaultLogoPath);
+                    $logoSrc = 'data:' . $defaultLogoMimeType . ';base64,' . $defaultLogoData;
+                }
+            }
+        @endphp
+
+        <div class="logo-container">
+            @if ($logoSrc)
+                <img src="{{ $logoSrc }}" alt="Logo {{ $company->nama ?? 'Perusahaan' }}" class="company-logo">
+            @endif
+
+            <div class="company-info">
+                <div class="company-name">{{ $company->nama ?? 'PT SINAR SURYA SEMESTARAYA' }}</div>
+                {{-- <div class="company-tagline">{{ $company->footer_text ?? 'Bersama Membangun Masa Depan' }}</div> --}}
+            </div>
+        </div>
+
+        <div class="report-title">LAPORAN PRODUKSI</div>
     </div>
 
     <div class="meta-info">

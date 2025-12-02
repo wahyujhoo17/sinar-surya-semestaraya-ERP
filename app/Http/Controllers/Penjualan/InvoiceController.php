@@ -73,9 +73,9 @@ class InvoiceController extends Controller
         $query = null;
 
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = Invoice::query();
+            $query = Invoice::with('customer.sales');
         } else {
-            $query = Invoice::where('user_id', Auth::id());
+            $query = Invoice::with('customer.sales')->where('user_id', Auth::id());
         }
 
         // Check if this is for credit application

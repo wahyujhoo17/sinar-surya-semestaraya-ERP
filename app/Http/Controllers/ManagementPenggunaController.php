@@ -35,9 +35,9 @@ class ManagementPenggunaController extends Controller
         }
 
         // Role filter
-        if ($request->filled('role_id')) {
+        if ($request->filled('role')) {
             $query->whereHas('roles', function ($q) use ($request) {
-                $q->where('roles.id', $request->role_id);
+                $q->where('roles.kode', $request->role);
             });
         }
 
@@ -56,7 +56,9 @@ class ManagementPenggunaController extends Controller
             $query->orderBy($sortField, $sortDirection);
         }
 
-        $users = $query->paginate($request->input('per_page', 10))->withQueryString();
+        $perPage = $request->input('per_page', 10);
+        $perPage = in_array((int)$perPage, [10, 25, 50, 100]) ? (int)$perPage : 10;
+        $users = $query->paginate($perPage)->withQueryString();
         $roles = Role::orderBy('nama')->get();
 
         // AJAX request for table data

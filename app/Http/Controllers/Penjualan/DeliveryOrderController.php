@@ -45,7 +45,13 @@ class DeliveryOrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user']);
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
+            $query = DeliveryOrder::with(['salesOrder.customer.sales', 'customer', 'gudang', 'user']);
+        } else {
+            $query = DeliveryOrder::with(['salesOrder.customer.sales', 'customer', 'gudang', 'user'])->whereHas('salesOrder.customer', function ($q) {
+                $q->where('sales_id', Auth::id());
+            });
+        }
 
         // --- Bagian Filter dan Sorting ---
         $filters = [
@@ -731,6 +737,9 @@ class DeliveryOrderController extends Controller
             $deliveryOrder->status = 'dikirim';
             $deliveryOrder->save();
 
+            // HPP journal will be created when DO is completed (status 'diterima')
+            // This ensures journal date matches the completion date, not creation date
+
             // Send notification to managers about shipped delivery order
             $notificationService = app(NotificationService::class);
             $notificationService->notifyDeliveryOrderShipped($deliveryOrder, Auth::user());
@@ -796,6 +805,10 @@ class DeliveryOrderController extends Controller
                 'keterangan_penerima' => $request->keterangan_penerima,
                 'tanggal_diterima' => $request->tanggal_diterima,
             ]);
+
+            // Create HPP journal entry after DO completed (DEBIT HPP, KREDIT Persediaan)
+            // Using tanggal_diterima as journal date
+            $deliveryOrder->createAutomaticJournal();
 
             // Log aktivitas
             $this->logUserAktivitas(
@@ -1513,7 +1526,13 @@ class DeliveryOrderController extends Controller
      */
     public function table(Request $request)
     {
-        $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user']);
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
+            $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user']);
+        } else {
+            $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user'])->whereHas('salesOrder.customer', function ($q) {
+                $q->where('sales_id', Auth::id());
+            });
+        }
 
         // --- Sorting ---
         $sort_field = $request->input('sort_field', 'tanggal');

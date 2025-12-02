@@ -126,52 +126,141 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 15%">Kode</th>
-                    <th style="width: 65%">Nama Akun</th>
-                    <th style="width: 20%">Jumlah</th>
+                    <th style="width: 65%">Keterangan</th>
+                    <th style="width: 35%">Jumlah (Rp)</th>
                 </tr>
             </thead>
             <tbody>
-                {{-- PENDAPATAN --}}
-                <tr class="bg-gray">
-                    <td colspan="3" class="font-bold">PENDAPATAN</td>
-                </tr>
-                @foreach ($data['income'] as $income)
-                    <tr>
-                        <td>{{ $income['kode'] }}</td>
-                        <td>{{ $income['nama'] }}</td>
-                        <td class="text-right">{{ number_format($income['balance'], 0, ',', '.') }}</td>
+                @if (isset($data['revenue']))
+                    {{-- PENDAPATAN --}}
+                    <tr class="bg-gray">
+                        <td class="font-bold">PENDAPATAN</td>
+                        <td></td>
                     </tr>
-                @endforeach
-                <tr class="font-bold">
-                    <td colspan="2">TOTAL PENDAPATAN</td>
-                    <td class="text-right">{{ number_format($data['totals']['total_income'], 0, ',', '.') }}</td>
-                </tr>
 
-                {{-- BEBAN --}}
-                <tr>
-                    <td colspan="3"></td>
-                </tr>
-                <tr class="bg-gray">
-                    <td colspan="3" class="font-bold">BEBAN</td>
-                </tr>
-                @foreach ($data['expenses'] as $expense)
+                    {{-- Penjualan --}}
                     <tr>
-                        <td>{{ $expense['kode'] }}</td>
-                        <td>{{ $expense['nama'] }}</td>
-                        <td class="text-right">{{ number_format($expense['balance'], 0, ',', '.') }}</td>
+                        <td style="padding-left: 10px;"><strong>Penjualan</strong></td>
+                        <td class="text-right font-bold">
+                            {{ number_format($data['revenue']['sales_revenue'] ?? 0, 0, ',', '.') }}</td>
                     </tr>
-                @endforeach
-                <tr class="font-bold">
-                    <td colspan="2">TOTAL BEBAN</td>
-                    <td class="text-right">{{ number_format($data['totals']['total_expenses'], 0, ',', '.') }}</td>
-                </tr>
 
-                {{-- LABA/RUGI BERSIH --}}
-                <tr class="font-bold">
-                    <td colspan="2">LABA/RUGI BERSIH</td>
-                    <td class="text-right">{{ number_format($data['totals']['net_income'], 0, ',', '.') }}</td>
-                </tr>
+                    {{-- Pendapatan Lain --}}
+                    @if (isset($data['revenue']['other_income']) && count($data['revenue']['other_income']) > 0)
+                        <tr>
+                            <td style="padding-left: 10px;"><strong>Pendapatan Lain</strong></td>
+                            <td></td>
+                        </tr>
+                        @foreach ($data['revenue']['other_income'] as $income)
+                            <tr>
+                                <td style="padding-left: 20px;">{{ $income['nama'] }}</td>
+                                <td class="text-right">{{ number_format($income['balance'], 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    @endif
+
+                    <tr class="font-bold">
+                        <td>Total Pendapatan</td>
+                        <td class="text-right">{{ number_format($data['revenue']['total_revenue'] ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+
+                    {{-- HARGA POKOK PENJUALAN --}}
+                    <tr>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr class="bg-gray">
+                        <td class="font-bold">HARGA POKOK PENJUALAN</td>
+                        <td></td>
+                    </tr>
+                    @if (isset($data['cogs']))
+                        {{-- Persediaan Awal - Selalu tampilkan --}}
+                        <tr>
+                            <td style="padding-left: 10px;">Persediaan Awal</td>
+                            <td class="text-right">
+                                {{ number_format($data['cogs']['persediaan_awal_total'] ?? 0, 0, ',', '.') }}</td>
+                        </tr>
+
+                        {{-- Pembelian - Selalu tampilkan --}}
+                        <tr>
+                            <td style="padding-left: 10px;">Pembelian</td>
+                            <td class="text-right">
+                                {{ number_format($data['cogs']['pembelian_total'] ?? 0, 0, ',', '.') }}</td>
+                        </tr>
+
+                        {{-- Jumlah Persediaan - Selalu tampilkan --}}
+                        <tr>
+                            <td style="padding-left: 10px;">Jumlah Persediaan</td>
+                            <td class="text-right">
+                                {{ number_format($data['cogs']['jumlah_persediaan'] ?? 0, 0, ',', '.') }}</td>
+                        </tr>
+
+                        {{-- Persediaan Akhir - Selalu tampilkan --}}
+                        <tr>
+                            <td style="padding-left: 10px;">Persediaan Akhir</td>
+                            <td class="text-right">
+                                {{ number_format($data['cogs']['persediaan_akhir_total'] ?? 0, 0, ',', '.') }}</td>
+                        </tr>
+
+                        <tr class="font-bold">
+                            <td>Harga Pokok Penjualan</td>
+                            <td class="text-right">{{ number_format($data['cogs']['total_cogs'] ?? 0, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+
+                    {{-- LABA KOTOR --}}
+                    <tr>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr class="font-bold bg-gray">
+                        <td>LABA KOTOR</td>
+                        <td class="text-right">{{ number_format($data['totals']['gross_profit'] ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+
+                    {{-- BEBAN OPERASIONAL --}}
+                    <tr>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr class="bg-gray">
+                        <td class="font-bold">BEBAN OPERASIONAL</td>
+                        <td></td>
+                    </tr>
+                    @if (isset($data['operating_expenses']))
+                        @foreach (['salary_from_journal', 'utility_expenses', 'rent_expenses', 'admin_expenses', 'transport_expenses', 'maintenance_expenses', 'marketing_expenses', 'professional_expenses', 'insurance_expenses', 'other_expenses'] as $expenseKey)
+                            @if (isset($data['operating_expenses'][$expenseKey]) && count($data['operating_expenses'][$expenseKey]) > 0)
+                                @foreach ($data['operating_expenses'][$expenseKey] as $expense)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $expense['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($expense['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+                        @endforeach
+                        <tr class="font-bold">
+                            <td>Total Beban Operasional</td>
+                            <td class="text-right">
+                                {{ number_format($data['operating_expenses']['total_operating_expenses'] ?? 0, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+
+                    {{-- LABA BERSIH --}}
+                    <tr>
+                        <td colspan="2"></td>
+                    </tr>
+                    <tr class="font-bold bg-gray">
+                        <td>LABA BERSIH</td>
+                        <td class="text-right">{{ number_format($data['totals']['net_income'] ?? 0, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                @else
+                    <tr>
+                        <td colspan="2" class="text-center">Tidak ada data laporan laba rugi untuk periode ini</td>
+                    </tr>
+                @endif
             </tbody>
         </table>
     @else

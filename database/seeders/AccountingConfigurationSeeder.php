@@ -110,6 +110,14 @@ class AccountingConfigurationSeeder extends Seeder
             // Pembelian
             [
                 'transaction_type' => 'pembelian',
+                'account_key' => 'pembelian',
+                'account_name' => 'Pembelian',
+                'akun_id' => config('accounting.pembelian.pembelian'),
+                'is_required' => true,
+                'description' => 'Akun pembelian yang akan didebit saat pembelian untuk keperluan laporan HPP'
+            ],
+            [
+                'transaction_type' => 'pembelian',
                 'account_key' => 'persediaan',
                 'account_name' => 'Persediaan Barang Dagang',
                 'akun_id' => config('accounting.pembelian.persediaan'),

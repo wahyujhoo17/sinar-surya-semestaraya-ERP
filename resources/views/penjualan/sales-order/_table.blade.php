@@ -188,6 +188,13 @@
                     </span>
                 </div>
             @endif
+            @if ($salesOrder->customer && $salesOrder->customer->sales)
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="inline-flex items-center font-semibold">
+                        Sales: {{ $salesOrder->customer->sales->name }}
+                    </span>
+                </div>
+            @endif
         </td>
         <td class="px-5 py-4">
             <div class="text-sm font-medium text-gray-700 dark:text-gray-200">

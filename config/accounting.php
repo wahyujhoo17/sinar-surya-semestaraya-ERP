@@ -38,6 +38,7 @@ return [
 
     // Pembelian
     'pembelian' => [
+        'pembelian' => env('AKUN_PEMBELIAN_ID', null),          // Pembelian (50001) - untuk laporan HPP
         'hutang_usaha' => env('AKUN_HUTANG_USAHA_ID', 9),          // Hutang Usaha
         'persediaan' => env('AKUN_PERSEDIAAN_ID', 25),          // Persediaan Barang Dagang
         'ppn_masukan' => env('AKUN_PPN_MASUKAN_ID', 26),          // PPN Masukan
@@ -108,6 +109,12 @@ return [
     // Saldo Awal / Opening Balance
     'saldo_awal' => [
         'modal_pemilik' => env('AKUN_MODAL_PEMILIK_ID', null),  // Modal Pemilik / Ekuitas
+    ],
+
+    // Laporan Keuangan - Konfigurasi akun untuk Income Statement
+    'laporan_keuangan' => [
+        'persediaan' => env('AKUN_PERSEDIAAN_ID', 25),          // Persediaan Barang Dagang untuk HPP
+        'pembelian' => env('AKUN_PEMBELIAN_ID', null),          // Pembelian untuk HPP (50001)
     ],
 
     // Header/Parent untuk Auto-Create COA

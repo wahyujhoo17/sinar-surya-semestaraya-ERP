@@ -85,18 +85,20 @@ class SalesOrderController extends Controller
 
     public function index(Request $request)
     {
-        $query = null;
-
-        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = SalesOrder::with(['customer', 'deliveryOrders']);
-        } else {
-            $query = SalesOrder::with(['customer', 'deliveryOrders'])->whereHas('customer', function ($q) {
-                $q->where('sales_id', Auth::id());
-            });
+        // Check if user has permission to view sales orders
+        if (!Auth::user()->hasPermission('sales_order.view')) {
+            abort(403, 'Unauthorized action.');
         }
 
-        if (!auth()->user()->hasPermission('sales_order.view')) {
-            abort(403, 'Unauthorized action.');
+        $query = null;
+
+        if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan') || Auth::user()->hasRole('purchasing')) {
+            $query = SalesOrder::with(['customer.sales', 'deliveryOrders']);
+        } else {
+            // For sales users, only show sales orders for their assigned customers
+            $query = SalesOrder::with(['customer.sales', 'deliveryOrders'])->whereHas('customer', function ($q) {
+                $q->where('sales_id', Auth::id());
+            });
         }
 
         $sort = $request->get('sort', 'tanggal');
@@ -765,7 +767,15 @@ class SalesOrderController extends Controller
 
     public function show($id)
     {
-        if (auth()->user()->hasPermission('sales_order.view')) {
+        // Allow access for admin, manager_penjualan, admin_penjualan, and pembelian roles
+        if (
+            auth()->user()->hasPermission('sales_order.view') ||
+            Auth::user()->hasRole('admin') ||
+            Auth::user()->hasRole('manager_penjualan') ||
+            Auth::user()->hasRole('admin_penjualan') ||
+            Auth::user()->hasRole('pembelian')
+        ) {
+
             $salesOrder = SalesOrder::with([
                 'customer',
                 'quotation',
@@ -777,7 +787,6 @@ class SalesOrderController extends Controller
                 'deliveryOrders',
                 'invoices'
             ])->findOrFail($id);
-
 
             return view('penjualan.sales-order.show', compact('salesOrder'));
         } else {

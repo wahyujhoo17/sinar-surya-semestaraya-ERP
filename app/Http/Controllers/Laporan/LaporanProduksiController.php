@@ -205,18 +205,22 @@ class LaporanProduksiController extends Controller
             'search' => $search
         ];
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Generate PDF
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_produksi.pdf', [
             'dataProduksi' => $dataProduksi,
             'filters' => $filters,
-            'totalProduksi' => $totalProduksi
+            'totalProduksi' => $totalProduksi,
+            'company' => $company
         ]);
 
         // Format tanggal untuk nama file
         $fileDate = now()->format('Ymd_His');
         $fileName = "laporan_produksi_{$fileDate}.pdf";
 
-        return $pdf->download($fileName);
+        return $pdf->stream($fileName);
     }
 
     /**
@@ -286,8 +290,14 @@ class LaporanProduksiController extends Controller
             abort(404, 'Data produksi tidak ditemukan');
         }
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_produksi.detail_pdf', compact('produksi'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_produksi.detail_pdf', [
+            'produksi' => $produksi,
+            'company' => $company
+        ]);
 
         // Format for filename
         $fileName = "detail_produksi_{$produksi->nomor}_{$id}.pdf";

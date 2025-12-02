@@ -44,9 +44,12 @@
         }
 
         .company-logo {
-            width: 80px;
-            height: 80px;
+            max-width: 100px;
+            max-height: 80px;
+            width: auto;
+            height: auto;
             object-fit: contain;
+            display: block;
         }
 
         .company-info {
@@ -322,31 +325,31 @@
     <div class="container">
         {{-- Enhanced Header --}}
         <div class="header">
+            @php
+                $logoSrc = null;
+
+                // Try company logo first
+                if (isset($company) && $company && $company->logo) {
+                    $logoPath = public_path('storage/' . $company->logo);
+                    if (file_exists($logoPath)) {
+                        $logoData = base64_encode(file_get_contents($logoPath));
+                        $logoMimeType = mime_content_type($logoPath);
+                        $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
+                    }
+                }
+
+                // Fallback to default logo
+                if (!$logoSrc) {
+                    $defaultLogoPath = public_path('img/logo-sinar-surya.png');
+                    if (file_exists($defaultLogoPath)) {
+                        $defaultLogoData = base64_encode(file_get_contents($defaultLogoPath));
+                        $defaultLogoMimeType = mime_content_type($defaultLogoPath);
+                        $logoSrc = 'data:' . $defaultLogoMimeType . ';base64,' . $defaultLogoData;
+                    }
+                }
+            @endphp
+
             <div class="logo-container">
-                @php
-                    $logoSrc = null;
-
-                    // Try company logo first
-                    if (isset($company) && $company && $company->logo) {
-                        $logoPath = public_path('storage/' . $company->logo);
-                        if (file_exists($logoPath)) {
-                            $logoData = base64_encode(file_get_contents($logoPath));
-                            $logoMimeType = mime_content_type($logoPath);
-                            $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
-                        }
-                    }
-
-                    // Fallback to default logo
-                    if (!$logoSrc) {
-                        $defaultLogoPath = public_path('img/logo-sinar-surya.png');
-                        if (file_exists($defaultLogoPath)) {
-                            $defaultLogoData = base64_encode(file_get_contents($defaultLogoPath));
-                            $defaultLogoMimeType = mime_content_type($defaultLogoPath);
-                            $logoSrc = 'data:' . $defaultLogoMimeType . ';base64,' . $defaultLogoData;
-                        }
-                    }
-                @endphp
-
                 @if ($logoSrc)
                     <img src="{{ $logoSrc }}" alt="Logo {{ $company->nama ?? 'Perusahaan' }}" class="company-logo">
                 @endif
@@ -615,132 +618,126 @@
                 </p>
             </div>
         @elseif($reportType === 'income_statement')
-            {{-- ENHANCED INCOME STATEMENT WITH DETAILED GROUPING --}}
+            {{-- ENHANCED INCOME STATEMENT WITH NEW STRUCTURE --}}
             <table>
                 <thead>
                     <tr>
                         <th style="width: 70%; text-align: left;">Keterangan</th>
-                        <th style="width: 30%; text-align: right;">PER
-                            {{ strtoupper(\Carbon\Carbon::parse($filters['tanggal_akhir'])->translatedFormat('d F Y')) }}
-                        </th>
+                        <th style="width: 30%; text-align: right;">Jumlah (Rp)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (isset($data['income_grouped']))
-                        @php
-                            $grouped = $data['income_grouped'];
-                        @endphp
-
-                        {{-- PENJUALAN / REVENUE --}}
+                    @if (isset($data['revenue']))
+                        {{-- PENDAPATAN --}}
                         <tr class="section-header">
-                            <td colspan="2"><strong>PENJUALAN</strong></td>
+                            <td colspan="2"><strong>PENDAPATAN</strong></td>
                         </tr>
 
-                        @if (count($grouped['revenue']['penjualan']) > 0)
-                            @foreach ($grouped['revenue']['penjualan'] as $account)
+                        {{-- Penjualan --}}
+                        <tr class="subsection-header">
+                            <td style="padding-left: 10px;"><strong>Penjualan</strong></td>
+                            <td class="text-right"></td>
+                        </tr>
+                        @if (isset($data['revenue']['sales_accounts']) && count($data['revenue']['sales_accounts']) > 0)
+                            @foreach ($data['revenue']['sales_accounts'] as $account)
                                 <tr>
-                                    <td style="padding-left: 20px;">
-                                        {{ ucwords(strtolower($account['nama'])) }}
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
-                                                ABNORMAL</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-right"
-                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
-                                        @else
-                                            {{ number_format($account['balance'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
+                                    <td style="padding-left: 20px;">{{ $account['nama'] }}</td>
+                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
                                 </tr>
                             @endforeach
                         @else
                             <tr>
-                                <td style="padding-left: 20px;">Trading</td>
-                                <td class="text-right">{{ number_format($data['total_income'] ?? 0, 0, ',', '.') }}
-                                </td>
+                                <td style="padding-left: 20px;">Penjualan</td>
+                                <td class="text-right">
+                                    {{ number_format($data['revenue']['sales_revenue'] ?? 0, 0, ',', '.') }}</td>
                             </tr>
                         @endif
 
+                        {{-- Pendapatan Lain --}}
+                        @if (isset($data['revenue']['other_income']) && count($data['revenue']['other_income']) > 0)
+                            <tr class="subsection-header">
+                                <td style="padding-left: 10px;"><strong>Pendapatan Lain</strong></td>
+                                <td class="text-right"></td>
+                            </tr>
+                            @foreach ($data['revenue']['other_income'] as $account)
+                                <tr>
+                                    <td style="padding-left: 20px;">{{ $account['nama'] }}</td>
+                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        @endif
+
+                        {{-- Total Pendapatan --}}
+                        <tr class="total-row">
+                            <td style="padding-left: 10px;"><strong>Total Pendapatan</strong></td>
+                            <td class="text-right font-bold">
+                                {{ number_format($data['revenue']['total_revenue'] ?? 0, 0, ',', '.') }}
+                            </td>
+                        </tr>
+
                         {{-- Spacer --}}
                         <tr class="no-border">
-                            <td colspan="2" style="border: none; padding: 3px;">&nbsp;</td>
+                            <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
                         </tr>
 
                         {{-- HARGA POKOK PENJUALAN --}}
-                        <tr class="subsection-header">
+                        <tr class="section-header">
                             <td colspan="2"><strong>HARGA POKOK PENJUALAN</strong></td>
                         </tr>
 
-                        @if (count($grouped['revenue']['harga_pokok']) > 0)
-                            @php
-                                $persediaanAwal = 0;
-                                $pembelian = 0;
-                                $persediaanAkhir = 0;
+                        @if (isset($data['cogs']))
+                            {{-- Persediaan Awal - Selalu tampilkan --}}
+                            <tr>
+                                <td style="padding-left: 10px;">Persediaan Awal</td>
+                                <td class="text-right">
+                                    {{ number_format($data['cogs']['persediaan_awal_total'] ?? 0, 0, ',', '.') }}
+                                </td>
+                            </tr>
 
-                                foreach ($grouped['revenue']['harga_pokok'] as $account) {
-                                    if (stripos($account['nama'], 'persediaan awal') !== false) {
-                                        $persediaanAwal += $account['balance'];
-                                    } elseif (stripos($account['nama'], 'pembelian') !== false) {
-                                        $pembelian += $account['balance'];
-                                    } elseif (stripos($account['nama'], 'persediaan akhir') !== false) {
-                                        $persediaanAkhir += $account['balance'];
-                                    }
-                                }
+                            {{-- Pembelian - Selalu tampilkan --}}
+                            <tr>
+                                <td style="padding-left: 10px;">Pembelian</td>
+                                <td class="text-right">
+                                    {{ number_format($data['cogs']['pembelian_total'] ?? 0, 0, ',', '.') }}
+                                </td>
+                            </tr>
 
-                                $jumlahPersediaan = $persediaanAwal + $pembelian;
-                                $hpp = $jumlahPersediaan - $persediaanAkhir;
-                            @endphp
+                            {{-- Jumlah Persediaan - Selalu tampilkan --}}
+                            <tr>
+                                <td style="padding-left: 10px;">Jumlah Persediaan</td>
+                                <td class="text-right">
+                                    {{ number_format($data['cogs']['jumlah_persediaan'] ?? 0, 0, ',', '.') }}
+                                </td>
+                            </tr>
 
-                            @if ($persediaanAwal > 0)
-                                <tr>
-                                    <td style="padding-left: 20px;">Persediaan Awal</td>
-                                    <td class="text-right">{{ number_format($persediaanAwal, 0, ',', '.') }}</td>
-                                </tr>
-                            @endif
+                            {{-- Persediaan Akhir - Selalu tampilkan --}}
+                            <tr>
+                                <td style="padding-left: 10px;">Persediaan Akhir</td>
+                                <td class="text-right">
+                                    {{ number_format($data['cogs']['persediaan_akhir_total'] ?? 0, 0, ',', '.') }}
+                                </td>
+                            </tr>
 
-                            @if ($pembelian > 0)
-                                <tr>
-                                    <td style="padding-left: 20px;">Pembelian</td>
-                                    <td class="text-right">{{ number_format($pembelian, 0, ',', '.') }}</td>
-                                </tr>
-                            @endif
-
-                            @if ($persediaanAwal > 0 || $pembelian > 0)
-                                <tr>
-                                    <td style="padding-left: 20px;">Jumlah Persediaan</td>
-                                    <td class="text-right">{{ number_format($jumlahPersediaan, 0, ',', '.') }}</td>
-                                </tr>
-                            @endif
-
-                            @if ($persediaanAkhir > 0)
-                                <tr>
-                                    <td style="padding-left: 20px;">Persediaan Akhir</td>
-                                    <td class="text-right">{{ number_format($persediaanAkhir, 0, ',', '.') }}</td>
-                                </tr>
-                            @endif
-
-                            {{-- Harga Pokok Penjualan Total --}}
+                            {{-- HPP Total --}}
                             <tr class="subtotal-row">
-                                <td style="padding-left: 30px;"><strong>Harga Pokok Penjualan</strong></td>
+                                <td style="padding-left: 10px;"><strong>Harga Pokok Penjualan</strong></td>
                                 <td class="text-right font-semibold">
-                                    {{ number_format($hpp > 0 ? $hpp : array_sum(array_column($grouped['revenue']['harga_pokok'], 'balance')), 0, ',', '.') }}
+                                    {{ number_format($data['cogs']['total_cogs'] ?? 0, 0, ',', '.') }}
                                 </td>
                             </tr>
                         @endif
 
                         {{-- Spacer --}}
                         <tr class="no-border">
-                            <td colspan="2" style="border: none; padding: 3px;">&nbsp;</td>
+                            <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
                         </tr>
 
                         {{-- LABA KOTOR --}}
                         <tr class="total-row">
-                            <td style="padding-left: 30px;"><strong>LABA KOTOR</strong></td>
+                            <td><strong>LABA KOTOR</strong></td>
                             <td class="text-right font-bold">
-                                {{ number_format($grouped['revenue']['laba_kotor'], 0, ',', '.') }}</td>
+                                {{ number_format($data['totals']['gross_profit'] ?? 0, 0, ',', '.') }}
+                            </td>
                         </tr>
 
                         {{-- Spacer --}}
@@ -748,182 +745,157 @@
                             <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
                         </tr>
 
-                        {{-- BIAYA OPERASIONAL --}}
-                        <tr class="section-header">
-                            <td colspan="2"><strong>BIAYA OPERASIONAL</strong></td>
-                        </tr>
-
-                        @if (count($grouped['operational']['biaya_umum']) > 0)
-                            @foreach ($grouped['operational']['biaya_umum'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        @endif
-
-                        @if (count($grouped['operational']['biaya_pemasaran']) > 0)
-                            @foreach ($grouped['operational']['biaya_pemasaran'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        @endif
-
-                        @if (count($grouped['operational']['biaya_penyusutan']) > 0)
-                            @foreach ($grouped['operational']['biaya_penyusutan'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        @endif
-
-                        {{-- Show all other operational expenses if no specific grouping --}}
-                        @if (count($grouped['operational']['biaya_umum']) === 0 &&
-                                count($grouped['operational']['biaya_pemasaran']) === 0 &&
-                                count($grouped['operational']['biaya_penyusutan']) === 0)
-                            @foreach ($data['expenses'] as $expense)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($expense['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($expense['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-                        @endif
-
-                        {{-- Jumlah Biaya Operasional --}}
-                        <tr class="subtotal-row">
-                            <td style="padding-left: 30px;"><strong>Jumlah Biaya Operasional</strong></td>
-                            <td class="text-right font-semibold">
-                                {{ number_format($grouped['operational']['total_operasional'], 0, ',', '.') }}</td>
-                        </tr>
-
-                        {{-- Spacer --}}
-                        <tr class="no-border">
-                            <td colspan="2" style="border: none; padding: 3px;">&nbsp;</td>
-                        </tr>
-
-                        {{-- LABA OPERASI --}}
-                        <tr class="total-row">
-                            <td style="padding-left: 20px;"><strong>Laba Operasi</strong></td>
-                            <td class="text-right font-bold">
-                                {{ number_format($grouped['operational']['laba_operasi'], 0, ',', '.') }}</td>
-                        </tr>
-
-                        {{-- Spacer --}}
-                        <tr class="no-border">
-                            <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
-                        </tr>
-
-                        {{-- PENDAPATAN LAIN-LAIN & BIAYA NON OPERASIONAL --}}
-                        @if (count($grouped['other']['pendapatan_lain']) > 0 || count($grouped['other']['biaya_lain']) > 0)
-                            <tr class="section-header">
-                                <td colspan="2"><strong>PENDAPATAN LAIN-LAIN & BIAYA NON OPERASIONAL</strong></td>
-                            </tr>
-
-                            @foreach ($grouped['other']['pendapatan_lain'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-
-                            @foreach ($grouped['other']['biaya_lain'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">{{ ucwords(strtolower($account['nama'])) }}</td>
-                                    <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}</td>
-                                </tr>
-                            @endforeach
-
-                            <tr class="subtotal-row">
-                                <td style="padding-left: 30px;"><strong>Jumlah</strong></td>
-                                <td class="text-right font-semibold">
-                                    {{ number_format($grouped['other']['total_other'], 0, ',', '.') }}</td>
-                            </tr>
-
-                            {{-- Spacer --}}
-                            <tr class="no-border">
-                                <td colspan="2" style="border: none; padding: 3px;">&nbsp;</td>
-                            </tr>
-                        @endif
-
-                        {{-- LABA SEBELUM PAJAK --}}
-                        <tr class="total-row">
-                            <td><strong>LABA SEBELUM PAJAK</strong></td>
-                            <td class="text-right font-bold">
-                                {{ number_format($grouped['tax']['laba_sebelum_pajak'], 0, ',', '.') }}</td>
-                        </tr>
-
-                        {{-- PAJAK PENDAPATAN --}}
-                        @if (isset($grouped['tax']['pajak_accounts']) && count($grouped['tax']['pajak_accounts']) > 0)
-                            <tr>
-                                <td><strong>PAJAK PENDAPATAN</strong></td>
-                                <td class="text-right font-semibold">
-                                    {{ number_format($grouped['tax']['pajak'], 0, ',', '.') }}</td>
-                            </tr>
-                        @endif
-
-                        {{-- LABA (RUGI) BERSIH --}}
-                        <tr class="grand-total">
-                            <td><strong>LABA (RUGI) BERSIH</strong></td>
-                            <td class="text-right font-bold">
-                                {{ number_format($grouped['tax']['laba_bersih'], 0, ',', '.') }}</td>
-                        </tr>
-                    @else
-                        {{-- Fallback to simple format if grouping not available --}}
-                        <tr class="section-header">
-                            <td colspan="2"><strong>PENDAPATAN</strong></td>
-                        </tr>
-                        @forelse($data['income'] as $income)
-                            <tr>
-                                <td style="padding-left: 20px;">{{ $income['nama'] }}</td>
-                                <td class="text-right">{{ number_format($income['balance'], 0, ',', '.') }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2" class="text-center text-sm"
-                                    style="color: #6b7280; font-style: italic;">
-                                    Tidak ada data pendapatan</td>
-                            </tr>
-                        @endforelse
-                        <tr class="total-row">
-                            <td><strong>TOTAL PENDAPATAN</strong></td>
-                            <td class="text-right font-bold">
-                                {{ number_format($data['total_income'] ?? 0, 0, ',', '.') }}</td>
-                        </tr>
-
-                        <tr class="no-border">
-                            <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
-                        </tr>
-
+                        {{-- BEBAN OPERASIONAL --}}
                         <tr class="section-header">
                             <td colspan="2"><strong>BEBAN OPERASIONAL</strong></td>
                         </tr>
-                        @forelse($data['expenses'] as $expense)
-                            <tr>
-                                <td style="padding-left: 20px;">{{ $expense['nama'] }}</td>
-                                <td class="text-right">{{ number_format($expense['balance'], 0, ',', '.') }}</td>
+
+                        @if (isset($data['operating_expenses']))
+                            {{-- Beban Gaji --}}
+                            @if (isset($data['operating_expenses']['salary_from_journal']) &&
+                                    count($data['operating_expenses']['salary_from_journal']) > 0)
+                                @foreach ($data['operating_expenses']['salary_from_journal'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Utilitas --}}
+                            @if (isset($data['operating_expenses']['utility_expenses']) &&
+                                    count($data['operating_expenses']['utility_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['utility_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Sewa --}}
+                            @if (isset($data['operating_expenses']['rent_expenses']) && count($data['operating_expenses']['rent_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['rent_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Administrasi --}}
+                            @if (isset($data['operating_expenses']['admin_expenses']) && count($data['operating_expenses']['admin_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['admin_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Transport --}}
+                            @if (isset($data['operating_expenses']['transport_expenses']) &&
+                                    count($data['operating_expenses']['transport_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['transport_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Maintenance --}}
+                            @if (isset($data['operating_expenses']['maintenance_expenses']) &&
+                                    count($data['operating_expenses']['maintenance_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['maintenance_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Marketing --}}
+                            @if (isset($data['operating_expenses']['marketing_expenses']) &&
+                                    count($data['operating_expenses']['marketing_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['marketing_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Profesional --}}
+                            @if (isset($data['operating_expenses']['professional_expenses']) &&
+                                    count($data['operating_expenses']['professional_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['professional_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Asuransi --}}
+                            @if (isset($data['operating_expenses']['insurance_expenses']) &&
+                                    count($data['operating_expenses']['insurance_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['insurance_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Beban Lainnya --}}
+                            @if (isset($data['operating_expenses']['other_expenses']) && count($data['operating_expenses']['other_expenses']) > 0)
+                                @foreach ($data['operating_expenses']['other_expenses'] as $account)
+                                    <tr>
+                                        <td style="padding-left: 10px;">{{ $account['nama'] }}</td>
+                                        <td class="text-right">{{ number_format($account['balance'], 0, ',', '.') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @endif
+
+                            {{-- Total Beban Operasional --}}
+                            <tr class="subtotal-row">
+                                <td style="padding-left: 10px;"><strong>Total Beban Operasional</strong></td>
+                                <td class="text-right font-semibold">
+                                    {{ number_format($data['operating_expenses']['total_operating_expenses'] ?? 0, 0, ',', '.') }}
+                                </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="2" class="text-center text-sm"
-                                    style="color: #6b7280; font-style: italic;">
-                                    Tidak ada data beban</td>
-                            </tr>
-                        @endforelse
-                        <tr class="total-row">
-                            <td><strong>TOTAL BEBAN</strong></td>
-                            <td class="text-right font-bold">
-                                {{ number_format($data['total_expenses'] ?? 0, 0, ',', '.') }}</td>
+                        @endif
+
+                        {{-- Spacer --}}
+                        <tr class="no-border">
+                            <td colspan="2" style="border: none; padding: 10px;">&nbsp;</td>
                         </tr>
 
-                        @php
-                            $netIncome = ($data['total_income'] ?? 0) - ($data['total_expenses'] ?? 0);
-                        @endphp
+                        {{-- LABA BERSIH --}}
                         <tr class="grand-total">
-                            <td><strong>{{ $netIncome >= 0 ? 'LABA BERSIH' : 'RUGI BERSIH' }}</strong></td>
-                            <td class="text-right font-bold">{{ number_format(abs($netIncome), 0, ',', '.') }}</td>
+                            <td><strong>LABA BERSIH</strong></td>
+                            <td class="text-right font-bold">
+                                {{ number_format($data['totals']['net_income'] ?? 0, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @else
+                        {{-- Fallback: No data available --}}
+                        <tr>
+                            <td colspan="2" class="text-center"
+                                style="padding: 20px; color: #6b7280; font-style: italic;">
+                                Tidak ada data laporan laba rugi untuk periode ini
+                            </td>
                         </tr>
                     @endif
                 </tbody>
@@ -955,7 +927,8 @@
                     @empty
                         <tr>
                             <td colspan="3" class="text-center text-sm"
-                                style="color: #6b7280; font-style: italic;">Tidak ada transaksi kas dalam periode ini
+                                style="color: #6b7280; font-style: italic;">
+                                Tidak ada transaksi kas dalam periode ini
                             </td>
                         </tr>
                     @endforelse
@@ -989,7 +962,8 @@
                     @empty
                         <tr>
                             <td colspan="3" class="text-center text-sm"
-                                style="color: #6b7280; font-style: italic;">Tidak ada transaksi bank dalam periode ini
+                                style="color: #6b7280; font-style: italic;">
+                                Tidak ada transaksi bank dalam periode ini
                             </td>
                         </tr>
                     @endforelse

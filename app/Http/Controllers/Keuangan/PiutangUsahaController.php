@@ -55,6 +55,13 @@ class PiutangUsahaController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
 
+        // Filter by sales user if provided
+        if ($request->filled('sales_id')) {
+            $query->whereHas('salesOrder', function ($q) use ($request) {
+                $q->where('user_id', $request->sales_id);
+            });
+        }
+
         // Filter by date range (invoice date)
         if ($request->filled('start_date')) {
             $query->whereDate('tanggal', '>=', $request->start_date);
@@ -97,14 +104,15 @@ class PiutangUsahaController extends Controller
             $query->whereIn('status', ['belum_bayar', 'sebagian']);
         }
 
-        // Paginate the results
-        $invoices = $query->paginate(15)->withQueryString();
+        // Calculate summary statistics from the filtered query (before pagination)
+        $filteredQuery = clone $query;
+        $filteredInvoices = $filteredQuery->with(['pembayaranPiutang', 'uangMukaAplikasi'])->get();
 
         // If filtering for jatuh_tempo, we need to do post-DB filtering
         // since this combines DB status with date logic
         if ($request->filled('status_pembayaran_filter') && $request->status_pembayaran_filter === 'jatuh_tempo') {
             // Get all IDs of invoices that are overdue
-            $overdueIds = $invoices->filter(function ($invoice) {
+            $overdueIds = $filteredInvoices->filter(function ($invoice) {
                 $isOverdue = $invoice->jatuh_tempo && Carbon::parse($invoice->jatuh_tempo)->startOfDay()->lt(Carbon::today()->startOfDay());
                 return $isOverdue && ($invoice->sisa_piutang > 0);
             })->pluck('id')->toArray();
@@ -116,36 +124,66 @@ class PiutangUsahaController extends Controller
                 $query->where('id', 0); // No results if no overdue invoices
             }
             $invoices = $query->paginate(15)->withQueryString();
-        }
 
-        $totalPiutang = 0;
-        $jumlahInvoiceBelumLunas = 0;
-        $jatuhTempoMingguIni = 0;
-        $now = Carbon::now();
-        $nextWeek = $now->copy()->addDays(7);
+            // Recalculate statistics for overdue invoices only
+            $overdueInvoices = $filteredInvoices->filter(function ($invoice) {
+                $isOverdue = $invoice->jatuh_tempo && Carbon::parse($invoice->jatuh_tempo)->startOfDay()->lt(Carbon::today()->startOfDay());
+                return $isOverdue && ($invoice->sisa_piutang > 0);
+            });
 
-        // Get all invoices for stats (without pagination)
-        $allInvoices = Invoice::with(['pembayaranPiutang', 'uangMukaAplikasi'])->where('total', '>', 0)->get();
+            $totalPiutang = 0;
+            $jumlahInvoiceBelumLunas = 0;
+            $jatuhTempoMingguIni = 0;
 
-        foreach ($allInvoices as $invoice) {
-            $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
-            $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
-
-            if ($sisaPiutang > 0) {
-                $totalPiutang += $sisaPiutang;
+            foreach ($overdueInvoices as $invoice) {
+                $totalPiutang += $invoice->sisa_piutang;
                 $jumlahInvoiceBelumLunas++;
+                // For overdue invoices, they are already past due, so jatuhTempoMingguIni should be 0
+            }
+        } else {
+            // Paginate the results
+            $invoices = $query->paginate(15)->withQueryString();
 
-                if ($invoice->jatuh_tempo) {
-                    $dueDate = Carbon::parse($invoice->jatuh_tempo);
-                    // Check if due date is between now and next week
-                    if ($dueDate->gte($now) && $dueDate->lt($nextWeek)) {
-                        $jatuhTempoMingguIni++;
+            // Calculate summary statistics from filtered results
+            $totalPiutang = 0;
+            $jumlahInvoiceBelumLunas = 0;
+            $jatuhTempoMingguIni = 0;
+            $now = Carbon::now();
+            $nextWeek = $now->copy()->addDays(7);
+
+            foreach ($filteredInvoices as $invoice) {
+                $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+                $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
+
+                if ($sisaPiutang > 0) {
+                    $totalPiutang += $sisaPiutang;
+                    $jumlahInvoiceBelumLunas++;
+
+                    if ($invoice->jatuh_tempo) {
+                        $dueDate = Carbon::parse($invoice->jatuh_tempo);
+                        // Check if due date is between now and next week
+                        if ($dueDate->gte($now) && $dueDate->lt($nextWeek)) {
+                            $jatuhTempoMingguIni++;
+                        }
                     }
                 }
             }
         }
 
         $customers = Customer::orderBy('nama')->get();
+
+        // Get sales users (users who have created sales orders)
+        $salesUsers = \App\Models\User::whereHas('salesOrders')
+            ->with('karyawan')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->display_name,
+                    'email' => $user->display_email,
+                ];
+            });
 
         // Calculate total sisa_piutang for the current page
         $totalSisaPiutangCurrent = 0;
@@ -163,6 +201,7 @@ class PiutangUsahaController extends Controller
             return view('keuangan.piutang_usaha.index', [
                 'invoices' => $invoices,
                 'customers' => $customers,
+                'salesUsers' => $salesUsers,
                 'request' => $request,
                 'totalPiutang' => $totalPiutang,
                 'jumlahInvoiceBelumLunas' => $jumlahInvoiceBelumLunas,
@@ -176,6 +215,7 @@ class PiutangUsahaController extends Controller
         return view('keuangan.piutang_usaha.index', [
             'invoices' => $invoices,
             'customers' => $customers,
+            'salesUsers' => $salesUsers,
             'request' => $request,
             'totalPiutang' => $totalPiutang,
             'jumlahInvoiceBelumLunas' => $jumlahInvoiceBelumLunas,
@@ -307,6 +347,11 @@ class PiutangUsahaController extends Controller
         // Apply filters
         if ($request->filled('customer_id')) {
             $query->where('customer_id', $request->customer_id);
+        }
+        if ($request->filled('sales_id')) {
+            $query->whereHas('salesOrder', function ($q) use ($request) {
+                $q->where('user_id', $request->sales_id);
+            });
         }
         if ($request->filled('start_date')) {
             $query->whereDate('tanggal', '>=', $request->start_date);

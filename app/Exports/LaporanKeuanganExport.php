@@ -57,18 +57,36 @@ class LaporanKeuanganExport implements FromView, WithTitle, WithStyles, WithColu
                 break;
 
             case 'income_statement':
-                $income = $this->getAccountBalanceForPeriod('income', $tanggalAwal, $tanggalAkhir);
-                $expenses = $this->getAccountBalanceForPeriod('expense', $tanggalAwal, $tanggalAkhir);
+                // Get the same data structure as the controller
+                $request = new \Illuminate\Http\Request();
+                $request->merge([
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
+                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d')
+                ]);
 
-                $data = [
-                    'income' => $income,
-                    'expenses' => $expenses,
-                    'totals' => [
-                        'total_income' => $income->sum('balance'),
-                        'total_expenses' => $expenses->sum('balance'),
-                        'net_income' => $income->sum('balance') - $expenses->sum('balance')
-                    ]
-                ];
+                // Create temporary controller instance to reuse the logic
+                $controller = new \App\Http\Controllers\Laporan\LaporanKeuanganController();
+                $incomeStatementResponse = $controller->getIncomeStatement($request);
+                $incomeStatementData = json_decode($incomeStatementResponse->getContent(), true);
+
+                if ($incomeStatementData['success']) {
+                    $data = $incomeStatementData['data'];
+                } else {
+                    // Fallback if there's an error
+                    $data = [
+                        'revenue' => [],
+                        'cogs' => [],
+                        'operating_expenses' => [],
+                        'totals' => [
+                            'total_revenue' => 0,
+                            'total_cogs' => 0,
+                            'gross_profit' => 0,
+                            'total_operating_expenses' => 0,
+                            'operating_income' => 0,
+                            'net_income' => 0
+                        ]
+                    ];
+                }
                 break;
 
             case 'cash_flow':

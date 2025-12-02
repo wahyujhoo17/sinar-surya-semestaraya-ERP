@@ -285,6 +285,9 @@ class LaporanPenjualanController extends Controller
             });
         }
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Tentukan view dan data berdasarkan detail level
         if ($detailLevel === 'simple') {
             // Level Simple: Ringkasan per transaksi dengan detail tambahan
@@ -328,6 +331,7 @@ class LaporanPenjualanController extends Controller
                 'totalDibayar' => $totalDibayar,
                 'totalUangMuka' => $totalUangMuka,
                 'sisaPembayaran' => $sisaPembayaran,
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_penjualan.pdf_simple';
@@ -346,19 +350,24 @@ class LaporanPenjualanController extends Controller
                 ->select(
                     'sales_order.*',
                     DB::raw('COALESCE(
-                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
-                         JOIN invoice i ON pp.invoice_id = i.id 
-                         WHERE i.sales_order_id = sales_order.id), 
+                        (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp
+                         JOIN invoice i ON pp.invoice_id = i.id
+                         WHERE i.sales_order_id = sales_order.id),
                         0
                     ) as total_bayar'),
                     DB::raw('COALESCE(
-                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
-                         WHERE i.sales_order_id = sales_order.id), 
+                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i
+                         WHERE i.sales_order_id = sales_order.id),
                         0
                     ) as total_uang_muka')
                 )
                 ->orderBy('sales_order.tanggal', 'desc')
                 ->get();
+
+            $totalPenjualan = $dataPenjualan->sum('total');
+            $totalDibayar = $dataPenjualan->sum('total_bayar');
+            $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
+            $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
 
             $viewData = [
                 'dataPenjualan' => $dataPenjualan,
@@ -370,10 +379,11 @@ class LaporanPenjualanController extends Controller
                     'status_pembayaran' => $statusPembayaran,
                     'search' => $search
                 ],
-                'totalPenjualan' => $dataPenjualan->sum('total'),
-                'totalDibayar' => $dataPenjualan->sum('total_bayar'),
-                'totalUangMuka' => $dataPenjualan->sum('total_uang_muka'),
-                'sisaPembayaran' => $dataPenjualan->sum('total') - $dataPenjualan->sum('total_bayar') - $dataPenjualan->sum('total_uang_muka'),
+                'totalPenjualan' => $totalPenjualan,
+                'totalDibayar' => $totalDibayar,
+                'totalUangMuka' => $totalUangMuka,
+                'sisaPembayaran' => $sisaPembayaran,
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_penjualan.pdf_sangat_detail';
@@ -430,6 +440,7 @@ class LaporanPenjualanController extends Controller
                 'totalRetur' => $dataPenjualan->sum('total_retur'),
                 'totalUangMuka' => $dataPenjualan->sum('total_uang_muka'),
                 'sisaPembayaran' => $dataPenjualan->sum('total') - $dataPenjualan->sum('total_bayar') - $dataPenjualan->sum('total_uang_muka'),
+                'company' => $company
             ];
 
             $viewName = 'laporan.laporan_penjualan.pdf_detail';
@@ -503,8 +514,14 @@ class LaporanPenjualanController extends Controller
         $penjualan = SalesOrder::with(['customer', 'details.produk.satuan', 'user', 'invoices.pembayaranPiutang', 'returPenjualan.details.produk.satuan', 'returPenjualan.user'])
             ->findOrFail($id);
 
+        // Get company data
+        $company = \App\Models\Company::first();
+
         // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_penjualan.detail_pdf', compact('penjualan'));
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_penjualan.detail_pdf', [
+            'penjualan' => $penjualan,
+            'company' => $company
+        ]);
 
         // Format for filename
         $fileName = "detail_penjualan_{$penjualan->nomor}_{$id}.pdf";

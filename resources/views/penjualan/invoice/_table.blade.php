@@ -57,6 +57,13 @@
                     <div class="text-gray-500 dark:text-gray-400">
                         {{ $invoice->customer->kode ?? '' }}
                     </div>
+                    @if ($invoice->customer && $invoice->customer->sales)
+                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <span class="inline-flex items-center font-semibold">
+                                Sales: {{ $invoice->customer->sales->name }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </td>
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">

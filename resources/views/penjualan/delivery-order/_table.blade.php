@@ -94,6 +94,13 @@
             <div class="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {{ $deliveryOrder->customer ? $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama : 'Customer tidak ditemukan' }}
             </div>
+            @if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->customer && $deliveryOrder->salesOrder->customer->sales)
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="inline-flex items-center font-semibold">
+                        Sales: {{ $deliveryOrder->salesOrder->customer->sales->name }}
+                    </span>
+                </div>
+            @endif
             @if ($deliveryOrder->customer && $deliveryOrder->customer->telepon)
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     <span class="inline-flex items-center">

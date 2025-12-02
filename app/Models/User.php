@@ -63,6 +63,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Relasi ke Sales Order
+     */
+    public function salesOrders()
+    {
+        return $this->hasMany(SalesOrder::class, 'user_id');
+    }
+
+    /**
      * Cek apakah user memiliki role tertentu
      */
     public function hasRole($role)

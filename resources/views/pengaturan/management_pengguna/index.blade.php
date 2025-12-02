@@ -131,7 +131,7 @@
                             class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
                             <option value="">Semua Role</option>
                             @foreach ($roles as $role)
-                                <option value="{{ $role->id }}">{{ $role->nama ?? $role->name }}</option>
+                                <option value="{{ $role->kode }}">{{ $role->nama ?? $role->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -171,6 +171,37 @@
         <!-- Users Table -->
         <div x-show="activeTab === 'users'"
             class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700">
+
+            <!-- Per Page Selector - Moved to top -->
+            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-600">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <label for="per_page_top" class="text-sm text-gray-700 dark:text-gray-300">Tampilkan:</label>
+                        <select id="per_page_top" x-model="filters.per_page" @change="loadUsers()"
+                            class="rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white text-sm">
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <span class="text-sm text-gray-700 dark:text-gray-300">per halaman</span>
+                    </div>
+
+                    <!-- Pagination Info -->
+                    <div x-show="!loading && pagination && pagination.total > 0"
+                        class="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-medium"
+                                    x-text="`Halaman ${pagination.current_page || 0} dari ${pagination.last_page || 0}`"></span>
+                                <span class="ml-4 text-xs"
+                                    x-text="`(${pagination.from || 0}-${pagination.to || 0} dari ${pagination.total || 0} data)`"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
                     <thead class="bg-gray-50 dark:bg-gray-700">
@@ -271,10 +302,15 @@
                             <span class="font-medium" x-text="pagination.total || 0"></span>
                             hasil
                         </p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Halaman <span class="font-medium" x-text="pagination.current_page || 0"></span> dari <span
+                                class="font-medium" x-text="pagination.last_page || 0"></span>
+                        </p>
                     </div>
                     <div>
                         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
                             aria-label="Pagination">
+                            <!-- Previous Button -->
                             <button @click="changePage(pagination.current_page - 1)"
                                 :disabled="pagination.current_page <= 1"
                                 class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -287,16 +323,25 @@
                                 </svg>
                             </button>
 
+                            <!-- Page Numbers -->
                             <template x-for="page in paginationPages" :key="page">
-                                <button @click="changePage(page)"
+                                <!-- Ellipsis -->
+                                <span x-show="page === '...'"
+                                    class="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    ...
+                                </span>
+
+                                <!-- Page Button -->
+                                <button x-show="page !== '...'" @click="changePage(page)"
                                     :class="page === pagination.current_page ?
-                                        'z-10 bg-primary-50 dark:bg-primary-900 border-primary-500 text-primary-600 dark:text-primary-300' :
+                                        'z-10 bg-primary-50 dark:bg-primary-900 border-primary-500 text-primary-600 dark:text-primary-300 font-bold' :
                                         'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'"
-                                    class="relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                                    class="relative inline-flex items-center px-4 py-2 border text-sm font-medium transition-colors duration-200">
                                     <span x-text="page"></span>
                                 </button>
                             </template>
 
+                            <!-- Next Button -->
                             <button @click="changePage(pagination.current_page + 1)"
                                 :disabled="pagination.current_page >= pagination.last_page"
                                 class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm font-medium text-gray-500 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
@@ -309,8 +354,23 @@
                                 </svg>
                             </button>
                         </nav>
+
+                        <!-- Quick Page Jump (optional) -->
+                        <div x-show="pagination.last_page > 5" class="mt-2 flex items-center space-x-2">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Ke halaman:</span>
+                            <input type="number" x-model="jumpToPage"
+                                @keyup.enter="changePage(parseInt(jumpToPage))" :min="1"
+                                :max="pagination.last_page"
+                                class="w-16 px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded dark:bg-gray-700 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                placeholder="1">
+                            <button @click="changePage(parseInt(jumpToPage))"
+                                class="px-2 py-1 text-xs bg-primary-500 text-white rounded hover:bg-primary-600 transition-colors">
+                                Go
+                            </button>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -1071,7 +1131,8 @@
                 filters: {
                     search: '',
                     role: '',
-                    status: ''
+                    status: '',
+                    per_page: '10'
                 },
                 roleFilters: {
                     search: ''
@@ -1083,36 +1144,50 @@
 
                 // Pagination
                 pagination: {},
+                jumpToPage: '',
 
                 // Computed property for pagination pages
                 get paginationPages() {
                     const pages = [];
                     const current = this.pagination.current_page || 1;
                     const total = this.pagination.last_page || 1;
-                    const delta = 2;
 
-                    const range = {
-                        start: Math.max(2, current - delta),
-                        end: Math.min(total - 1, current + delta)
-                    };
-
-                    if (current - delta > 2) {
-                        pages.push(1, '...');
-                    } else {
-                        pages.push(1);
+                    // If total pages is small (less than or equal to 7), show all pages
+                    if (total <= 7) {
+                        for (let i = 1; i <= total; i++) {
+                            pages.push(i);
+                        }
+                        return pages;
                     }
 
-                    for (let i = range.start; i <= range.end; i++) {
+                    // Always show first page
+                    pages.push(1);
+
+                    // Calculate range around current page
+                    const start = Math.max(2, current - 1);
+                    const end = Math.min(total - 1, current + 1);
+
+                    // Add ellipsis if there's a gap after first page
+                    if (start > 2) {
+                        pages.push('...');
+                    }
+
+                    // Add pages in range
+                    for (let i = start; i <= end; i++) {
                         pages.push(i);
                     }
 
-                    if (current + delta < total - 1) {
-                        pages.push('...', total);
-                    } else if (total > 1) {
+                    // Add ellipsis if there's a gap before last page
+                    if (end < total - 1) {
+                        pages.push('...');
+                    }
+
+                    // Always show last page if more than 1 page
+                    if (total > 1) {
                         pages.push(total);
                     }
 
-                    return pages.filter(page => page !== 1 || total === 1);
+                    return pages;
                 },
 
                 // Password strength validation
@@ -1185,6 +1260,7 @@
                             search: this.filters.search,
                             role: this.filters.role,
                             status: this.filters.status,
+                            per_page: this.filters.per_page,
                             sort_field: this.sorting.field,
                             sort_direction: this.sorting.direction
                         });
@@ -1441,8 +1517,10 @@
                 },
 
                 changePage(page) {
-                    if (page >= 1 && page <= this.pagination.last_page) {
-                        this.loadUsers(page);
+                    const pageNum = parseInt(page);
+                    if (pageNum >= 1 && pageNum <= this.pagination.last_page) {
+                        this.loadUsers(pageNum);
+                        this.jumpToPage = ''; // Reset jump input
                     }
                 },
 

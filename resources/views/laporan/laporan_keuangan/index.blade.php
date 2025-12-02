@@ -621,31 +621,45 @@
                             <h4
                                 class="text-lg font-semibold text-orange-600 dark:text-orange-400 mb-4 border-b border-orange-200 dark:border-orange-800 pb-2">
                                 HARGA POKOK PENJUALAN</h4>
-                            <div class="space-y-3">
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Harga Pokok
-                                        Penjualan (dari jurnal)</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
+                            <div class="space-y-1">
+                                <!-- Persediaan Awal -->
+                                <div class="flex justify-between items-center py-2 pl-4">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Persediaan Awal</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                        x-text="formatCurrency(incomeStatementData.cogs?.persediaan_awal_total || 0)"></span>
+                                </div>
+
+                                <!-- Pembelian -->
+                                <div class="flex justify-between items-center py-2 pl-4">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Pembelian</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                        x-text="formatCurrency(incomeStatementData.cogs?.pembelian_total || 0)"></span>
+                                </div>
+
+                                <!-- Jumlah Persediaan -->
+                                <div
+                                    class="flex justify-between items-center py-2 pl-4 border-t border-gray-200 dark:border-gray-700">
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Jumlah
+                                        Persediaan</span>
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-white underline"
+                                        x-text="formatCurrency(incomeStatementData.cogs?.jumlah_persediaan || 0)"></span>
+                                </div>
+
+                                <!-- Persediaan Akhir -->
+                                <div class="flex justify-between items-center py-2 pl-4">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Persediaan Akhir</span>
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white"
+                                        x-text="formatCurrency(incomeStatementData.cogs?.persediaan_akhir_total || 0)"></span>
+                                </div>
+
+                                <!-- Harga Pokok Penjualan (Total HPP) -->
+                                <div
+                                    class="flex justify-between items-center py-2 pl-8 border-t-2 border-gray-300 dark:border-gray-600 mt-2">
+                                    <span class="text-base font-bold text-gray-900 dark:text-white">Harga Pokok
+                                        Penjualan</span>
+                                    <span
+                                        class="text-base font-bold text-orange-600 dark:text-orange-400 underline decoration-2"
                                         x-text="formatCurrency(incomeStatementData.cogs?.total_cogs || 0)"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white">Pembelian</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
-                                        x-text="formatCurrency(incomeStatementData.cogs?.purchase_costs || 0)"></span>
-                                </div>
-                                <div class="flex justify-between items-center py-2">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-white">HPP
-                                        Lainnya</span>
-                                    <span class="text-sm font-semibold text-orange-600 dark:text-orange-400"
-                                        x-text="formatCurrency(incomeStatementData.cogs?.additional_cogs || 0)"></span>
-                                </div>
-                                <div class="border-t border-gray-200 dark:border-gray-600 pt-2">
-                                    <div class="flex justify-between items-center">
-                                        <span class="text-base font-bold text-gray-900 dark:text-white">Total
-                                            HPP</span>
-                                        <span class="text-base font-bold text-orange-600 dark:text-orange-400"
-                                            x-text="formatCurrency(incomeStatementData.cogs?.total_cogs || 0)"></span>
-                                    </div>
                                 </div>
                             </div>
                         </div>

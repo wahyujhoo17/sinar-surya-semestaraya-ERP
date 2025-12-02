@@ -16,6 +16,17 @@
         .header {
             text-align: center;
             margin-bottom: 20px;
+            position: relative;
+        }
+
+        .logo-container {
+            margin-bottom: 10px;
+        }
+
+        .company-logo {
+            max-width: 80px;
+            max-height: 60px;
+            height: auto;
         }
 
         .header h1 {
@@ -26,6 +37,14 @@
         .header p {
             font-size: 12px;
             margin: 0;
+        }
+
+        .print-info {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 10px;
+            color: #777;
         }
 
         .meta-info {
@@ -144,8 +163,38 @@
 
 <body>
     <div class="header">
-        <h1>DETAIL PENJUALAN #{{ $penjualan->nomor_faktur }}</h1>
+        @php
+            $logoSrc = null;
+            if (isset($company) && $company && $company->logo) {
+                $logoPath = public_path('storage/' . $company->logo);
+                if (file_exists($logoPath)) {
+                    $logoData = base64_encode(file_get_contents($logoPath));
+                    $logoMimeType = mime_content_type($logoPath);
+                    $logoSrc = 'data:' . $logoMimeType . ';base64,' . $logoData;
+                }
+            }
+
+            if (!$logoSrc) {
+                $defaultLogoPath = public_path('img/SemestaPro.PNG');
+                if (file_exists($defaultLogoPath)) {
+                    $logoData = base64_encode(file_get_contents($defaultLogoPath));
+                    $logoSrc = 'data:image/png;base64,' . $logoData;
+                }
+            }
+        @endphp
+
+        @if ($logoSrc)
+            <div class="logo-container">
+                <img src="{{ $logoSrc }}" alt="Logo" class="company-logo">
+            </div>
+        @endif
+
+        <h1>{{ $company->nama ?? 'SINAR SURYA SEMESTARAYA' }}</h1>
+        <p>DETAIL PENJUALAN #{{ $penjualan->nomor_faktur }}</p>
         <p>Tanggal Penjualan: {{ \Carbon\Carbon::parse($penjualan->tanggal)->format('d M Y') }}</p>
+        <div class="print-info">
+            Dicetak: {{ now()->format('d/m/Y H:i') }}
+        </div>
     </div>
 
     <div class="row">
