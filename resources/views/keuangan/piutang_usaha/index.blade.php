@@ -329,7 +329,7 @@
                                 @endforeach
                             </select>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan sales yang
-                                membuat penjualan</p>
+                                ditugaskan ke customer</p>
                         </div>
                     </div>
 

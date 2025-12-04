@@ -32,6 +32,11 @@ class PiutangUsahaExport implements FromCollection, WithHeadings, WithMapping, S
         if (!empty($this->filters['customer_id'])) {
             $query->where('customer_id', $this->filters['customer_id']);
         }
+        if (!empty($this->filters['sales_id'])) {
+            $query->whereHas('customer', function ($q) {
+                $q->where('sales_id', $this->filters['sales_id']);
+            });
+        }
         if (!empty($this->filters['start_date'])) {
             $query->whereDate('tanggal', '>=', $this->filters['start_date']);
         }

@@ -55,10 +55,10 @@ class PiutangUsahaController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
 
-        // Filter by sales user if provided
+        // Filter by sales user if provided (based on customer's sales_id, not SO creator)
         if ($request->filled('sales_id')) {
-            $query->whereHas('salesOrder', function ($q) use ($request) {
-                $q->where('user_id', $request->sales_id);
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('sales_id', $request->sales_id);
             });
         }
 
@@ -354,8 +354,8 @@ class PiutangUsahaController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
         if ($request->filled('sales_id')) {
-            $query->whereHas('salesOrder', function ($q) use ($request) {
-                $q->where('user_id', $request->sales_id);
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('sales_id', $request->sales_id);
             });
         }
         if ($request->filled('start_date')) {
