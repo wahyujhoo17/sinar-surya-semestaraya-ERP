@@ -319,12 +319,12 @@
                             <label for="sales_id"
                                 class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sales</label>
                             <select name="sales_id" id="sales_id"
-                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full select2-basic">
+                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full">
                                 <option value="">-- Semua Sales --</option>
                                 @foreach ($salesUsers as $salesUser)
-                                    <option value="{{ $salesUser['id'] }}"
+                                    <option value="{{ $salesUser['id'] }}" data-name="{{ $salesUser['name'] }}"
                                         {{ request('sales_id') == $salesUser['id'] ? 'selected' : '' }}>
-                                        {{ $salesUser['name'] }} ({{ $salesUser['email'] }})
+                                        {{ $salesUser['name'] }}
                                     </option>
                                 @endforeach
                             </select>
@@ -1340,21 +1340,6 @@
                     toggleClearButton();
                 }
 
-                // Initialize Select2 for customer filter
-                $('#customer_id').select2({
-                    placeholder: "-- Semua Customer --",
-                    allowClear: true,
-                    width: '100%'
-
-                });
-
-                // Initialize Select2 for sales filter
-                $('#sales_id').select2({
-                    placeholder: "-- Semua Sales --",
-                    allowClear: true,
-                    width: '100%'
-                });
-
                 function initializePaginationLinks() {
                     if (!paginationContainer) return;
                     // Corrected selector for pagination links based on partial's structure
@@ -1400,7 +1385,8 @@
                     var name = $customer.data('name') || '';
                     return $(
                         '<div class="flex flex-col py-1">' +
-                        '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + name + '</div>' +
+                        '<div class="font-normal text-gray-900 dark:text-white text-sm">' + kode + ' - ' + name +
+                        '</div>' +
                         '</div>'
                     );
                 }
@@ -1414,12 +1400,49 @@
                     var name = $customer.data('name') || '';
                     return kode + ' - ' + name;
                 }
+
+                // Format function for Sales dropdown
+                function formatSalesOption(sales) {
+                    if (!sales.id) {
+                        return sales.text;
+                    }
+                    var $sales = $(sales.element);
+                    var name = $sales.data('name') || '';
+                    return $(
+                        '<div class="py-1">' +
+                        '<div class="font-normal text-gray-900 dark:text-white text-sm">' + name + '</div>' +
+                        '</div>'
+                    );
+                }
+
+                function formatSalesSelection(sales) {
+                    if (!sales.id) {
+                        return '-- Semua Sales --';
+                    }
+                    var $sales = $(sales.element);
+                    var name = $sales.data('name') || '';
+                    return name;
+                }
+
+                // Initialize Select2 for customer filter
                 $('#customer_id').select2({
                     placeholder: '-- Semua Customer --',
                     allowClear: true,
                     width: '100%',
                     templateResult: formatCustomerOption,
                     templateSelection: formatCustomerSelection,
+                    escapeMarkup: function(markup) {
+                        return markup;
+                    }
+                });
+
+                // Initialize Select2 for sales filter
+                $('#sales_id').select2({
+                    placeholder: '-- Semua Sales --',
+                    allowClear: true,
+                    width: '100%',
+                    templateResult: formatSalesOption,
+                    templateSelection: formatSalesSelection,
                     escapeMarkup: function(markup) {
                         return markup;
                     }

@@ -172,8 +172,13 @@ class PiutangUsahaController extends Controller
 
         $customers = Customer::orderBy('nama')->get();
 
-        // Get sales users (users who have created sales orders)
-        $salesUsers = \App\Models\User::whereHas('salesOrders')
+        // Get all unique sales users from customer table (sales_id column)
+        $salesUserIds = Customer::select('sales_id')
+            ->distinct()
+            ->whereNotNull('sales_id')
+            ->pluck('sales_id');
+
+        $salesUsers = \App\Models\User::whereIn('id', $salesUserIds)
             ->with('karyawan')
             ->orderBy('name')
             ->get()
