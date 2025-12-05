@@ -58,6 +58,14 @@ return [
         'hutang_usaha' => env('AKUN_HUTANG_USAHA_ID', 9),          // Hutang Usaha
     ],
 
+    // Uang Muka Penjualan
+    'uang_muka_penjualan' => [
+        'kas' => env('AKUN_KAS_ID', 19),                        // Kas
+        'bank' => env('AKUN_BANK_ID', 22),                       // Bank
+        'hutang_uang_muka_penjualan' => env('AKUN_HUTANG_UANG_MUKA_PENJUALAN_ID', null), // Hutang Uang Muka Penjualan (2201)
+        'piutang_usaha' => env('AKUN_PIUTANG_USAHA_ID', 24),    // Piutang Usaha (untuk aplikasi ke invoice)
+    ],
+
     // Retur Penjualan
     'retur_penjualan' => [
         'piutang_usaha' => env('AKUN_PIUTANG_USAHA_ID'),          // Piutang Usaha

@@ -167,6 +167,16 @@ class AccountingConfigurationSeeder extends Seeder
                 'description' => 'Akun bank yang akan didebit saat penerimaan pembayaran transfer'
             ],
 
+            // Uang Muka Penjualan
+            [
+                'transaction_type' => 'uang_muka_penjualan',
+                'account_key' => 'hutang_uang_muka_penjualan',
+                'account_name' => 'Hutang Uang Muka Penjualan',
+                'akun_id' => config('accounting.uang_muka_penjualan.hutang_uang_muka_penjualan'),
+                'is_required' => true,
+                'description' => 'Akun hutang uang muka penjualan yang akan dikredit saat penerimaan uang muka dan didebit saat aplikasi ke invoice'
+            ],
+
             // Saldo Awal (Opening Balance)
             [
                 'transaction_type' => 'saldo_awal',

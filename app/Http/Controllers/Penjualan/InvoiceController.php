@@ -1232,16 +1232,15 @@ class InvoiceController extends Controller
             return;
         }
 
-        $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('kode', '2201')->first();
-        $akunPiutang = \App\Models\AkunAkuntansi::where('id', '24')->first();
+        $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('id', config('accounting.uang_muka_penjualan.hutang_uang_muka_penjualan'))->first();
+        $akunPiutang = \App\Models\AkunAkuntansi::where('id', config('accounting.accounts.piutang_usaha'))->first();
 
         if (!$akunUangMukaPenjualan) {
-            throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
+            throw new \Exception('Akun Hutang Uang Muka Penjualan tidak ditemukan. Silakan periksa konfigurasi AKUN_HUTANG_UANG_MUKA_PENJUALAN_ID di .env atau hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            $piutangId = '24';
-            throw new \Exception("Akun Piutang Usaha (ID: {$piutangId}) tidak ditemukan. Pastikan AKUN_PIUTANG_USAHA_ID di .env sudah benar.");
+            throw new \Exception('Akun Piutang Usaha tidak ditemukan. Silakan periksa konfigurasi AKUN_PIUTANG_USAHA_ID di .env atau hubungi administrator.');
         }
 
         // Buat jurnal debit hutang uang muka

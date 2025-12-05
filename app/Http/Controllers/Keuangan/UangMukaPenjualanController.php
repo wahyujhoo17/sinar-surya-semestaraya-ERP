@@ -531,16 +531,16 @@ class UangMukaPenjualanController extends Controller
         // Cari akun
         $akunKas = null;
         $akunBank = null;
-        $akunUangMukaPenjualan = AkunAkuntansi::where('kode', '2201')->first(); // Hutang Uang Muka Penjualan
+        $akunUangMukaPenjualan = AkunAkuntansi::where('id', config('accounting.uang_muka_penjualan.hutang_uang_muka_penjualan'))->first();
 
         if ($uangMuka->metode_pembayaran === 'kas') {
-            $akunKas = $uangMuka->kas->akunAkuntansi ?? AkunAkuntansi::where('kode', '1001')->first();
+            $akunKas = $uangMuka->kas->akunAkuntansi ?? AkunAkuntansi::where('id', config('accounting.accounts.kas'))->first();
         } else {
-            $akunBank = $uangMuka->rekeningBank->akunAkuntansi ?? AkunAkuntansi::where('kode', '1002')->first();
+            $akunBank = $uangMuka->rekeningBank->akunAkuntansi ?? AkunAkuntansi::where('id', config('accounting.accounts.bank'))->first();
         }
 
         if (!$akunUangMukaPenjualan) {
-            throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
+            throw new \Exception('Akun Hutang Uang Muka Penjualan tidak ditemukan. Silakan periksa konfigurasi AKUN_HUTANG_UANG_MUKA_PENJUALAN_ID di .env atau hubungi administrator.');
         }
 
         $akunKasBankId = $uangMuka->metode_pembayaran === 'kas' ? $akunKas->id : $akunBank->id;
@@ -639,16 +639,15 @@ class UangMukaPenjualanController extends Controller
             return;
         }
 
-        $akunUangMukaPenjualan = AkunAkuntansi::where('kode', '2201')->first();
-        $akunPiutang = AkunAkuntansi::where('id', env('AKUN_PIUTANG_USAHA_ID'))->first();
+        $akunUangMukaPenjualan = AkunAkuntansi::where('id', config('accounting.uang_muka_penjualan.hutang_uang_muka_penjualan'))->first();
+        $akunPiutang = AkunAkuntansi::where('id', config('accounting.accounts.piutang_usaha'))->first();
 
         if (!$akunUangMukaPenjualan) {
-            throw new \Exception('Akun Hutang Uang Muka Penjualan (2201) tidak ditemukan. Silakan hubungi administrator.');
+            throw new \Exception('Akun Hutang Uang Muka Penjualan tidak ditemukan. Silakan periksa konfigurasi AKUN_HUTANG_UANG_MUKA_PENJUALAN_ID di .env atau hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            $piutangId = env('AKUN_PIUTANG_USAHA_ID');
-            throw new \Exception("Akun Piutang Usaha (ID: {$piutangId}) tidak ditemukan. Pastikan AKUN_PIUTANG_USAHA_ID di .env sudah benar.");
+            throw new \Exception('Akun Piutang Usaha tidak ditemukan. Silakan periksa konfigurasi AKUN_PIUTANG_USAHA_ID di .env atau hubungi administrator.');
         }
 
         // Buat jurnal debit hutang uang muka
