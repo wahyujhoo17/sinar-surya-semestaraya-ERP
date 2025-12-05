@@ -14,6 +14,7 @@ use App\Models\LogAktivitas;
 use App\Models\UangMukaPenjualan;
 use App\Models\UangMukaAplikasi;
 use App\Models\JurnalUmum;
+use App\Models\AccountingConfiguration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -1232,15 +1233,18 @@ class InvoiceController extends Controller
             return;
         }
 
-        $akunUangMukaPenjualan = \App\Models\AkunAkuntansi::where('id', config('accounting.uang_muka_penjualan.hutang_uang_muka_penjualan'))->first();
-        $akunPiutang = \App\Models\AkunAkuntansi::where('id', config('accounting.accounts.piutang_usaha'))->first();
+        $akunUangMukaPenjualanId = AccountingConfiguration::getAccountId('uang_muka_penjualan', 'hutang_uang_muka_penjualan');
+        $akunUangMukaPenjualan = $akunUangMukaPenjualanId ? \App\Models\AkunAkuntansi::find($akunUangMukaPenjualanId) : null;
+
+        $akunPiutangId = AccountingConfiguration::getAccountId('penjualan', 'piutang_usaha');
+        $akunPiutang = $akunPiutangId ? \App\Models\AkunAkuntansi::find($akunPiutangId) : null;
 
         if (!$akunUangMukaPenjualan) {
-            throw new \Exception('Akun Hutang Uang Muka Penjualan tidak ditemukan. Silakan periksa konfigurasi AKUN_HUTANG_UANG_MUKA_PENJUALAN_ID di .env atau hubungi administrator.');
+            throw new \Exception('Akun Hutang Uang Muka Penjualan tidak ditemukan. Silakan konfigurasi akun di menu Konfigurasi Akuntansi atau hubungi administrator.');
         }
 
         if (!$akunPiutang) {
-            throw new \Exception('Akun Piutang Usaha tidak ditemukan. Silakan periksa konfigurasi AKUN_PIUTANG_USAHA_ID di .env atau hubungi administrator.');
+            throw new \Exception('Akun Piutang Usaha tidak ditemukan. Silakan konfigurasi akun di menu Konfigurasi Akuntansi atau hubungi administrator.');
         }
 
         // Buat jurnal debit hutang uang muka
