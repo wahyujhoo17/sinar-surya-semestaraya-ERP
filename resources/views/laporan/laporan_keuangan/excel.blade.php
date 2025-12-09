@@ -62,13 +62,32 @@
                 <tr class="bg-gray">
                     <td colspan="3" class="font-bold">ASET</td>
                 </tr>
-                @foreach ($data['assets'] as $asset)
-                    <tr>
-                        <td>{{ $asset['kode'] }}</td>
-                        <td>{{ $asset['nama'] }}</td>
-                        <td class="text-right">{{ number_format($asset['balance'], 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
+                @if (isset($data['assets_grouped']) && isset($data['assets_grouped']['groups']))
+                    @foreach ($data['assets_grouped']['groups'] as $group)
+                        <tr class="font-bold bg-gray">
+                            <td colspan="3">{{ $group['name'] }}</td>
+                        </tr>
+                        @foreach ($group['accounts'] as $asset)
+                            <tr>
+                                <td>{{ $asset['kode'] }}</td>
+                                <td>{{ $asset['nama'] }}</td>
+                                <td class="text-right">{{ number_format($asset['balance'], 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                        <tr class="font-bold">
+                            <td colspan="2">Subtotal {{ $group['name'] }}</td>
+                            <td class="text-right">{{ number_format($group['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    @foreach ($data['assets'] as $asset)
+                        <tr>
+                            <td>{{ $asset['kode'] }}</td>
+                            <td>{{ $asset['nama'] }}</td>
+                            <td class="text-right">{{ number_format($asset['balance'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @endif
                 <tr class="font-bold">
                     <td colspan="2">TOTAL ASET</td>
                     <td class="text-right">{{ number_format($data['totals']['total_assets'], 0, ',', '.') }}</td>
@@ -81,13 +100,32 @@
                 <tr class="bg-gray">
                     <td colspan="3" class="font-bold">KEWAJIBAN</td>
                 </tr>
-                @foreach ($data['liabilities'] as $liability)
-                    <tr>
-                        <td>{{ $liability['kode'] }}</td>
-                        <td>{{ $liability['nama'] }}</td>
-                        <td class="text-right">{{ number_format($liability['balance'], 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
+                @if (isset($data['liabilities_grouped']) && isset($data['liabilities_grouped']['groups']))
+                    @foreach ($data['liabilities_grouped']['groups'] as $group)
+                        <tr class="font-bold bg-gray">
+                            <td colspan="3">{{ $group['name'] }}</td>
+                        </tr>
+                        @foreach ($group['accounts'] as $liability)
+                            <tr>
+                                <td>{{ $liability['kode'] }}</td>
+                                <td>{{ $liability['nama'] }}</td>
+                                <td class="text-right">{{ number_format($liability['balance'], 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                        <tr class="font-bold">
+                            <td colspan="2">Subtotal {{ $group['name'] }}</td>
+                            <td class="text-right">{{ number_format($group['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @else
+                    @foreach ($data['liabilities'] as $liability)
+                        <tr>
+                            <td>{{ $liability['kode'] }}</td>
+                            <td>{{ $liability['nama'] }}</td>
+                            <td class="text-right">{{ number_format($liability['balance'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @endif
                 <tr class="font-bold">
                     <td colspan="2">TOTAL KEWAJIBAN</td>
                     <td class="text-right">{{ number_format($data['totals']['total_liabilities'], 0, ',', '.') }}</td>
@@ -100,13 +138,25 @@
                 <tr class="bg-gray">
                     <td colspan="3" class="font-bold">EKUITAS</td>
                 </tr>
-                @foreach ($data['equity'] as $equity)
-                    <tr>
-                        <td>{{ $equity['kode'] }}</td>
-                        <td>{{ $equity['nama'] }}</td>
-                        <td class="text-right">{{ number_format($equity['balance'], 0, ',', '.') }}</td>
-                    </tr>
-                @endforeach
+                @if (isset($data['equity_grouped']) && isset($data['equity_grouped']['groups']))
+                    @foreach ($data['equity_grouped']['groups'] as $group)
+                        @foreach ($group['accounts'] as $equity)
+                            <tr>
+                                <td>{{ $equity['kode'] }}</td>
+                                <td>{{ $equity['nama'] }}</td>
+                                <td class="text-right">{{ number_format($equity['balance'], 0, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                    @endforeach
+                @else
+                    @foreach ($data['equity'] as $equity)
+                        <tr>
+                            <td>{{ $equity['kode'] }}</td>
+                            <td>{{ $equity['nama'] }}</td>
+                            <td class="text-right">{{ number_format($equity['balance'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                @endif
                 <tr class="font-bold">
                     <td colspan="2">TOTAL EKUITAS</td>
                     <td class="text-right">{{ number_format($data['totals']['total_equity'], 0, ',', '.') }}</td>

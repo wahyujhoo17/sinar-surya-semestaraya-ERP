@@ -168,9 +168,9 @@
                                             </template>
                                         </div>
 
-                                        <!-- Custom Date Range -->
+                                        <!-- Custom Date Range (for all report types) -->
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                                            x-show="dateType === 'custom' && filter.report_type !== 'balance_sheet'">
+                                            x-show="dateType === 'custom'" x-transition>
                                             <div>
                                                 <label for="tanggal_awal"
                                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
@@ -188,13 +188,28 @@
                                             </div>
                                         </div>
 
-                                        <!-- Single Date for Balance Sheet -->
-                                        <div x-show="dateType === 'custom' && filter.report_type === 'balance_sheet'">
-                                            <label for="tanggal_neraca"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
-                                                Neraca</label>
-                                            <input type="date" id="tanggal_neraca" x-model="filter.tanggal_akhir"
-                                                class="block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white" />
+                                        <!-- Display Selected Dates (show in all modes) -->
+                                        <div
+                                            class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                                            <div class="flex items-start space-x-2">
+                                                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5"
+                                                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                                    </path>
+                                                </svg>
+                                                <div class="flex-1">
+                                                    <p class="text-sm font-medium text-blue-900 dark:text-blue-100">
+                                                        Periode yang Dipilih:</p>
+                                                    <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                                        <strong>Dari:</strong> <span
+                                                            x-text="formatDateDisplay(filter.tanggal_awal)"></span>
+                                                        <strong class="ml-2">Sampai:</strong> <span
+                                                            x-text="formatDateDisplay(filter.tanggal_akhir)"></span>
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -281,30 +296,53 @@
                             <div x-show="loading" class="flex justify-center py-8">
                                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
                             </div>
-                            <div x-show="!loading && balanceSheetData.assets?.length > 0">
-                                <template x-for="asset in balanceSheetData.assets" :key="asset.id">
-                                    <div
-                                        class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                        <div class="flex items-center gap-2">
-                                            <div>
-                                                <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                                    x-text="asset.nama"></span>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                    x-text="asset.kode">
+                            <div x-show="!loading && balanceSheetData.assets_grouped?.groups?.length > 0">
+                                <!-- Loop through asset groups -->
+                                <template x-for="(group, groupIndex) in balanceSheetData.assets_grouped?.groups"
+                                    :key="'asset-group-' + groupIndex">
+                                    <div class="mb-4">
+                                        <!-- Group Header -->
+                                        <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
+                                            x-text="group.name"></div>
+
+                                        <!-- Group Accounts -->
+                                        <template x-for="(account, accountIndex) in group.accounts"
+                                            :key="'asset-account-' + groupIndex + '-' + accountIndex">
+                                            <div
+                                                class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                <div class="flex items-center gap-2">
+                                                    <div>
+                                                        <span class="text-sm text-gray-900 dark:text-white"
+                                                            x-text="account.nama"></span>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400"
+                                                            x-text="account.kode_akun">
+                                                        </div>
+                                                    </div>
+                                                    <span x-show="account.is_abnormal"
+                                                        class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                                        title="Saldo tidak normal - mungkin ada kesalahan jurnal">
+                                                        ⚠️
+                                                    </span>
                                                 </div>
+                                                <span class="text-sm"
+                                                    :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
+                                                        'text-gray-900 dark:text-white'"
+                                                    x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
                                             </div>
-                                            <span x-show="asset.is_abnormal"
-                                                class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                                title="Saldo tidak normal - mungkin ada kesalahan jurnal">
-                                                ⚠️
-                                            </span>
+                                        </template>
+
+                                        <!-- Group Subtotal -->
+                                        <div
+                                            class="flex justify-between items-center py-2 pl-6 bg-gray-50 dark:bg-gray-700/50 font-medium text-sm mt-1">
+                                            <span class="text-gray-700 dark:text-gray-300"
+                                                x-text="'Subtotal ' + group.name"></span>
+                                            <span class="text-gray-900 dark:text-white"
+                                                x-text="formatCurrency(group.subtotal || 0)"></span>
                                         </div>
-                                        <span class="text-sm font-semibold"
-                                            :class="asset.is_abnormal ? 'text-red-600 dark:text-red-400' :
-                                                'text-gray-900 dark:text-white'"
-                                            x-text="asset.is_abnormal ? '(' + formatCurrency(Math.abs(asset.balance)) + ')' : formatCurrency(asset.balance)"></span>
                                     </div>
                                 </template>
+
+                                <!-- Total Assets -->
                                 <div class="pt-4 mt-4 border-t-2 border-gray-200 dark:border-gray-600">
                                     <div class="flex justify-between items-center">
                                         <span class="text-lg font-bold text-gray-900 dark:text-white">Total Aset</span>
@@ -313,7 +351,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div x-show="!loading && (!balanceSheetData.assets || balanceSheetData.assets.length === 0)"
+                            <div x-show="!loading && (!balanceSheetData.assets_grouped?.groups || balanceSheetData.assets_grouped.groups.length === 0)"
                                 class="text-center py-8">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4"
                                     fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -342,29 +380,53 @@
                                 </h3>
                             </div>
                             <div class="p-6">
-                                <div x-show="!loading && balanceSheetData.liabilities?.length > 0">
-                                    <template x-for="liability in balanceSheetData.liabilities" :key="liability.id">
-                                        <div
-                                            class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                            <div class="flex items-center gap-2">
-                                                <div>
-                                                    <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                                        x-text="liability.nama"></span>
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                        x-text="liability.kode"></div>
+                                <div x-show="!loading && balanceSheetData.liabilities_grouped?.groups?.length > 0">
+                                    <!-- Loop through liability groups -->
+                                    <template
+                                        x-for="(group, groupIndex) in balanceSheetData.liabilities_grouped?.groups"
+                                        :key="'liability-group-' + groupIndex">
+                                        <div class="mb-4">
+                                            <!-- Group Header -->
+                                            <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
+                                                x-text="group.name"></div>
+
+                                            <!-- Group Accounts -->
+                                            <template x-for="(account, accountIndex) in group.accounts"
+                                                :key="'liability-account-' + groupIndex + '-' + accountIndex">
+                                                <div
+                                                    class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <div>
+                                                            <span class="text-sm text-gray-900 dark:text-white"
+                                                                x-text="account.nama"></span>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400"
+                                                                x-text="account.kode_akun"></div>
+                                                        </div>
+                                                        <span x-show="account.is_abnormal"
+                                                            class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                                            title="Saldo tidak normal - mungkin ada kesalahan jurnal">
+                                                            ⚠️
+                                                        </span>
+                                                    </div>
+                                                    <span class="text-sm"
+                                                        :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
+                                                            'text-gray-900 dark:text-white'"
+                                                        x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
                                                 </div>
-                                                <span x-show="liability.is_abnormal"
-                                                    class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                                    title="Saldo tidak normal - mungkin ada kesalahan jurnal">
-                                                    ⚠️
-                                                </span>
+                                            </template>
+
+                                            <!-- Group Subtotal -->
+                                            <div
+                                                class="flex justify-between items-center py-2 pl-6 bg-gray-50 dark:bg-gray-700/50 font-medium text-sm mt-1">
+                                                <span class="text-gray-700 dark:text-gray-300"
+                                                    x-text="'Subtotal ' + group.name"></span>
+                                                <span class="text-gray-900 dark:text-white"
+                                                    x-text="formatCurrency(group.subtotal || 0)"></span>
                                             </div>
-                                            <span class="text-sm font-semibold"
-                                                :class="liability.is_abnormal ? 'text-red-600 dark:text-red-400' :
-                                                    'text-gray-900 dark:text-white'"
-                                                x-text="liability.is_abnormal ? '(' + formatCurrency(Math.abs(liability.balance)) + ')' : formatCurrency(liability.balance)"></span>
                                         </div>
                                     </template>
+
+                                    <!-- Total Liabilities -->
                                     <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
                                         <div class="flex justify-between items-center">
                                             <span class="text-base font-bold text-gray-900 dark:text-white">Total
@@ -374,7 +436,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div x-show="!loading && (!balanceSheetData.liabilities || balanceSheetData.liabilities.length === 0)"
+                                <div x-show="!loading && (!balanceSheetData.liabilities_grouped?.groups || balanceSheetData.liabilities_grouped.groups.length === 0)"
                                     class="text-center py-4">
                                     <p class="text-gray-500 dark:text-gray-400 text-sm">Tidak ada data kewajiban</p>
                                 </div>
@@ -396,20 +458,52 @@
                                 </h3>
                             </div>
                             <div class="p-6">
-                                <div x-show="!loading && balanceSheetData.equity?.length > 0">
-                                    <template x-for="equity in balanceSheetData.equity" :key="equity.id">
-                                        <div
-                                            class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
-                                            <div>
-                                                <span class="text-sm font-medium text-gray-900 dark:text-white"
-                                                    x-text="equity.nama"></span>
-                                                <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                    x-text="equity.kode"></div>
+                                <div x-show="!loading && balanceSheetData.equity_grouped?.groups?.length > 0">
+                                    <!-- Loop through equity groups -->
+                                    <template x-for="(group, groupIndex) in balanceSheetData.equity_grouped?.groups"
+                                        :key="'equity-group-' + groupIndex">
+                                        <div class="mb-4">
+                                            <!-- Group Header -->
+                                            <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
+                                                x-text="group.name"></div>
+
+                                            <!-- Group Accounts -->
+                                            <template x-for="(account, accountIndex) in group.accounts"
+                                                :key="'equity-account-' + groupIndex + '-' + accountIndex">
+                                                <div
+                                                    class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                    <div class="flex items-center gap-2">
+                                                        <div>
+                                                            <span class="text-sm text-gray-900 dark:text-white"
+                                                                x-text="account.nama"></span>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400"
+                                                                x-text="account.kode_akun"></div>
+                                                        </div>
+                                                        <span x-show="account.is_abnormal"
+                                                            class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                                                            title="Saldo tidak normal - mungkin ada kesalahan jurnal">
+                                                            ⚠️
+                                                        </span>
+                                                    </div>
+                                                    <span class="text-sm"
+                                                        :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
+                                                            'text-gray-900 dark:text-white'"
+                                                        x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
+                                                </div>
+                                            </template>
+
+                                            <!-- Group Subtotal -->
+                                            <div
+                                                class="flex justify-between items-center py-2 pl-6 bg-gray-50 dark:bg-gray-700/50 font-medium text-sm mt-1">
+                                                <span class="text-gray-700 dark:text-gray-300"
+                                                    x-text="'Subtotal ' + group.name"></span>
+                                                <span class="text-gray-900 dark:text-white"
+                                                    x-text="formatCurrency(group.subtotal || 0)"></span>
                                             </div>
-                                            <span class="text-sm font-semibold text-gray-900 dark:text-white"
-                                                x-text="formatCurrency(equity.balance)"></span>
                                         </div>
                                     </template>
+
+                                    <!-- Total Equity -->
                                     <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-600">
                                         <div class="flex justify-between items-center">
                                             <span class="text-base font-bold text-gray-900 dark:text-white">Total
@@ -419,7 +513,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div x-show="!loading && (!balanceSheetData.equity || balanceSheetData.equity.length === 0)"
+                                <div x-show="!loading && (!balanceSheetData.equity_grouped?.groups || balanceSheetData.equity_grouped.groups.length === 0)"
                                     class="text-center py-4">
                                     <p class="text-gray-500 dark:text-gray-400 text-sm">Tidak ada data ekuitas</p>
                                 </div>
@@ -1365,9 +1459,8 @@
                         let url = '';
                         let params = new URLSearchParams();
 
-                        if (this.filter.report_type !== 'balance_sheet') {
-                            params.append('tanggal_awal', this.filter.tanggal_awal);
-                        }
+                        // Send both tanggal_awal and tanggal_akhir for all report types
+                        params.append('tanggal_awal', this.filter.tanggal_awal);
                         params.append('tanggal_akhir', this.filter.tanggal_akhir);
 
                         switch (this.filter.report_type) {
@@ -1753,6 +1846,17 @@
                 getLastMonthEnd() {
                     const now = new Date();
                     return new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+                },
+
+                formatDateDisplay(dateString) {
+                    if (!dateString) return '-';
+                    const options = {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    };
+                    const date = new Date(dateString + 'T00:00:00');
+                    return date.toLocaleDateString('id-ID', options);
                 }
             }
         }

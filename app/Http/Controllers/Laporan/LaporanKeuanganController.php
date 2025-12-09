@@ -59,6 +59,7 @@ class LaporanKeuanganController extends Controller
     public function getBalanceSheet(Request $request)
     {
         try {
+            $tanggalAwal = Carbon::parse($request->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
             $tanggalAkhir = Carbon::parse($request->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay();
 
             // Get assets (Aset)
@@ -146,6 +147,7 @@ class LaporanKeuanganController extends Controller
                     'chart_data' => $chartData
                 ],
                 'period' => [
+                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
                     'tanggal_akhir' => $tanggalAkhir->format('Y-m-d')
                 ]
             ]);
@@ -1246,19 +1248,111 @@ class LaporanKeuanganController extends Controller
             'total' => 0
         ];
 
+        // Convert collection to array if needed
+        if ($accounts instanceof \Illuminate\Support\Collection) {
+            $accounts = $accounts->toArray();
+        }
+
+        // Group accounts by their parent (header accounts)
+        // Special handling: accounts with ref_type (RekeningBank, Kas) should be grouped under parent
+        // Other accounts without parent shown individually
+        $accountsWithParent = [];
+        $accountsWithoutParent = [];
+        $allAccountIds = [];
+
+        foreach ($accounts as $acc) {
+            $allAccountIds[] = $acc['id'];
+
+            // Check if this is a reference account (bank/kas) that should be grouped
+            $shouldGroup = !empty($acc['parent_id']) &&
+                (isset($acc['ref_type']) && in_array($acc['ref_type'], ['App\\Models\\RekeningBank', 'App\\Models\\Kas']));
+
+            // Or if it has parent_id and parent exists in our accounts list
+            $hasParentInList = !empty($acc['parent_id']);
+
+            if ($shouldGroup || $hasParentInList) {
+                if (!isset($accountsWithParent[$acc['parent_id']])) {
+                    $accountsWithParent[$acc['parent_id']] = [];
+                }
+                $accountsWithParent[$acc['parent_id']][] = $acc;
+            } else {
+                $accountsWithoutParent[] = $acc;
+            }
+        }
+
+        // Build the grouped accounts array
+        // For accounts with parent, show only the parent (header) with aggregated balance
+        $processedAccounts = [];
+
+        // First, add accounts without parent that don't have children
+        foreach ($accountsWithoutParent as $acc) {
+            if (!isset($accountsWithParent[$acc['id']])) {
+                // Regular account without children
+                $processedAccounts[] = $acc;
+            }
+        }
+
+        // Then, process all parent-child relationships
+        // Find all parent IDs that have children
+        foreach ($accountsWithParent as $parentId => $children) {
+            // Find the parent account (could be in accountsWithoutParent or in accounts array)
+            $parentAcc = null;
+
+            foreach ($accountsWithoutParent as $acc) {
+                if ($acc['id'] == $parentId) {
+                    $parentAcc = $acc;
+                    break;
+                }
+            }
+
+            // If parent not found in accountsWithoutParent, search in all accounts
+            if (!$parentAcc) {
+                foreach ($accounts as $acc) {
+                    if ($acc['id'] == $parentId) {
+                        $parentAcc = $acc;
+                        break;
+                    }
+                }
+            }
+
+            if ($parentAcc) {
+                // This is a header account with children
+                $childrenBalance = collect($children)->sum('balance');
+
+                // Check if balance is abnormal for asset category
+                $isAbnormal = false;
+                if ($mainCategory === 'asset' && $childrenBalance < 0) {
+                    $isAbnormal = true;
+                } elseif (in_array($mainCategory, ['liability', 'equity']) && $childrenBalance < 0) {
+                    $isAbnormal = true;
+                }
+
+                $processedAccounts[] = [
+                    'id' => $parentAcc['id'],
+                    'kode' => $parentAcc['kode'],
+                    'nama' => $parentAcc['nama'],
+                    'balance' => $childrenBalance,
+                    'is_header' => true,
+                    'is_abnormal' => $isAbnormal
+                ];
+            }
+        }
+
+        $processedCollection = collect($processedAccounts);
+
         if ($mainCategory === 'asset') {
             // Aset Lancar: 1-1xxx
-            $currentAssets = $accounts->filter(function ($acc) {
+            $currentAssets = $processedCollection->filter(function ($acc) {
                 return preg_match('/^1[- ]?1/', $acc['kode']);
             });
 
             // Aset Tetap: 1-2xxx or 1-3xxx
-            $fixedAssets = $accounts->filter(function ($acc) {
+            $fixedAssets = $processedCollection->filter(function ($acc) {
                 return preg_match('/^1[- ]?[23]/', $acc['kode']);
             });
 
             // Aset lainnya (yang tidak masuk kategori di atas)
-            $otherAssets = $accounts->filter(function ($acc) use ($currentAssets, $fixedAssets) {
+            $otherAssets = $processedCollection->filter(function ($acc) use ($currentAssets, $fixedAssets) {
                 $isInCurrent = $currentAssets->contains('id', $acc['id']);
                 $isInFixed = $fixedAssets->contains('id', $acc['id']);
                 return !$isInCurrent && !$isInFixed;
@@ -1289,20 +1383,20 @@ class LaporanKeuanganController extends Controller
                 ];
             }
 
-            $grouped['total'] = $accounts->sum('balance');
+            $grouped['total'] = $processedCollection->sum('balance');
         } elseif ($mainCategory === 'liability') {
             // Kewajiban Jangka Pendek: 2-1xxx
-            $currentLiabilities = $accounts->filter(function ($acc) {
+            $currentLiabilities = $processedCollection->filter(function ($acc) {
                 return preg_match('/^2[- ]?1/', $acc['kode']);
             });
 
             // Kewajiban Jangka Panjang: 2-2xxx
-            $longTermLiabilities = $accounts->filter(function ($acc) {
+            $longTermLiabilities = $processedCollection->filter(function ($acc) {
                 return preg_match('/^2[- ]?2/', $acc['kode']);
             });
 
             // Kewajiban lainnya (yang tidak masuk kategori di atas)
-            $otherLiabilities = $accounts->filter(function ($acc) use ($currentLiabilities, $longTermLiabilities) {
+            $otherLiabilities = $processedCollection->filter(function ($acc) use ($currentLiabilities, $longTermLiabilities) {
                 $isInCurrent = $currentLiabilities->contains('id', $acc['id']);
                 $isInLongTerm = $longTermLiabilities->contains('id', $acc['id']);
                 return !$isInCurrent && !$isInLongTerm;
@@ -1332,16 +1426,16 @@ class LaporanKeuanganController extends Controller
                 ];
             }
 
-            $grouped['total'] = $accounts->sum('balance');
+            $grouped['total'] = $processedCollection->sum('balance');
         } elseif ($mainCategory === 'equity') {
             // All equity accounts without sub-grouping (Modal, Laba Ditahan, Prive, Laba Tahun Berjalan)
             $grouped['groups'][] = [
                 'name' => 'EKUITAS',
-                'accounts' => $accounts->values()->all(),
-                'subtotal' => $accounts->sum('balance')
+                'accounts' => $processedCollection->values()->all(),
+                'subtotal' => $processedCollection->sum('balance')
             ];
 
-            $grouped['total'] = $accounts->sum('balance');
+            $grouped['total'] = $processedCollection->sum('balance');
         }
 
         return $grouped;
@@ -1801,6 +1895,20 @@ class LaporanKeuanganController extends Controller
 
     /**
      * Get account balance for specific category up to specific date
+     * 
+     * CATATAN KALIBRASI AKUN:
+     * Fungsi ini mengambil SEMUA akun yang aktif dari kategori tertentu (asset, liability, equity)
+     * dan menghitung saldonya berdasarkan JURNAL UMUM yang sudah dibuat.
+     * 
+     * Kalibrasi akun dari accounting_configuration SUDAH DITERAPKAN saat:
+     * 1. Pembuatan jurnal dari transaksi penjualan (Invoice)
+     * 2. Pembuatan jurnal dari transaksi pembelian (PurchaseOrder)
+     * 3. Pembayaran hutang/piutang
+     * 4. Transfer barang
+     * 5. Dan transaksi lainnya
+     * 
+     * Sehingga data yang ditampilkan di NERACA adalah HASIL AKHIR dari semua jurnal
+     * yang sudah menggunakan konfigurasi akun yang benar.
      *
      * @param string $category
      * @param Carbon $tanggalAkhir
@@ -1808,26 +1916,33 @@ class LaporanKeuanganController extends Controller
      */
     private function getAccountBalance($category, $tanggalAkhir)
     {
+        // Get all active detail accounts for this category
         $accounts = AkunAkuntansi::where('kategori', $category)
             ->where('is_active', true)
             ->where('tipe', 'detail')
             ->orderBy('kode')
             ->get();
 
-        return $accounts->map(function ($account) use ($tanggalAkhir) {
+        // Calculate balance for each account from posted journal entries
+        $accountsWithBalance = $accounts->map(function ($account) use ($tanggalAkhir) {
+            // Sum debit and credit from posted journal entries up to specified date
             $totalDebit = JurnalUmum::where('akun_id', $account->id)
                 ->where('tanggal', '<=', $tanggalAkhir)
+                ->where('is_posted', true) // Only posted entries
                 ->sum('debit');
 
             $totalKredit = JurnalUmum::where('akun_id', $account->id)
                 ->where('tanggal', '<=', $tanggalAkhir)
+                ->where('is_posted', true) // Only posted entries
                 ->sum('kredit');
 
-            // Calculate balance based on account category
+            // Calculate balance based on account category (normal balance)
             if (in_array($account->kategori, ['asset', 'expense'])) {
+                // Normal debit balance
                 $balance = $totalDebit - $totalKredit;
                 $isAbnormal = $balance < 0; // Asset/Expense shouldn't be negative
             } else {
+                // Normal credit balance (liability, equity, income)
                 $balance = $totalKredit - $totalDebit;
                 $isAbnormal = $balance < 0; // Liability/Equity/Income shouldn't be negative
             }
@@ -1835,9 +1950,13 @@ class LaporanKeuanganController extends Controller
             return [
                 'id' => $account->id,
                 'kode' => $account->kode,
+                'kode_akun' => $account->kode, // For compatibility
                 'nama' => $account->nama,
                 'nama_akun' => $account->nama, // For compatibility with chart data
                 'kategori' => $account->kategori,
+                'parent_id' => $account->parent_id,
+                'ref_id' => $account->ref_id,
+                'ref_type' => $account->ref_type,
                 'debit' => $totalDebit,
                 'kredit' => $totalKredit,
                 'balance' => $balance,
@@ -1846,6 +1965,34 @@ class LaporanKeuanganController extends Controller
         })->filter(function ($account) {
             return $account['balance'] != 0; // Only show accounts with balance
         });
+
+        // Get unique parent IDs from accounts with balance
+        $parentIds = $accountsWithBalance->pluck('parent_id')->filter()->unique();
+
+        // Fetch parent (header) accounts
+        $parentAccounts = AkunAkuntansi::whereIn('id', $parentIds)
+            ->where('is_active', true)
+            ->get()
+            ->map(function ($parent) {
+                return [
+                    'id' => $parent->id,
+                    'kode' => $parent->kode,
+                    'kode_akun' => $parent->kode,
+                    'nama' => $parent->nama,
+                    'nama_akun' => $parent->nama,
+                    'kategori' => $parent->kategori,
+                    'parent_id' => $parent->parent_id,
+                    'ref_id' => $parent->ref_id,
+                    'ref_type' => $parent->ref_type,
+                    'debit' => 0,
+                    'kredit' => 0,
+                    'balance' => 0, // Will be calculated from children
+                    'is_abnormal' => false
+                ];
+            });
+
+        // Merge detail accounts with their parent accounts
+        return $accountsWithBalance->concat($parentAccounts);
     }
 
     /**
@@ -1905,6 +2052,7 @@ class LaporanKeuanganController extends Controller
                 'kode' => $account->kode,
                 'nama' => $account->nama,
                 'kategori' => $account->kategori,
+                'parent_id' => $account->parent_id,
                 'debit' => $totalDebit,
                 'kredit' => $totalKredit,
                 'balance' => $balance,
