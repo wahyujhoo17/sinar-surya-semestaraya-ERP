@@ -565,6 +565,26 @@
                             </div>
 
                             <div class="md:col-span-2">
+                                <label for="dashboard_type"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe
+                                    Dashboard</label>
+                                <select id="dashboard_type" x-model="formData.dashboard_type"
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
+                                    <option value="">Auto (Sesuai Permission)</option>
+                                    <option value="management">Management Dashboard</option>
+                                    <option value="finance">Finance Dashboard</option>
+                                    <option value="sales">Sales Dashboard</option>
+                                    <option value="production">Production Dashboard</option>
+                                    <option value="hrd">HR Dashboard</option>
+                                    <option value="inventory">Inventory Dashboard</option>
+                                    <option value="purchasing">Purchasing Dashboard</option>
+                                    <option value="default">Default Dashboard</option>
+                                </select>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Kosongkan untuk menggunakan
+                                    dashboard otomatis berdasarkan permission</p>
+                            </div>
+
+                            <div class="md:col-span-2">
                                 <label class="flex items-center">
                                     <input type="checkbox" x-model="formData.is_active"
                                         class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500">
@@ -677,30 +697,64 @@
                                 </svg>
                                 Role & Permissions
                             </h4>
-                            <div>
-                                <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Role yang
-                                    Dimiliki</label>
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    <template x-for="role in viewUser.roles" :key="role.id">
-                                        <span
-                                            :class="role.kode === 'admin' ?
-                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                                                (role.kode === 'manager' ?
-                                                    'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                                                    'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200')"
-                                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium">
-                                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd"
-                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                    clip-rule="evenodd"></path>
-                                            </svg>
-                                            <span x-text="role.nama || role.name"></span>
-                                        </span>
-                                    </template>
-                                    <div x-show="!viewUser.roles || viewUser.roles.length === 0"
-                                        class="text-sm text-gray-500 dark:text-gray-400 italic">
-                                        Tidak ada role yang ditetapkan
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Role yang
+                                        Dimiliki</label>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <template x-for="role in viewUser.roles" :key="role.id">
+                                            <span
+                                                :class="role.kode === 'admin' ?
+                                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                                    (role.kode === 'manager' ?
+                                                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                                                        'bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200')"
+                                                class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium">
+                                                <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd"
+                                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                        clip-rule="evenodd"></path>
+                                                </svg>
+                                                <span x-text="role.nama || role.name"></span>
+                                            </span>
+                                        </template>
+                                        <div x-show="!viewUser.roles || viewUser.roles.length === 0"
+                                            class="text-sm text-gray-500 dark:text-gray-400 italic">
+                                            Tidak ada role yang ditetapkan
+                                        </div>
                                     </div>
+                                </div>
+                                <div>
+                                    <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Tipe
+                                        Dashboard</label>
+                                    <p class="text-sm text-gray-900 dark:text-white mt-1">
+                                        <span x-show="!viewUser.dashboard_type" class="italic text-gray-500">Auto
+                                            (Sesuai Permission)</span>
+                                        <span x-show="viewUser.dashboard_type === 'management'"
+                                            class="px-2 py-1 bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 rounded">Management
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'finance'"
+                                            class="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">Finance
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'sales'"
+                                            class="px-2 py-1 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded">Sales
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'production'"
+                                            class="px-2 py-1 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 rounded">Production
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'hrd'"
+                                            class="px-2 py-1 bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200 rounded">HR
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'inventory'"
+                                            class="px-2 py-1 bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200 rounded">Inventory
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'purchasing'"
+                                            class="px-2 py-1 bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 rounded">Purchasing
+                                            Dashboard</span>
+                                        <span x-show="viewUser.dashboard_type === 'default'"
+                                            class="px-2 py-1 bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200 rounded">Default
+                                            Dashboard</span>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1116,6 +1170,7 @@
                     password: '',
                     password_confirmation: '',
                     roles: [],
+                    dashboard_type: '',
                     is_active: true
                 },
 
@@ -1354,6 +1409,11 @@
                         formData.append('email', this.formData.email);
                         formData.append('is_active', this.formData.is_active ? '1' : '0');
 
+                        // Add dashboard_type if set
+                        if (this.formData.dashboard_type) {
+                            formData.append('dashboard_type', this.formData.dashboard_type);
+                        }
+
                         // Add password fields only for create or if provided in edit
                         if (!this.editMode) {
                             formData.append('password', this.formData.password);
@@ -1450,6 +1510,7 @@
                         password: '',
                         password_confirmation: '',
                         roles: [],
+                        dashboard_type: '',
                         is_active: true
                     };
                 },
@@ -1641,6 +1702,7 @@
                             password: '',
                             password_confirmation: '',
                             roles: user.roles ? user.roles.map(role => role.id) : [],
+                            dashboard_type: user.dashboard_type || '',
                             is_active: user.is_active
                         };
                         this.showModal = true;

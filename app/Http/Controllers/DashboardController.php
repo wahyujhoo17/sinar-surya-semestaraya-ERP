@@ -40,15 +40,20 @@ class DashboardController extends Controller
 {
     /**
      * Menampilkan dashboard utama sistem ERP Sinar Surya Semestaraya
-     * Redirects to role-based dashboard based on user permissions
+     * Redirects to role-based dashboard based on user permissions or custom dashboard type
      */
     public function index()
     {
         $user = auth()->user();
         // dd($user->roles);
 
-        // Determine role group based on permissions
-        $roleGroup = $this->determineRoleGroup($user);
+        // Check if user has custom dashboard type set
+        if (!empty($user->dashboard_type)) {
+            $roleGroup = $user->dashboard_type;
+        } else {
+            // Determine role group based on permissions (existing logic)
+            $roleGroup = $this->determineRoleGroup($user);
+        }
 
         // Route to specific dashboard based on role group
         switch ($roleGroup) {

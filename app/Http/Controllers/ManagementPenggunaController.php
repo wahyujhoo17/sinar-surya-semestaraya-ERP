@@ -143,6 +143,7 @@ class ManagementPenggunaController extends Controller
             'role_ids' => 'required|array|min:1',
             'role_ids.*' => 'exists:roles,id',
             'is_active' => 'boolean',
+            'dashboard_type' => 'nullable|in:management,finance,sales,production,hrd,inventory,purchasing,default',
         ]);
 
         DB::beginTransaction();
@@ -153,6 +154,7 @@ class ManagementPenggunaController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'is_active' => $request->boolean('is_active', true),
+                'dashboard_type' => $request->dashboard_type,
                 'email_verified_at' => now(), // Auto verify for admin created users
             ]);
 
@@ -160,13 +162,14 @@ class ManagementPenggunaController extends Controller
             $user->roles()->attach($request->role_ids);
 
             // Log activity
+            $dashboardInfo = $request->dashboard_type ? ', Dashboard: ' . $request->dashboard_type : '';
             LogAktivitas::create([
                 'user_id' => Auth::id(),
                 'aktivitas' => 'Membuat pengguna baru: ' . $user->name,
                 'modul' => 'management_pengguna',
                 'data_id' => $user->id,
                 'ip_address' => request()->ip(),
-                'detail' => 'Email: ' . $user->email . ', Roles: ' . implode(', ', Role::whereIn('id', $request->role_ids)->pluck('nama')->toArray())
+                'detail' => 'Email: ' . $user->email . ', Roles: ' . implode(', ', Role::whereIn('id', $request->role_ids)->pluck('nama')->toArray()) . $dashboardInfo
             ]);
 
             DB::commit();
@@ -220,17 +223,20 @@ class ManagementPenggunaController extends Controller
             'role_ids' => 'required|array|min:1',
             'role_ids.*' => 'exists:roles,id',
             'is_active' => 'boolean',
+            'dashboard_type' => 'nullable|in:management,finance,sales,production,hrd,inventory,purchasing,default',
         ]);
 
         DB::beginTransaction();
         try {
             $oldRoles = $user->roles->pluck('nama')->toArray();
+            $oldDashboardType = $user->dashboard_type;
 
             // Update user basic info
             $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
                 'is_active' => $request->boolean('is_active', true),
+                'dashboard_type' => $request->dashboard_type,
             ];
 
             // Update password if provided
@@ -251,6 +257,11 @@ class ManagementPenggunaController extends Controller
             }
             if ($oldRoles !== $newRoles) {
                 $changes[] = 'Roles: ' . implode(', ', $oldRoles) . ' → ' . implode(', ', $newRoles);
+            }
+            if ($oldDashboardType !== $request->dashboard_type) {
+                $oldDashboard = $oldDashboardType ?? 'Auto';
+                $newDashboard = $request->dashboard_type ?? 'Auto';
+                $changes[] = 'Dashboard: ' . $oldDashboard . ' → ' . $newDashboard;
             }
 
             LogAktivitas::create([

@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_active',
+        'dashboard_type',
         'last_login_at',
         'last_login_ip'
     ];
