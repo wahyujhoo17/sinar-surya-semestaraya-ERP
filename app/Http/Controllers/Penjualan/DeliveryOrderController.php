@@ -121,6 +121,10 @@ class DeliveryOrderController extends Controller
      */
     public function create(Request $request)
     {
+        if (!Auth::user()->hasPermission('delivery_order.create')) {
+            abort(403, 'Unauthorized');
+        }
+
         $salesOrderId = $request->input('sales_order_id');
         $permintaanBarangId = $request->input('permintaan_barang_id');
         $salesOrder = null;
@@ -172,6 +176,9 @@ class DeliveryOrderController extends Controller
      */
     public function store(Request $request)
     {
+        if (!Auth::user()->hasPermission('delivery_order.create')) {
+            abort(403, 'Unauthorized');
+        }
 
         // Validate input
         $request->validate([

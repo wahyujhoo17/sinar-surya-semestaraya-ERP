@@ -133,7 +133,14 @@ class COAController extends Controller
      * Menampilkan detail akun
      */    public function show($id)
     {
-        $akun = AkunAkuntansi::with(['parent', 'children', 'jurnalEntries', 'reference'])->findOrFail($id);
+        $akun = AkunAkuntansi::with([
+            'parent',
+            'children',
+            'jurnalEntries' => function ($query) {
+                $query->with('referensi')->latest()->take(10);
+            },
+            'reference'
+        ])->findOrFail($id);
 
         // Calculate total balance from journal entries
         $totalDebit = $akun->jurnalEntries->sum('debit');

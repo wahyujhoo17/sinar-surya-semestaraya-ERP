@@ -68,11 +68,19 @@
                             <td colspan="3">{{ $group['name'] }}</td>
                         </tr>
                         @foreach ($group['accounts'] as $asset)
-                            <tr>
-                                <td>{{ $asset['kode'] }}</td>
-                                <td>{{ $asset['nama'] }}</td>
-                                <td class="text-right">{{ number_format($asset['balance'], 0, ',', '.') }}</td>
-                            </tr>
+                            @if (!($asset['hide_details'] ?? false))
+                                <tr @if ($asset['is_header'] ?? false) class="font-bold bg-gray" @endif>
+                                    <td
+                                        @if (!($asset['is_header'] ?? false)) style="padding-left: {{ ($asset['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $asset['kode_akun'] ?? $asset['kode'] }}
+                                    </td>
+                                    <td
+                                        @if (!($asset['is_header'] ?? false)) style="padding-left: {{ ($asset['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $asset['nama'] }}
+                                    </td>
+                                    <td class="text-right">{{ number_format($asset['balance'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
                         @endforeach
                         <tr class="font-bold">
                             <td colspan="2">Subtotal {{ $group['name'] }}</td>
@@ -106,11 +114,19 @@
                             <td colspan="3">{{ $group['name'] }}</td>
                         </tr>
                         @foreach ($group['accounts'] as $liability)
-                            <tr>
-                                <td>{{ $liability['kode'] }}</td>
-                                <td>{{ $liability['nama'] }}</td>
-                                <td class="text-right">{{ number_format($liability['balance'], 0, ',', '.') }}</td>
-                            </tr>
+                            @if (!($liability['hide_details'] ?? false))
+                                <tr @if ($liability['is_header'] ?? false) class="font-bold bg-gray" @endif>
+                                    <td
+                                        @if (!($liability['is_header'] ?? false)) style="padding-left: {{ ($liability['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $liability['kode_akun'] ?? $liability['kode'] }}
+                                    </td>
+                                    <td
+                                        @if (!($liability['is_header'] ?? false)) style="padding-left: {{ ($liability['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $liability['nama'] }}
+                                    </td>
+                                    <td class="text-right">{{ number_format($liability['balance'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
                         @endforeach
                         <tr class="font-bold">
                             <td colspan="2">Subtotal {{ $group['name'] }}</td>
@@ -140,13 +156,28 @@
                 </tr>
                 @if (isset($data['equity_grouped']) && isset($data['equity_grouped']['groups']))
                     @foreach ($data['equity_grouped']['groups'] as $group)
+                        <tr class="font-bold bg-gray">
+                            <td colspan="3">{{ $group['name'] }}</td>
+                        </tr>
                         @foreach ($group['accounts'] as $equity)
-                            <tr>
-                                <td>{{ $equity['kode'] }}</td>
-                                <td>{{ $equity['nama'] }}</td>
-                                <td class="text-right">{{ number_format($equity['balance'], 0, ',', '.') }}</td>
-                            </tr>
+                            @if (!($equity['hide_details'] ?? false))
+                                <tr @if ($equity['is_header'] ?? false) class="font-bold bg-gray" @endif>
+                                    <td
+                                        @if (!($equity['is_header'] ?? false)) style="padding-left: {{ ($equity['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $equity['kode_akun'] ?? $equity['kode'] }}
+                                    </td>
+                                    <td
+                                        @if (!($equity['is_header'] ?? false)) style="padding-left: {{ ($equity['level'] ?? 0) * 10 + 8 }}px" @endif>
+                                        {{ $equity['nama'] }}
+                                    </td>
+                                    <td class="text-right">{{ number_format($equity['balance'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endif
                         @endforeach
+                        <tr class="font-bold">
+                            <td colspan="2">Subtotal {{ $group['name'] }}</td>
+                            <td class="text-right">{{ number_format($group['subtotal'], 0, ',', '.') }}</td>
+                        </tr>
                     @endforeach
                 @else
                     @foreach ($data['equity'] as $equity)

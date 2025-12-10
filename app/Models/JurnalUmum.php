@@ -94,6 +94,35 @@ class JurnalUmum extends Model
     }
 
     /**
+     * Get display text for referensi
+     */
+    public function getReferensiDisplayAttribute()
+    {
+        if (!$this->ref_type || !$this->ref_id) {
+            return $this->no_referensi ?? '-';
+        }
+
+        $refType = class_basename($this->ref_type);
+
+        switch ($refType) {
+            case 'PurchaseOrder':
+                return $this->referensi ? $this->referensi->nomor : $this->no_referensi;
+            case 'Invoice':
+                return $this->referensi ? $this->referensi->nomor : $this->no_referensi;
+            case 'SalesOrder':
+                return $this->referensi ? $this->referensi->nomor : $this->no_referensi;
+            case 'PenerimaanBarang':
+                return $this->referensi ? $this->referensi->nomor : $this->no_referensi;
+            case 'Kas':
+                return $this->referensi ? 'Kas: ' . $this->referensi->nama : $this->no_referensi;
+            case 'RekeningBank':
+                return $this->referensi ? 'Bank: ' . $this->referensi->nama_bank . ' - ' . $this->referensi->nomor_rekening : $this->no_referensi;
+            default:
+                return $this->no_referensi ?? '-';
+        }
+    }
+
+    /**
      * Relasi ke user yang posting
      */
     public function postedBy()

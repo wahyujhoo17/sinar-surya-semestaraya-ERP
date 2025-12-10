@@ -240,7 +240,20 @@
             <!-- Latest Transactions -->
             @if ($akun->jurnalEntries->count() > 0)
                 <div class="p-6">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Transaksi Terbaru</h2>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">
+                            Transaksi Terbaru
+                            <span class="ml-2 text-sm font-normal text-gray-500 dark:text-gray-400">
+                                (Menampilkan 5 dari {{ $akun->jurnalEntries->count() }} transaksi)
+                            </span>
+                        </h2>
+                        @if ($akun->jurnalEntries->count() > 5)
+                            <a href="{{ route('keuangan.jurnal-umum.index', ['akun_id' => $akun->id]) }}"
+                                class="text-sm text-primary-600 hover:text-primary-900 dark:text-primary-500 dark:hover:text-primary-400 font-medium">
+                                Lihat Semua →
+                            </a>
+                        @endif
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                             <thead class="bg-gray-50 dark:bg-gray-700">
@@ -276,10 +289,10 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                                            {{ $entry->referensi }}
+                                            {{ $entry->referensi_display }}
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
-                                            {{ $entry->deskripsi }}
+                                            {{ $entry->keterangan ?? '-' }}
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700 dark:text-gray-300">
@@ -301,14 +314,6 @@
                                 @endforeach
                             </tbody>
                         </table>
-                        @if ($akun->jurnalEntries->count() > 5)
-                            <div class="mt-4 text-center">
-                                <a href="#"
-                                    class="text-primary-600 hover:text-primary-900 dark:text-primary-500 dark:hover:text-primary-400 text-sm">
-                                    Lihat semua transaksi
-                                </a>
-                            </div>
-                        @endif
                     </div>
                 </div>
             @endif

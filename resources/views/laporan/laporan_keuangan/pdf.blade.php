@@ -434,23 +434,26 @@
 
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">
-                                        - {{ strtoupper($account['nama']) }}
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
-                                                ABNORMAL</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-right"
-                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
-                                        @else
-                                            {{ number_format($account['balance'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
-                                </tr>
+                                @if (!($account['hide_details'] ?? false))
+                                    <tr @if ($account['is_header'] ?? false) class="subsection-header" @endif>
+                                        <td
+                                            style="padding-left: {{ ($account['level'] ?? 0) * 10 + 20 }}px; {{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}">
+                                            {{ $account['is_header'] ?? false ? '' : '- ' }}{{ strtoupper($account['nama']) }}
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                    ABNORMAL</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right"
+                                            style="{{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}{{ isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false) ? 'color: #DC2626;' : '' }}">
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                            @else
+                                                {{ number_format($account['balance'], 0, ',', '.') }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
 
                             {{-- Group Subtotal --}}
@@ -502,23 +505,26 @@
 
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">
-                                        - {{ strtoupper($account['nama']) }}
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
-                                                ABNORMAL</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-right"
-                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
-                                        @else
-                                            {{ number_format($account['balance'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
-                                </tr>
+                                @if (!($account['hide_details'] ?? false))
+                                    <tr @if ($account['is_header'] ?? false) class="subsection-header" @endif>
+                                        <td
+                                            style="padding-left: {{ ($account['level'] ?? 0) * 10 + 20 }}px; {{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}">
+                                            {{ $account['is_header'] ?? false ? '' : '- ' }}{{ strtoupper($account['nama']) }}
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                    ABNORMAL</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right"
+                                            style="{{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}{{ isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false) ? 'color: #DC2626;' : '' }}">
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                            @else
+                                                {{ number_format($account['balance'], 0, ',', '.') }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
 
                             {{-- Group Subtotal --}}
@@ -558,23 +564,26 @@
 
                             {{-- Group Accounts --}}
                             @foreach ($group['accounts'] as $account)
-                                <tr>
-                                    <td style="padding-left: 20px;">
-                                        - {{ strtoupper($account['nama']) }}
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
-                                                ABNORMAL</span>
-                                        @endif
-                                    </td>
-                                    <td class="text-right"
-                                        style="{{ isset($account['is_abnormal']) && $account['is_abnormal'] ? 'color: #DC2626;' : '' }}">
-                                        @if (isset($account['is_abnormal']) && $account['is_abnormal'])
-                                            ({{ number_format(abs($account['balance']), 0, ',', '.') }})
-                                        @else
-                                            {{ number_format($account['balance'], 0, ',', '.') }}
-                                        @endif
-                                    </td>
-                                </tr>
+                                @if (!($account['hide_details'] ?? false))
+                                    <tr @if ($account['is_header'] ?? false) class="subsection-header" @endif>
+                                        <td
+                                            style="padding-left: {{ ($account['level'] ?? 0) * 10 + 20 }}px; {{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}">
+                                            {{ $account['is_header'] ?? false ? '' : '- ' }}{{ strtoupper($account['nama']) }}
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                <span style="color: #DC2626; font-weight: bold; font-size: 9px;"> ⚠
+                                                    ABNORMAL</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right"
+                                            style="{{ $account['is_header'] ?? false ? 'font-weight: bold;' : '' }}{{ isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false) ? 'color: #DC2626;' : '' }}">
+                                            @if (isset($account['is_abnormal']) && $account['is_abnormal'] && !($account['is_header'] ?? false))
+                                                ({{ number_format(abs($account['balance']), 0, ',', '.') }})
+                                            @else
+                                                {{ number_format($account['balance'], 0, ',', '.') }}
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
 
                             {{-- Group Subtotal --}}

@@ -1250,195 +1250,157 @@ class LaporanKeuanganController extends Controller
 
         // Convert collection to array if needed
         if ($accounts instanceof \Illuminate\Support\Collection) {
-            $accounts = $accounts->toArray();
+            $accountsArray = $accounts->toArray();
+        } else {
+            $accountsArray = $accounts;
         }
 
-        // Group accounts by their parent (header accounts)
-        // Special handling: accounts with ref_type (RekeningBank, Kas) should be grouped under parent
-        // Other accounts without parent shown individually
-        $accountsWithParent = [];
-        $accountsWithoutParent = [];
-        $allAccountIds = [];
+        // Jika tidak ada akun dengan balance, return kosong
+        if (empty($accountsArray)) {
+            return $grouped;
+        }
 
-        foreach ($accounts as $acc) {
-            $allAccountIds[] = $acc['id'];
+        // Get all unique parent IDs to find headers
+        $allParentIds = array_unique(array_filter(array_column($accountsArray, 'parent_id')));
 
-            // Check if this is a reference account (bank/kas) that should be grouped
-            $shouldGroup = !empty($acc['parent_id']) &&
-                (isset($acc['ref_type']) && in_array($acc['ref_type'], ['App\\Models\\RekeningBank', 'App\\Models\\Kas']));
+        if (empty($allParentIds)) {
+            return $grouped;
+        }
 
-            // Or if it has parent_id and parent exists in our accounts list
-            $hasParentInList = !empty($acc['parent_id']);
+        // Get all parent/header accounts in this category
+        $allParents = AkunAkuntansi::whereIn('id', $allParentIds)
+            ->where('is_active', true)
+            ->orderBy('kode')
+            ->get()
+            ->keyBy('id');
 
-            if ($shouldGroup || $hasParentInList) {
-                if (!isset($accountsWithParent[$acc['parent_id']])) {
-                    $accountsWithParent[$acc['parent_id']] = [];
-                }
-                $accountsWithParent[$acc['parent_id']][] = $acc;
-            } else {
-                $accountsWithoutParent[] = $acc;
+        // Find top-level headers (Level 2 - directly under main category like Aset/Kewajiban/Ekuitas)
+        $topLevelHeaders = [];
+        foreach ($allParents as $parent) {
+            // Check if parent's parent is the main category (null or has no parent)
+            if (empty($parent->parent_id)) {
+                continue; // This is the root (Aset/Kewajiban/Ekuitas itself)
             }
-        }
 
-        // Build the grouped accounts array
-        // For accounts with parent, show only the parent (header) with aggregated balance
-        $processedAccounts = [];
-
-        // First, add accounts without parent that don't have children
-        foreach ($accountsWithoutParent as $acc) {
-            if (!isset($accountsWithParent[$acc['id']])) {
-                // Regular account without children
-                $processedAccounts[] = $acc;
+            $grandParent = AkunAkuntansi::find($parent->parent_id);
+            if (!$grandParent || empty($grandParent->parent_id)) {
+                // This parent is Level 2 (directly under main category)
+                $topLevelHeaders[$parent->id] = $parent;
             }
         }
 
-        // Then, process all parent-child relationships
-        // Find all parent IDs that have children
-        foreach ($accountsWithParent as $parentId => $children) {
-            // Find the parent account (could be in accountsWithoutParent or in accounts array)
-            $parentAcc = null;
+        // Build hierarchy for each top-level header
+        foreach ($topLevelHeaders as $header) {
+            $items = $this->buildFlatHierarchy(
+                $header,
+                $accountsArray,
+                $allParents,
+                0
+            );
 
-            foreach ($accountsWithoutParent as $acc) {
-                if ($acc['id'] == $parentId) {
-                    $parentAcc = $acc;
-                    break;
+            if (!empty($items)) {
+                // Calculate total for this top-level group
+                $subtotal = array_sum(array_column($items, 'balance'));
+
+                if ($subtotal != 0) {
+                    $grouped['groups'][] = [
+                        'name' => $header->nama,
+                        'kode' => $header->kode,
+                        'subtotal' => $subtotal,
+                        'accounts' => $items
+                    ];
+                    $grouped['total'] += $subtotal;
                 }
             }
-
-            // If parent not found in accountsWithoutParent, search in all accounts
-            if (!$parentAcc) {
-                foreach ($accounts as $acc) {
-                    if ($acc['id'] == $parentId) {
-                        $parentAcc = $acc;
-                        break;
-                    }
-                }
-            }
-
-            if ($parentAcc) {
-                // This is a header account with children
-                $childrenBalance = collect($children)->sum('balance');
-
-                // Check if balance is abnormal for asset category
-                $isAbnormal = false;
-                if ($mainCategory === 'asset' && $childrenBalance < 0) {
-                    $isAbnormal = true;
-                } elseif (in_array($mainCategory, ['liability', 'equity']) && $childrenBalance < 0) {
-                    $isAbnormal = true;
-                }
-
-                $processedAccounts[] = [
-                    'id' => $parentAcc['id'],
-                    'kode' => $parentAcc['kode'],
-                    'nama' => $parentAcc['nama'],
-                    'balance' => $childrenBalance,
-                    'is_header' => true,
-                    'is_abnormal' => $isAbnormal
-                ];
-            }
-        }
-
-        $processedCollection = collect($processedAccounts);
-
-        if ($mainCategory === 'asset') {
-            // Aset Lancar: 1-1xxx
-            $currentAssets = $processedCollection->filter(function ($acc) {
-                return preg_match('/^1[- ]?1/', $acc['kode']);
-            });
-
-            // Aset Tetap: 1-2xxx or 1-3xxx
-            $fixedAssets = $processedCollection->filter(function ($acc) {
-                return preg_match('/^1[- ]?[23]/', $acc['kode']);
-            });
-
-            // Aset lainnya (yang tidak masuk kategori di atas)
-            $otherAssets = $processedCollection->filter(function ($acc) use ($currentAssets, $fixedAssets) {
-                $isInCurrent = $currentAssets->contains('id', $acc['id']);
-                $isInFixed = $fixedAssets->contains('id', $acc['id']);
-                return !$isInCurrent && !$isInFixed;
-            });
-
-            if ($currentAssets->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'AKTIVA LANCAR',
-                    'accounts' => $currentAssets->values()->all(),
-                    'subtotal' => $currentAssets->sum('balance')
-                ];
-            }
-
-            if ($fixedAssets->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'AKTIVA TETAP',
-                    'accounts' => $fixedAssets->values()->all(),
-                    'subtotal' => $fixedAssets->sum('balance'),
-                    'show_depreciation' => true
-                ];
-            }
-
-            if ($otherAssets->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'AKTIVA LAINNYA',
-                    'accounts' => $otherAssets->values()->all(),
-                    'subtotal' => $otherAssets->sum('balance')
-                ];
-            }
-
-            $grouped['total'] = $processedCollection->sum('balance');
-        } elseif ($mainCategory === 'liability') {
-            // Kewajiban Jangka Pendek: 2-1xxx
-            $currentLiabilities = $processedCollection->filter(function ($acc) {
-                return preg_match('/^2[- ]?1/', $acc['kode']);
-            });
-
-            // Kewajiban Jangka Panjang: 2-2xxx
-            $longTermLiabilities = $processedCollection->filter(function ($acc) {
-                return preg_match('/^2[- ]?2/', $acc['kode']);
-            });
-
-            // Kewajiban lainnya (yang tidak masuk kategori di atas)
-            $otherLiabilities = $processedCollection->filter(function ($acc) use ($currentLiabilities, $longTermLiabilities) {
-                $isInCurrent = $currentLiabilities->contains('id', $acc['id']);
-                $isInLongTerm = $longTermLiabilities->contains('id', $acc['id']);
-                return !$isInCurrent && !$isInLongTerm;
-            });
-
-            if ($currentLiabilities->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'KEWAJIBAN JANGKA PENDEK',
-                    'accounts' => $currentLiabilities->values()->all(),
-                    'subtotal' => $currentLiabilities->sum('balance')
-                ];
-            }
-
-            if ($longTermLiabilities->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'KEWAJIBAN JANGKA PANJANG',
-                    'accounts' => $longTermLiabilities->values()->all(),
-                    'subtotal' => $longTermLiabilities->sum('balance')
-                ];
-            }
-
-            if ($otherLiabilities->count() > 0) {
-                $grouped['groups'][] = [
-                    'name' => 'KEWAJIBAN LAINNYA',
-                    'accounts' => $otherLiabilities->values()->all(),
-                    'subtotal' => $otherLiabilities->sum('balance')
-                ];
-            }
-
-            $grouped['total'] = $processedCollection->sum('balance');
-        } elseif ($mainCategory === 'equity') {
-            // All equity accounts without sub-grouping (Modal, Laba Ditahan, Prive, Laba Tahun Berjalan)
-            $grouped['groups'][] = [
-                'name' => 'EKUITAS',
-                'accounts' => $processedCollection->values()->all(),
-                'subtotal' => $processedCollection->sum('balance')
-            ];
-
-            $grouped['total'] = $processedCollection->sum('balance');
         }
 
         return $grouped;
+    }
+
+    /**
+     * Build flat hierarchy with indentation levels
+     */
+    private function buildFlatHierarchy($header, $detailAccounts, $allParents, $level)
+    {
+        $result = [];
+
+        // Find direct children (sub-headers and detail accounts)
+        $directSubHeaders = [];
+        $directDetailAccounts = [];
+
+        foreach ($allParents as $subHeader) {
+            if ($subHeader->parent_id == $header->id) {
+                $directSubHeaders[] = $subHeader;
+            }
+        }
+
+        foreach ($detailAccounts as $account) {
+            if ($account['parent_id'] == $header->id) {
+                $directDetailAccounts[] = $account;
+            }
+        }
+
+        // Check if ALL direct detail children are Kas/Bank
+        $allChildrenAreKasBank = false;
+        if (!empty($directDetailAccounts) && empty($directSubHeaders)) {
+            $allChildrenAreKasBank = true;
+            foreach ($directDetailAccounts as $account) {
+                if (
+                    empty($account['ref_type']) ||
+                    !in_array($account['ref_type'], ['App\Models\Kas', 'App\Models\RekeningBank'])
+                ) {
+                    $allChildrenAreKasBank = false;
+                    break;
+                }
+            }
+        }
+
+        // Process sub-headers first (recursively)
+        foreach ($directSubHeaders as $subHeader) {
+            $subItems = $this->buildFlatHierarchy(
+                $subHeader,
+                $detailAccounts,
+                $allParents,
+                $level + 1
+            );
+
+            if (!empty($subItems)) {
+                // Add sub-header as a separator/label
+                $subtotal = array_sum(array_column($subItems, 'balance'));
+
+                $result[] = [
+                    'id' => $subHeader->id,
+                    'kode_akun' => $subHeader->kode,
+                    'nama' => $subHeader->nama,
+                    'balance' => $subtotal,
+                    'is_header' => true,
+                    'hide_details' => false,
+                    'is_abnormal' => false,
+                    'level' => $level
+                ];
+
+                // Add all sub-items
+                foreach ($subItems as $item) {
+                    $result[] = $item;
+                }
+            }
+        }
+
+        // Add direct detail accounts
+        foreach ($directDetailAccounts as $account) {
+            $result[] = [
+                'id' => $account['id'],
+                'kode_akun' => $account['kode'],
+                'nama' => $account['nama'],
+                'balance' => $account['balance'],
+                'is_header' => false,
+                'hide_details' => $allChildrenAreKasBank, // Mark for hiding if all are Kas/Bank
+                'is_abnormal' => $account['is_abnormal'] ?? false,
+                'level' => $level
+            ];
+        }
+
+        return $result;
     }
 
     /**
@@ -1940,11 +1902,17 @@ class LaporanKeuanganController extends Controller
             if (in_array($account->kategori, ['asset', 'expense'])) {
                 // Normal debit balance
                 $balance = $totalDebit - $totalKredit;
-                $isAbnormal = $balance < 0; // Asset/Expense shouldn't be negative
+                $isAbnormal = $balance < -1; // Allow rounding errors, only flag if < -1
             } else {
                 // Normal credit balance (liability, equity, income)
                 $balance = $totalKredit - $totalDebit;
-                $isAbnormal = $balance < 0; // Liability/Equity/Income shouldn't be negative
+                $isAbnormal = $balance < -1; // Allow rounding errors, only flag if < -1
+            }
+
+            // Treat very small balances (< 1 rupiah) as zero
+            if (abs($balance) < 1) {
+                $balance = 0;
+                $isAbnormal = false;
             }
 
             return [
@@ -1966,33 +1934,9 @@ class LaporanKeuanganController extends Controller
             return $account['balance'] != 0; // Only show accounts with balance
         });
 
-        // Get unique parent IDs from accounts with balance
-        $parentIds = $accountsWithBalance->pluck('parent_id')->filter()->unique();
-
-        // Fetch parent (header) accounts
-        $parentAccounts = AkunAkuntansi::whereIn('id', $parentIds)
-            ->where('is_active', true)
-            ->get()
-            ->map(function ($parent) {
-                return [
-                    'id' => $parent->id,
-                    'kode' => $parent->kode,
-                    'kode_akun' => $parent->kode,
-                    'nama' => $parent->nama,
-                    'nama_akun' => $parent->nama,
-                    'kategori' => $parent->kategori,
-                    'parent_id' => $parent->parent_id,
-                    'ref_id' => $parent->ref_id,
-                    'ref_type' => $parent->ref_type,
-                    'debit' => 0,
-                    'kredit' => 0,
-                    'balance' => 0, // Will be calculated from children
-                    'is_abnormal' => false
-                ];
-            });
-
-        // Merge detail accounts with their parent accounts
-        return $accountsWithBalance->concat($parentAccounts);
+        // Return only detail accounts with balance
+        // Parent balances will be calculated in buildFlatHierarchy()
+        return $accountsWithBalance;
     }
 
     /**

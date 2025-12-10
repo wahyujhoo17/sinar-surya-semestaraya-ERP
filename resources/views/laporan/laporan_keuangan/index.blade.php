@@ -305,29 +305,45 @@
                                         <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
                                             x-text="group.name"></div>
 
-                                        <!-- Group Accounts -->
+                                        <!-- Group Accounts (with hierarchy support) -->
                                         <template x-for="(account, accountIndex) in group.accounts"
                                             :key="'asset-account-' + groupIndex + '-' + accountIndex">
-                                            <div
-                                                class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                            <div x-show="!account.hide_details"
+                                                class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                                :class="{
+                                                    'pl-4': (account.level || 0) === 0,
+                                                    'pl-8': (account.level || 0) === 1,
+                                                    'pl-12': (account.level || 0) === 2,
+                                                    'pl-16': (account.level || 0) === 3,
+                                                    'font-semibold bg-gray-50 dark:bg-gray-700/30': account.is_header,
+                                                    '': !account.is_header
+                                                }">
                                                 <div class="flex items-center gap-2">
                                                     <div>
-                                                        <span class="text-sm text-gray-900 dark:text-white"
+                                                        <span class="text-sm"
+                                                            :class="account.is_header ?
+                                                                'text-gray-800 dark:text-gray-200 font-medium' :
+                                                                'text-gray-900 dark:text-white'"
                                                             x-text="account.nama"></span>
                                                         <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                            x-text="account.kode_akun">
+                                                            x-text="account.kode_akun" x-show="!account.is_header">
                                                         </div>
                                                     </div>
-                                                    <span x-show="account.is_abnormal"
+                                                    <span x-show="account.is_abnormal && !account.is_header"
                                                         class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                                         title="Saldo tidak normal - mungkin ada kesalahan jurnal">
                                                         ⚠️
                                                     </span>
                                                 </div>
                                                 <span class="text-sm"
-                                                    :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
-                                                        'text-gray-900 dark:text-white'"
-                                                    x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
+                                                    :class="{
+                                                        'text-red-600 dark:text-red-400': account.is_abnormal && !
+                                                            account.is_header,
+                                                        'text-gray-900 dark:text-white font-medium': account.is_header,
+                                                        'text-gray-900 dark:text-white': !account.is_header && !account
+                                                            .is_abnormal
+                                                    }"
+                                                    x-text="account.is_abnormal && !account.is_header ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
                                             </div>
                                         </template>
 
@@ -390,28 +406,47 @@
                                             <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
                                                 x-text="group.name"></div>
 
-                                            <!-- Group Accounts -->
+                                            <!-- Group Accounts (with hierarchy support) -->
                                             <template x-for="(account, accountIndex) in group.accounts"
                                                 :key="'liability-account-' + groupIndex + '-' + accountIndex">
-                                                <div
-                                                    class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                <div x-show="!account.hide_details"
+                                                    class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                                    :class="{
+                                                        'pl-4': (account.level || 0) === 0,
+                                                        'pl-8': (account.level || 0) === 1,
+                                                        'pl-12': (account.level || 0) === 2,
+                                                        'pl-16': (account.level || 0) === 3,
+                                                        'font-semibold bg-gray-50 dark:bg-gray-700/30': account
+                                                            .is_header,
+                                                        '': !account.is_header
+                                                    }">
                                                     <div class="flex items-center gap-2">
                                                         <div>
-                                                            <span class="text-sm text-gray-900 dark:text-white"
+                                                            <span class="text-sm"
+                                                                :class="account.is_header ?
+                                                                    'text-gray-800 dark:text-gray-200 font-medium' :
+                                                                    'text-gray-900 dark:text-white'"
                                                                 x-text="account.nama"></span>
                                                             <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                                x-text="account.kode_akun"></div>
+                                                                x-text="account.kode_akun"
+                                                                x-show="!account.is_header"></div>
                                                         </div>
-                                                        <span x-show="account.is_abnormal"
+                                                        <span x-show="account.is_abnormal && !account.is_header"
                                                             class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                                             title="Saldo tidak normal - mungkin ada kesalahan jurnal">
                                                             ⚠️
                                                         </span>
                                                     </div>
                                                     <span class="text-sm"
-                                                        :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
-                                                            'text-gray-900 dark:text-white'"
-                                                        x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
+                                                        :class="{
+                                                            'text-red-600 dark:text-red-400': account.is_abnormal && !
+                                                                account.is_header,
+                                                            'text-gray-900 dark:text-white font-medium': account
+                                                                .is_header,
+                                                            'text-gray-900 dark:text-white': !account.is_header && !
+                                                                account.is_abnormal
+                                                        }"
+                                                        x-text="account.is_abnormal && !account.is_header ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
                                                 </div>
                                             </template>
 
@@ -467,28 +502,47 @@
                                             <div class="font-semibold text-gray-700 dark:text-gray-300 text-sm mb-2 uppercase"
                                                 x-text="group.name"></div>
 
-                                            <!-- Group Accounts -->
+                                            <!-- Group Accounts (with hierarchy support) -->
                                             <template x-for="(account, accountIndex) in group.accounts"
                                                 :key="'equity-account-' + groupIndex + '-' + accountIndex">
-                                                <div
-                                                    class="flex justify-between items-center py-2 pl-4 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                                                <div x-show="!account.hide_details"
+                                                    class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                                                    :class="{
+                                                        'pl-4': (account.level || 0) === 0,
+                                                        'pl-8': (account.level || 0) === 1,
+                                                        'pl-12': (account.level || 0) === 2,
+                                                        'pl-16': (account.level || 0) === 3,
+                                                        'font-semibold bg-gray-50 dark:bg-gray-700/30': account
+                                                            .is_header,
+                                                        '': !account.is_header
+                                                    }">
                                                     <div class="flex items-center gap-2">
                                                         <div>
-                                                            <span class="text-sm text-gray-900 dark:text-white"
+                                                            <span class="text-sm"
+                                                                :class="account.is_header ?
+                                                                    'text-gray-800 dark:text-gray-200 font-medium' :
+                                                                    'text-gray-900 dark:text-white'"
                                                                 x-text="account.nama"></span>
                                                             <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                                x-text="account.kode_akun"></div>
+                                                                x-text="account.kode_akun"
+                                                                x-show="!account.is_header"></div>
                                                         </div>
-                                                        <span x-show="account.is_abnormal"
+                                                        <span x-show="account.is_abnormal && !account.is_header"
                                                             class="text-xs px-2 py-0.5 rounded bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                                             title="Saldo tidak normal - mungkin ada kesalahan jurnal">
                                                             ⚠️
                                                         </span>
                                                     </div>
                                                     <span class="text-sm"
-                                                        :class="account.is_abnormal ? 'text-red-600 dark:text-red-400' :
-                                                            'text-gray-900 dark:text-white'"
-                                                        x-text="account.is_abnormal ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
+                                                        :class="{
+                                                            'text-red-600 dark:text-red-400': account.is_abnormal && !
+                                                                account.is_header,
+                                                            'text-gray-900 dark:text-white font-medium': account
+                                                                .is_header,
+                                                            'text-gray-900 dark:text-white': !account.is_header && !
+                                                                account.is_abnormal
+                                                        }"
+                                                        x-text="account.is_abnormal && !account.is_header ? '(' + formatCurrency(Math.abs(account.balance)) + ')' : formatCurrency(account.balance)"></span>
                                                 </div>
                                             </template>
 
