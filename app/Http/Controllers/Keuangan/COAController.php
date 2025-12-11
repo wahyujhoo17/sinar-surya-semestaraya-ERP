@@ -142,9 +142,9 @@ class COAController extends Controller
             'reference'
         ])->findOrFail($id);
 
-        // Calculate total balance from journal entries
-        $totalDebit = $akun->jurnalEntries->sum('debit');
-        $totalKredit = $akun->jurnalEntries->sum('kredit');
+        // Calculate total balance from POSTED journal entries only
+        $totalDebit = $akun->jurnalEntries()->where('is_posted', true)->sum('debit');
+        $totalKredit = $akun->jurnalEntries()->where('is_posted', true)->sum('kredit');
 
         // Calculate balance based on account category
         $balance = 0;

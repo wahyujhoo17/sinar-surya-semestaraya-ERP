@@ -71,15 +71,43 @@ class LaporanKeuanganController extends Controller
             // Get equity (Ekuitas)
             $equity = $this->getAccountBalance('equity', $tanggalAkhir);
 
+            // Calculate current year profit/loss (Laba Rugi Tahun Berjalan)
+            $income = $this->getAccountBalance('income', $tanggalAkhir);
+            $expense = $this->getAccountBalance('expense', $tanggalAkhir);
+            $currentYearProfit = $income->sum('balance') - $expense->sum('balance');
+
             // Group accounts into detailed categories
             $assetsGrouped = $this->groupBalanceSheetAccounts($assets, 'asset');
             $liabilitiesGrouped = $this->groupBalanceSheetAccounts($liabilities, 'liability');
             $equityGrouped = $this->groupBalanceSheetAccounts($equity, 'equity');
 
+            // Add current year profit to equity grouped
+            if ($currentYearProfit != 0) {
+                $equityGrouped['groups'][] = [
+                    'name' => 'Laba Rugi Tahun Berjalan',
+                    'kode' => 'PROFIT',
+                    'subtotal' => $currentYearProfit,
+                    'accounts' => [
+                        [
+                            'id' => 'profit',
+                            'kode_akun' => 'LABA-' . date('Y'),
+                            'nama' => $currentYearProfit >= 0 ? 'Laba Tahun Berjalan' : 'Rugi Tahun Berjalan',
+                            'balance' => $currentYearProfit,
+                            'is_header' => false,
+                            'hide_details' => false,
+                            'is_abnormal' => false,
+                            'level' => 0,
+                            'is_profit_loss' => true
+                        ]
+                    ]
+                ];
+                $equityGrouped['total'] += $currentYearProfit;
+            }
+
             // Calculate totals
             $totalAssets = $assets->sum('balance');
             $totalLiabilities = $liabilities->sum('balance');
-            $totalEquity = $equity->sum('balance');
+            $totalEquity = $equity->sum('balance') + $currentYearProfit;
 
             // === CHART DATA ===
             $chartData = [
@@ -142,6 +170,7 @@ class LaporanKeuanganController extends Controller
                         'total_assets' => $totalAssets,
                         'total_liabilities' => $totalLiabilities,
                         'total_equity' => $totalEquity,
+                        'current_year_profit' => $currentYearProfit,
                         'total_liab_equity' => $totalLiabilities + $totalEquity
                     ],
                     'chart_data' => $chartData
@@ -1263,6 +1292,86 @@ class LaporanKeuanganController extends Controller
         // Get all unique parent IDs to find headers
         $allParentIds = array_unique(array_filter(array_column($accountsArray, 'parent_id')));
 
+        // Get all IDs from accounts with balance
+        $accountIds = array_column($accountsArray, 'id');
+
+        // Find root accounts (parent_id = NULL) that have balance
+        $rootAccountsWithBalance = array_filter($accountsArray, function ($acc) {
+            return empty($acc['parent_id']);
+        });
+
+        // Process each root account
+        foreach ($rootAccountsWithBalance as $rootAccount) {
+            // Check if this root has children in our balance accounts
+            $childrenWithBalance = array_filter($accountsArray, function ($acc) use ($rootAccount) {
+                return $acc['parent_id'] == $rootAccount['id'];
+            });
+
+            if (!empty($childrenWithBalance)) {
+                // Root has children with balance - treat root as group header
+                $items = [];
+
+                // Add root itself with its balance
+                $items[] = [
+                    'id' => $rootAccount['id'],
+                    'kode' => $rootAccount['kode'],
+                    'kode_akun' => $rootAccount['kode'],
+                    'nama' => $rootAccount['nama'],
+                    'balance' => $rootAccount['balance'],
+                    'level' => 1,
+                    'is_header' => false,
+                    'hide_details' => false,
+                    'is_abnormal' => $rootAccount['is_abnormal'] ?? false
+                ];
+
+                // Add children
+                foreach ($childrenWithBalance as $child) {
+                    $items[] = [
+                        'id' => $child['id'],
+                        'kode' => $child['kode'],
+                        'kode_akun' => $child['kode'],
+                        'nama' => $child['nama'],
+                        'balance' => $child['balance'],
+                        'level' => 2,
+                        'is_header' => false,
+                        'hide_details' => false,
+                        'is_abnormal' => $child['is_abnormal'] ?? false
+                    ];
+                }
+
+                $subtotal = array_sum(array_column($items, 'balance'));
+
+                $grouped['groups'][] = [
+                    'name' => $rootAccount['nama'],
+                    'kode' => $rootAccount['kode'],
+                    'subtotal' => $subtotal,
+                    'accounts' => $items
+                ];
+                $grouped['total'] += $subtotal;
+            } else {
+                // Root has no children - add as standalone
+                $grouped['groups'][] = [
+                    'name' => $rootAccount['nama'],
+                    'kode' => $rootAccount['kode'],
+                    'subtotal' => $rootAccount['balance'],
+                    'accounts' => [
+                        [
+                            'id' => $rootAccount['id'],
+                            'kode' => $rootAccount['kode'],
+                            'kode_akun' => $rootAccount['kode'],
+                            'nama' => $rootAccount['nama'],
+                            'balance' => $rootAccount['balance'],
+                            'level' => 1,
+                            'is_header' => false,
+                            'hide_details' => false,
+                            'is_abnormal' => $rootAccount['is_abnormal'] ?? false
+                        ]
+                    ]
+                ];
+                $grouped['total'] += $rootAccount['balance'];
+            }
+        }
+
         if (empty($allParentIds)) {
             return $grouped;
         }
@@ -1557,6 +1666,32 @@ class LaporanKeuanganController extends Controller
                 $liabilitiesGrouped = $this->groupBalanceSheetAccounts($liabilities, 'liability');
                 $equityGrouped = $this->groupBalanceSheetAccounts($equity, 'equity');
 
+                // Calculate current year profit/loss
+                $income = $this->getAccountBalance('income', $tanggalAkhir);
+                $expense = $this->getAccountBalance('expense', $tanggalAkhir);
+                $currentYearProfit = $income->sum('balance') - $expense->sum('balance');
+
+                // Add profit/loss to equity groups
+                $equityGrouped[] = [
+                    'name' => 'Laba Rugi Tahun Berjalan',
+                    'kode' => 'PROFIT',
+                    'level' => 1,
+                    'subtotal' => $currentYearProfit,
+                    'accounts' => [
+                        [
+                            'id' => null,
+                            'kode' => 'PROFIT-LOSS',
+                            'nama' => 'Laba Rugi Tahun Berjalan',
+                            'balance' => $currentYearProfit,
+                            'level' => 2,
+                            'is_profit_loss' => true,
+                            'hide_details' => false
+                        ]
+                    ]
+                ];
+
+                $totalEquity = $equity->sum('balance') + $currentYearProfit;
+
                 $data = [
                     'assets' => $assets,
                     'liabilities' => $liabilities,
@@ -1566,7 +1701,8 @@ class LaporanKeuanganController extends Controller
                     'equity_grouped' => $equityGrouped,
                     'total_assets' => $assets->sum('balance'),
                     'total_liabilities' => $liabilities->sum('balance'),
-                    'total_equity' => $equity->sum('balance')
+                    'total_equity' => $totalEquity,
+                    'current_year_profit' => $currentYearProfit
                 ];
                 break;
 
@@ -1878,10 +2014,22 @@ class LaporanKeuanganController extends Controller
      */
     private function getAccountBalance($category, $tanggalAkhir)
     {
-        // Get all active detail accounts for this category
-        $accounts = AkunAkuntansi::where('kategori', $category)
+        // Get accounts that have actual journal entries
+        // This handles cases where journals are posted to header accounts (not standard but happens in real data)
+        $accountsWithJournals = JurnalUmum::select('akun_id')
+            ->where('tanggal', '<=', $tanggalAkhir)
+            ->where('is_posted', true)
+            ->whereHas('akun', function ($query) use ($category) {
+                $query->where('kategori', $category)
+                    ->where('is_active', true);
+            })
+            ->distinct()
+            ->pluck('akun_id');
+
+        // Get all accounts that have journals (both detail and header if they have transactions)
+        $accounts = AkunAkuntansi::whereIn('id', $accountsWithJournals)
+            ->where('kategori', $category)
             ->where('is_active', true)
-            ->where('tipe', 'detail')
             ->orderBy('kode')
             ->get();
 

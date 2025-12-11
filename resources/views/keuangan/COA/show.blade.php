@@ -154,7 +154,13 @@
                         <p
                             class="mt-1 text-lg font-semibold {{ $balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
                             Rp {{ number_format(abs($balance), 0, ',', '.') }}
-                            {{ $balance < 0 ? '(Kredit)' : '(Debit)' }}
+                            @if (in_array($akun->kategori, ['asset', 'expense']))
+                                {{-- Asset/Expense: positive = Debit (normal), negative = Kredit (abnormal) --}}
+                                {{ $balance >= 0 ? '(Debit)' : '(Kredit)' }}
+                            @else
+                                {{-- Liability/Equity/Income: positive = Kredit (normal), negative = Debit (abnormal) --}}
+                                {{ $balance >= 0 ? '(Kredit)' : '(Debit)' }}
+                            @endif
                         </p>
                     </div>
                 </div>
