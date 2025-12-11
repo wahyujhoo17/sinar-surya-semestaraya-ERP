@@ -231,7 +231,8 @@ class JurnalPenyesuaianController extends Controller
                     'keterangan' => $entry['keterangan'] ?: $request->keterangan,
                     'user_id' => Auth::id(),
                     'jenis_jurnal' => 'penyesuaian',
-                    'ref_type' => 'manual_adjustment',
+                    // manual adjustments do not reference a separate model, keep ref_type null
+                    'ref_type' => null,
                     'ref_id' => null,
                     'is_posted' => false, // Jurnal penyesuaian manual dimulai sebagai draft
                 ]);
@@ -352,7 +353,8 @@ class JurnalPenyesuaianController extends Controller
                     'keterangan' => $entry['keterangan'] ?: $request->keterangan,
                     'user_id' => Auth::id(),
                     'jenis_jurnal' => 'penyesuaian',
-                    'ref_type' => 'manual_adjustment',
+                    // manual adjustments do not reference a separate model, keep ref_type null
+                    'ref_type' => null,
                     'ref_id' => null,
                     'is_posted' => false, // Jurnal penyesuaian manual dimulai sebagai draft
                 ]);

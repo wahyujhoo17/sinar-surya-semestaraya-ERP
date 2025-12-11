@@ -137,7 +137,10 @@ class COAController extends Controller
             'parent',
             'children',
             'jurnalEntries' => function ($query) {
-                $query->with('referensi')->latest()->take(10);
+                // avoid eager-loading polymorphic referensi for entries that may have non-class ref_type
+                // some historical entries use custom ref_type strings (e.g. 'manual_adjustment')
+                // which can cause errors when morphTo tries to resolve a non-existent class.
+                $query->latest()->take(10);
             },
             'reference'
         ])->findOrFail($id);
