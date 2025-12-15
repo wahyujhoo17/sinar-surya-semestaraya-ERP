@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class TransaksiKas extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'transaksi_kas';
-    
+
     protected $fillable = [
         'tanggal',
         'kas_id',
@@ -18,11 +18,12 @@ class TransaksiKas extends Model
         'jumlah',
         'keterangan',
         'no_bukti',
+        'nama_penerima',
         'related_id', // ID dari dokumen terkait
         'related_type', // nama model dari dokumen terkait
         'user_id'
     ];
-    
+
     /**
      * Relasi ke Kas
      */
@@ -30,7 +31,7 @@ class TransaksiKas extends Model
     {
         return $this->belongsTo(Kas::class, 'kas_id');
     }
-    
+
     /**
      * Relasi ke User
      */
@@ -38,7 +39,7 @@ class TransaksiKas extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-    
+
     /**
      * Relasi polimorfik ke dokumen terkait
      */

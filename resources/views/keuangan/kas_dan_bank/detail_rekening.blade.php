@@ -423,6 +423,10 @@
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Nama Penerima
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
                                             Dokumen Terkait
                                         </th>
                                         <th scope="col"
@@ -442,7 +446,7 @@
                                 <tbody class="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
                                     @foreach ($transaksi as $trx)
                                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-all duration-150 ease-in-out cursor-pointer hover:shadow-sm relative transform hover:scale-[1.01]"
-                                            onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
+                                            onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}', '{{ $trx->nama_penerima ?? '' }}')">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
                                                     {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
@@ -459,6 +463,11 @@
                                             <td class="px-6 py-4">
                                                 <div class="text-sm text-gray-900 dark:text-gray-200 line-clamp-2">
                                                     {{ $trx->keterangan }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900 dark:text-gray-200">
+                                                    {{ $trx->nama_penerima ?: '-' }}
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -518,7 +527,7 @@
                                                 <div class="flex justify-end space-x-2">
                                                     <a href="#"
                                                         class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 rounded-full p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
-                                                        onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')"
+                                                        onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_referensi }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}', '{{ $trx->nama_penerima ?? '' }}')"
                                                         title="Detail">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                             viewBox="0 0 24 24" stroke-width="1.5"
@@ -632,6 +641,15 @@
                                     Keterangan
                                 </dt>
                                 <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-description">
+                                    <!-- Will be set by JavaScript -->
+                                </dd>
+                            </div>
+                            <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                    Nama Penerima
+                                </dt>
+                                <dd class="text-sm text-gray-900 dark:text-white col-span-2"
+                                    id="detail-nama-penerima">
                                     <!-- Will be set by JavaScript -->
                                 </dd>
                             </div>

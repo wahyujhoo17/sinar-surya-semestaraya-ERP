@@ -741,7 +741,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Management Pajak Routes
         Route::post('management-pajak/auto-report', [ManagementPajakController::class, 'generateAutoReport'])->name('management-pajak.auto-report');
-        Route::post('management-pajak/{id}/finalize', [ManagementPajakController::class, 'finalize'])->name('management-pajak.finalize');
+        Route::patch('management-pajak/{id}/finalize', [ManagementPajakController::class, 'finalize'])->name('management-pajak.finalize');
         Route::get('management-pajak/{id}/export-pdf', [ManagementPajakController::class, 'exportPdf'])->name('management-pajak.export-pdf');
         Route::resource('management-pajak', ManagementPajakController::class);
 

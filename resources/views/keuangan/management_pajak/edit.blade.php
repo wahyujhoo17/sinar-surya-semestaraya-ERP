@@ -1,8 +1,4 @@
-@extends('layouts.app')
-
-@section('title', 'Edit Management Pajak')
-
-@section('content')
+<x-app-layout>
     <div class="py-6">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             @include('keuangan.management_pajak.partials.alerts')
@@ -62,13 +58,16 @@
                                         {{ old('jenis_pajak', $pajak->jenis_pajak) === 'ppn_masukan' ? 'selected' : '' }}>
                                         PPN Masukan</option>
                                     <option value="pph21"
-                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph21' ? 'selected' : '' }}>PPh 21
+                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph21' ? 'selected' : '' }}>PPh
+                                        21
                                     </option>
                                     <option value="pph23"
-                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph23' ? 'selected' : '' }}>PPh 23
+                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph23' ? 'selected' : '' }}>PPh
+                                        23
                                     </option>
                                     <option value="pph4_ayat2"
-                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph4_ayat2' ? 'selected' : '' }}>PPh
+                                        {{ old('jenis_pajak', $pajak->jenis_pajak) === 'pph4_ayat2' ? 'selected' : '' }}>
+                                        PPh
                                         4 Ayat 2</option>
                                 </select>
                                 @error('jenis_pajak')
@@ -113,8 +112,8 @@
                                     class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                     NPWP
                                 </label>
-                                <input type="text" name="npwp" id="npwp" value="{{ old('npwp', $pajak->npwp) }}"
-                                    placeholder="Contoh: 01.234.567.8-901.000"
+                                <input type="text" name="npwp" id="npwp"
+                                    value="{{ old('npwp', $pajak->npwp) }}" placeholder="Contoh: 01.234.567.8-901.000"
                                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white">
                                 @error('npwp')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
@@ -129,7 +128,8 @@
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2 text-gray-500 dark:text-gray-400">Rp</span>
-                                    <input type="text" name="dasar_pengenaan_pajak" id="dasar_pengenaan_pajak" required
+                                    <input type="text" name="dasar_pengenaan_pajak" id="dasar_pengenaan_pajak"
+                                        required
                                         value="{{ old('dasar_pengenaan_pajak', number_format($pajak->dasar_pengenaan_pajak, 0, ',', '.')) }}"
                                         placeholder="0"
                                         class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white currency-input"
@@ -148,8 +148,8 @@
                                 </label>
                                 <div class="relative">
                                     <input type="number" name="tarif_pajak" id="tarif_pajak" required
-                                        value="{{ old('tarif_pajak', $pajak->tarif_pajak) }}" step="0.01" min="0"
-                                        max="100" placeholder="11.00"
+                                        value="{{ old('tarif_pajak', $pajak->tarif_pajak) }}" step="0.01"
+                                        min="0" max="100" placeholder="11.00"
                                         class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                                         {{ $pajak->status === 'final' ? 'readonly' : '' }}>
                                     <span class="absolute right-3 top-2 text-gray-500 dark:text-gray-400">%</span>
@@ -253,7 +253,8 @@
                                 @if ($pajak->status === 'final')
                                     <div class="flex items-center text-green-600 dark:text-green-400">
                                         <i class="fas fa-lock mr-2"></i>
-                                        <span class="text-sm font-medium">Data sudah final dan tidak dapat diubah</span>
+                                        <span class="text-sm font-medium">Data sudah final dan tidak dapat
+                                            diubah</span>
                                     </div>
                                 @else
                                     <div class="flex items-center text-blue-600 dark:text-blue-400">
@@ -411,4 +412,4 @@
             }
         });
     </script>
-@endsection
+</x-app-layout>

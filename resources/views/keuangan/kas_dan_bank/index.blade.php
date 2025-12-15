@@ -564,6 +564,9 @@
                                                         <span class="text-xs text-gray-500 dark:text-gray-400">
                                                             {{ $trx->kas->nama }} •
                                                             {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
+                                                            @if ($trx->nama_penerima)
+                                                                • {{ $trx->nama_penerima }}
+                                                            @endif
                                                         </span>
                                                     </div>
                                                 </div>
@@ -643,6 +646,9 @@
                                                         <span class="text-xs text-gray-500 dark:text-gray-400">
                                                             {{ $trx->rekening->nama_bank }} •
                                                             {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
+                                                            @if ($trx->nama_penerima)
+                                                                • {{ $trx->nama_penerima }}
+                                                            @endif
                                                         </span>
                                                     </div>
                                                 </div>
@@ -831,10 +837,9 @@
                                             <div class="flex justify-between text-sm mb-1">
                                                 <span class="text-gray-500 dark:text-gray-400">Progress
                                                     Penggunaan</span>
-                                                <span
-                                                    class="text-gray-700 dark:text-gray-300">
-                                                        {{ $project->total_alokasi > 0 ? round(($project->total_penggunaan / $project->total_alokasi) * 100) : 0 }}%
-                                                    </span>
+                                                <span class="text-gray-700 dark:text-gray-300">
+                                                    {{ $project->total_alokasi > 0 ? round(($project->total_penggunaan / $project->total_alokasi) * 100) : 0 }}%
+                                                </span>
                                             </div>
                                             <div class="w-full bg-gray-200 rounded-full h-2">
                                                 @php

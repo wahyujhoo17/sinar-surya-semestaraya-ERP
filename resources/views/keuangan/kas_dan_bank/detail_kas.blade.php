@@ -106,7 +106,7 @@
                                 <!-- Test button for modal -->
                                 <button type="button"
                                     class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                                    onclick="showSimpleModal('test-id', 'TEST-001', '13 Juni 2025', 'Test Keterangan', 'masuk', 1000000, '13 Juni 2025 12:00', '13 Juni 2025 12:00', '', '')">
+                                    onclick="showSimpleModal('test-id', 'TEST-001', '13 Juni 2025', 'Test Keterangan', 'masuk', 1000000, '13 Juni 2025 12:00', '13 Juni 2025 12:00', '', '', 'Test Penerima')">
                                     Test Modal
                                 </button>
                             </div>
@@ -471,6 +471,10 @@
                                         </th>
                                         <th scope="col"
                                             class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
+                                            Nama Penerima
+                                        </th>
+                                        <th scope="col"
+                                            class="px-6 py-3.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider dark:text-gray-300">
                                             Dokumen Terkait
                                         </th>
                                         <th scope="col"
@@ -497,8 +501,8 @@
                                             data-created-at="{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}"
                                             data-updated-at="{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}"
                                             data-related-id="{{ $trx->related_id ?? '' }}"
-                                            data-related-type="{{ $trx->related_type ?? '' }}"
-                                            onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
+                                            data-nama-penerima="{{ $trx->nama_penerima ?? '' }}"
+                                            onclick="showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}', '{{ $trx->nama_penerima ?? '' }}')">
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-200">
                                                     {{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}
@@ -515,6 +519,11 @@
                                             <td class="px-6 py-4">
                                                 <div class="text-sm text-gray-900 dark:text-gray-200 line-clamp-2">
                                                     {{ $trx->keterangan }}
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900 dark:text-gray-200">
+                                                    {{ $trx->nama_penerima ?: '-' }}
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -577,7 +586,7 @@
                                                     <a href="javascript:void(0)"
                                                         class="text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300 rounded-full p-1.5 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
                                                         title="Detail"
-                                                        onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}')">
+                                                        onclick="event.stopPropagation(); showSimpleModal('{{ $trx->id }}', '{{ $trx->no_bukti }}', '{{ \Carbon\Carbon::parse($trx->tanggal)->format('d F Y') }}', '{{ $trx->keterangan }}', '{{ $trx->jenis }}', '{{ $trx->jumlah }}', '{{ \Carbon\Carbon::parse($trx->created_at)->format('d F Y H:i') }}', '{{ \Carbon\Carbon::parse($trx->updated_at)->format('d F Y H:i') }}', '{{ $trx->related_id ?? '' }}', '{{ $trx->related_type ?? '' }}', '{{ $trx->nama_penerima ?? '' }}')">
                                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none"
                                                             viewBox="0 0 24 24" stroke-width="1.5"
                                                             stroke="currentColor" class="w-5 h-5">
@@ -712,6 +721,14 @@
                             Keterangan
                         </dt>
                         <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-description">
+                            <!-- Will be set by JavaScript -->
+                        </dd>
+                    </div>
+                    <div class="px-4 py-3 grid grid-cols-3 gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                            Nama Penerima
+                        </dt>
+                        <dd class="text-sm text-gray-900 dark:text-white col-span-2" id="detail-nama-penerima">
                             <!-- Will be set by JavaScript -->
                         </dd>
                     </div>

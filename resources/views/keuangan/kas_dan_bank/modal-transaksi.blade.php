@@ -24,6 +24,7 @@
                 jumlah: 0,
                 jumlah_display: '',
                 no_referensi: '',
+                nama_penerima: '',
                 keterangan: ''
             },
 
@@ -82,6 +83,7 @@
                     jumlah: 0,
                     jumlah_display: '',
                     no_referensi: '',
+                    nama_penerima: '',
                     keterangan: ''
                 };
                 this.errors = {};
@@ -672,6 +674,21 @@
                                 <p class="mt-1 text-xs text-red-600 dark:text-red-400" x-show="errors.no_referensi"
                                     x-text="errors.no_referensi"></p>
                             </div>
+                        </div>
+
+                        {{-- Row 4.5: Nama Penerima (untuk kas dan bank) --}}
+                        <div x-show="formData.account_type">
+                            <label for="nama_penerima"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Nama Penerima
+                            </label>
+                            <input type="text" name="nama_penerima" id="nama_penerima"
+                                x-model="formData.nama_penerima" placeholder="Nama penerima atau pengirim (opsional)"
+                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Nama penerima untuk transaksi
+                                masuk atau nama pengirim untuk transaksi keluar</p>
+                            <p class="mt-1 text-xs text-red-600 dark:text-red-400" x-show="errors.nama_penerima"
+                                x-text="errors.nama_penerima"></p>
                         </div>
 
                         {{-- Row 5: Description --}}

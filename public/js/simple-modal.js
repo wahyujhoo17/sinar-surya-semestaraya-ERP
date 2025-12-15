@@ -1,7 +1,7 @@
 // Simple Modal Implementation - FIXED VERSION
 // Define the functions directly in the global scope (not inside DOMContentLoaded)
 // This ensures they're available immediately to any onclick handlers
-window.showSimpleModal = function (id, noBukti, tanggal, keterangan, jenis, jumlah, createdAt, updatedAt, relatedId, relatedType) {
+window.showSimpleModal = function (id, noBukti, tanggal, keterangan, jenis, jumlah, createdAt, updatedAt, relatedId, relatedType, namaPenerima) {
     // Check if the modal element exists
     const modal = document.getElementById('transactionDetailModal');
     if (!modal) {
@@ -33,6 +33,7 @@ window.showSimpleModal = function (id, noBukti, tanggal, keterangan, jenis, juml
     const detailDescription = document.getElementById('detail-description');
     const detailRelated = document.getElementById('detail-related');
     const detailCreated = document.getElementById('detail-created');
+    const detailNamaPenerima = document.getElementById('detail-nama-penerima');
     const relatedDocumentContainer = document.getElementById('related-document-container');
 
     // Log missing elements but don't stop execution
@@ -45,6 +46,7 @@ window.showSimpleModal = function (id, noBukti, tanggal, keterangan, jenis, juml
         'detailType': detailType,
         'detailAmount': detailAmount,
         'detailDescription': detailDescription,
+        'detailNamaPenerima': detailNamaPenerima,
         'detailRelated': detailRelated,
         'detailCreated': detailCreated,
         'relatedDocumentContainer': relatedDocumentContainer
@@ -106,6 +108,7 @@ window.showSimpleModal = function (id, noBukti, tanggal, keterangan, jenis, juml
     detailReference.textContent = noBukti;
     detailDate.textContent = tanggal;
     detailDescription.textContent = keterangan || '-';
+    detailNamaPenerima.textContent = namaPenerima || '-';
     detailCreated.textContent = createdAt;
 
     // Handle related document

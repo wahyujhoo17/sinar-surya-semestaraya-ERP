@@ -85,16 +85,17 @@
                     const updatedAt = this.getAttribute('data-updated-at');
                     const relatedId = this.getAttribute('data-related-id');
                     const relatedType = this.getAttribute('data-related-type');
+                    const namaPenerima = this.getAttribute('data-nama-penerima');
 
                     // Make sure the modal function exists before calling it
                     if (typeof window.showSimpleModal === 'function') {
                         window.showSimpleModal(id, noBukti, tanggal, keterangan, jenis, jumlah,
-                            createdAt, updatedAt, relatedId, relatedType);
+                            createdAt, updatedAt, relatedId, relatedType, namaPenerima);
                     } else {
                         console.error('showSimpleModal function not found!');
                         alert(
                             'Error: Modal function not available. Please refresh the page and try again.'
-                            );
+                        );
                     }
                 });
             });

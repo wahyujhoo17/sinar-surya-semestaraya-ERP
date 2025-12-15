@@ -840,6 +840,7 @@ class KasDanBankController extends Controller
             'jumlah' => 'required|numeric|min:0.01',
             'keterangan' => 'required|string|max:500',
             'no_referensi' => 'nullable|string|max:100',
+            'nama_penerima' => 'nullable|string|max:255',
         ], [
             'tanggal.required' => 'Tanggal transaksi harus diisi',
             'jenis.required' => 'Jenis transaksi harus dipilih',
@@ -855,6 +856,7 @@ class KasDanBankController extends Controller
             'keterangan.required' => 'Keterangan transaksi harus diisi',
             'keterangan.max' => 'Keterangan maksimal 500 karakter',
             'no_referensi.max' => 'No referensi maksimal 100 karakter',
+            'nama_penerima.max' => 'Nama penerima maksimal 255 karakter',
         ]);
 
         if ($validator->fails()) {
@@ -951,6 +953,7 @@ class KasDanBankController extends Controller
                     'jumlah' => $request->jumlah,
                     'keterangan' => $request->keterangan,
                     'no_referensi' => $noReferensi,
+                    'nama_penerima' => $request->nama_penerima,
                     'user_id' => Auth::id(),
                     'no_bukti' => $noReferensi,
                 ]);
@@ -976,6 +979,7 @@ class KasDanBankController extends Controller
                             'jumlah' => $request->jumlah,
                             'keterangan' => 'Transfer dari ' . $account->nama . ' - ' . $request->keterangan,
                             'no_referensi' => $noReferensi . '-IN',
+                            'nama_penerima' => null, // Transfer internal
                             'user_id' => Auth::id(),
                             'no_bukti' => $noReferensi,
                         ]);
@@ -1000,6 +1004,7 @@ class KasDanBankController extends Controller
                     'jumlah' => $request->jumlah,
                     'keterangan' => $request->keterangan,
                     'no_referensi' => $noReferensi,
+                    'nama_penerima' => $request->nama_penerima,
                     'user_id' => Auth::id(),
                 ]);
 
