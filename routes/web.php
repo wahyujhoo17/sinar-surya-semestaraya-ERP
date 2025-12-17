@@ -212,6 +212,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware('permission:pelanggan.create')->group(function () {
             Route::get('pelanggan/generate-code', [CustomerController::class, 'generateCode'])->name('pelanggan.generate-code');
             Route::get('pelanggan/get-sales-users', [CustomerController::class, 'getSalesUsers'])->name('pelanggan.get-sales-users');
+            Route::get('pelanggan/get-customer-groups', [CustomerController::class, 'getCustomerGroups'])->name('pelanggan.get-customer-groups');
         });
         Route::middleware('permission:pelanggan.export')->group(function () {
             Route::get('pelanggan/export', [CustomerController::class, 'export'])->name('pelanggan.export');
@@ -839,6 +840,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('crm')->name('crm.')->group(function () {
         // Prospek & Lead Routes
         Route::get('prospek/data', [ProspekLeadController::class, 'data'])->name('prospek.data');
+        Route::get('prospek/customer-groups', [ProspekLeadController::class, 'getCustomerGroups'])->name('prospek.customer-groups');
         Route::get('prospek/{id}/attachment/{index}/download', [ProspekLeadController::class, 'downloadAttachment'])->name('prospek.attachment.download');
         Route::delete('prospek/{id}/attachment/{index}', [ProspekLeadController::class, 'deleteAttachment'])->name('prospek.attachment.delete');
         Route::resource('prospek', ProspekLeadController::class);

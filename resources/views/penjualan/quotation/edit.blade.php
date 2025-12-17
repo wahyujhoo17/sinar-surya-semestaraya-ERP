@@ -555,7 +555,7 @@
                                                             <option value="{{ $product->id }}"
                                                                 data-harga="{{ $product->harga_jual ?? 0 }}"
                                                                 data-satuan_id="{{ $product->satuan_id ?? '' }}">
-                                                                {{ $product->nama }}</option>
+                                                                {{ $product->kode }} - {{ $product->nama }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>

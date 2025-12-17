@@ -38,7 +38,15 @@ class ProspekLeadController extends Controller
         // All sales can view all prospects for listing
         $prospeks = Prospek::with('user')->orderBy('created_at', 'desc')->get();
 
-        return view('CRM.prospek_and_lead.index', compact('prospeks'));
+        // Get customer groups for filter
+        $customerGroups = Customer::whereNotNull('group')
+            ->where('group', '!=', '')
+            ->distinct()
+            ->pluck('group')
+            ->sort()
+            ->values();
+
+        return view('CRM.prospek_and_lead.index', compact('prospeks', 'customerGroups'));
     }
 
     public function data(Request $request)
@@ -66,6 +74,13 @@ class ProspekLeadController extends Controller
         // Apply sumber filter
         if ($request->filled('sumber')) {
             $query->where('sumber', $request->sumber);
+        }
+
+        // Apply customer group filter
+        if ($request->filled('customer_group')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('group', $request->customer_group);
+            });
         }
 
         // Apply periode filter
@@ -511,5 +526,17 @@ class ProspekLeadController extends Controller
         }
 
         return $code;
+    }
+
+    public function getCustomerGroups()
+    {
+        $groups = Customer::whereNotNull('group')
+            ->where('group', '!=', '')
+            ->distinct()
+            ->pluck('group')
+            ->sort()
+            ->values();
+
+        return response()->json(['success' => true, 'groups' => $groups]);
     }
 }

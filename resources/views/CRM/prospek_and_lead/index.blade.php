@@ -55,9 +55,9 @@
 
                 <div class="flex items-center gap-3">
                     <span class="text-xs text-gray-600 italic dark:text-gray-400 sm:inline-block">
-                        <span x-show="search || status || sumber || periode" x-cloak>Filter
+                        <span x-show="search || status || sumber || periode || customer_group" x-cloak>Filter
                             aktif</span>
-                        <span x-show="!search && !status && !sumber && !periode">Tidak ada
+                        <span x-show="!search && !status && !sumber && !periode && !customer_group">Tidak ada
                             filter</span>
                     </span>
                     <button @click="filterPanelOpen = !filterPanelOpen" type="button"
@@ -82,7 +82,7 @@
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 overflow-hidden">
                 <form @submit.prevent="applyFilters" class="space-y-3">
                     <!-- Filter Controls -->
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-3">
                         <!-- Search -->
                         <div>
                             <div class="flex items-center justify-between">
@@ -147,6 +147,27 @@
                                     <option value="media_sosial">Media Sosial</option>
                                     <option value="cold_call">Cold Call</option>
                                     <option value="lainnya">Lainnya</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Customer Group -->
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Group
+                                    Customer</label>
+                                <span x-show="customer_group"
+                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 ml-2">
+                                    Aktif
+                                </span>
+                            </div>
+                            <div class="relative mt-1">
+                                <select x-model="customer_group"
+                                    class="select2-basic block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
+                                    <option value="">Semua Group</option>
+                                    @foreach ($customerGroups as $group)
+                                        <option value="{{ $group }}">{{ $group }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -523,6 +544,7 @@
                 status: '',
                 sumber: '',
                 periode: '',
+                customer_group: '',
                 prospekToDelete: null,
                 isLoading: false,
                 currentUserId: {{ auth()->id() }},
@@ -557,7 +579,8 @@
                         search: this.search,
                         status: this.status,
                         sumber: this.sumber,
-                        periode: this.periode
+                        periode: this.periode,
+                        customer_group: this.customer_group
                     });
 
                     // Make AJAX request to get data
@@ -658,6 +681,7 @@
                     this.status = '';
                     this.sumber = '';
                     this.periode = '';
+                    this.customer_group = '';
                     this.page = 1;
                     this.loadData();
                 },
@@ -803,4 +827,25 @@
             };
         }
     </script>
+
+    @push('scripts')
+        <!-- Select2 JS -->
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            $(document).ready(function() {
+                // Initialize Select2 for customer group filter
+                $('select[x-model="customer_group"]').select2({
+                    placeholder: 'Semua Group',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: Infinity // Hide search box for simple dropdown
+                }).on('change', function(e) {
+                    // Update Alpine.js data when Select2 changes
+                    const value = $(this).val();
+                    Alpine.store('prospekTableManager').customer_group = value;
+                });
+            });
+        </script>
+    @endpush
 </x-app-layout>

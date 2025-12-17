@@ -308,8 +308,31 @@
                                 </div>
                             </div>
 
+                            <!-- Customer Group Filter -->
+                            <div class="lg:col-span-6">
+                                <div
+                                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full">
+                                    <label
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 flex items-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
+                                            viewBox="0 0 20 20" fill="currentColor">
+                                            <path
+                                                d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                                        </svg>
+                                        Group Customer
+                                    </label>
+                                    <select id="customer_group_filter" x-model="filter.customer_group"
+                                        class="select2-search block w-full rounded-md border-gray-300 dark:border-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-900 dark:text-white">
+                                        <option value="">Semua Group</option>
+                                        <template x-for="group in customerGroupList" :key="group">
+                                            <option :value="group" x-text="group"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </div>
+
                             <!-- Search Filter -->
-                            <div class="lg:col-span-12">
+                            <div class="lg:col-span-6">
                                 <div
                                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                                     <label
@@ -688,11 +711,13 @@
                     penjualanData: [],
                     customerList: [],
                     userList: [],
+                    customerGroupList: [],
                     filter: {
                         tanggal_awal: '',
                         tanggal_akhir: '',
                         customer_id: '',
                         user_id: '',
+                        customer_group: '',
                         status_pembayaran: '',
                         search: '',
                     },
@@ -751,6 +776,7 @@
 
                         await this.loadCustomerData();
                         await this.loadUserData();
+                        await this.loadCustomerGroupData();
                         await this.fetchData();
                         await this.loadChartData();
 
@@ -770,6 +796,15 @@
                                 width: '100%'
                             }).on('change', (e) => {
                                 this.filter.user_id = $('#user_filter').val();
+                            });
+
+                            $('#customer_group_filter').select2({
+                                placeholder: 'Pilih group customer...',
+                                allowClear: true,
+                                width: '100%',
+                                minimumResultsForSearch: Infinity // Hide search box for simple dropdown
+                            }).on('change', (e) => {
+                                this.filter.customer_group = $('#customer_group_filter').val();
                             });
                         });
                     },
@@ -791,6 +826,16 @@
                         } catch (error) {
                             console.error('Error loading customer data:', error);
                             this.customerList = [];
+                        }
+                    },
+
+                    async loadCustomerGroupData() {
+                        try {
+                            // Using direct controller access for customer groups
+                            this.customerGroupList = @json($customerGroups);
+                        } catch (error) {
+                            console.error('Error loading customer group data:', error);
+                            this.customerGroupList = [];
                         }
                     },
 
@@ -1273,6 +1318,7 @@
                             tanggal_akhir: this.filter.tanggal_akhir,
                             customer_id: this.filter.customer_id,
                             user_id: this.filter.user_id,
+                            customer_group: this.filter.customer_group,
                             status_pembayaran: this.filter.status_pembayaran,
                             search: this.filter.search,
                             detail_level: detailLevel
@@ -1285,6 +1331,7 @@
                             tanggal_akhir: this.filter.tanggal_akhir,
                             customer_id: this.filter.customer_id,
                             user_id: this.filter.user_id,
+                            customer_group: this.filter.customer_group,
                             status_pembayaran: this.filter.status_pembayaran,
                             search: this.filter.search,
                             detail_level: detailLevel
@@ -1297,6 +1344,7 @@
                             tanggal_akhir: this.getToday(),
                             customer_id: '',
                             user_id: '',
+                            customer_group: '',
                             status_pembayaran: '',
                             search: '',
                         };

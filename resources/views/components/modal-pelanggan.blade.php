@@ -2,7 +2,7 @@
 @include('components.custom-dropdown-styles')
 @include('components.custom-dropdown')
 
-<div x-data="modalPelangganManager()" x-show="isOpen" @open-pelanggan-modal.window="openModal($event.detail)"
+<div x-data="modalPelangganManager()" x-init="init()" x-show="isOpen" @open-pelanggan-modal.window="openModal($event.detail)"
     @close-pelanggan-modal.window="closeModal()" x-cloak
     class="fixed inset-0 z-50 overflow-y-auto modal-pelanggan-container">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -62,6 +62,34 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe</label>
                             <input type="text" name="tipe" id="tipe" x-model="formData.tipe"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
+                        </div>
+                        <div>
+                            <label for="group"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Group</label>
+                            <div x-data="editableCombobox()" class="relative w-full" x-init="init('{{ route('master.pelanggan.get-customer-groups') }}')">
+                                <input type="text" name="group" id="group" x-model="formData.group"
+                                    @input="handleInput" @focus="showDropdown" @blur="hideDropdown"
+                                    placeholder="Pilih atau ketik group..."
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm focus:border-primary-500 focus:ring-primary-500"
+                                    autocomplete="off">
+                                <div x-show="isOpen" @click.away="hideDropdown"
+                                    class="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-48 overflow-y-auto"
+                                    style="display: none;">
+                                    <template x-for="option in filteredOptions" :key="option">
+                                        <div @click="selectOption(option)"
+                                            class="px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm text-gray-900 dark:text-white"
+                                            x-text="option"></div>
+                                    </template>
+                                    <div x-show="filteredOptions.length === 0 && searchTerm"
+                                        class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                        Tidak ada group yang cocok
+                                    </div>
+                                    <div x-show="filteredOptions.length === 0 && !searchTerm && options.length === 0"
+                                        class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 text-center">
+                                        Memuat data...
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label for="telepon"
@@ -254,6 +282,13 @@
             loading: false,
             customerId: null,
             salesUsers: [],
+
+            init() {
+                // Listen for group selection events
+                this.$el.addEventListener('group-selected', (event) => {
+                    this.formData.group = event.detail.group;
+                });
+            },
             formData: {
                 kode: '',
                 nama: '',
@@ -552,6 +587,71 @@
                             notify(error.message || 'Terjadi kesalahan saat menyimpan data.', 'error', 'Error');
                         }
                     });
+            }
+        };
+    }
+
+    // Editable Combobox for Group field
+    function editableCombobox() {
+        return {
+            isOpen: false,
+            options: [],
+            filteredOptions: [],
+            searchTerm: '',
+            apiUrl: '',
+
+            init(url) {
+                this.apiUrl = url;
+                this.loadOptions();
+            },
+
+            async loadOptions() {
+                try {
+                    const response = await fetch(this.apiUrl);
+                    const data = await response.json();
+                    if (data.success) {
+                        this.options = data.groups || [];
+                        this.filteredOptions = this.options;
+                    }
+                } catch (error) {
+                    console.error('Error loading options:', error);
+                }
+            },
+
+            handleInput(event) {
+                this.searchTerm = event.target.value;
+                this.filterOptions();
+                if (this.filteredOptions.length > 0 || this.searchTerm) {
+                    this.showDropdown();
+                }
+            },
+
+            filterOptions() {
+                if (!this.searchTerm) {
+                    this.filteredOptions = this.options;
+                } else {
+                    this.filteredOptions = this.options.filter(option =>
+                        option.toLowerCase().includes(this.searchTerm.toLowerCase())
+                    );
+                }
+            },
+
+            selectOption(option) {
+                // Dispatch custom event to update parent formData
+                this.$dispatch('group-selected', {
+                    group: option
+                });
+                this.hideDropdown();
+            },
+
+            showDropdown() {
+                this.isOpen = true;
+            },
+
+            hideDropdown() {
+                setTimeout(() => {
+                    this.isOpen = false;
+                }, 150);
             }
         };
     }

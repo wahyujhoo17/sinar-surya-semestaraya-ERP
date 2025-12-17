@@ -62,6 +62,13 @@ class PiutangUsahaController extends Controller
             });
         }
 
+        // Filter by customer group if provided
+        if ($request->filled('customer_group')) {
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('group', $request->customer_group);
+            });
+        }
+
         // Filter by date range (invoice date)
         if ($request->filled('start_date')) {
             $query->whereDate('tanggal', '>=', $request->start_date);
@@ -172,6 +179,14 @@ class PiutangUsahaController extends Controller
 
         $customers = Customer::orderBy('nama')->get();
 
+        // Get all unique customer groups
+        $customerGroups = Customer::whereNotNull('group')
+            ->where('group', '!=', '')
+            ->distinct()
+            ->pluck('group')
+            ->sort()
+            ->values();
+
         // Get all unique sales users from customer table (sales_id column)
         $salesUserIds = Customer::select('sales_id')
             ->distinct()
@@ -206,6 +221,7 @@ class PiutangUsahaController extends Controller
             return view('keuangan.piutang_usaha.index', [
                 'invoices' => $invoices,
                 'customers' => $customers,
+                'customerGroups' => $customerGroups,
                 'salesUsers' => $salesUsers,
                 'request' => $request,
                 'totalPiutang' => $totalPiutang,
@@ -220,6 +236,7 @@ class PiutangUsahaController extends Controller
         return view('keuangan.piutang_usaha.index', [
             'invoices' => $invoices,
             'customers' => $customers,
+            'customerGroups' => $customerGroups,
             'salesUsers' => $salesUsers,
             'request' => $request,
             'totalPiutang' => $totalPiutang,

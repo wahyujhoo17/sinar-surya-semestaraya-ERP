@@ -223,123 +223,189 @@
                             </svg>
                             <span>Gunakan filter untuk mempermudah pencarian data piutang</span>
                         </div>
+                        <button type="button" id="toggleFilters"
+                            class="inline-flex items-center px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                            <span id="toggleText">Sembunyikan Filter</span>
+                        </button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                        <div
-                            class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <label for="customer_id"
-                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Customer</label>
-                            <select name="customer_id" id="customer_id"
-                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full select2-basic">
-                                <option value="">-- Semua Customer --</option>
-                                @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}"
-                                        data-name="{{ $customer->company ?? $customer->nama }}"
-                                        data-kode="{{ $customer->kode_customer }}"
-                                        {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
-                                        {{ $customer->kode_customer }} - {{ $customer->company ?? $customer->nama }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan customer
-                                tertentu</p>
-                        </div>
-                        <div
-                            class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <label for="start_date"
-                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
-                                Invoice Mulai</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <div id="filterContainer" class="space-y-4">
+                        {{-- Row 1: Customer & Tanggal Mulai --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="customer_id"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                                        </path>
+                                    </svg>
+                                    Customer
+                                </label>
+                                <select name="customer_id" id="customer_id"
+                                    class="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors select2-basic">
+                                    <option value="">-- Semua Customer --</option>
+                                    @foreach ($customers as $customer)
+                                        <option value="{{ $customer->id }}"
+                                            data-name="{{ $customer->company ?? $customer->nama }}"
+                                            data-kode="{{ $customer->kode_customer }}"
+                                            {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                                            {{ $customer->kode_customer }} -
+                                            {{ $customer->company ?? $customer->nama }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan customer
+                                    tertentu</p>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="start_date"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                                         </path>
                                     </svg>
-                                </div>
+                                    Tanggal Invoice Mulai
+                                </label>
                                 <input id="start_date" type="date"
-                                    class="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full"
+                                    class="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors"
                                     name="start_date" value="{{ request('start_date') }}">
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Tanggal awal periode invoice
+                                </p>
                             </div>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tanggal awal periode invoice</p>
                         </div>
-                        <div
-                            class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <label for="end_date"
-                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal
-                                Invoice Akhir</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none"
-                                        stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+
+                        {{-- Row 2: Tanggal Akhir & Status Pembayaran --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="end_date"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                                         </path>
                                     </svg>
-                                </div>
+                                    Tanggal Invoice Akhir
+                                </label>
                                 <input id="end_date" type="date"
-                                    class="pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full"
+                                    class="w-full pl-3 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors"
                                     name="end_date" value="{{ request('end_date') }}">
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Tanggal akhir periode invoice
+                                </p>
                             </div>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Tanggal akhir periode invoice</p>
-                        </div>
-                        <div
-                            class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <label for="status_pembayaran_filter"
-                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status
-                                Pembayaran Invoice</label>
-                            <select name="status_pembayaran_filter" id="status_pembayaran_filter"
-                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full">
-                                <option value="all"
-                                    {{ request('status_pembayaran_filter') == 'all' ? 'selected' : '' }}>-- Semua
-                                    Status --
-                                </option>
-                                <option value="belum_bayar"
-                                    {{ request('status_pembayaran_filter') == 'belum_bayar' ? 'selected' : '' }}>Belum
-                                    Bayar
-                                </option>
-                                <option value="sebagian"
-                                    {{ request('status_pembayaran_filter') == 'sebagian' ? 'selected' : '' }}>
-                                    Lunas Sebagian</option>
-                                <option value="lunas"
-                                    {{ request('status_pembayaran_filter') == 'lunas' ? 'selected' : '' }}>Lunas
-                                </option>
-                                <option value="jatuh_tempo"
-                                    {{ request('status_pembayaran_filter') == 'jatuh_tempo' ? 'selected' : '' }}>Jatuh
-                                    Tempo
-                                </option>
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan status
-                                pembayaran invoice</p>
-                        </div>
-                        <div
-                            class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
-                            <label for="sales_id"
-                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Sales</label>
-                            <select name="sales_id" id="sales_id"
-                                class="pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors w-full">
-                                <option value="">-- Semua Sales --</option>
-                                @foreach ($salesUsers as $salesUser)
-                                    <option value="{{ $salesUser['id'] }}" data-name="{{ $salesUser['name'] }}"
-                                        {{ request('sales_id') == $salesUser['id'] ? 'selected' : '' }}>
-                                        {{ $salesUser['name'] }}
+
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="status_pembayaran_filter"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Status Pembayaran Invoice
+                                </label>
+                                <select name="status_pembayaran_filter" id="status_pembayaran_filter"
+                                    class="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors select2-basic">
+                                    <option value="all"
+                                        {{ request('status_pembayaran_filter') == 'all' ? 'selected' : '' }}>-- Semua
+                                        Status --</option>
+                                    <option value="belum_bayar"
+                                        {{ request('status_pembayaran_filter') == 'belum_bayar' ? 'selected' : '' }}>
+                                        Belum Bayar</option>
+                                    <option value="sebagian"
+                                        {{ request('status_pembayaran_filter') == 'sebagian' ? 'selected' : '' }}>Lunas
+                                        Sebagian</option>
+                                    <option value="lunas"
+                                        {{ request('status_pembayaran_filter') == 'lunas' ? 'selected' : '' }}>Lunas
                                     </option>
-                                @endforeach
-                            </select>
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan sales yang
-                                ditugaskan ke customer</p>
+                                    <option value="jatuh_tempo"
+                                        {{ request('status_pembayaran_filter') == 'jatuh_tempo' ? 'selected' : '' }}>
+                                        Jatuh Tempo</option>
+                                </select>
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan status
+                                    pembayaran invoice</p>
+                            </div>
+                        </div>
+
+                        {{-- Row 3: Sales & Group Customer --}}
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="sales_id"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z">
+                                        </path>
+                                    </svg>
+                                    Sales
+                                </label>
+                                </label>
+                                <select name="sales_id" id="sales_id"
+                                    class="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors select2-basic">
+                                    <option value="">-- Semua Sales --</option>
+                                    @foreach ($salesUsers as $salesUser)
+                                        <option value="{{ $salesUser['id'] }}" data-name="{{ $salesUser['name'] }}"
+                                            {{ request('sales_id') == $salesUser['id'] ? 'selected' : '' }}>
+                                            {{ $salesUser['name'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan sales yang
+                                    ditugaskan ke customer</p>
+                            </div>
+
+                            <div
+                                class="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm">
+                                <label for="customer_group"
+                                    class="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    <svg class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                        </path>
+                                    </svg>
+                                    Group Customer
+                                </label>
+                                </label>
+                                <select name="customer_group" id="customer_group"
+                                    class="w-full pl-3 pr-8 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-primary-500 focus:border-primary-500 transition-colors select2-basic">
+                                    <option value="">-- Semua Group --</option>
+                                    @foreach ($customerGroups as $group)
+                                        <option value="{{ $group }}"
+                                            {{ request('customer_group') == $group ? 'selected' : '' }}>
+                                            {{ $group }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Filter berdasarkan group
+                                    customer</p>
+                            </div>
                         </div>
                     </div>
 
                     <div
-                        class="flex flex-wrap items-center justify-end space-x-0 space-y-2 sm:space-x-2 sm:space-y-0 mt-4">
+                        class="flex flex-wrap items-center justify-end space-x-0 space-y-2 sm:space-x-2 sm:space-y-0 mt-6">
                         @if (request()->has('customer_id') ||
                                 request()->has('start_date') ||
                                 request()->has('end_date') ||
                                 (request()->has('status_pembayaran_filter') && request('status_pembayaran_filter') != 'all') ||
-                                request()->has('sales_id'))
+                                request()->has('sales_id') ||
+                                request()->has('customer_group'))
                             <a href="{{ route('keuangan.piutang-usaha.index') }}"
                                 class="px-3 py-1.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 text-xs font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-gray-500 transition-all duration-200 shadow-sm w-full sm:w-auto justify-center flex items-center group">
                                 <span class="flex items-center gap-1">
@@ -375,7 +441,8 @@
                         request('start_date') ||
                         request('end_date') ||
                         (request('status_pembayaran_filter') && request('status_pembayaran_filter') != 'all') ||
-                        request('sales_id'))
+                        request('sales_id') ||
+                        request('customer_group'))
                     <div
                         class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4 mt-4 mx-2">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
@@ -488,6 +555,21 @@
                                                 </path>
                                             </svg>
                                             <span class="font-semibold mr-1">Sales:</span> {{ $salesName }}
+                                        </span>
+                                    @endif
+
+                                    @if (request('customer_group'))
+                                        <span
+                                            class="inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200">
+                                            <svg class="w-3.5 h-3.5 mr-1 text-blue-600 dark:text-blue-300"
+                                                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                                xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M17 20h5v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2h5M9 12a4 4 0 100-8 4 4 0 000 8z">
+                                                </path>
+                                            </svg>
+                                            <span class="font-semibold mr-1">Group:</span>
+                                            {{ request('customer_group') }}
                                         </span>
                                     @endif
                                 </div>
@@ -1445,6 +1527,41 @@
                     templateSelection: formatSalesSelection,
                     escapeMarkup: function(markup) {
                         return markup;
+                    }
+                });
+
+                // Initialize Select2 for status pembayaran filter
+                $('#status_pembayaran_filter').select2({
+                    placeholder: '-- Semua Status --',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: Infinity // Hide search box for simple dropdown
+                });
+
+                // Initialize Select2 for customer group filter
+                $('#customer_group').select2({
+                    placeholder: '-- Semua Group --',
+                    allowClear: true,
+                    width: '100%',
+                    minimumResultsForSearch: Infinity // Hide search box for simple dropdown
+                });
+
+                // Toggle filter functionality
+                let filtersVisible = true;
+                $('#toggleFilters').on('click', function() {
+                    filtersVisible = !filtersVisible;
+                    const $filterContainer = $('#filterContainer');
+                    const $toggleText = $('#toggleText');
+                    const $icon = $(this).find('svg');
+
+                    if (filtersVisible) {
+                        $filterContainer.slideDown(300);
+                        $toggleText.text('Sembunyikan Filter');
+                        $icon.css('transform', 'rotate(0deg)');
+                    } else {
+                        $filterContainer.slideUp(300);
+                        $toggleText.text('Tampilkan Filter');
+                        $icon.css('transform', 'rotate(180deg)');
                     }
                 });
             });

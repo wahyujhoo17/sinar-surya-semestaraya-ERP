@@ -23,6 +23,14 @@ class LaporanPenjualanController extends Controller
         $tanggalAkhir = now();
         $customers = Customer::orderBy('nama')->get();
 
+        // Get all unique customer groups
+        $customerGroups = Customer::whereNotNull('group')
+            ->where('group', '!=', '')
+            ->distinct()
+            ->pluck('group')
+            ->sort()
+            ->values();
+
         // Get all users (sales)
         $users = \App\Models\User::orderBy('name')->get();
 
@@ -39,6 +47,7 @@ class LaporanPenjualanController extends Controller
             'tanggalAwal',
             'tanggalAkhir',
             'customers',
+            'customerGroups',
             'users',
             'breadcrumbs',
             'currentPage'
@@ -59,6 +68,7 @@ class LaporanPenjualanController extends Controller
             $customerId = $request->input('customer_id');
             $userId = $request->input('user_id');
             $statusPembayaran = $request->input('status_pembayaran');
+            $customerGroup = $request->input('customer_group');
             $search = $request->input('search');
             $perPage = $request->input('per_page', 25);
             $page = $request->input('page', 1);
@@ -70,6 +80,7 @@ class LaporanPenjualanController extends Controller
                 'customer_id' => $customerId,
                 'user_id' => $userId,
                 'status_pembayaran' => $statusPembayaran,
+                'customer_group' => $customerGroup,
                 'search' => $search
             ]);
 
@@ -112,6 +123,11 @@ class LaporanPenjualanController extends Controller
             // Filter berdasarkan customer
             if ($customerId) {
                 $query->where('sales_order.customer_id', $customerId);
+            }
+
+            // Filter berdasarkan customer group
+            if ($customerGroup) {
+                $query->where('customer.group', $customerGroup);
             }
 
             // Filter berdasarkan user/sales

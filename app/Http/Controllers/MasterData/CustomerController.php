@@ -332,6 +332,18 @@ class CustomerController extends Controller
         return response()->json(['success' => true, 'salesUsers' => $salesUsers]);
     }
 
+    public function getCustomerGroups()
+    {
+        $groups = Customer::whereNotNull('group')
+            ->where('group', '!=', '')
+            ->distinct()
+            ->pluck('group')
+            ->sort()
+            ->values();
+
+        return response()->json(['success' => true, 'groups' => $groups]);
+    }
+
     public function export()
     {
         return Excel::download(new CustomerExport, 'pelanggan-' . date('Y-m-d') . '.xlsx');
