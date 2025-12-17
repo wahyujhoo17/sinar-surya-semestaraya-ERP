@@ -354,6 +354,23 @@
                             </tfoot>
                         </table>
                     </div>
+
+                    {{-- Pagination --}}
+                    @if ($relatedTransactions->hasPages())
+                        <div
+                            class="px-6 py-4 bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-700">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    Menampilkan {{ $relatedTransactions->firstItem() }} sampai
+                                    {{ $relatedTransactions->lastItem() }}
+                                    dari {{ $relatedTransactions->total() }} transaksi
+                                </div>
+                                <div class="flex space-x-1">
+                                    {{ $relatedTransactions->appends(request()->query())->links() }}
+                                </div>
+                            </div>
+                        </div>
+                    @endif
                 </div>
             </div>
         @endif

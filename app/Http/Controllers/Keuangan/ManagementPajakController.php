@@ -212,20 +212,26 @@ class ManagementPajakController extends Controller
     /**
      * Display the specified tax record.
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $laporanPajak = LaporanPajak::findOrFail($id);
 
         // Get related transactions based on tax type and period
-        // For single period, we'll use the month of the periode field
-        $periodeDate = Carbon::parse($laporanPajak->periode ?? $laporanPajak->tanggal);
-        $periodeAwal = $periodeDate->startOfMonth()->format('Y-m-d');
-        $periodeAkhir = $periodeDate->endOfMonth()->format('Y-m-d');
+        // Use periode_awal and periode_akhir if available (for auto-generated reports), otherwise use monthly period
+        $periodeAwal = $laporanPajak->periode_awal;
+        $periodeAkhir = $laporanPajak->periode_akhir;
+
+        if (!$periodeAwal || !$periodeAkhir) {
+            $periodeDate = Carbon::parse($laporanPajak->periode ?? $laporanPajak->tanggal);
+            $periodeAwal = $periodeDate->startOfMonth()->format('Y-m-d');
+            $periodeAkhir = $periodeDate->endOfMonth()->format('Y-m-d');
+        }
 
         $relatedTransactions = $this->getRelatedTransactions(
             $laporanPajak->jenis_pajak,
             $periodeAwal,
-            $periodeAkhir
+            $periodeAkhir,
+            $request->get('per_page', 50)
         );
 
         return view('keuangan.management_pajak.show', [
@@ -500,60 +506,79 @@ class ManagementPajakController extends Controller
     }
 
     /**
-     * Get related transactions for a tax type and period.
+     * Get related transactions for a tax type and period with pagination.
      */
-    private function getRelatedTransactions($jenis, $periodeAwal, $periodeAkhir)
+    private function getRelatedTransactions($jenis, $periodeAwal, $periodeAkhir, $perPage = 50)
     {
-        $transactions = collect();
+        $query = null;
 
         switch ($jenis) {
             case 'ppn_keluaran':
-                $salesOrders = SalesOrder::with(['customer', 'details.produk'])
+                $query = SalesOrder::with(['customer', 'details.produk'])
                     ->where('ppn', '>', 0)
                     ->whereBetween('tanggal', [$periodeAwal, $periodeAkhir])
-                    ->get();
-
-                foreach ($salesOrders as $so) {
-                    $ppnAmount = ($so->total - $so->ongkos_kirim) * ($so->ppn / 100);
-                    $transactions->push([
-                        'type' => 'Sales Order',
-                        'nomor' => $so->nomor,
-                        'tanggal' => $so->tanggal,
-                        'partner' => $so->customer->nama ?? $so->customer->company ?? 'N/A',
-                        'base_amount' => $so->total - $so->ongkos_kirim,
-                        'tax_rate' => $so->ppn,
-                        'tax_amount' => $ppnAmount,
-                        'total' => $so->total,
-                    ]);
-                }
+                    ->select([
+                        'id',
+                        'nomor',
+                        'tanggal',
+                        'customer_id',
+                        'total',
+                        'ongkos_kirim',
+                        'ppn',
+                        DB::raw('(total - ongkos_kirim) as base_amount'),
+                        DB::raw('((total - ongkos_kirim) * (ppn / 100)) as tax_amount'),
+                        DB::raw("'Sales Order' as type"),
+                        'customer_id as partner_id'
+                    ])
+                    ->orderBy('tanggal', 'desc');
                 break;
 
             case 'ppn_masukan':
-                $purchaseOrders = PurchaseOrder::with(['supplier', 'details.produk'])
+                $query = PurchaseOrder::with(['supplier', 'details.produk'])
                     ->where('ppn', '>', 0)
                     ->where('status', '!=', 'dibatalkan')
                     ->whereBetween('tanggal', [$periodeAwal, $periodeAkhir])
-                    ->get();
-
-                foreach ($purchaseOrders as $po) {
-                    $baseAmount = $po->subtotal - $po->diskon_nominal;
-                    $ppnAmount = $baseAmount * ($po->ppn / 100);
-                    $transactions->push([
-                        'type' => 'Purchase Order',
-                        'nomor' => $po->nomor,
-                        'tanggal' => $po->tanggal,
-                        'partner' => $po->supplier->nama,
-                        'base_amount' => $baseAmount,
-                        'tax_rate' => $po->ppn,
-                        'tax_amount' => $ppnAmount,
-                        'total' => $po->total,
-                    ]);
-                }
+                    ->select([
+                        'id',
+                        'nomor',
+                        'tanggal',
+                        'supplier_id',
+                        'subtotal',
+                        'diskon_nominal',
+                        'ppn',
+                        'total',
+                        DB::raw('(subtotal - diskon_nominal) as base_amount'),
+                        DB::raw('((subtotal - diskon_nominal) * (ppn / 100)) as tax_amount'),
+                        DB::raw("'Purchase Order' as type"),
+                        'supplier_id as partner_id'
+                    ])
+                    ->orderBy('tanggal', 'desc');
                 break;
         }
-        // dd($transactions);
 
-        return $transactions->sortBy('tanggal');
+        if ($query) {
+            return $query->paginate($perPage)->through(function ($transaction) use ($jenis) {
+                $partner = null;
+                if ($jenis === 'ppn_keluaran') {
+                    $partner = $transaction->customer->nama ?? $transaction->customer->company ?? 'N/A';
+                } else {
+                    $partner = $transaction->supplier->nama ?? 'N/A';
+                }
+
+                return [
+                    'type' => $transaction->type,
+                    'nomor' => $transaction->nomor,
+                    'tanggal' => $transaction->tanggal,
+                    'partner' => $partner,
+                    'base_amount' => $transaction->base_amount,
+                    'tax_rate' => $transaction->ppn,
+                    'tax_amount' => $transaction->tax_amount,
+                    'total' => $transaction->total,
+                ];
+            });
+        }
+
+        return collect();
     }
 
     /**
@@ -567,7 +592,17 @@ class ManagementPajakController extends Controller
             'periode_akhir' => 'required|date|after_or_equal:periode_awal',
         ]);
 
-        DB::beginTransaction();
+        // Validate maximum period (90 days)
+        $periodeAwal = Carbon::parse($validatedData['periode_awal']);
+        $periodeAkhir = Carbon::parse($validatedData['periode_akhir']);
+        $daysDifference = $periodeAwal->diffInDays($periodeAkhir);
+
+        if ($daysDifference > 90) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Periode laporan maksimal 90 hari untuk menghindari beban sistem yang berlebih. Untuk laporan tahunan, gunakan laporan manual dengan periode bulanan.',
+            ], 422);
+        }
         try {
             $jenis = $validatedData['jenis_pajak'];
             $periodeAwal = $validatedData['periode_awal'];
