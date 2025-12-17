@@ -592,17 +592,6 @@ class ManagementPajakController extends Controller
             'periode_akhir' => 'required|date|after_or_equal:periode_awal',
         ]);
 
-        // Validate maximum period (90 days)
-        $periodeAwal = Carbon::parse($validatedData['periode_awal']);
-        $periodeAkhir = Carbon::parse($validatedData['periode_akhir']);
-        $daysDifference = $periodeAwal->diffInDays($periodeAkhir);
-
-        if ($daysDifference > 90) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Periode laporan maksimal 90 hari untuk menghindari beban sistem yang berlebih. Untuk laporan tahunan, gunakan laporan manual dengan periode bulanan.',
-            ], 422);
-        }
         try {
             $jenis = $validatedData['jenis_pajak'];
             $periodeAwal = $validatedData['periode_awal'];
