@@ -4,6 +4,48 @@
     ['label' => 'Tambah Aktivitas'],
 ]" :currentPage="'Tambah Aktivitas'">
 
+    @push('styles')
+        <style>
+            /* Select2 Dark Mode Support */
+            .dark .select2-container--default .select2-selection--single {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: rgb(156 163 175);
+            }
+
+            .dark .select2-dropdown {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: rgb(59 130 246);
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            .select2-customer-option {
+                padding: 4px 0;
+            }
+        </style>
+    @endpush
+
     <div class="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
             <div class="p-6">
@@ -24,25 +66,78 @@
                     @csrf
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Prospek -->
+                        <!-- Tipe Entitas -->
                         <div class="col-span-1">
+                            <label for="entity_type"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Tipe <span class="text-red-600">*</span>
+                            </label>
+                            <select id="entity_type" name="entity_type"
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 @error('entity_type') border-red-500 @enderror"
+                                required onchange="toggleEntityFields(this.value)">
+                                <option value="">-- Pilih Tipe --</option>
+                                <option value="prospek"
+                                    {{ old('entity_type', request('prospek_id') ? 'prospek' : '') == 'prospek' ? 'selected' : '' }}>
+                                    Prospek / Lead
+                                </option>
+                                <option value="customer"
+                                    {{ old('entity_type', request('customer_id') ? 'customer' : '') == 'customer' ? 'selected' : '' }}>
+                                    Customer / Konsumen
+                                </option>
+                            </select>
+                            @error('entity_type')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Prospek (conditional) -->
+                        <div class="col-span-1" id="prospek-field"
+                            style="display: {{ old('entity_type', request('prospek_id') ? 'prospek' : '') == 'prospek' ? 'block' : 'none' }}">
                             <label for="prospek_id"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                 Prospek <span class="text-red-600">*</span>
                             </label>
                             <select id="prospek_id" name="prospek_id"
-                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 @error('prospek_id') border-red-500 @enderror"
-                                required>
+                                class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 @error('prospek_id') border-red-500 @enderror">
                                 <option value="">-- Pilih Prospek --</option>
                                 @foreach ($prospekList as $prospek)
                                     <option value="{{ $prospek->id }}"
                                         {{ old('prospek_id', request('prospek_id')) == $prospek->id ? 'selected' : '' }}>
                                         {{ $prospek->nama_prospek }}
-                                        {{ $prospek->customer ? '(' . $prospek->customer->nama . ')' : '' }}
+                                        @if ($prospek->perusahaan)
+                                            ({{ $prospek->perusahaan }})
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>
                             @error('prospek_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Customer (conditional) -->
+                        <div class="col-span-1" id="customer-field"
+                            style="display: {{ old('entity_type', request('customer_id') ? 'customer' : '') == 'customer' ? 'block' : 'none' }}">
+                            <label for="customer_id"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Customer <span class="text-red-600">*</span>
+                            </label>
+                            <select id="customer_id" name="customer_id"
+                                class="select2-customer block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 @error('customer_id') border-red-500 @enderror">
+                                <option value="">-- Pilih Customer --</option>
+                                @foreach ($customerList as $customer)
+                                    <option value="{{ $customer->id }}"
+                                        {{ old('customer_id', request('customer_id')) == $customer->id ? 'selected' : '' }}
+                                        data-kode="{{ $customer->kode }}" data-nama="{{ $customer->nama }}"
+                                        data-company="{{ $customer->company ?? '' }}">
+                                        {{ $customer->kode }} - {{ $customer->nama }}
+                                        @if ($customer->company)
+                                            ({{ $customer->company }})
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('customer_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -266,33 +361,126 @@
         </div>
     </div>
 
-    <script>
-        function toggleFollowupFields(isChecked) {
-            const followupFields = document.getElementById('followup-fields');
-            const tanggalFollowup = document.getElementById('tanggal_followup');
-            const statusFollowup = document.getElementById('status_followup');
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            function toggleEntityFields(entityType) {
+                const prospekField = document.getElementById('prospek-field');
+                const customerField = document.getElementById('customer-field');
+                const prospekSelect = document.getElementById('prospek_id');
+                const customerSelect = document.getElementById('customer_id');
 
-            if (isChecked) {
-                followupFields.classList.remove('hidden');
-                // Make fields required when checkbox is checked
-                tanggalFollowup.required = true;
-                statusFollowup.required = true;
-                // Ensure the fields are enabled for submission
-                tanggalFollowup.disabled = false;
-                statusFollowup.disabled = false;
-            } else {
-                followupFields.classList.add('hidden');
-                // Remove required attribute when checkbox is unchecked
-                tanggalFollowup.required = false;
-                statusFollowup.required = false;
-                // Don't disable fields as this prevents them from being submitted
-                // Just make them not required
+                if (entityType === 'prospek') {
+                    prospekField.style.display = 'block';
+                    customerField.style.display = 'none';
+                    prospekSelect.required = true;
+                    customerSelect.required = false;
+
+                    // Destroy and clear select2 for customer
+                    if ($('.select2-customer').data('select2')) {
+                        $('.select2-customer').select2('destroy');
+                    }
+                    customerSelect.value = '';
+                } else if (entityType === 'customer') {
+                    prospekField.style.display = 'none';
+                    customerField.style.display = 'block';
+                    prospekSelect.required = false;
+                    customerSelect.required = true;
+                    prospekSelect.value = '';
+
+                    // Reinitialize select2 for customer
+                    initCustomerSelect2();
+                } else {
+                    prospekField.style.display = 'none';
+                    customerField.style.display = 'none';
+                    prospekSelect.required = false;
+                    customerSelect.required = false;
+                }
             }
-        }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            toggleFollowupFields(document.getElementById('perlu_followup').checked);
-        });
-    </script>
+            function initCustomerSelect2() {
+                if ($('.select2-customer').data('select2')) {
+                    return; // Already initialized
+                }
+
+                $('.select2-customer').select2({
+                    placeholder: '-- Pilih Customer --',
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'default',
+                    templateResult: formatCustomer,
+                    templateSelection: formatCustomerSelection
+                });
+            }
+
+            function formatCustomer(customer) {
+                if (!customer.id) {
+                    return customer.text;
+                }
+
+                const $customer = $(customer.element);
+                const kode = $customer.data('kode');
+                const nama = $customer.data('nama');
+                const company = $customer.data('company');
+
+                let html = '<div class="select2-customer-option">';
+                html += '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + nama + '</div>';
+                if (company) {
+                    html += '<div class="text-xs text-gray-500 dark:text-gray-400">' + company + '</div>';
+                }
+                html += '</div>';
+
+                return $(html);
+            }
+
+            function formatCustomerSelection(customer) {
+                if (!customer.id) {
+                    return customer.text;
+                }
+                const $customer = $(customer.element);
+                const kode = $customer.data('kode');
+                const nama = $customer.data('nama');
+                return kode + ' - ' + nama;
+            }
+
+            function toggleFollowupFields(isChecked) {
+                const followupFields = document.getElementById('followup-fields');
+                const tanggalFollowup = document.getElementById('tanggal_followup');
+                const statusFollowup = document.getElementById('status_followup');
+
+                if (isChecked) {
+                    followupFields.classList.remove('hidden');
+                    // Make fields required when checkbox is checked
+                    tanggalFollowup.required = true;
+                    statusFollowup.required = true;
+                    // Ensure the fields are enabled for submission
+                    tanggalFollowup.disabled = false;
+                    statusFollowup.disabled = false;
+                } else {
+                    followupFields.classList.add('hidden');
+                    // Remove required attribute when checkbox is unchecked
+                    tanggalFollowup.required = false;
+                    statusFollowup.required = false;
+                    // Don't disable fields as this prevents them from being submitted
+                    // Just make them not required
+                }
+            }
+
+            // Initialize on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                toggleFollowupFields(document.getElementById('perlu_followup').checked);
+
+                // Initialize entity fields based on current selection
+                const entityType = document.getElementById('entity_type').value;
+                if (entityType) {
+                    toggleEntityFields(entityType);
+                }
+
+                // Initialize Select2 if customer field is visible
+                if (entityType === 'customer') {
+                    initCustomerSelect2();
+                }
+            });
+        </script>
+    @endpush
 </x-app-layout>

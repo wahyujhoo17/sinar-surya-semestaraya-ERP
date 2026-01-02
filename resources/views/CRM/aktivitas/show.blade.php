@@ -21,16 +21,30 @@
                 </svg>
                 Kembali ke Daftar
             </a>
-            <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
-                class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
-                Lihat Prospek
-                <svg class="ml-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                        clip-rule="evenodd" />
-                </svg>
-            </a>
+
+            @if ($aktivitas->prospek_id && $aktivitas->prospek)
+                <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                    Lihat Prospek
+                    <svg class="ml-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </a>
+            @elseif($aktivitas->customer_id && $aktivitas->customer)
+                <a href="{{ route('master.pelanggan.show', $aktivitas->customer_id) }}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                    Lihat Customer
+                    <svg class="ml-2 h-5 w-5 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </a>
+            @endif
         </div>
     </div>
 
@@ -100,13 +114,34 @@
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Prospek</h3>
-                                <p class="mt-1 text-sm text-gray-900 dark:text-white">
-                                    <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
-                                        class="text-primary-600 hover:text-primary-700 hover:underline">
-                                        {{ $aktivitas->prospek->nama_prospek }}
-                                    </a>
-                                </p>
+                                @if ($aktivitas->prospek_id && $aktivitas->prospek)
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Prospek</h3>
+                                    <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                                        <a href="{{ route('crm.prospek.show', $aktivitas->prospek_id) }}"
+                                            class="text-primary-600 hover:text-primary-700 hover:underline">
+                                            {{ $aktivitas->prospek->nama_prospek }}
+                                        </a>
+                                        <span
+                                            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300">
+                                            Prospek
+                                        </span>
+                                    </p>
+                                @elseif($aktivitas->customer_id && $aktivitas->customer)
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</h3>
+                                    <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                                        <a href="{{ route('master.pelanggan.show', $aktivitas->customer_id) }}"
+                                            class="text-primary-600 hover:text-primary-700 hover:underline">
+                                            {{ $aktivitas->customer->nama }}
+                                        </a>
+                                        <span
+                                            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
+                                            Customer
+                                        </span>
+                                    </p>
+                                @else
+                                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Entitas</h3>
+                                    <p class="mt-1 text-sm text-gray-400 dark:text-gray-500 italic">Tidak ada data</p>
+                                @endif
                             </div>
                         </div>
                         <div class="flex items-start">

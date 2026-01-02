@@ -1,5 +1,47 @@
 <x-app-layout :breadcrumbs="[['label' => 'CRM', 'url' => route('crm.prospek.index')], ['label' => 'Aktivitas & Follow-up']]" :currentPage="'Aktivitas & Follow-up'">
 
+    @push('styles')
+        <style>
+            /* Select2 Dark Mode Support */
+            .dark .select2-container--default .select2-selection--single {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
+                color: rgb(156 163 175);
+            }
+
+            .dark .select2-dropdown {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+            }
+
+            .dark .select2-container--default .select2-results__option {
+                color: white;
+            }
+
+            .dark .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                background-color: rgb(59 130 246);
+            }
+
+            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                background-color: rgb(55 65 81);
+                border-color: rgb(75 85 99);
+                color: white;
+            }
+
+            .select2-user-option {
+                padding: 4px 0;
+            }
+        </style>
+    @endpush
+
     <style>
         [x-cloak] {
             display: none !important;
@@ -108,10 +150,12 @@
                 const prospekEl = document.getElementById('prospek_id');
                 const tipeEl = document.getElementById('tipe');
                 const statusEl = document.getElementById('status_followup');
+                const userEl = document.getElementById('user_id');
         
                 return (prospekEl && prospekEl.value !== '') ||
                     (tipeEl && tipeEl.value !== '') ||
                     (statusEl && statusEl.value !== '') ||
+                    (userEl && userEl.value !== '') ||
                     this.dateRange.start !== '' ||
                     this.dateRange.end !== '';
             },
@@ -391,6 +435,39 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Pembuat Filter -->
+                            <div class="space-y-2">
+                                <label for="user_id"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-primary-500"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Dibuat Oleh
+                                </label>
+                                <div class="relative rounded-md shadow-sm group">
+                                    <select id="user_id" name="user_id"
+                                        class="select2-user block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-colors duration-200 group-hover:bg-gray-50 dark:group-hover:bg-gray-600">
+                                        <option value="">Semua Pembuat</option>
+                                        @foreach (\App\Models\User::where('is_active', true)->orderBy('name')->get() as $user)
+                                            <option value="{{ $user->id }}"
+                                                {{ request('user_id') == $user->id ? 'selected' : '' }}
+                                                data-name="{{ $user->name }}" data-email="{{ $user->email }}">
+                                                {{ $user->name }}
+                                                @if ($user->email)
+                                                    ({{ $user->email }})
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <div class="absolute -bottom-1 left-3 right-3 h-0.5 bg-primary-500 scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"
+                                        x-show="document.getElementById('user_id')?.value !== ''" x-cloak>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -599,6 +676,26 @@
                                         <button type="button"
                                             @click="const el = document.getElementById('status_followup'); if(el) el.value = ''"
                                             class="ml-1.5 text-green-500 hover:text-green-700 dark:hover:text-green-300">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
+                                                viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    <div x-show="document.getElementById('user_id')?.value !== ''"
+                                        class="inline-flex items-center text-xs px-2 py-1 rounded-md bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border border-purple-100 dark:border-purple-800">
+                                        <span>Pembuat: </span>
+                                        <span class="font-medium ml-1"
+                                            x-text="(() => {
+                                    const select = document.getElementById('user_id');
+                                    if (!select) return '';
+                                    const option = select.options[select.selectedIndex];
+                                    return option ? option.getAttribute('data-name') || option.text : '';
+                                })()"></span>
+                                        <button type="button"
+                                            @click="const el = document.getElementById('user_id'); if(el) { if ($(el).data('select2')) { $(el).val('').trigger('change'); } else { el.value = ''; } }"
+                                            class="ml-1.5 text-purple-500 hover:text-purple-700 dark:hover:text-purple-300">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
                                                 viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -889,7 +986,7 @@
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
-                                            Prospek
+                                            Prospek / Customer
                                             <!-- Sort Indicator -->
                                             <span class="ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
                                                 :class="{ 'opacity-100': sortField === 'prospek_id' }">
@@ -1042,14 +1139,32 @@
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <a href="{{ route('crm.prospek.show', $item->prospek_id) }}"
-                                                class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 truncate max-w-[200px] block hover:underline transition-all duration-200">
-                                                {{ $item->prospek->nama_prospek }}
-                                            </a>
-                                            <div
-                                                class="text-gray-500 dark:text-gray-400 text-xs truncate max-w-[200px]">
-                                                {{ $item->prospek->perusahaan ?: 'Tidak ada perusahaan' }}
-                                            </div>
+                                            @if ($item->prospek_id && $item->prospek)
+                                                <a href="{{ route('crm.prospek.show', $item->prospek_id) }}"
+                                                    class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 truncate max-w-[200px] block hover:underline transition-all duration-200">
+                                                    {{ $item->prospek->nama_prospek }}
+                                                </a>
+                                                <div
+                                                    class="text-gray-500 dark:text-gray-400 text-xs truncate max-w-[200px]">
+                                                    <span
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 mr-1">Prospek</span>
+                                                    {{ $item->prospek->perusahaan ?: 'Tidak ada perusahaan' }}
+                                                </div>
+                                            @elseif($item->customer_id && $item->customer)
+                                                <a href="{{ route('master.pelanggan.show', $item->customer_id) }}"
+                                                    class="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300 truncate max-w-[200px] block hover:underline transition-all duration-200">
+                                                    {{ $item->customer->nama }}
+                                                </a>
+                                                <div
+                                                    class="text-gray-500 dark:text-gray-400 text-xs truncate max-w-[200px]">
+                                                    <span
+                                                        class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 mr-1">Customer</span>
+                                                    {{ $item->customer->company ?: $item->customer->kode }}
+                                                </div>
+                                            @else
+                                                <span class="text-gray-400 dark:text-gray-500 italic">Tidak ada
+                                                    data</span>
+                                            @endif
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -1279,4 +1394,49 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize Select2 for user dropdown
+                $('.select2-user').select2({
+                    placeholder: 'Semua Pembuat',
+                    allowClear: true,
+                    width: '100%',
+                    theme: 'default',
+                    templateResult: formatUser,
+                    templateSelection: formatUserSelection
+                });
+
+                function formatUser(user) {
+                    if (!user.id) {
+                        return user.text;
+                    }
+
+                    const $user = $(user.element);
+                    const name = $user.data('name');
+                    const email = $user.data('email');
+
+                    let html = '<div class="select2-user-option">';
+                    html += '<div class="font-medium text-gray-900 dark:text-white">' + name + '</div>';
+                    if (email) {
+                        html += '<div class="text-xs text-gray-500 dark:text-gray-400">' + email + '</div>';
+                    }
+                    html += '</div>';
+
+                    return $(html);
+                }
+
+                function formatUserSelection(user) {
+                    if (!user.id) {
+                        return user.text;
+                    }
+                    const $user = $(user.element);
+                    const name = $user.data('name');
+                    return name || user.text;
+                }
+            });
+        </script>
+    @endpush
 </x-app-layout>

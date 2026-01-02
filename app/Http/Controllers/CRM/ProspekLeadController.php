@@ -177,31 +177,10 @@ class ProspekLeadController extends Controller
         // Simpan data prospek
         $prospek = Prospek::create($data);
 
-        // Buat customer otomatis setelah prospek dibuat
-        $customerCreated = false;
-        $customerData = $this->createCustomerFromProspek($prospek);
-        if ($customerData) {
-            $customerCreated = true;
-            $customerId = $customerData['id'];
-
-            // Update prospek dengan customer_id
-            $prospek->customer_id = $customerId;
-            $prospek->save();
-
-            Log::info('Customer created automatically from new prospek:', [
-                'prospek_id' => $prospek->id,
-                'customer_id' => $customerId,
-                'customer_kode' => $customerData['kode']
-            ]);
-        }
-
-        $message = 'Prospek berhasil ditambahkan';
-        if ($customerCreated) {
-            $message .= ' dan data customer baru telah dibuat otomatis';
-        }
+        // Customer akan dibuat otomatis saat status diubah menjadi "tertarik"
 
         return redirect()->route('crm.prospek.index')
-            ->with('success', $message);
+            ->with('success', 'Prospek berhasil ditambahkan');
     }
 
     public function show($id)
@@ -281,10 +260,10 @@ class ProspekLeadController extends Controller
 
         $prospek->update($data);
 
-        // Automatic customer creation when status becomes "menjadi_customer"
+        // Automatic customer creation when status becomes "tertarik"
         $customerCreated = false;
         $customerId = null;
-        if ($request->status === 'menjadi_customer' && $oldStatus !== 'menjadi_customer') {
+        if ($request->status === 'tertarik' && $oldStatus !== 'tertarik') {
             $customerData = $this->createCustomerFromProspek($prospek);
             if ($customerData) {
                 $customerCreated = true;

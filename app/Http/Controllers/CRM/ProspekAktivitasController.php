@@ -28,7 +28,7 @@ class ProspekAktivitasController extends Controller
 
         // Filter aktivitas dengan role-based access control
         $query = ProspekAktivitas::query()
-            ->with(['prospek', 'user'])
+            ->with(['prospek', 'customer', 'user'])
             ->orderBy('tanggal', 'desc');
 
         // Apply role-based access control
@@ -51,6 +51,11 @@ class ProspekAktivitasController extends Controller
         // Filter by status
         if ($request->has('status_followup') && $request->status_followup) {
             $query->where('status_followup', $request->status_followup);
+        }
+
+        // Filter by user (pembuat aktivitas)
+        if ($request->has('user_id') && $request->user_id) {
+            $query->where('user_id', $request->user_id);
         }
 
         // Filter by date range
@@ -115,13 +120,18 @@ class ProspekAktivitasController extends Controller
         // Filter prospek list berdasarkan role
         if ($this->canAccessAllProspects()) {
             $prospekList = Prospek::orderBy('nama_prospek')->get();
+            $customerList = \App\Models\Customer::where('is_active', true)->orderBy('nama')->get();
         } else {
             $prospekList = Prospek::where('user_id', Auth::id())->orderBy('nama_prospek')->get();
+            $customerList = \App\Models\Customer::where('is_active', true)
+                ->where('sales_id', Auth::id())
+                ->orderBy('nama')->get();
         }
 
         return view('CRM.aktivitas.create', [
             'prospek' => $prospek,
             'prospekList' => $prospekList,
+            'customerList' => $customerList,
             'tipeList' => ProspekAktivitas::getTipeList(),
             'statusList' => ProspekAktivitas::getStatusList(),
             'userList' => User::where('is_active', true)->orderBy('name')->get(),
@@ -134,7 +144,9 @@ class ProspekAktivitasController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'prospek_id' => 'required|exists:prospek,id',
+            'entity_type' => 'required|in:prospek,customer',
+            'prospek_id' => 'required_if:entity_type,prospek|nullable|exists:prospek,id',
+            'customer_id' => 'required_if:entity_type,customer|nullable|exists:customer,id',
             'tipe' => 'required|string',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'nullable|string',
@@ -147,19 +159,30 @@ class ProspekAktivitasController extends Controller
             'attachments.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,gif|max:10240', // Max 10MB per file
         ]);
 
-        // Validasi akses ke prospek berdasarkan role
+        // Validasi akses berdasarkan role
         if (!$this->canAccessAllProspects()) {
-            $prospekExists = Prospek::where('id', $request->prospek_id)
-                ->where('user_id', Auth::id())
-                ->exists();
+            if ($request->entity_type === 'prospek' && $request->prospek_id) {
+                $prospekExists = Prospek::where('id', $request->prospek_id)
+                    ->where('user_id', Auth::id())
+                    ->exists();
 
-            if (!$prospekExists) {
-                abort(403, 'Anda tidak memiliki akses ke prospek ini.');
+                if (!$prospekExists) {
+                    abort(403, 'Anda tidak memiliki akses ke prospek ini.');
+                }
+            } elseif ($request->entity_type === 'customer' && $request->customer_id) {
+                $customerExists = \App\Models\Customer::where('id', $request->customer_id)
+                    ->where('sales_id', Auth::id())
+                    ->exists();
+
+                if (!$customerExists) {
+                    abort(403, 'Anda tidak memiliki akses ke customer ini.');
+                }
             }
         }
 
         $aktivitas = new ProspekAktivitas();
-        $aktivitas->prospek_id = $request->prospek_id;
+        $aktivitas->prospek_id = $request->entity_type === 'prospek' ? $request->prospek_id : null;
+        $aktivitas->customer_id = $request->entity_type === 'customer' ? $request->customer_id : null;
         $aktivitas->user_id = Auth::id();
         $aktivitas->tipe = $request->tipe;
         $aktivitas->judul = $request->judul;
@@ -243,13 +266,18 @@ class ProspekAktivitasController extends Controller
         // Filter prospek list berdasarkan role
         if ($this->canAccessAllProspects()) {
             $prospekList = Prospek::orderBy('nama_prospek')->get();
+            $customerList = \App\Models\Customer::where('is_active', true)->orderBy('nama')->get();
         } else {
             $prospekList = Prospek::where('user_id', Auth::id())->orderBy('nama_prospek')->get();
+            $customerList = \App\Models\Customer::where('is_active', true)
+                ->where('sales_id', Auth::id())
+                ->orderBy('nama')->get();
         }
 
         return view('CRM.aktivitas.edit', [
             'aktivitas' => $aktivita,
             'prospekList' => $prospekList,
+            'customerList' => $customerList,
             'tipeList' => ProspekAktivitas::getTipeList(),
             'statusList' => ProspekAktivitas::getStatusList(),
         ]);

@@ -24,10 +24,38 @@ class ProspekAktivitas extends Model
         return $this->belongsTo(Prospek::class, 'prospek_id');
     }
 
+    // Relasi dengan customer
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
     // Relasi dengan user (yang menambahkan aktivitas)
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Mendapatkan nama entitas (prospek atau customer)
+    public function getEntityNameAttribute()
+    {
+        if ($this->customer_id) {
+            return $this->customer ? $this->customer->nama : 'Customer Terhapus';
+        } elseif ($this->prospek_id) {
+            return $this->prospek ? $this->prospek->nama_prospek : 'Prospek Terhapus';
+        }
+        return 'N/A';
+    }
+
+    // Mendapatkan tipe entitas
+    public function getEntityTypeAttribute()
+    {
+        if ($this->customer_id) {
+            return 'customer';
+        } elseif ($this->prospek_id) {
+            return 'prospek';
+        }
+        return null;
     }
 
     // Tipe aktivitas

@@ -192,10 +192,10 @@ class PipelinePenjualanController extends Controller
             $prospek->status = $request->status;
             $saved = $prospek->save();
 
-            // Automatic customer creation when status becomes "menjadi_customer"
+            // Automatic customer creation when status becomes "tertarik"
             $customerCreated = false;
             $customerId = null;
-            if ($request->status === 'menjadi_customer' && $oldStatus !== 'menjadi_customer') {
+            if ($request->status === 'tertarik' && $oldStatus !== 'tertarik') {
                 $customerData = $this->createCustomerFromProspek($prospek);
                 if ($customerData) {
                     $customerCreated = true;
