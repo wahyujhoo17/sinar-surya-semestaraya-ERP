@@ -554,51 +554,124 @@
                             <div class="grid grid-cols-3 gap-2 py-3">
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</dt>
                                 <dd class="col-span-2">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ $quotation->customer->company ?? ($quotation->customer->nama ?? '-') }}
-                                    </div>
-                                    @if ($quotation->customer)
-                                        <div class="mt-2 space-y-1.5">
-                                            @if ($quotation->customer->email)
+                                    <div
+                                        class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                        <div class="flex items-start">
+                                            <div class="flex-shrink-0">
                                                 <div
-                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
+                                                    class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                        class="h-5 w-5 text-primary-600 dark:text-primary-400"
                                                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             stroke-width="2"
-                                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                                     </svg>
-                                                    {{ $quotation->customer->email }}
                                                 </div>
-                                            @endif
-                                            @if ($quotation->customer->telepon)
-                                                <div
-                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                    </svg>
-                                                    {{ $quotation->customer->telepon }}
+                                            </div>
+                                            <div class="ml-3 flex-1">
+                                                <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {{ $quotation->customer->company ?? ($quotation->customer->nama ?? '-') }}
                                                 </div>
-                                            @endif
-                                            @if ($quotation->customer->telepon_alternatif)
-                                                <div
-                                                    class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1.5"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {{ $quotation->customer->telepon_alternatif }}
-                                                </div>
-                                            @endif
+                                                @if ($quotation->customer->kode)
+                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                        Kode: {{ $quotation->customer->kode }}
+                                                    </div>
+                                                @endif
+                                                @if ($quotation->customer)
+                                                    <div class="mt-3 space-y-2">
+                                                        @if ($quotation->customer->email)
+                                                            <div
+                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                                </svg>
+                                                                {{ $quotation->customer->email }}
+                                                            </div>
+                                                        @endif
+                                                        @if ($quotation->customer->telepon)
+                                                            <div
+                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                </svg>
+                                                                {{ $quotation->customer->telepon }}
+                                                            </div>
+                                                        @endif
+                                                        @if ($quotation->customer->telepon_alternatif)
+                                                            <div
+                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                </svg>
+                                                                {{ $quotation->customer->telepon_alternatif }}
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
                                         </div>
-                                    @endif
+                                    </div>
                                 </dd>
                             </div>
+
+                            {{-- Sales Person Section --}}
+                            @if ($quotation->customer && $quotation->customer->sales_id)
+                                <div class="grid grid-cols-3 gap-2 py-3">
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Sales Person</dt>
+                                    <dd class="col-span-2">
+                                        @if ($quotation->customer->sales)
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                                {{ $quotation->customer->sales->name }}
+                                            </div>
+                                            <div class="mt-2 space-y-1.5">
+                                                @if ($quotation->customer->sales->email)
+                                                    <div
+                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                        </svg>
+                                                        {{ $quotation->customer->sales->email }}
+                                                    </div>
+                                                @endif
+                                                @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                                                    <div
+                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg"
+                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
+                                                            viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                        </svg>
+                                                        {{ $quotation->customer->sales->karyawan->telepon }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="text-sm text-gray-500 dark:text-gray-400">
+                                                Sales tidak ditemukan
+                                            </div>
+                                        @endif
+                                    </dd>
+                                </div>
+                            @endif
 
                             <div class="grid grid-cols-3 gap-2 py-3">
                                 <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat</dt>

@@ -681,6 +681,16 @@
                                 @endif
                             </p>
                         @endif
+                        @if ($quotation->customer->sales)
+                            <p style="margin-top: 8px;"><strong>Sales Person:</strong></p>
+                            <p>{{ $quotation->customer->sales->name }}</p>
+                            @if ($quotation->customer->sales->email)
+                                <p>{{ $quotation->customer->sales->email }}</p>
+                            @endif
+                            @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                                <p>{{ $quotation->customer->sales->karyawan->telepon }}</p>
+                            @endif
+                        @endif
                     </div>
                 </div>
                 <div class="payment-method">

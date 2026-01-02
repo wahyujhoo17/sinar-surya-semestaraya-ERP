@@ -265,6 +265,17 @@
                         @endif
                         <br>
                     @endif
+                    @if ($quotation->customer->sales)
+                        <br>
+                        <strong style="color: #4a6fa5;">Sales Person:</strong><br>
+                        {{ $quotation->customer->sales->name }}
+                        @if ($quotation->customer->sales->email)
+                            <br>{{ $quotation->customer->sales->email }}
+                        @endif
+                        @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                            <br>{{ $quotation->customer->sales->karyawan->telepon }}
+                        @endif
+                    @endif
                 </div>
             </td>
         </tr>

@@ -367,6 +367,10 @@
                             </th>
                             <th
                                 class="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                Sales Person
+                            </th>
+                            <th
+                                class="px-5 py-3.5 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                                 <button type="button" class="flex items-center gap-1 group"
                                     @click="sortBy('status')">
                                     Status

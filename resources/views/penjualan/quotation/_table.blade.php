@@ -98,6 +98,7 @@
                 </div>
             @endif
         </td>
+
         <td class="px-5 py-4">
             <div class="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {{ $quotation->customer ? $quotation->customer->company ?? $quotation->customer->nama : 'Customer tidak ditemukan' }}
@@ -116,6 +117,7 @@
                 </div>
             @endif
         </td>
+
         <td class="px-5 py-4">
             <div class="text-sm font-medium text-gray-700 dark:text-gray-200">
                 {{-- {{ $quotation->customer ? $quotation->customer->kontak_person : 'Customer tidak ditemukan' }} --}}
@@ -149,6 +151,28 @@
                         Tidak ada nomor kontak
                     </span>
                 </div>
+            @endif
+        </td>
+        <td class="px-5 py-4">
+            @if ($quotation->customer && $quotation->customer->sales)
+                <div class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {{ $quotation->customer->sales->name }}
+                </div>
+                @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span class="inline-flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="w-3 h-3 mr-1">
+                                <path fill-rule="evenodd"
+                                    d="M2 3.5A1.5 1.5 0 013.5 2h1.148a1.5 1.5 0 011.465 1.175l.716 3.223a1.5 1.5 0 01-1.052 1.767l-.933.267c-.41.117-.643.555-.48.95a11.542 11.542 0 006.254 6.254c.395.163.833-.07.95-.48l.267-.933a1.5 1.5 0 011.767-1.052l3.223.716A1.5 1.5 0 0118 15.352V16.5a1.5 1.5 0 01-1.5 1.5H15c-1.149 0-2.263-.15-3.326-.43A13.022 13.022 0 012.43 8.326 13.019 13.019 0 012 5V3.5z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            {{ $quotation->customer->sales->karyawan->telepon }}
+                        </span>
+                    </div>
+                @endif
+            @else
+                <span class="text-xs text-gray-500 dark:text-gray-400">-</span>
             @endif
         </td>
         <td class="px-5 py-4">
@@ -236,7 +260,8 @@
                     <button type="button" disabled
                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed border border-dashed border-gray-300"
                         title="Hanya quotation dengan status Draft yang dapat dihapus atau Anda tidak memiliki akses">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            class="w-4 h-4">
                             <path fill-rule="evenodd"
                                 d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
                                 clip-rule="evenodd" />
@@ -248,7 +273,7 @@
     </tr>
 @empty
     <tr>
-        <td colspan="7" class="px-5 py-10 text-center">
+        <td colspan="8" class="px-5 py-10 text-center">
             <div class="flex flex-col items-center justify-center space-y-4">
                 <div
                     class="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-gray-50 dark:bg-gray-700/50">

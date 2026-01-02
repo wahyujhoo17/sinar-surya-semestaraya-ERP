@@ -425,6 +425,17 @@
                             @if ($quotation->customer->no_hp_kontak)
                                 ({{ $quotation->customer->no_hp_kontak }})
                             @endif
+                            <br>
+                        @endif
+                        @if ($quotation->customer->sales)
+                            <br><strong>Sales Person:</strong><br>
+                            {{ $quotation->customer->sales->name }}
+                            @if ($quotation->customer->sales->email)
+                                <br>{{ $quotation->customer->sales->email }}
+                            @endif
+                            @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                                <br>{{ $quotation->customer->sales->karyawan->telepon }}
+                            @endif
                         @endif
                     </div>
                 </div>

@@ -147,7 +147,7 @@ class QuotationController extends Controller
         }
 
         try {
-            $quotations = $query->paginate(10)->withQueryString();
+            $quotations = $query->with(['customer.sales.karyawan'])->paginate(10)->withQueryString();
 
             if ($request->ajax()) {
                 return response()->json([
@@ -470,7 +470,7 @@ class QuotationController extends Controller
 
     public function show($id)
     {
-        $quotation = Quotation::with(['customer', 'details.produk', 'details.satuan', 'details.bundle', 'logAktivitas.user'])->findOrFail($id);
+        $quotation = Quotation::with(['customer.sales.karyawan', 'details.produk', 'details.satuan', 'details.bundle', 'logAktivitas.user'])->findOrFail($id);
 
         return view('penjualan.quotation.show', compact('quotation'));
     }
