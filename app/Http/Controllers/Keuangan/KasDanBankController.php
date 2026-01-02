@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class KasDanBankController extends Controller
 {
@@ -1384,5 +1385,139 @@ class KasDanBankController extends Controller
         ]);
 
         return $akunModal;
+    }
+
+    /**
+     * Print PDF untuk transaksi Kas
+     */
+    public function printKasPdf($id, Request $request)
+    {
+        $kas = Kas::findOrFail($id);
+
+        // Start query builder for filters
+        $baseQuery = TransaksiKas::where('kas_id', $id)->orderBy('tanggal', 'desc');
+
+        // Apply filters based on request parameters
+        $query = clone $baseQuery;
+
+        // Filter by transaction type (masuk/keluar/all)
+        if ($request->has('jenis') && $request->jenis != 'all') {
+            $query->where('jenis', $request->jenis);
+            $baseQuery->where('jenis', $request->jenis);
+        }
+
+        // Filter by time period
+        if ($request->has('periode') && $request->periode != 'all') {
+            $days = (int) $request->periode;
+            $query->where('tanggal', '>=', now()->subDays($days));
+            $baseQuery->where('tanggal', '>=', now()->subDays($days));
+        }
+
+        // Filter by custom date range if provided
+        if ($request->has('tanggal_mulai') && $request->tanggal_mulai) {
+            $query->where('tanggal', '>=', $request->tanggal_mulai);
+            $baseQuery->where('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->has('tanggal_akhir') && $request->tanggal_akhir) {
+            $query->where('tanggal', '<=', $request->tanggal_akhir);
+            $baseQuery->where('tanggal', '<=', $request->tanggal_akhir);
+        }
+
+        // Calculate totals based on the filtered data
+        $totalMasuk = (clone $baseQuery)->where('jenis', 'masuk')->sum('jumlah');
+        $totalKeluar = (clone $baseQuery)->where('jenis', 'keluar')->sum('jumlah');
+
+        // Get all transactions (not paginated for PDF)
+        $transaksi = $query->orderBy('tanggal', 'desc')->get();
+
+        // Prepare filter info for display
+        $filterInfo = [
+            'jenis' => $request->jenis ?? 'all',
+            'periode' => $request->periode ?? '30',
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_akhir' => $request->tanggal_akhir,
+        ];
+
+        $pdf = Pdf::loadView('keuangan.kas_dan_bank.pdf_kas', compact(
+            'kas',
+            'transaksi',
+            'totalMasuk',
+            'totalKeluar',
+            'filterInfo'
+        ));
+
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'Laporan_Kas_' . str_replace(' ', '_', $kas->nama) . '_' . date('Y-m-d') . '.pdf';
+
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Print PDF untuk transaksi Rekening Bank
+     */
+    public function printRekeningPdf($id, Request $request)
+    {
+        $rekening = RekeningBank::findOrFail($id);
+
+        // Start query builder for filters
+        $baseQuery = TransaksiBank::where('rekening_id', $id)->orderBy('tanggal', 'desc');
+
+        // Apply filters based on request parameters
+        $query = clone $baseQuery;
+
+        // Filter by transaction type (masuk/keluar/all)
+        if ($request->has('jenis') && $request->jenis != 'all') {
+            $query->where('jenis', $request->jenis);
+            $baseQuery->where('jenis', $request->jenis);
+        }
+
+        // Filter by time period
+        if ($request->has('periode') && $request->periode != 'all') {
+            $days = (int) $request->periode;
+            $query->where('tanggal', '>=', now()->subDays($days));
+            $baseQuery->where('tanggal', '>=', now()->subDays($days));
+        }
+
+        // Filter by custom date range if provided
+        if ($request->has('tanggal_mulai') && $request->tanggal_mulai) {
+            $query->where('tanggal', '>=', $request->tanggal_mulai);
+            $baseQuery->where('tanggal', '>=', $request->tanggal_mulai);
+        }
+
+        if ($request->has('tanggal_akhir') && $request->tanggal_akhir) {
+            $query->where('tanggal', '<=', $request->tanggal_akhir);
+            $baseQuery->where('tanggal', '<=', $request->tanggal_akhir);
+        }
+
+        // Calculate totals based on the filtered data
+        $totalMasuk = (clone $baseQuery)->where('jenis', 'masuk')->sum('jumlah');
+        $totalKeluar = (clone $baseQuery)->where('jenis', 'keluar')->sum('jumlah');
+
+        // Get all transactions (not paginated for PDF)
+        $transaksi = $query->orderBy('tanggal', 'desc')->get();
+
+        // Prepare filter info for display
+        $filterInfo = [
+            'jenis' => $request->jenis ?? 'all',
+            'periode' => $request->periode ?? '30',
+            'tanggal_mulai' => $request->tanggal_mulai,
+            'tanggal_akhir' => $request->tanggal_akhir,
+        ];
+
+        $pdf = Pdf::loadView('keuangan.kas_dan_bank.pdf_rekening', compact(
+            'rekening',
+            'transaksi',
+            'totalMasuk',
+            'totalKeluar',
+            'filterInfo'
+        ));
+
+        $pdf->setPaper('a4', 'portrait');
+
+        $filename = 'Laporan_Rekening_' . str_replace(' ', '_', $rekening->nama_bank) . '_' . date('Y-m-d') . '.pdf';
+
+        return $pdf->stream($filename);
     }
 }

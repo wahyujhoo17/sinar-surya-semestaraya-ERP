@@ -970,14 +970,13 @@
         const printButton = document.getElementById('printButton');
         if (printButton) {
             printButton.addEventListener('click', function() {
-                // Buat URL yang sama dengan filter yang sedang diterapkan
+                // Buat URL PDF dengan filter yang sedang diterapkan
                 const formData = new FormData(filterForm);
                 const searchParams = new URLSearchParams(formData);
-                searchParams.append('print', 'true'); // Tambahkan parameter print=true
-                const printUrl = `${filterForm.action}?${searchParams.toString()}`;
+                const pdfUrl = `{{ route('keuangan.kas-dan-bank.kas.pdf', $kas->id) }}?${searchParams.toString()}`;
 
-                // Buka halaman cetak di tab baru
-                window.open(printUrl, '_blank');
+                // Buka PDF di tab baru
+                window.open(pdfUrl, '_blank');
             });
         }
 

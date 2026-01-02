@@ -696,6 +696,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'detailKas'])->name('kas-dan-bank.kas');
         Route::get('/kas-dan-bank/rekening/{id}', [KasDanBankController::class, 'detailRekening'])->name('kas-dan-bank.rekening');
 
+        // PDF Print Routes
+        Route::get('/kas-dan-bank/kas/{id}/pdf', [KasDanBankController::class, 'printKasPdf'])->name('kas-dan-bank.kas.pdf');
+        Route::get('/kas-dan-bank/rekening/{id}/pdf', [KasDanBankController::class, 'printRekeningPdf'])->name('kas-dan-bank.rekening.pdf');
+
         // Kas CRUD
         Route::post('/kas-dan-bank/kas', [KasDanBankController::class, 'storeKas'])->name('kas-dan-bank.store-kas');
         Route::put('/kas-dan-bank/kas/{id}', [KasDanBankController::class, 'updateKas'])->name('kas-dan-bank.update-kas');
