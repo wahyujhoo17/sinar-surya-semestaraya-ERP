@@ -130,8 +130,7 @@
                                         {{ old('customer_id', request('customer_id')) == $customer->id ? 'selected' : '' }}
                                         data-kode="{{ $customer->kode }}" data-nama="{{ $customer->nama }}"
                                         data-company="{{ $customer->company ?? '' }}">
-                                        {{ $customer->kode }} - {{ $customer->nama }}
-                                        @if ($customer->company)
+                                        {{ $customer->kode }} - {{ $customer->nama }} @if ($customer->company)
                                             ({{ $customer->company }})
                                         @endif
                                     </option>
@@ -409,8 +408,38 @@
                     width: '100%',
                     theme: 'default',
                     templateResult: formatCustomer,
-                    templateSelection: formatCustomerSelection
+                    templateSelection: formatCustomerSelection,
+                    matcher: matchCustomer
                 });
+            }
+
+            function matchCustomer(params, data) {
+                // If there are no search terms, return all data
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+
+                // Do not display the item if there is no 'text' property
+                if (typeof data.text === 'undefined') {
+                    return null;
+                }
+
+                // Search in kode, nama, and company
+                const searchTerm = params.term.toLowerCase();
+                const $option = $(data.element);
+                const kode = ($option.data('kode') || '').toString().toLowerCase();
+                const nama = ($option.data('nama') || '').toString().toLowerCase();
+                const company = ($option.data('company') || '').toString().toLowerCase();
+
+                // Return the data if any field matches
+                if (kode.indexOf(searchTerm) > -1 ||
+                    nama.indexOf(searchTerm) > -1 ||
+                    company.indexOf(searchTerm) > -1) {
+                    return data;
+                }
+
+                // Return null if the term should not be displayed
+                return null;
             }
 
             function formatCustomer(customer) {
@@ -419,14 +448,16 @@
                 }
 
                 const $customer = $(customer.element);
-                const kode = $customer.data('kode');
-                const nama = $customer.data('nama');
-                const company = $customer.data('company');
+                const kode = $customer.data('kode') || '';
+                const nama = $customer.data('nama') || '';
+                const company = $customer.data('company') || '';
 
                 let html = '<div class="select2-customer-option">';
-                html += '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + nama + '</div>';
                 if (company) {
-                    html += '<div class="text-xs text-gray-500 dark:text-gray-400">' + company + '</div>';
+                    html += '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + company + '</div>';
+                    html += '<div class="text-xs text-gray-500 dark:text-gray-400">' + nama + '</div>';
+                } else {
+                    html += '<div class="font-medium text-gray-900 dark:text-white">' + kode + ' - ' + nama + '</div>';
                 }
                 html += '</div>';
 
@@ -438,8 +469,13 @@
                     return customer.text;
                 }
                 const $customer = $(customer.element);
-                const kode = $customer.data('kode');
-                const nama = $customer.data('nama');
+                const kode = $customer.data('kode') || '';
+                const nama = $customer.data('nama') || '';
+                const company = $customer.data('company') || '';
+
+                if (company) {
+                    return kode + ' - ' + nama + ' (' + company + ')';
+                }
                 return kode + ' - ' + nama;
             }
 
