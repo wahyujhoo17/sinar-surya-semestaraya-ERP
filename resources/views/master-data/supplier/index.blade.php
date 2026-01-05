@@ -131,7 +131,7 @@
             @endif
         </div>
 
-        <div x-data="supplierTableManager()">>
+        <div x-data="supplierTableManager()">
             <div
                 class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300">
                 <div class="p-6 sm:p-7 text-gray-900 dark:text-gray-100">
@@ -631,20 +631,47 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
+                .then(async response => {
+                    const data = await response.json();
                     this.isUploading = false;
+    
                     if (data.success) {
-                        notify(data.message, 'success');
+                        let message = data.message;
+    
+                        // Tambahkan detail statistik jika ada
+                        if (data.stats) {
+                            let details = [];
+                            if (data.stats.inserted > 0) details.push(`✓ ${data.stats.inserted} ditambahkan`);
+                            if (data.stats.updated > 0) details.push(`↻ ${data.stats.updated} diperbarui`);
+                            if (data.stats.skipped_duplicate > 0) details.push(`⊘ ${data.stats.skipped_duplicate} duplikat`);
+                            if (data.stats.skipped_empty > 0) details.push(`∅ ${data.stats.skipped_empty} baris kosong`);
+    
+                            if (details.length > 0) {
+                                console.log('Import Statistics:', data.stats);
+                            }
+                        }
+    
+                        notify(message, 'success', 8000);
                         window.dispatchEvent(new CustomEvent('refresh-supplier-table'));
                         $dispatch('close-modal', 'import-supplier-modal');
+                        form.reset();
                     } else {
-                        notify(data.message || 'Import gagal', 'error');
+                        // Show error message and details
+                        let errorMessage = data.message || 'Import gagal';
+                        if (data.errors && Array.isArray(data.errors)) {
+                            errorMessage += ':\n' + data.errors.slice(0, 5).join('\n');
+                            if (data.errors.length > 5) {
+                                errorMessage += '\n... dan ' + (data.errors.length - 5) + ' error lainnya';
+                            }
+                        }
+                        notify(errorMessage, 'error', 10000);
+                        console.error('Import errors:', data.errors);
                     }
                 })
                 .catch(error => {
                     this.isUploading = false;
-                    notify('Gagal mengupload file', 'error');
+                    console.error('Import error:', error);
+                    notify('Gagal mengupload file: ' + error.message, 'error');
                 });
         }
     }">

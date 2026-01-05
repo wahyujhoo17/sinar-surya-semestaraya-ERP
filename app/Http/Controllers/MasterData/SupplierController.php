@@ -315,15 +315,65 @@ class SupplierController extends Controller
         ]);
 
         try {
-            ini_set('memory_limit', '512M'); // atau '1G' jika perlu
-            set_time_limit(300); // jika belum ada
-            Excel::import(new SupplierImport, $request->file('file'));
+            ini_set('memory_limit', '512M');
+            set_time_limit(300);
+
+            $import = new SupplierImport;
+            Excel::import($import, $request->file('file'));
+
+            $stats = $import->getStats();
+
+            // Build message berdasarkan statistik
+            $messageParts = [];
+            if ($stats['inserted'] > 0) {
+                $messageParts[] = "{$stats['inserted']} data berhasil ditambahkan";
+            }
+            if ($stats['updated'] > 0) {
+                $messageParts[] = "{$stats['updated']} data diperbarui";
+            }
+            if ($stats['skipped_duplicate'] > 0) {
+                $messageParts[] = "{$stats['skipped_duplicate']} duplikat di-skip";
+            }
+
+            $message = !empty($messageParts)
+                ? 'Import selesai: ' . implode(', ', $messageParts) . '.'
+                : 'Import selesai.';
+
             return response()->json([
                 'success' => true,
-                'message' => 'Data Supplier berhasil diimport!'
+                'message' => $message,
+                'stats' => $stats
             ]);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $errorMessages = [];
+
+            foreach ($failures as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+
+                \Log::error('Supplier Import Validation Error', [
+                    'row' => $failure->row(),
+                    'attribute' => $failure->attribute(),
+                    'errors' => $failure->errors(),
+                    'values' => $failure->values()
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Import gagal validasi pada ' . count($failures) . ' baris.',
+                'errors' => $errorMessages
+            ], 422);
         } catch (\Exception $e) {
-            return back()->with('error', 'Import gagal: ' . $e->getMessage());
+            \Log::error('Supplier Import Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Import gagal: ' . $e->getMessage()
+            ], 500);
         }
     }
 
