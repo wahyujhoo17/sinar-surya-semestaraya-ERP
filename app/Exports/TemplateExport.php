@@ -7,89 +7,96 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Maatwebsite\Excel\Concerns\WithColumnWidths;
-use App\Models\KategoriProduk;
-use App\Models\Satuan;
 
 class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnWidths
 {
     public function array(): array
     {
-        // Contoh data
+        // Contoh data untuk memudahkan user
         return [
             [
-                'PRD001', // Kode
-                'Nama Produk', // Nama
-                'Kimia', // jenis
-                'SKU123', // SKU
-                'Kategori 1', // Kategori
-                'Merek A', // Merek
-                'Sub Kategori A', // Sub Kategori
+                '', // Kode - kosong, akan auto-generate
+                'Contoh Nama Produk', // Nama
+                'Kimia', // Jenis
+                'SKU001', // SKU
+                'Bahan Kimia', // Kategori
+                'ABC Brand', // Merek
+                'Sub A', // Sub Kategori
                 'PCS', // Satuan
-                '10x20', // Ukuran
-                'Besi', // Tipe Material
+                '10x20 cm', // Ukuran
+                'Plastik', // Tipe Material
                 'Grade A', // Kualitas
-                '10000', // Harga Beli
-                '15000', // Harga Jual
-                '5', // Stok Minimum
+                '50000', // Harga Beli
+                '75000', // Harga Jual
+                '10', // Stok Minimum
                 'Aktif', // Status
+            ],
+            [
+                '', // Baris kedua kosong untuk user isi
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
             ]
         ];
     }
 
     public function headings(): array
     {
-        // Get available kategoris and satuans
-        $kategoris = KategoriProduk::pluck('nama')->implode(', ');
-        $satuans = Satuan::pluck('nama')->implode(', ');
-
         return [
-            ['TEMPLATE IMPORT PRODUK'],
-            ['Petunjuk Pengisian:'],
-            ['- Kode: Wajib diisi, maksimal 50 karakter, harus unik'],
-            ['- Nama: Wajib diisi, maksimal 255 karakter'],
-            ['- SKU: Opsional, maksimal 100 karakter'],
-            ["- Kategori: Wajib diisi, pilihan: {$kategoris}"],
-            ['- Merek: Opsional, maksimal 100 karakter'],
-            ['- Sub Kategori: Opsional, maksimal 100 karakter'],
-            ["- Satuan: Wajib diisi, pilihan: {$satuans}"],
-            ['- Ukuran: Opsional, maksimal 50 karakter'],
-            ['- Tipe Material: Opsional, maksimal 100 karakter'],
-            ['- Kualitas: Opsional, maksimal 100 karakter'],
-            ['- Harga Beli: Wajib diisi, angka positif'],
-            ['- Harga Jual: Wajib diisi, angka positif'],
-            ['- Stok Minimum: Opsional, angka positif'],
-            ['- Status: Wajib diisi, pilihan: Aktif atau Nonaktif'],
-            [],
             [
-                'Kode*',
-                'Nama*',
-                'Janis',
+                'Kode',
+                'Nama',
+                'Jenis',
                 'SKU',
-                'Kategori*',
+                'Kategori',
                 'Merek',
                 'Sub Kategori',
-                'Satuan*',
+                'Satuan',
                 'Ukuran',
                 'Tipe Material',
                 'Kualitas',
-                'Harga Beli*',
-                'Harga Jual*',
+                'Harga Beli',
+                'Harga Jual',
                 'Stok Minimum',
-                'Status*'
+                'Status'
             ]
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Style untuk judul
+        // Tambahkan note di atas header
+        $sheet->insertNewRowBefore(1, 3);
+
+        $sheet->setCellValue('A1', 'TEMPLATE IMPORT PRODUK');
+        $sheet->setCellValue('A2', 'Petunjuk: Nama wajib diisi. Kode kosong = auto-generate. Kategori/Satuan/Jenis akan dibuat otomatis jika belum ada. Status: Aktif/Nonaktif');
+
+        // Merge cells untuk petunjuk
+        $sheet->mergeCells('A1:O1');
+        $sheet->mergeCells('A2:O2');
+
+        // Style judul
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
+        $sheet->getStyle('A1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-        // Style untuk petunjuk
-        $sheet->getStyle('A2:A16')->getFont()->setSize(11);
+        // Style petunjuk
+        $sheet->getStyle('A2')->getFont()->setSize(10)->setItalic(true);
+        $sheet->getStyle('A2')->getAlignment()->setWrapText(true);
+        $sheet->getRowDimension(2)->setRowHeight(35);
 
-        // Style untuk header kolom
-        $sheet->getStyle('A18:N18')->applyFromArray([
+        // Style untuk header kolom (baris 4 setelah insert)
+        $sheet->getStyle('A4:O4')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF']
@@ -97,40 +104,55 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
             'fill' => [
                 'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
                 'startColor' => ['rgb' => '4F46E5']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
             ]
         ]);
 
-        // Style untuk contoh data
-        $sheet->getStyle('A19:N19')->applyFromArray([
+        // Style untuk contoh data (baris 5)
+        $sheet->getStyle('A5:O5')->applyFromArray([
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FEF3C7']
+            ],
             'font' => [
                 'italic' => true,
-                'color' => ['rgb' => '666666']
+                'color' => ['rgb' => '92400E']
             ]
         ]);
 
-        return [
-            1 => ['font' => ['bold' => true, 'size' => 14]],
-            2 => ['font' => ['bold' => true]],
-        ];
+        // Border untuk data area
+        $sheet->getStyle('A4:O6')->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC']
+                ]
+            ]
+        ]);
+
+        return [];
     }
 
     public function columnWidths(): array
     {
         return [
             'A' => 15, // Kode
-            'B' => 30, // Nama
-            'C' => 15, // SKU
-            'D' => 20, // Kategori
-            'E' => 15, // Merek
-            'F' => 15, // Sub Kategori
-            'G' => 15, // Satuan
-            'H' => 15, // Ukuran
-            'I' => 15, // Tipe Material
-            'J' => 15, // Kualitas
-            'K' => 15, // Harga Beli
-            'L' => 15, // Harga Jual
-            'M' => 15, // Stok Minimum
-            'N' => 15, // Status
+            'B' => 35, // Nama
+            'C' => 15, // Jenis
+            'D' => 15, // SKU
+            'E' => 20, // Kategori
+            'F' => 20, // Merek
+            'G' => 20, // Sub Kategori
+            'H' => 15, // Satuan
+            'I' => 15, // Ukuran
+            'J' => 20, // Tipe Material
+            'K' => 15, // Kualitas
+            'L' => 15, // Harga Beli
+            'M' => 15, // Harga Jual
+            'N' => 15, // Stok Minimum
+            'O' => 12, // Status
         ];
     }
 }

@@ -540,16 +540,59 @@ class ProdukController extends Controller
         ]);
 
         try {
-            ini_set('memory_limit', '512M'); // atau '1G' jika perlu
-            set_time_limit(300); // jika belum ada
+            ini_set('memory_limit', '512M');
+            set_time_limit(300);
             DB::beginTransaction();
-            Excel::import(new ProdukImport, $request->file('file'));
+
+            $import = new ProdukImport;
+            Excel::import($import, $request->file('file'));
+
             DB::commit();
+
+            $stats = $import->getStats();
+
+            // Build message berdasarkan statistik
+            $messageParts = [];
+            if ($stats['inserted'] > 0) {
+                $messageParts[] = "{$stats['inserted']} produk ditambahkan";
+            }
+            if ($stats['updated'] > 0) {
+                $messageParts[] = "{$stats['updated']} produk diperbarui";
+            }
+            if ($stats['skipped_duplicate'] > 0) {
+                $messageParts[] = "{$stats['skipped_duplicate']} duplikat di-skip";
+            }
+
+            $message = !empty($messageParts)
+                ? 'Import selesai: ' . implode(', ', $messageParts) . '.'
+                : 'Import selesai.';
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data produk berhasil diimport!'
+                'message' => $message,
+                'stats' => $stats
             ]);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            DB::rollBack();
+            $failures = $e->failures();
+            $errorMessages = [];
+
+            foreach ($failures as $failure) {
+                $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+
+                \Log::error('Produk Import Validation Error', [
+                    'row' => $failure->row(),
+                    'attribute' => $failure->attribute(),
+                    'errors' => $failure->errors(),
+                    'values' => $failure->values()
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Import gagal validasi pada ' . count($failures) . ' baris.',
+                'errors' => $errorMessages
+            ], 422);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Import error: ' . $e->getMessage());
