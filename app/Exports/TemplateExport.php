@@ -17,7 +17,7 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
             [
                 '', // Kode - kosong, akan auto-generate
                 'Contoh Nama Produk', // Nama
-                'Kimia', // Jenis
+                'Kimia', // Jenis (boleh kosong)
                 'SKU001', // SKU
                 'Bahan Kimia', // Kategori
                 'ABC Brand', // Merek
@@ -30,6 +30,8 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
                 '75000', // Harga Jual
                 '10', // Stok Minimum
                 'Aktif', // Status
+                'Gudang Utama', // Gudang (optional)
+                '100', // Qty (optional)
             ],
             [
                 '', // Baris kedua kosong untuk user isi
@@ -47,6 +49,8 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
                 '',
                 '',
                 '',
+                '', // Gudang
+                '', // Qty
             ]
         ];
     }
@@ -69,7 +73,9 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
                 'Harga Beli',
                 'Harga Jual',
                 'Stok Minimum',
-                'Status'
+                'Status',
+                'Gudang',
+                'Qty'
             ]
         ];
     }
@@ -80,11 +86,11 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
         $sheet->insertNewRowBefore(1, 3);
 
         $sheet->setCellValue('A1', 'TEMPLATE IMPORT PRODUK');
-        $sheet->setCellValue('A2', 'Petunjuk: Nama wajib diisi. Kode kosong = auto-generate. Kategori/Satuan/Jenis akan dibuat otomatis jika belum ada. Status: Aktif/Nonaktif');
+        $sheet->setCellValue('A2', 'Petunjuk: Nama wajib diisi. Kode kosong = auto-generate. Kategori/Satuan akan dibuat otomatis jika belum ada. Jenis kosong = tidak dibuat. Gudang & Qty opsional untuk langsung input stok. Status: Aktif/Nonaktif');
 
         // Merge cells untuk petunjuk
-        $sheet->mergeCells('A1:O1');
-        $sheet->mergeCells('A2:O2');
+        $sheet->mergeCells('A1:Q1');
+        $sheet->mergeCells('A2:Q2');
 
         // Style judul
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(14);
@@ -93,11 +99,47 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
         // Style petunjuk
         $sheet->getStyle('A2')->getFont()->setSize(10)->setItalic(true);
         $sheet->getStyle('A2')->getAlignment()->setWrapText(true);
-        $sheet->getRowDimension(2)->setRowHeight(35);
+        $sheet->getRowDimension(2)->setRowHeight(40);
 
         // Style untuk header kolom (baris 4 setelah insert)
-        $sheet->getStyle('A4:O4')->applyFromArray([
+        $sheet->getStyle('A4:Q4')->applyFromArray([
             'font' => [
+                'bold' => true,
+                'color' => ['rgb' => 'FFFFFF']
+            ],
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => '4F46E5']
+            ],
+            'alignment' => [
+                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            ]
+        ]);
+
+        // Style untuk contoh data (baris 5)
+        $sheet->getStyle('A5:Q5')->applyFromArray([
+            'fill' => [
+                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                'startColor' => ['rgb' => 'FEF3C7']
+            ],
+            'font' => [
+                'italic' => true,
+                'color' => ['rgb' => '92400E']
+            ]
+        ]);
+
+        // Border untuk data area
+        $sheet->getStyle('A4:Q6')->applyFromArray([
+            'borders' => [
+                'allBorders' => [
+                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                    'color' => ['rgb' => 'CCCCCC']
+                ]
+            ]
+        ]);
+
+        return [];
+    }
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF']
             ],
@@ -153,6 +195,8 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
             'M' => 15, // Harga Jual
             'N' => 15, // Stok Minimum
             'O' => 12, // Status
+            'P' => 20, // Gudang
+            'Q' => 12, // Qty
         ];
     }
 }

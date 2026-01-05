@@ -61,6 +61,56 @@
             </div>
         @endif
 
+        {{-- Warning: Produk Tanpa Harga --}}
+        @if (isset($produkTanpaHarga) && $produkTanpaHarga->count() > 0)
+            <div class="mb-6 bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 p-4 rounded-md">
+                <div class="flex">
+                    <svg class="h-6 w-6 text-orange-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    <div class="ml-3 flex-1">
+                        <h3 class="text-sm font-semibold text-orange-800 dark:text-orange-400">
+                            ⚠️ Peringatan: {{ $produkTanpaHarga->count() }} Produk Tanpa Harga Beli
+                        </h3>
+                        <p class="mt-2 text-sm text-orange-700 dark:text-orange-300">
+                            Produk berikut memiliki stok tetapi <strong>belum memiliki harga beli</strong>. Nilai
+                            persediaan
+                            untuk produk ini akan dihitung <strong>Rp 0</strong> dan menyebabkan kalkulasi tidak akurat:
+                        </p>
+                        <div
+                            class="mt-3 max-h-40 overflow-y-auto bg-white dark:bg-gray-800 rounded border border-orange-200 dark:border-orange-700">
+                            <ul class="divide-y divide-orange-100 dark:divide-orange-800">
+                                @foreach ($produkTanpaHarga as $stok)
+                                    <li class="px-3 py-2 text-xs">
+                                        <span class="font-medium text-orange-900 dark:text-orange-300">
+                                            {{ $stok->produk->kode ?? '-' }}
+                                        </span>
+                                        <span class="text-orange-700 dark:text-orange-400">
+                                            - {{ $stok->produk->nama ?? '-' }}
+                                        </span>
+                                        <span class="text-orange-600 dark:text-orange-500">
+                                            (Stok: {{ number_format($stok->jumlah, 2) }}
+                                            {{ $stok->produk->satuan->nama ?? 'pcs' }})
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        <p class="mt-3 text-sm text-orange-800 dark:text-orange-300">
+                            <strong>Rekomendasi:</strong> Update harga beli di
+                            <a href="{{ route('master-data.produk.index') }}"
+                                class="underline font-semibold hover:text-orange-900 dark:hover:text-orange-200">
+                                Master Data Produk
+                            </a>
+                            sebelum melakukan kalibrasi persediaan.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Summary Cards --}}
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             {{-- Nilai Persediaan Akuntansi --}}

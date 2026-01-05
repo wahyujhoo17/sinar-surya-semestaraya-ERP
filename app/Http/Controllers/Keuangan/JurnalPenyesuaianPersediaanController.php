@@ -66,6 +66,21 @@ class JurnalPenyesuaianPersediaanController extends Controller
         // Ambil daftar gudang
         $gudangs = Gudang::where('is_active', true)->get();
 
+        // Cek produk tanpa harga
+        $produkTanpaHarga = StokProduk::with('produk')
+            ->whereHas('produk', function ($query) {
+                $query->where(function ($q) {
+                    $q->whereNull('harga_beli')
+                        ->orWhere('harga_beli', '=', 0);
+                })
+                    ->where(function ($q) {
+                        $q->whereNull('harga_beli_rata_rata')
+                            ->orWhere('harga_beli_rata_rata', '=', 0);
+                    });
+            })
+            ->where('jumlah', '>', 0)
+            ->get();
+
         return view('keuangan.jurnal_penyesuaian_persediaan.index', compact(
             'breadcrumbs',
             'akunPersediaan',
@@ -73,7 +88,8 @@ class JurnalPenyesuaianPersediaanController extends Controller
             'nilaiPersediaanFisik',
             'selisih',
             'detailProduk',
-            'gudangs'
+            'gudangs',
+            'produkTanpaHarga'
         ));
     }
 

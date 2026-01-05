@@ -6,6 +6,8 @@ use App\Models\Produk;
 use App\Models\KategoriProduk;
 use App\Models\Satuan;
 use App\Models\JenisProduk;
+use App\Models\Gudang;
+use App\Models\StokProduk;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
@@ -104,9 +106,9 @@ class ProdukImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                     $satuanId = $satuan->id;
                 }
 
-                // Cari atau buat jenis jika ada
+                // Cari atau buat jenis jika ada DAN tidak kosong
                 $jenisId = null;
-                if (!empty($row['jenis'])) {
+                if (!empty($row['jenis']) && trim($row['jenis']) !== '') {
                     $jenisNama = trim($row['jenis']);
                     $jenis = JenisProduk::where('nama', $jenisNama)->first();
                     if (!$jenis) {
@@ -148,15 +150,88 @@ class ProdukImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                     $existingProduk->update($produkData);
                     $this->stats['updated']++;
                     Log::info('Produk Import: Updated existing produk', ['kode' => $kodeProduk]);
+                    $produkId = $existingProduk->id;
                 } else {
-                    Produk::create($produkData);
+                    $newProduk = Produk::create($produkData);
                     $this->stats['inserted']++;
+                    $produkId = $newProduk->id;
+                }
+
+                // Handle stok jika ada gudang dan qty
+                if (!empty($row['gudang']) && !empty($row['qty'])) {
+                    $this->handleStokImport($produkId, $row);
                 }
             } catch (\Exception $e) {
                 Log::error('Import error for row: ' . json_encode($row));
                 Log::error('Error message: ' . $e->getMessage());
                 throw new \Exception('Error pada baris dengan kode: ' . ($row['kode'] ?? 'unknown') . '. ' . $e->getMessage());
             }
+        }
+    }
+
+    /**
+     * Handle import stok ke gudang
+     */
+    protected function handleStokImport($produkId, $row)
+    {
+        try {
+            // Cari gudang berdasarkan nama
+            $gudangNama = trim($row['gudang']);
+            $gudang = Gudang::where('nama', $gudangNama)
+                ->orWhere('kode', $gudangNama)
+                ->where('is_active', true)
+                ->first();
+
+            if (!$gudang) {
+                Log::warning('Gudang tidak ditemukan, skip import stok', [
+                    'gudang' => $gudangNama,
+                    'produk_id' => $produkId
+                ]);
+                return;
+            }
+
+            $qty = floatval($row['qty']);
+
+            // Skip jika qty = 0 atau negatif
+            if ($qty <= 0) {
+                return;
+            }
+
+            // Cek apakah stok sudah ada
+            $stokProduk = StokProduk::where('produk_id', $produkId)
+                ->where('gudang_id', $gudang->id)
+                ->first();
+
+            if ($stokProduk) {
+                // Update stok yang ada
+                $stokProduk->jumlah = $qty;
+                $stokProduk->save();
+                Log::info('Stok updated from import', [
+                    'produk_id' => $produkId,
+                    'gudang_id' => $gudang->id,
+                    'qty' => $qty
+                ]);
+            } else {
+                // Buat stok baru
+                StokProduk::create([
+                    'produk_id' => $produkId,
+                    'gudang_id' => $gudang->id,
+                    'jumlah' => $qty,
+                    'lokasi_rak' => '-',
+                    'batch_number' => '-'
+                ]);
+                Log::info('Stok created from import', [
+                    'produk_id' => $produkId,
+                    'gudang_id' => $gudang->id,
+                    'qty' => $qty
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error handling stok import: ' . $e->getMessage(), [
+                'produk_id' => $produkId,
+                'row' => $row
+            ]);
+            // Don't throw, just log - stok import is optional
         }
     }
 
