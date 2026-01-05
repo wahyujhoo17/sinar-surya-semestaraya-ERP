@@ -44,14 +44,17 @@
 
                     <!-- Modify the grid layout to be more compact -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <!-- Kode Produk (Auto-generated, readonly) -->
+                        <!-- Kode Produk (Auto-generate tapi bisa diedit) -->
                         <div>
                             <label for="kode"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode
-                                Produk</label>
-                            <input type="text" name="kode" id="kode" x-model="formData.kode" readonly
-                                class="w-full rounded-md bg-gray-50 dark:bg-gray-600 border-gray-300 dark:border-gray-600 dark:text-gray-300 shadow-sm text-sm">
-                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Kode akan dibuat otomatis</p>
+                                Produk <span class="text-red-600">*</span></label>
+                            <input type="text" name="kode" id="kode" x-model="formData.kode"
+                                @input="syncSkuWithKode()" required
+                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm"
+                                placeholder="Kode otomatis, bisa diedit">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Auto-generate, dapat diedit manual
+                            </p>
                         </div>
 
                         <!-- SKU & Nama in same row -->
@@ -59,7 +62,16 @@
                             <label for="product_sku"
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">SKU</label>
                             <input type="text" name="product_sku" id="product_sku" x-model="formData.product_sku"
+                                :disabled="skuSameAsKode"
+                                :class="skuSameAsKode ? 'bg-gray-100 dark:bg-gray-600 cursor-not-allowed' : ''"
                                 class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm text-sm">
+                            <div class="flex items-center mt-1">
+                                <input type="checkbox" id="sku_same_as_kode" x-model="skuSameAsKode"
+                                    @change="syncSkuWithKode()"
+                                    class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
+                                <label for="sku_same_as_kode" class="ml-2 text-xs text-gray-600 dark:text-gray-400">Sama
+                                    dengan Kode Produk</label>
+                            </div>
                         </div>
 
                         <div>
@@ -290,6 +302,7 @@
             loading: false,
             imagePreview: null,
             productId: null,
+            skuSameAsKode: true, // Default dicentang
             formData: {
                 kode: '',
                 nama: '',
@@ -317,9 +330,32 @@
                     const data = await response.json();
                     if (data.success) {
                         this.formData.kode = data.code;
+                        // Sync SKU dengan kode setelah generate
+                        this.syncSkuWithKode();
                     }
                 } catch (error) {
                     console.error('Error generating product code:', error);
+                }
+            },
+
+            async generateKodeProduk() {
+                try {
+                    const response = await fetch('/master-data/produk/generate-code');
+                    const data = await response.json();
+                    if (data.success) {
+                        this.formData.kode = data.code;
+                        notify('Kode produk berhasil di-generate', 'success');
+                        this.syncSkuWithKode();
+                    }
+                } catch (error) {
+                    console.error('Error generating product code:', error);
+                    notify('Gagal generate kode produk', 'error');
+                }
+            },
+
+            syncSkuWithKode() {
+                if (this.skuSameAsKode) {
+                    this.formData.product_sku = this.formData.kode;
                 }
             },
 
@@ -334,6 +370,9 @@
                     this.formData.kode = data.product.kode;
                     this.formData.nama = data.product.nama;
                     this.formData.product_sku = data.product.product_sku;
+
+                    // Cek apakah SKU sama dengan kode
+                    this.skuSameAsKode = (data.product.product_sku === data.product.kode);
                     this.formData.kategori_id = data.product.kategori_id;
                     this.formData.jenis_id = data.product.jenis_id;
                     this.formData.ukuran = data.product.ukuran;
@@ -354,6 +393,7 @@
                 } else {
                     this.isEdit = false;
                     this.modalTitle = 'Tambah Produk';
+                    // Auto-generate kode, tapi user masih bisa edit
                     this.generateProductCode();
                 }
 
@@ -366,6 +406,7 @@
             },
 
             resetForm() {
+                this.skuSameAsKode = true; // Reset ke default dicentang
                 this.formData = {
                     kode: '',
                     nama: '',
