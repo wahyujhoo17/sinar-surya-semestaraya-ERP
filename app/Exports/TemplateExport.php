@@ -140,42 +140,6 @@ class TemplateExport implements FromArray, WithHeadings, WithStyles, WithColumnW
 
         return [];
     }
-                'bold' => true,
-                'color' => ['rgb' => 'FFFFFF']
-            ],
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => '4F46E5']
-            ],
-            'alignment' => [
-                'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
-            ]
-        ]);
-
-        // Style untuk contoh data (baris 5)
-        $sheet->getStyle('A5:O5')->applyFromArray([
-            'fill' => [
-                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                'startColor' => ['rgb' => 'FEF3C7']
-            ],
-            'font' => [
-                'italic' => true,
-                'color' => ['rgb' => '92400E']
-            ]
-        ]);
-
-        // Border untuk data area
-        $sheet->getStyle('A4:O6')->applyFromArray([
-            'borders' => [
-                'allBorders' => [
-                    'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                    'color' => ['rgb' => 'CCCCCC']
-                ]
-            ]
-        ]);
-
-        return [];
-    }
 
     public function columnWidths(): array
     {
