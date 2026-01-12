@@ -30,7 +30,7 @@ class CustomerController extends Controller
      */
     private function canAccessAllCustomers()
     {
-        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan');
     }
 
     public function index(Request $request)
