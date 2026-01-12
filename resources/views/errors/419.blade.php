@@ -93,7 +93,9 @@
             </p>
 
             <p class="text-gray-500 mb-8">
-                Untuk keamanan akun Anda, silakan muat ulang halaman dan login kembali.
+                Untuk keamanan akun Anda, silakan login kembali untuk melanjutkan.
+                <br>
+                <span id="countdown-text" class="font-semibold text-yellow-600"></span>
             </p>
 
             <!-- Info Box -->
@@ -107,7 +109,7 @@
                     <div class="text-left">
                         <p class="text-sm text-yellow-700 font-semibold">Token CSRF Kedaluwarsa</p>
                         <p class="text-sm text-yellow-600 mt-1">
-                            Halaman ini telah dibuka terlalu lama. Muat ulang halaman untuk melanjutkan.
+                            Halaman ini telah dibuka terlalu lama. Anda akan diarahkan ke halaman login.
                         </p>
                     </div>
                 </div>
@@ -115,24 +117,14 @@
 
             <!-- Action Buttons -->
             <div class="flex gap-4 justify-center flex-wrap">
-                <button onclick="location.reload()"
+                <a href="{{ route('login') }}"
                     class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                     </svg>
-                    Muat Ulang Halaman
-                </button>
-
-                <a href="{{ route('dashboard') }}"
-                    class="inline-flex items-center px-6 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                    Kembali ke Dashboard
+                    Login Kembali
                 </a>
             </div>
 
@@ -147,6 +139,26 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // Auto redirect to login after 5 seconds
+        let countdown = 5;
+        const countdownElement = document.getElementById('countdown-text');
+
+        function updateCountdown() {
+            if (countdown > 0) {
+                countdownElement.textContent = `Mengarahkan ke halaman login dalam ${countdown} detik...`;
+                countdown--;
+                setTimeout(updateCountdown, 1000);
+            } else {
+                countdownElement.textContent = 'Mengarahkan ke halaman login...';
+                window.location.href = '{{ route('login') }}';
+            }
+        }
+
+        // Start countdown when page loads
+        updateCountdown();
+    </script>
 </body>
 
 </html>
