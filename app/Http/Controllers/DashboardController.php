@@ -611,7 +611,7 @@ class DashboardController extends Controller
         $modules = [];
 
         if ($user->hasPermission('produk.view')) {
-            $modules[] = ['name' => 'Master Data', 'icon' => 'database', 'route' => 'produk.index'];
+            $modules[] = ['name' => 'Master Data', 'icon' => 'database', 'route' => 'master.produk.index'];
         }
 
         if ($user->hasPermission('stok_barang.view')) {
