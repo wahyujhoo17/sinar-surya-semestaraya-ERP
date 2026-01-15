@@ -100,7 +100,7 @@
                         </div>
                         <p class="mt-3 text-sm text-orange-800 dark:text-orange-300">
                             <strong>Rekomendasi:</strong> Update harga beli di
-                            <a href="{{ route('master-data.produk.index') }}"
+                            <a href="{{ route('master.produk.index') }}"
                                 class="underline font-semibold hover:text-orange-900 dark:hover:text-orange-200">
                                 Master Data Produk
                             </a>

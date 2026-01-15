@@ -72,11 +72,7 @@ class JurnalPenyesuaianPersediaanController extends Controller
                 $query->where(function ($q) {
                     $q->whereNull('harga_beli')
                         ->orWhere('harga_beli', '=', 0);
-                })
-                    ->where(function ($q) {
-                        $q->whereNull('harga_beli_rata_rata')
-                            ->orWhere('harga_beli_rata_rata', '=', 0);
-                    });
+                });
             })
             ->where('jumlah', '>', 0)
             ->get();
@@ -95,7 +91,7 @@ class JurnalPenyesuaianPersediaanController extends Controller
 
     /**
      * Hitung nilai persediaan fisik berdasarkan stok di gudang
-     * Menggunakan harga_beli_rata_rata jika ada, fallback ke harga_beli atau harga_pokok
+     * Menggunakan harga_beli atau harga_pokok
      */
     private function calculatePhysicalInventoryValue()
     {
@@ -105,8 +101,7 @@ class JurnalPenyesuaianPersediaanController extends Controller
 
         foreach ($stokProduk as $stok) {
             if ($stok->produk && $stok->jumlah > 0) {
-                $hargaPokok = $stok->produk->harga_beli_rata_rata
-                    ?? $stok->produk->harga_beli
+                $hargaPokok = $stok->produk->harga_beli
                     ?? $stok->produk->harga_pokok
                     ?? 0;
 
@@ -134,8 +129,7 @@ class JurnalPenyesuaianPersediaanController extends Controller
         $details = [];
         foreach ($stokProduk as $stok) {
             if ($stok->produk && $stok->jumlah > 0) {
-                $hargaPokok = $stok->produk->harga_beli_rata_rata
-                    ?? $stok->produk->harga_beli
+                $hargaPokok = $stok->produk->harga_beli
                     ?? $stok->produk->harga_pokok
                     ?? 0;
 
@@ -150,7 +144,7 @@ class JurnalPenyesuaianPersediaanController extends Controller
                     'satuan' => $stok->produk->satuan->nama ?? 'Pcs',
                     'harga_pokok' => $hargaPokok,
                     'nilai_total' => $nilaiStok,
-                    'sumber_harga' => $stok->produk->harga_beli_rata_rata ? 'Harga Beli Rata-rata' : ($stok->produk->harga_beli ? 'Harga Beli' : 'Harga Pokok')
+                    'sumber_harga' => $stok->produk->harga_beli ? 'Harga Beli' : 'Harga Pokok'
                 ];
             }
         }
