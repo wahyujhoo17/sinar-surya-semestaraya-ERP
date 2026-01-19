@@ -1,12 +1,15 @@
 <!-- Sidebar -->
 <div x-cloak
-    class="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-[#fdfdfd] dark:bg-gray-800 sidebar-shadow dark:sidebar-glow w-64">
+    class="flex h-full flex-col border-r border-gray-200 dark:border-gray-700 bg-[#fdfdfd] dark:bg-gray-800 sidebar-shadow dark:sidebar-glow transition-all duration-300"
+    :class="{ 'w-64': !sidebarCollapsed, 'w-20': sidebarCollapsed }">
     <!-- Logo -->
-    <div
-        class="flex items-center justify-center h-[77px] flex-shrink-0 px-4 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex items-center justify-center h-[77px] flex-shrink-0 px-4 border-b border-gray-200 dark:border-gray-700 transition-all duration-300"
+        :class="{ 'justify-center': sidebarCollapsed, 'justify-center': !sidebarCollapsed }">
         <a href="{{ route('dashboard') }}" class="flex items-center">
             <div class="flex items-center">
-                <img src="{{ asset('img/SemestaPro.PNG') }}" alt="Logo PT Sinar Surya Semestaraya" class="h-20 w-30">
+                <img src="{{ asset('img/SemestaPro.PNG') }}" alt="Logo PT Sinar Surya Semestaraya"
+                    class="transition-all duration-300"
+                    :class="{ 'h-12 w-auto': sidebarCollapsed, 'h-20 w-30': !sidebarCollapsed }">
             </div>
         </a>
     </div>
@@ -24,32 +27,35 @@
             <!-- Dashboard -->
             @if (auth()->user()->hasPermission('dashboard.view'))
                 <a href="{{ route('dashboard') }}"
-                    class="{{ request()->routeIs('dashboard') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 menu-active-item' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
-                    <div
-                        class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                    class="{{ request()->routeIs('dashboard') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 menu-active-item' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
+                    :class="{ 'justify-center': sidebarCollapsed }" x-tooltip="sidebarCollapsed ? 'Dashboard' : ''">
+                    <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                        :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                         <svg class="h-5 w-5 {{ request()->routeIs('dashboard') ? 'text-blue-600' : '' }}"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                     </div>
-                    <span>Dashboard</span>
+                    <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Dashboard</span>
                 </a>
             @endif
 
             <!-- Daily Aktivitas -->
             @if (auth()->user()->hasPermission('daily_aktivitas.view'))
                 <a href="/daily-aktivitas"
-                    class="{{ request()->routeIs('daily-aktivitas.*') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 menu-active-item' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
-                    <div
-                        class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                    class="{{ request()->routeIs('daily-aktivitas.*') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 menu-active-item' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
+                    :class="{ 'justify-center': sidebarCollapsed }"
+                    x-tooltip="sidebarCollapsed ? 'Daily Aktivitas' : ''">
+                    <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                        :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                         <svg class="h-5 w-5 {{ request()->routeIs('daily-aktivitas.*') ? 'text-blue-600' : '' }}"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                         </svg>
                     </div>
-                    <span>Daily Aktivitas</span>
+                    <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Daily Aktivitas</span>
                 </a>
             @endif
 
@@ -64,10 +70,11 @@
                 <div>
                     <button @click="toggleDropdown('masterData')"
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
-                        :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'masterData' }">
+                        :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'masterData', 'justify-center': sidebarCollapsed }"
+                        x-tooltip="sidebarCollapsed ? 'Master Data' : ''">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('master.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -75,15 +82,16 @@
                                         d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                                 </svg>
                             </div>
-                            <span>Master Data</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Master Data</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'masterData' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'masterData'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'masterData' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('produk.view'))
                             <a href="{{ route('master.produk.index') }}"
                                 class="{{ request()->routeIs('master.produk.index') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Produk</span></a>
@@ -131,8 +139,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'inventaris' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('inventaris.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -140,15 +148,18 @@
                                         d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                                 </svg>
                             </div>
-                            <span>Inventaris</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Inventaris</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'inventaris' }"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'inventaris'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'inventaris' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('stok_barang.view'))
                             <a href="/inventaris/stok"
                                 class="{{ request()->is('inventaris/stok') || request()->is('inventaris/stok/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Stok
@@ -187,8 +198,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'produksi' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('produksi.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -198,9 +209,9 @@
                                         d="M9.879 16.121A3 3 0 1012.014 14 3 3 0 009.879 16.121z" />
                                 </svg>
                             </div>
-                            <span>Produksi</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Produksi</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'produksi' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -208,7 +219,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'produksi'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'produksi' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('work_order.view'))
                             <a href="/produksi/work-order"
                                 class="{{ request()->is('produksi/work-order') || request()->is('produksi/work-order/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Perintah
@@ -240,8 +252,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'penjualan' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('penjualan.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -249,9 +261,9 @@
                                         d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
-                            <span>Penjualan</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Penjualan</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'penjualan' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -259,7 +271,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'penjualan'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'penjualan' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('quotation.view'))
                             <a href="/penjualan/quotation"
                                 class="{{ request()->is('penjualan/quotation') || request()->is('penjualan/quotation/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Quotation</span></a>
@@ -308,8 +321,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'pembelian' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('pembelian.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -317,9 +330,9 @@
                                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                 </svg>
                             </div>
-                            <span>Pembelian</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Pembelian</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'pembelian' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -327,7 +340,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'pembelian'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'pembelian' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('purchase_request.view'))
                             <a href="/pembelian/permintaan-pembelian"
                                 class="{{ request()->is('pembelian/permintaan-pembelian') || request()->is('pembelian/permintaan-pembelian/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Permintaan
@@ -368,8 +382,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'hr' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('hr.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -377,9 +391,10 @@
                                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </div>
-                            <span>HR & Karyawan</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">HR &
+                                Karyawan</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'hr' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -387,7 +402,7 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'hr'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'hr' && !sidebarCollapsed" x-cloak class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('karyawan.view'))
                             <a href="/hr/karyawan"
                                 class="{{ request()->is('hr/karyawan') || request()->is('hr/karyawan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Data
@@ -426,8 +441,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'crm' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('crm.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -435,9 +450,9 @@
                                         d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <span>CRM</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">CRM</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'crm' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -445,7 +460,7 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'crm'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'crm' && !sidebarCollapsed" x-cloak class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('prospek_lead.view'))
                             <a href="{{ route('crm.prospek.index') }}"
                                 class="{{ request()->is('crm/prospek') || request()->is('crm/prospek/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Prospek
@@ -478,8 +493,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'keuangan' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('keuangan.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -487,9 +502,9 @@
                                         d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0c-1.657 0-3-.895-3-2s1.343-2 3-2 3-.895 3-2-1.343-2-3-2m0 8c1.11 0 2.08-.402 2.599-1M12 16v1m0-1v-8m0 0c-1.657 0-3 .895-3 2s1.343 2 3 2m0 0c1.657 0 3 .895 3 2s-1.343 2-3 2m0 0c-1.11 0-2.08.402-2.599 1M9.401 15C9.126 14.283 9 13.474 9 12.6c0-1.79.684-3.418 1.808-4.632M14.599 9c.275.717.401 1.526.401 2.4 0 1.79-.684 3.418-1.808 4.632" />
                                 </svg>
                             </div>
-                            <span>Keuangan</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Keuangan</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'keuangan' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -497,7 +512,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'keuangan'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'keuangan' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('chart_of_accounts.view'))
                             <a href="{{ route('keuangan.coa.index') }}"
                                 class="{{ request()->is('keuangan/coa') || request()->is('keuangan/coa/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Chart
@@ -573,8 +589,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'laporan' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('laporan.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -582,9 +598,9 @@
                                         d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
                             </div>
-                            <span>Laporan</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Laporan</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'laporan' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -592,7 +608,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'laporan'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'laporan' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('laporan_penjualan.view'))
                             <a href="/laporan/penjualan"
                                 class="{{ request()->is('laporan/penjualan') || request()->is('laporan/penjualan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan
@@ -634,8 +651,8 @@
                         class="group flex items-center justify-between w-full px-3 py-2 text-sm font-medium rounded-md text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700 focus:outline-none transition-colors"
                         :class="{ 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400': activeDropdown === 'pengaturan' }">
                         <div class="flex items-center">
-                            <div
-                                class="mr-3 flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon">
+                            <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
+                                :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                                 <svg class="h-5 w-5 {{ request()->routeIs('pengaturan.*') ? 'text-blue-600' : '' }}"
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
@@ -645,9 +662,9 @@
                                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
-                            <span>Pengaturan</span>
+                            <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Pengaturan</span>
                         </div>
-                        <svg class="h-5 w-5"
+                        <svg x-show="!sidebarCollapsed" class="h-5 w-5 transition-transform duration-300"
                             :class="{ 'transform rotate-180 text-blue-600': activeDropdown === 'pengaturan' }"
                             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
@@ -655,7 +672,8 @@
                                 d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
-                    <div x-show="activeDropdown === 'pengaturan'" x-cloak class="mt-1 space-y-1 pl-11">
+                    <div x-show="activeDropdown === 'pengaturan' && !sidebarCollapsed" x-cloak
+                        class="mt-1 space-y-1 pl-11">
                         @if (auth()->user()->hasPermission('pengaturan_umum.view'))
                             <a href="/pengaturan/umum"
                                 class="{{ request()->is('pengaturan/umum') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pengaturan
@@ -683,10 +701,14 @@
     </div>
 
     <!-- Footer -->
-    <div class="border-t border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center justify-center">
-        <div class="text-xs text-gray-500 text-center">
+    <div
+        class="border-t border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center justify-center transition-all duration-300">
+        <div class="text-xs text-gray-500 text-center" x-show="!sidebarCollapsed">
             {{ setting('company_name', 'PT. Sinar Surya Semestaraya') }}<br>
             <span class="font-semibold">Versi {{ setting('app_version', '1.0.0') }}</span>
+        </div>
+        <div x-show="sidebarCollapsed" class="text-xs text-gray-500 text-center font-semibold">
+            v{{ setting('app_version', '1.0.0') }}
         </div>
     </div>
 </div>

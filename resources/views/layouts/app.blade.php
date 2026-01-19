@@ -197,6 +197,47 @@ if (darkMode) {
             border-radius: 0 0.25rem 0.25rem 0;
             opacity: 0.7;
         }
+
+        /* Tooltip for collapsed sidebar */
+        [x-tooltip] {
+            position: relative;
+        }
+
+        [x-tooltip]:hover::after {
+            content: attr(x-tooltip);
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            margin-left: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background-color: #1f2937;
+            color: white;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            z-index: 1000;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            opacity: 0;
+            animation: tooltipFadeIn 0.2s ease-out forwards;
+        }
+
+        .dark [x-tooltip]:hover::after {
+            background-color: #374151;
+        }
+
+        @keyframes tooltipFadeIn {
+            from {
+                opacity: 0;
+                margin-left: 0.25rem;
+            }
+
+            to {
+                opacity: 1;
+                margin-left: 0.5rem;
+            }
+        }
     </style>
 
     <!-- Select2 CSS -->

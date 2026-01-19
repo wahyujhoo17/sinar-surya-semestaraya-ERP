@@ -14,6 +14,24 @@
                             d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
+
+                <!-- Desktop sidebar toggle button -->
+                <button @click="sidebarCollapsed = !sidebarCollapsed"
+                    class="hidden md:inline-flex items-center justify-center p-2 rounded-md text-gray-500 hover:text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-all duration-200">
+                    <span class="sr-only">Toggle sidebar</span>
+                    <!-- Icon untuk collapsed state (menu icon) -->
+                    <svg x-show="sidebarCollapsed" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <!-- Icon untuk expanded state (menu fold left icon) -->
+                    <svg x-show="!sidebarCollapsed" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                </button>
             </div>
 
             <!-- Right side - User menu and settings -->
@@ -112,9 +130,11 @@
                                             </path>
                                         </svg>
                                     </div>
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Belum ada notifikasi
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">Belum ada
+                                        notifikasi
                                     </p>
-                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notifikasi baru akan muncul
+                                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Notifikasi baru akan
+                                        muncul
                                         di
                                         sini</p>
                                 </div>
