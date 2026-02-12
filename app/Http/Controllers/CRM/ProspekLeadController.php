@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\Log;
 
 class ProspekLeadController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:prospek_lead.view')->only(['index', 'show', 'data', 'getCustomerGroups']);
+        $this->middleware('permission:prospek_lead.create')->only(['create', 'store']);
+        $this->middleware('permission:prospek_lead.edit')->only(['edit', 'update']);
+        $this->middleware('permission:prospek_lead.delete')->only(['destroy', 'deleteAttachment']);
+    }
+
     /**
      * Check if current user can access all prospects (admin/manager_penjualan)
      */

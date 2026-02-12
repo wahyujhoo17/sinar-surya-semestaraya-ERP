@@ -17,6 +17,12 @@ use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
 class PipelinePenjualanController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:pipeline_penjualan.view')->only(['index', 'data']);
+        $this->middleware('permission:pipeline_penjualan.export')->only(['exportExcel', 'exportCsv']);
+    }
+
     /**
      * Check if current user can access all prospects (admin/manager_penjualan)
      */

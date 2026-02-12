@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\Auth;
 
 class ProspekAktivitasController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:aktivitas_prospek.view')->only(['index', 'show', 'followups']);
+        $this->middleware('permission:aktivitas_prospek.create')->only(['create', 'store']);
+        $this->middleware('permission:aktivitas_prospek.edit')->only(['edit', 'update', 'updateFollowupStatus', 'batchUpdateFollowup']);
+        $this->middleware('permission:aktivitas_prospek.delete')->only(['destroy', 'batchDelete', 'deleteAttachment']);
+    }
+
     /**
      * Check if current user can access all prospects (admin/manager_penjualan)
      */
@@ -33,8 +41,15 @@ class ProspekAktivitasController extends Controller
 
         // Apply role-based access control
         if (!$this->canAccessAllProspects()) {
-            $query->whereHas('prospek', function ($q) {
-                $q->where('user_id', Auth::id());
+            // Sales can only see their own activities or activities from prospects/customers they own
+            $query->where(function ($q) {
+                $q->where('user_id', Auth::id()) // Activities created by them
+                    ->orWhereHas('prospek', function ($pq) {
+                        $pq->where('user_id', Auth::id()); // Activities from their prospects
+                    })
+                    ->orWhereHas('customer', function ($cq) {
+                        $cq->where('sales_id', Auth::id()); // Activities from their customers
+                    });
             });
         }
 
@@ -217,7 +232,7 @@ class ProspekAktivitasController extends Controller
 
             // Update prospek's next follow-up date if needed
             $prospek = Prospek::find($request->prospek_id);
-            if (!$prospek->tanggal_followup || $prospek->tanggal_followup > $aktivitas->tanggal_followup) {
+            if ($prospek && (!$prospek->tanggal_followup || $prospek->tanggal_followup > $aktivitas->tanggal_followup)) {
                 $prospek->tanggal_followup = $aktivitas->tanggal_followup;
                 $prospek->save();
             }
@@ -237,9 +252,20 @@ class ProspekAktivitasController extends Controller
     {
         // Role-based access control untuk show
         if (!$this->canAccessAllProspects()) {
-            $aktivita->load(['prospek']);
-            if ($aktivita->prospek->user_id !== Auth::id()) {
-                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            // Sales can view their own activities
+            if ($aktivita->user_id !== Auth::id()) {
+                // Or activities from prospects they own
+                $aktivita->load(['prospek', 'customer']);
+                if ($aktivita->prospek && $aktivita->prospek->user_id !== Auth::id()) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
+                if ($aktivita->customer && $aktivita->customer->sales_id !== Auth::id()) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
+                // If no prospek and no customer, deny access
+                if (!$aktivita->prospek && !$aktivita->customer) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
             }
         }
 
@@ -257,9 +283,19 @@ class ProspekAktivitasController extends Controller
     {
         // Role-based access control untuk edit
         if (!$this->canAccessAllProspects()) {
-            $aktivita->load(['prospek']);
-            if ($aktivita->prospek->user_id !== Auth::id()) {
-                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            // Sales can edit their own activities
+            if ($aktivita->user_id !== Auth::id()) {
+                $aktivita->load(['prospek', 'customer']);
+                $hasAccess = false;
+                if ($aktivita->prospek && $aktivita->prospek->user_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if ($aktivita->customer && $aktivita->customer->sales_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if (!$hasAccess) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
             }
         }
 
@@ -290,9 +326,19 @@ class ProspekAktivitasController extends Controller
     {
         // Role-based access control untuk update
         if (!$this->canAccessAllProspects()) {
-            $aktivita->load(['prospek']);
-            if ($aktivita->prospek->user_id !== Auth::id()) {
-                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            // Sales can update their own activities
+            if ($aktivita->user_id !== Auth::id()) {
+                $aktivita->load(['prospek', 'customer']);
+                $hasAccess = false;
+                if ($aktivita->prospek && $aktivita->prospek->user_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if ($aktivita->customer && $aktivita->customer->sales_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if (!$hasAccess) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
             }
         }
 
@@ -391,9 +437,19 @@ class ProspekAktivitasController extends Controller
     {
         // Role-based access control untuk destroy
         if (!$this->canAccessAllProspects()) {
-            $aktivita->load(['prospek']);
-            if ($aktivita->prospek->user_id !== Auth::id()) {
-                abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+            // Sales can delete their own activities
+            if ($aktivita->user_id !== Auth::id()) {
+                $aktivita->load(['prospek', 'customer']);
+                $hasAccess = false;
+                if ($aktivita->prospek && $aktivita->prospek->user_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if ($aktivita->customer && $aktivita->customer->sales_id === Auth::id()) {
+                    $hasAccess = true;
+                }
+                if (!$hasAccess) {
+                    abort(403, 'Anda tidak memiliki akses ke aktivitas ini.');
+                }
             }
         }
 
@@ -401,21 +457,25 @@ class ProspekAktivitasController extends Controller
         $aktivita->delete();
 
         // Update the prospect's follow-up date
-        $prospek = Prospek::find($prospekId);
-        $earliestFollowup = ProspekAktivitas::where('prospek_id', $prospekId)
-            ->where('perlu_followup', 1)
-            ->where('status_followup', '!=', ProspekAktivitas::STATUS_SELESAI)
-            ->where('status_followup', '!=', ProspekAktivitas::STATUS_DIBATALKAN)
-            ->orderBy('tanggal_followup')
-            ->first();
+        if ($prospekId) {
+            $prospek = Prospek::find($prospekId);
+            if ($prospek) {
+                $earliestFollowup = ProspekAktivitas::where('prospek_id', $prospekId)
+                    ->where('perlu_followup', 1)
+                    ->where('status_followup', '!=', ProspekAktivitas::STATUS_SELESAI)
+                    ->where('status_followup', '!=', ProspekAktivitas::STATUS_DIBATALKAN)
+                    ->orderBy('tanggal_followup')
+                    ->first();
 
-        if ($earliestFollowup) {
-            $prospek->tanggal_followup = $earliestFollowup->tanggal_followup;
-        } else {
-            $prospek->tanggal_followup = null;
+                if ($earliestFollowup) {
+                    $prospek->tanggal_followup = $earliestFollowup->tanggal_followup;
+                } else {
+                    $prospek->tanggal_followup = null;
+                }
+
+                $prospek->save();
+            }
         }
-
-        $prospek->save();
 
         return redirect()
             ->route('crm.aktivitas.index')
