@@ -654,8 +654,10 @@
                             <div>Tanggal:
                                 <strong>{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</strong>
                             </div>
-                            <div>Status: <strong style="text-transform: uppercase;">{{ $quotation->status }}</strong>
-                            </div>
+                            @if (isset($quotation->status) && $quotation->status !== 'draft')
+                                <div>Status: <strong
+                                        style="text-transform: uppercase;">{{ $quotation->status }}</strong></div>
+                            @endif
                         </div>
                     </div>
                 </div>

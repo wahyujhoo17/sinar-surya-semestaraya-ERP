@@ -488,6 +488,8 @@
                 }
 
                 formData.set('is_active', this.formData.is_active);
+                // Ensure SKU is always sent (disabled inputs are not included by FormData)
+                formData.set('product_sku', this.formData.product_sku || this.formData.kode);
 
                 fetch(url, {
                         method: method,

@@ -209,6 +209,11 @@ class ProdukController extends Controller
         // Pastikan status boolean (default: aktif)
         $validatedData['is_active'] = $request->boolean('is_active', true);
 
+        // Ensure product_sku is present (frontend may omit it when the input is disabled)
+        if (empty($validatedData['product_sku'])) {
+            $validatedData['product_sku'] = $validatedData['kode'];
+        }
+
         $produk = Produk::create($validatedData);
 
         return response()->json([
@@ -303,6 +308,11 @@ class ProdukController extends Controller
 
         // Pastikan status boolean (default: aktif)
         $validatedData['is_active'] = $request->boolean('is_active', true);
+
+        // Ensure product_sku is present (frontend may omit it when the input is disabled)
+        if (empty($validatedData['product_sku'])) {
+            $validatedData['product_sku'] = $validatedData['kode'];
+        }
 
         $produk->update($validatedData);
 
@@ -432,6 +442,11 @@ class ProdukController extends Controller
         } else {
         }
 
+        // Ensure product_sku is present (frontend may omit it when the input is disabled)
+        if (empty($validatedData['product_sku'])) {
+            $validatedData['product_sku'] = $validatedData['kode'];
+        }
+
         // Buat produk baru
         $produk = Produk::create($validatedData);
 
@@ -475,6 +490,11 @@ class ProdukController extends Controller
             // Simpan gambar baru
             $path = $request->file('gambar')->store('produk_gambar', 'public');
             $validatedData['gambar'] = $path;
+        }
+
+        // Ensure product_sku is present (frontend may omit it when the input is disabled)
+        if (empty($validatedData['product_sku'])) {
+            $validatedData['product_sku'] = $validatedData['kode'];
         }
 
         // Update produk

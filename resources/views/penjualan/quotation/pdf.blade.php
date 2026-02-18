@@ -219,8 +219,10 @@
                 <div>
                     <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
-                    <strong>Status:</strong> <span
-                        style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
+                    @if (isset($quotation->status) && $quotation->status !== 'draft')
+                        <strong>Status:</strong> <span
+                            style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
+                    @endif
                     <p></p>
                 </div>
             </td>

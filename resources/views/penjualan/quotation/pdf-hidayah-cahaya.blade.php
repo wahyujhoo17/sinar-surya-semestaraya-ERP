@@ -370,11 +370,13 @@
                                 <span
                                     style="color: #374151;">{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</span>
                             </div>
-                            <div>
-                                <span style="font-weight: 600; color: #1f2937;">Status:</span>
-                                <span
-                                    style="color: var(--hcb-green); font-weight: 700; text-transform: uppercase; background-color: #f0fdf4; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $quotation->status }}</span>
-                            </div>
+                            @if (isset($quotation->status) && $quotation->status !== 'draft')
+                                <div>
+                                    <span style="font-weight: 600; color: #1f2937;">Status:</span>
+                                    <span
+                                        style="color: var(--hcb-green); font-weight: 700; text-transform: uppercase; background-color: #f0fdf4; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $quotation->status }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
