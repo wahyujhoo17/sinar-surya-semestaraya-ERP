@@ -219,10 +219,8 @@
                 <div>
                     <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
-                    @if (isset($quotation->status) && $quotation->status !== 'draft')
-                        <strong>Status:</strong> <span
-                            style="text-transform: uppercase; color: #3498db;">{{ $quotation->status }}</span>
-                    @endif
+                    <strong>Customer:</strong>
+                    <span>{{ $quotation->customer->company ?? $quotation->customer->nama }}</span>
                     <p></p>
                 </div>
             </td>
@@ -267,14 +265,14 @@
                         @endif
                         <br>
                     @endif
-                    @if ($quotation->customer->sales)
+                    @if ($quotation->customer->sales && $quotation->customer->sales->karyawan)
                         <br>
                         <strong style="color: #4a6fa5;">Sales Person:</strong><br>
-                        {{ $quotation->customer->sales->name }}
-                        @if ($quotation->customer->sales->email)
-                            <br>{{ $quotation->customer->sales->email }}
+                        {{ $quotation->customer->sales->karyawan->nama_lengkap }}
+                        @if ($quotation->customer->sales->karyawan->email)
+                            <br>{{ $quotation->customer->sales->karyawan->email }}
                         @endif
-                        @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                        @if ($quotation->customer->sales->karyawan->telepon)
                             <br>{{ $quotation->customer->sales->karyawan->telepon }}
                         @endif
                     @endif
@@ -480,7 +478,8 @@
     <div style="margin-bottom: 15px; border-left: 3px solid #4a6fa5; padding-left: 10px; background-color: #f8fafc;">
         <strong style="color: #2c3e50;">Syarat & Ketentuan:</strong>
         @if ($quotation->syarat_ketentuan)
-            <div style="margin-top: 5px; white-space: pre-line;">{!! nl2br(e($quotation->syarat_ketentuan)) !!}</div>
+            <div style="margin-top: 5px; white-space: pre-line; line-height: 1.3;">{{ $quotation->syarat_ketentuan }}
+            </div>
         @else
             <ol style="margin-top: 5px; padding-left: 20px;">
                 <li>Penawaran ini berlaku selama periode yang tertera di atas</li>

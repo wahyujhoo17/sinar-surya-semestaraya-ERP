@@ -654,10 +654,9 @@
                             <div>Tanggal:
                                 <strong>{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</strong>
                             </div>
-                            @if (isset($quotation->status) && $quotation->status !== 'draft')
-                                <div>Status: <strong
-                                        style="text-transform: uppercase;">{{ $quotation->status }}</strong></div>
-                            @endif
+                            <div>Customer:
+                                <strong>{{ $quotation->customer->company ?? $quotation->customer->nama }}</strong>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -683,13 +682,13 @@
                                 @endif
                             </p>
                         @endif
-                        @if ($quotation->customer->sales)
+                        @if ($quotation->customer->sales && $quotation->customer->sales->karyawan)
                             <p style="margin-top: 8px;"><strong>Sales Person:</strong></p>
-                            <p>{{ $quotation->customer->sales->name }}</p>
-                            @if ($quotation->customer->sales->email)
-                                <p>{{ $quotation->customer->sales->email }}</p>
+                            <p>{{ $quotation->customer->sales->karyawan->nama_lengkap }}</p>
+                            @if ($quotation->customer->sales->karyawan->email)
+                                <p>{{ $quotation->customer->sales->karyawan->email }}</p>
                             @endif
-                            @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                            @if ($quotation->customer->sales->karyawan->telepon)
                                 <p>{{ $quotation->customer->sales->karyawan->telepon }}</p>
                             @endif
                         @endif
@@ -919,7 +918,7 @@
                     <div class="terms-content">
                         @if ($quotation->syarat_ketentuan)
                             <div style="font-size: 9px; line-height: 1.4; white-space: pre-line;">
-                                {!! nl2br(e($quotation->syarat_ketentuan)) !!}</div>
+                                {{ $quotation->syarat_ketentuan }}</div>
                         @else
                             <div style="font-size: 9px; line-height: 1.4;">
                                 1. Penawaran berlaku sesuai periode yang tertera<br>

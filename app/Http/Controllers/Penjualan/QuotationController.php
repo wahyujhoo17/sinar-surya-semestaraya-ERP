@@ -10,6 +10,8 @@ use App\Models\Produk;
 use App\Models\ProductBundle;
 use App\Models\Satuan;
 use App\Models\LogAktivitas;
+use App\Models\Notification;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -455,6 +457,8 @@ class QuotationController extends Controller
             ]);
 
             DB::commit();
+
+            $this->notifyQuotationCreated($quotation, Auth::user());
 
             return redirect()->route('penjualan.quotation.index')
                 ->with('success', 'Quotation berhasil dibuat');
@@ -997,7 +1001,7 @@ class QuotationController extends Controller
             // Log PDF generation start for debugging
             Log::info("PDF generation started for quotation ID: {$id}, template: {$template}");
 
-            $quotation = Quotation::with(['customer', 'user', 'details.produk', 'details.satuan', 'details.bundle'])
+            $quotation = Quotation::with(['customer.sales.karyawan', 'user.karyawan', 'details.produk', 'details.satuan', 'details.bundle'])
                 ->findOrFail($id);
 
             // Generate WhatsApp QR Code for creator signature
@@ -1121,5 +1125,35 @@ class QuotationController extends Controller
             'last_page' => $quotations->lastPage(),
             'total' => $quotations->total(),
         ]);
+    }
+
+    private function notifyQuotationCreated(Quotation $quotation, $createdBy): void
+    {
+        try {
+            $roles = ['admin', 'manager_penjualan', 'admin_penjualan'];
+
+            $users = User::whereHas('roles', function ($query) use ($roles) {
+                $query->whereIn('kode', $roles);
+            })->where('is_active', true)->get();
+
+            $customerName = $quotation->customer->company ?? $quotation->customer->nama ?? 'Customer';
+            $creatorName = $createdBy->name ?? 'System';
+            $title = 'Quotation Baru';
+            $message = "Quotation #{$quotation->nomor} dibuat untuk {$customerName} dengan total Rp "
+                . number_format($quotation->total, 0, ',', '.') . " oleh {$creatorName}";
+
+            foreach ($users as $user) {
+                Notification::create([
+                    'user_id' => $user->id,
+                    'title' => $title,
+                    'message' => $message,
+                    'type' => 'info',
+                    'link' => route('penjualan.quotation.show', $quotation->id),
+                    'read_at' => null,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Gagal mengirim notifikasi quotation baru: ' . $e->getMessage());
+        }
     }
 }

@@ -370,13 +370,11 @@
                                 <span
                                     style="color: #374151;">{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</span>
                             </div>
-                            @if (isset($quotation->status) && $quotation->status !== 'draft')
-                                <div>
-                                    <span style="font-weight: 600; color: #1f2937;">Status:</span>
-                                    <span
-                                        style="color: var(--hcb-green); font-weight: 700; text-transform: uppercase; background-color: #f0fdf4; padding: 2px 6px; border-radius: 3px; font-size: 9px;">{{ $quotation->status }}</span>
-                                </div>
-                            @endif
+                            <div>
+                                <span style="font-weight: 600; color: #1f2937;">Customer:</span>
+                                <span
+                                    style="color: var(--hcb-green); font-weight: 700;">{{ $quotation->customer->company ?? $quotation->customer->nama }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -429,13 +427,13 @@
                             @endif
                             <br>
                         @endif
-                        @if ($quotation->customer->sales)
+                        @if ($quotation->customer->sales && $quotation->customer->sales->karyawan)
                             <br><strong>Sales Person:</strong><br>
-                            {{ $quotation->customer->sales->name }}
-                            @if ($quotation->customer->sales->email)
-                                <br>{{ $quotation->customer->sales->email }}
+                            {{ $quotation->customer->sales->karyawan->nama_lengkap }}
+                            @if ($quotation->customer->sales->karyawan->email)
+                                <br>{{ $quotation->customer->sales->karyawan->email }}
                             @endif
-                            @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
+                            @if ($quotation->customer->sales->karyawan->telepon)
                                 <br>{{ $quotation->customer->sales->karyawan->telepon }}
                             @endif
                         @endif
@@ -678,16 +676,15 @@
         @endif
 
         <!-- Terms and Conditions -->
-        <div
-            style="margin-bottom: 30px; margin-top: {{ $quotation->catatan ? '25px' : '40px' }}; page-break-inside: avoid; clear: both;">
+        <div style="margin: 10px 0 16px 0; page-break-inside: avoid; clear: both;">
             <div
-                style="font-weight: 600; font-size: 11px; color: var(--hcb-blue); margin-bottom: 8px; padding: 4px 0; border-bottom: 1px solid #e5e7eb;">
+                style="font-weight: 600; font-size: 11px; color: var(--hcb-blue); margin-bottom: 5px; padding: 2px 0; border-bottom: 1px solid #e5e7eb;">
                 SYARAT & KETENTUAN
             </div>
-            <div style="padding: 5px 0;">
+            <div style="padding: 2px 0;">
                 @if ($quotation->syarat_ketentuan)
                     <div style="color: #374151; font-size: 9px; line-height: 1.4; white-space: pre-line;">
-                        {!! nl2br(e($quotation->syarat_ketentuan)) !!}
+                        {{ $quotation->syarat_ketentuan }}
                     </div>
                 @else
                     <div style="color: #374151; font-size: 9px; line-height: 1.4;">

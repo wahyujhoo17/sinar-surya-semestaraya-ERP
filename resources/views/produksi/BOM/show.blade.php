@@ -319,7 +319,8 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            <template x-for="item in data.breakdown" :key="item.komponen_id">
+                            <template x-for="(item, index) in data.breakdown"
+                                :key="`${item.komponen_id ?? 'component'}-${index}`">
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                         <span x-text="item.komponen_nama"></span>
