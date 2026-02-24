@@ -634,10 +634,10 @@
                                     <dd class="col-span-2">
                                         @if ($quotation->customer->sales)
                                             <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                {{ $quotation->customer->sales->name }}
+                                                {{ $quotation->customer->sales->karyawan->nama_lengkap ?? $quotation->customer->sales->name }}
                                             </div>
                                             <div class="mt-2 space-y-1.5">
-                                                @if ($quotation->customer->sales->email)
+                                                @if ($quotation->customer->sales->karyawan->email || $quotation->customer->sales->email)
                                                     <div
                                                         class="flex items-center text-xs text-gray-600 dark:text-gray-400">
                                                         <svg xmlns="http://www.w3.org/2000/svg"
@@ -647,7 +647,7 @@
                                                                 stroke-width="2"
                                                                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                                         </svg>
-                                                        {{ $quotation->customer->sales->email }}
+                                                        {{ $quotation->customer->sales->karyawan->email ?? $quotation->customer->sales->email }}
                                                     </div>
                                                 @endif
                                                 @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
