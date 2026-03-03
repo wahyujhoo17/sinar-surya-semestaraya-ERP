@@ -31,6 +31,8 @@
             errors: {},
             availableAccounts: [],
             contraAccounts: [],
+            contraAccountSearch: '',
+            isContraDropdownOpen: false,
             selectedAccount: null,
             journalPreview: [],
 
@@ -89,6 +91,8 @@
                 this.errors = {};
                 this.availableAccounts = [];
                 this.contraAccounts = [];
+                this.contraAccountSearch = '';
+                this.isContraDropdownOpen = false;
                 this.selectedAccount = null;
                 this.journalPreview = [];
                 this.showJournalPreview = false;
@@ -97,6 +101,8 @@
 
             async handleJenisChange() {
                 this.formData.contra_account_id = '';
+                this.contraAccountSearch = '';
+                this.isContraDropdownOpen = false;
                 this.updateJournalPreview();
                 await this.loadContraAccounts();
             },
@@ -209,6 +215,32 @@
 
                 // console.log('Filtered contra accounts:', filtered);
                 return filtered;
+            },
+
+            get searchedContraAccounts() {
+                const keyword = this.contraAccountSearch.toLowerCase().trim();
+                if (!keyword) {
+                    return this.filteredContraAccounts;
+                }
+
+                return this.filteredContraAccounts.filter(account => {
+                    const kode = (account.kode || '').toLowerCase();
+                    const nama = (account.nama || '').toLowerCase();
+                    return kode.includes(keyword) || nama.includes(keyword);
+                });
+            },
+
+            selectContraAccount(account) {
+                this.formData.contra_account_id = String(account.id);
+                this.contraAccountSearch = `${account.kode} - ${account.nama}`;
+                this.isContraDropdownOpen = false;
+                this.updateJournalPreview();
+            },
+
+            clearContraAccountSelection() {
+                this.formData.contra_account_id = '';
+                this.contraAccountSearch = '';
+                this.updateJournalPreview();
             },
 
             updateJournalPreview() {
@@ -619,15 +651,48 @@
                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Akun Lawan Transaksi <span class="text-red-500">*</span>
                             </label>
-                            <select name="contra_account_id" id="contra_account_id"
-                                x-model="formData.contra_account_id" required @change="updateJournalPreview()"
-                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
-                                <option value="">Pilih Akun</option>
-                                <template x-for="account in filteredContraAccounts" :key="account.id">
-                                    <option :value="account.id" x-text="account.kode + ' - ' + account.nama">
-                                    </option>
-                                </template>
-                            </select>
+                            <div class="relative" @click.away="isContraDropdownOpen = false">
+                                <input type="hidden" name="contra_account_id" x-model="formData.contra_account_id"
+                                    required>
+                                <input type="text" id="contra_account_id" x-model="contraAccountSearch"
+                                    @focus="isContraDropdownOpen = true"
+                                    @input="if (!contraAccountSearch) clearContraAccountSelection(); isContraDropdownOpen = true"
+                                    placeholder="Cari akun (kode / nama)..."
+                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm">
+
+                                <button type="button" x-show="formData.contra_account_id"
+                                    @click="clearContraAccountSelection(); isContraDropdownOpen = true"
+                                    class="absolute inset-y-0 right-8 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+
+                                <button type="button" @click="isContraDropdownOpen = !isContraDropdownOpen"
+                                    class="absolute inset-y-0 right-2 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+
+                                <div x-show="isContraDropdownOpen"
+                                    class="absolute z-30 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 shadow-lg">
+                                    <template x-if="searchedContraAccounts.length === 0">
+                                        <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-300">Akun tidak
+                                            ditemukan</div>
+                                    </template>
+                                    <template x-for="account in searchedContraAccounts" :key="account.id">
+                                        <button type="button" @click="selectContraAccount(account)"
+                                            class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600"
+                                            :class="{ 'bg-primary-50 dark:bg-primary-900/20': String(formData
+                                                    .contra_account_id) === String(account.id) }"
+                                            x-text="account.kode + ' - ' + account.nama">
+                                        </button>
+                                    </template>
+                                </div>
+                            </div>
                             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                 <span x-show="formData.jenis === 'masuk'">Pilih akun sumber penerimaan (misal:
                                     Pendapatan Penjualan, Piutang Usaha, dll)</span>

@@ -1059,7 +1059,7 @@ class KasDanBankController extends Controller
                     'kode' => ($request->account_type === 'kas' ? '1110' : '1120') . str_pad($account->id, 3, '0', STR_PAD_LEFT),
                     'nama' => $request->account_type === 'kas' ? $account->nama : $account->nama_bank . ' - ' . $account->nomor_rekening,
                     'kategori' => 'asset',
-                    'tipe' => 'current',
+                    'tipe' => 'detail',
                     'is_active' => true,
                     'ref_type' => get_class($account),
                     'ref_id' => $account->id,
