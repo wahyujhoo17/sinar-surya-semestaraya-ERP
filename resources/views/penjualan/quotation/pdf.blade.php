@@ -219,8 +219,10 @@
                 <div>
                     <strong>Nomor:</strong> {{ $quotation->nomor }}<br>
                     <strong>Tanggal:</strong> {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}<br>
-                    <strong>Customer:</strong>
-                    <span>{{ $quotation->customer->company ?? $quotation->customer->nama }}</span>
+                    @if ($quotation->customer->kontak_person)
+                        <strong>Kontak Person:</strong>
+                        <span>{{ $quotation->customer->kontak_person }}</span>
+                    @endif
                     <p></p>
                 </div>
             </td>

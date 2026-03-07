@@ -370,11 +370,13 @@
                                 <span
                                     style="color: #374151;">{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</span>
                             </div>
-                            <div>
-                                <span style="font-weight: 600; color: #1f2937;">Customer:</span>
-                                <span
-                                    style="color: var(--hcb-green); font-weight: 700;">{{ $quotation->customer->company ?? $quotation->customer->nama }}</span>
-                            </div>
+                            @if ($quotation->customer->kontak_person)
+                                <div>
+                                    <span style="font-weight: 600; color: #1f2937;">Kontak Person:</span>
+                                    <span
+                                        style="color: var(--hcb-green); font-weight: 700;">{{ $quotation->customer->kontak_person }}</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

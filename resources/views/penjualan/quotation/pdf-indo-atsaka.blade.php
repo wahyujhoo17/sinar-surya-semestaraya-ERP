@@ -654,9 +654,11 @@
                             <div>Tanggal:
                                 <strong>{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</strong>
                             </div>
-                            <div>Customer:
-                                <strong>{{ $quotation->customer->company ?? $quotation->customer->nama }}</strong>
-                            </div>
+                            @if ($quotation->customer->kontak_person)
+                                <div>Kontak Person:
+                                    <strong>{{ $quotation->customer->kontak_person }}</strong>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
