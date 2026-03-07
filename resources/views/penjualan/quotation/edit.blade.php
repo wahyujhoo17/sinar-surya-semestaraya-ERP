@@ -1187,6 +1187,12 @@
                                     bundleItem.bundle_diskon_persen = bundleDiskonPersen;
                                     bundleItem.additional_diskon_persen = additionalDiscount;
 
+                                    // Set base_quantity so updateBundleCalculations can correctly
+                                    // scale child quantities when bundle header qty changes.
+                                    // base_quantity = qty per 1 bundle unit.
+                                    bundleItem.base_quantity = (parseFloat(bundleItem.kuantitas) || 1) / (
+                                        bundleQuantity || 1);
+
                                     // Push item first, then calculate
                                     this.items.push(bundleItem);
                                 });
@@ -1759,8 +1765,9 @@
                         this.items.forEach((bundleItem, itemIndex) => {
                             if (bundleItem.is_bundle_item && bundleItem.bundle_id === bundleId) {
                                 // Update bundle item quantity (base quantity * bundle quantity)
-                                const baseQuantity = parseFloat(bundleItem.base_quantity) || parseFloat(bundleItem
-                                    .kuantitas) || 1;
+                                // base_quantity is qty per 1 bundle unit — never fall back to kuantitas
+                                // (which is already the multiplied value and would double on each edit)
+                                const baseQuantity = parseFloat(bundleItem.base_quantity) || 1;
                                 bundleItem.kuantitas = baseQuantity * bundleQuantity;
 
                                 // Set bundle discount

@@ -190,7 +190,7 @@
         </style>
     @endpush
 
-    <div class="py-8 max-w-full mx-auto sm:px-6 lg:px-8" x-data="$store.salesOrderEditForm" x-init="init()">>
+    <div class="py-8 max-w-full mx-auto sm:px-6 lg:px-8" x-data="$store.salesOrderEditForm" x-init="init()">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 mb-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
@@ -281,8 +281,7 @@
                             <label for="quotation_id" class="text-gray-700 dark:text-gray-300">Berdasarkan
                                 Quotation</label>
                             <select name="quotation_id" id="quotation_id"
-                                class="quotation-select mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white"
-                                @change="loadQuotationData()">
+                                class="quotation-select mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm dark:text-white">
                                 <option value="">Pilih Quotation (Opsional)</option>
                                 @if ($salesOrder->quotation)
                                     <option value="{{ $salesOrder->quotation->id }}" selected>
@@ -740,28 +739,6 @@
                                     </div> <!-- End Template Item Container -->
                                 </template>
                             </div>
-
-                            <!-- Action buttons at the bottom of items list -->
-                            <div x-show="items.length > 0" class="mt-4 flex justify-center gap-3">
-                                <button type="button" @click="addItem"
-                                    class="inline-flex items-center gap-2 px-4 py-2.5 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-lg text-sm font-medium text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 transition-all duration-200 shadow-sm hover:shadow-md">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    Tambah Item
-                                </button>
-                                <button type="button" @click="showBundleModal = true"
-                                    class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M20 7l-8-4-8 4m16 0l-8 4m-8-4l8 4m8 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                    </svg>
-                                    Tambah Bundle
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1040,12 +1017,12 @@
             Alpine.store('salesOrderEditForm', {
                 // Data
                 customer_id: '{{ $salesOrder->customer_id }}',
-                tanggal: '{{ Carbon\Carbon::parse($salesOrder->tanggal)->format('Y-m-d') }}',
-                tanggal_kirim: '{{ Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('Y-m-d') }}',
-                keterangan: '{{ addslashes($salesOrder->keterangan) }}',
-                catatan: '{{ addslashes($salesOrder->catatan) }}',
-                alamat_pengiriman: '{{ addslashes($salesOrder->alamat_pengiriman) }}',
-                syarat_ketentuan: '{{ addslashes($salesOrder->syarat_ketentuan) }}',
+                tanggal: '{{ $salesOrder->tanggal ? \Carbon\Carbon::parse($salesOrder->tanggal)->format('Y-m-d') : '' }}',
+                tanggal_kirim: '{{ $salesOrder->tanggal_kirim ? \Carbon\Carbon::parse($salesOrder->tanggal_kirim)->format('Y-m-d') : '' }}',
+                keterangan: @json($salesOrder->keterangan ?? ''),
+                catatan: @json($salesOrder->catatan ?? ''),
+                alamat_pengiriman: @json($salesOrder->alamat_pengiriman ?? ''),
+                syarat_ketentuan: @json($salesOrder->syarat_ketentuan ?? ''),
                 status_pembayaran: '{{ $salesOrder->status_pembayaran }}',
                 status_pengiriman: '{{ $salesOrder->status_pengiriman }}',
                 status: '{{ $salesOrder->status }}',
@@ -1054,10 +1031,10 @@
                 items: [],
 
                 // Calculations
-                diskonGlobalPersen: {{ $salesOrder->diskon_global_persen ?? 0 }},
-                diskonGlobalNominal: {{ $salesOrder->diskon_global_nominal ?? 0 }},
+                diskonGlobalPersen: {{ $salesOrder->diskon_persen ?? 0 }},
+                diskonGlobalNominal: {{ $salesOrder->diskon_nominal ?? 0 }},
                 ongkosKirim: {{ $salesOrder->ongkos_kirim ?? 0 }},
-                includePPN: {{ $salesOrder->include_ppn ? 'true' : 'false' }},
+                includePPN: {{ ($salesOrder->ppn ?? 0) > 0 ? 'true' : 'false' }},
 
                 // Bundle modal
                 showBundleModal: false,
@@ -1117,7 +1094,7 @@
                         const item{{ $index }} = {
                             id: {{ $detail->id }},
                             produk_id: '{{ $detail->produk_id }}',
-                            deskripsi: '{{ addslashes($detail->deskripsi) }}',
+                            deskripsi: @json($detail->deskripsi ?? ''),
                             kuantitas: {{ $detail->quantity }},
                             satuan_id: '{{ $detail->satuan_id }}',
                             harga: {{ $detail->harga }},
@@ -1128,37 +1105,40 @@
                                 is_bundle_item: true,
                                 is_bundle: false,
                                 @if ($detail->produk)
-                                    nama: '{{ addslashes($detail->produk->nama) }}',
+                                    nama: @json($detail->produk->nama ?? ''),
                                     kode: '{{ $detail->produk->kode }}',
-                                    produk_nama: '{{ addslashes($detail->produk->nama) }}',
+                                    produk_nama: @json($detail->produk->nama ?? ''),
                                     produk_kode: '{{ $detail->produk->kode }}',
                                 @endif
                                 @if ($detail->satuan)
-                                    satuan_nama: '{{ $detail->satuan->nama }}',
+                                    satuan_nama: @json($detail->satuan->nama ?? ''),
                                 @endif
                                 @if ($detail->bundle)
-                                    bundle_name: '{{ addslashes($detail->bundle->nama) }}',
+                                    bundle_name: @json($detail->bundle->nama ?? ''),
                                     bundle_code: '{{ $detail->bundle->kode }}',
                                 @endif
                                 // Clean description from bundle prefix if exists
-                                deskripsi_clean: '{{ addslashes(preg_replace('/^└─\s*/', '', preg_replace('/\s*\(dari bundle.*\)$/', '', $detail->deskripsi))) }}',
+                                @php
+                                    $deskripsiClean = preg_replace('/^└─\s*/', '', preg_replace('/\s*\(dari bundle.*\)$/', '', $detail->deskripsi ?? ''));
+                                @endphp
+                                deskripsi_clean: @json($deskripsiClean),
                             @elseif ($detail->bundle_id && !$detail->is_bundle_item)
                                 bundle_id: {{ $detail->bundle_id }},
                                     is_bundle: true,
                                     is_bundle_item: false,
                                     @if ($detail->bundle)
-                                        bundle_name: '{{ addslashes($detail->bundle->nama) }}',
+                                        bundle_name: @json($detail->bundle->nama ?? ''),
                                         bundle_code: '{{ $detail->bundle->kode }}',
                                     @endif
                             @else
                                 is_bundle: false,
                                 is_bundle_item: false,
                                 @if ($detail->produk)
-                                    produk_nama: '{{ addslashes($detail->produk->nama) }}',
+                                    produk_nama: @json($detail->produk->nama ?? ''),
                                     produk_kode: '{{ $detail->produk->kode }}',
                                 @endif
                                 @if ($detail->satuan)
-                                    satuan_nama: '{{ $detail->satuan->nama }}',
+                                    satuan_nama: @json($detail->satuan->nama ?? ''),
                                 @endif
                             @endif
                         };
@@ -2042,6 +2022,111 @@
                     return formatter.format(roundedAmount);
                 },
 
+                loadQuotationData() {
+                    const quotationId = document.getElementById('quotation_id').value;
+                    const self = this;
+
+                    if (!quotationId) {
+                        // Don't reset form when clearing quotation during edit
+                        return;
+                    }
+
+                    const url = `/penjualan/sales-order/get-quotation-data/${quotationId}`;
+
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.success === true && data.data && typeof data.data === 'object') {
+                                const quotation = data.data;
+
+                                // Update customer
+                                if (quotation.customer_id) {
+                                    self.customer_id = parseInt(quotation.customer_id);
+                                    self.$nextTick(() => {
+                                        if (typeof $ !== 'undefined' && $('#customer_id').hasClass('select2-hidden-accessible')) {
+                                            $('#customer_id').val(self.customer_id).trigger('change.select2');
+                                        } else {
+                                            $('#customer_id').val(self.customer_id).trigger('change');
+                                        }
+                                    });
+                                }
+
+                                // Update shipping address from quotation's customer
+                                self.alamat_pengiriman = (quotation.customer && quotation.customer.alamat_pengiriman)
+                                    ? quotation.customer.alamat_pengiriman : '';
+
+                                // Update syarat_ketentuan
+                                self.syarat_ketentuan = quotation.syarat_ketentuan || '';
+
+                                // Update items from quotation
+                                self.items = [];
+                                if (quotation.details && Array.isArray(quotation.details) && quotation.details.length > 0) {
+                                    quotation.details.forEach((detail) => {
+                                        if (typeof detail !== 'object' || detail === null) return;
+
+                                        const produkId = detail.produk_id ? parseInt(detail.produk_id) : '';
+                                        const satuanId = detail.satuan_id ? parseInt(detail.satuan_id) : '';
+                                        const harga = parseFloat(detail.harga) || 0;
+                                        const kuantitas = parseFloat(detail.quantity) || 1;
+                                        const diskonPersen = parseFloat(detail.diskon_persen) || 0;
+                                        const itemSubtotal = parseFloat(detail.subtotal) || ((harga * kuantitas) * (1 - (diskonPersen / 100)));
+
+                                        const newItem = {
+                                            id: Date.now() + Math.random(),
+                                            produk_id: produkId,
+                                            deskripsi: detail.deskripsi || '',
+                                            kuantitas: kuantitas,
+                                            satuan_id: satuanId,
+                                            harga: harga,
+                                            diskon_persen: diskonPersen,
+                                            subtotal: itemSubtotal,
+                                            bundle_id: detail.bundle_id || null,
+                                            item_type: detail.item_type || 'regular',
+                                            is_bundle: (detail.item_type === 'bundle' || (detail.bundle_id && detail.is_bundle_item !== 1)),
+                                            is_bundle_item: (detail.is_bundle_item === 1 || detail.item_type === 'bundle_item'),
+                                            bundle_name: (detail.bundle && detail.bundle.nama) || detail.bundle_name || '',
+                                            bundle_code: (detail.bundle && detail.bundle.kode) || detail.bundle_code || '',
+                                            base_quantity: detail.base_quantity || kuantitas,
+                                            readonly: (detail.is_bundle_item === 1 || detail.item_type === 'bundle_item'),
+                                            nama: detail.produk ? detail.produk.nama : '',
+                                            kode: detail.produk ? detail.produk.kode : '',
+                                            satuan_nama: detail.satuan ? detail.satuan.nama : ''
+                                        };
+
+                                        self.items.push(newItem);
+                                    });
+                                }
+
+                                // Update discount and other fields
+                                self.diskonGlobalPersen = parseFloat(quotation.diskon_persen) || 0;
+                                self.diskonGlobalNominal = parseFloat(quotation.diskon_nominal) || 0;
+                                self.ongkosKirim = parseFloat(quotation.ongkos_kirim) || 0;
+                                if (quotation.ppn !== undefined && quotation.ppn !== null) {
+                                    self.includePPN = quotation.ppn > 0;
+                                }
+
+                                self.$nextTick(() => {
+                                    setTimeout(() => {
+                                        if (typeof self.initializeSelectsForExistingItems === 'function') {
+                                            self.initializeSelectsForExistingItems();
+                                        }
+                                        if (typeof self.calculateTotal === 'function') {
+                                            self.calculateTotal();
+                                        }
+                                    }, 200);
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading quotation data:', error);
+                        });
+                },
+
                 validateForm(event) {
                     // Check if there are any items (bundle or regular)
                     if (this.items.length === 0) {
@@ -2111,6 +2196,84 @@
 
         <script>
             $(document).ready(function() {
+                const alpineStore = () => Alpine.store('salesOrderEditForm');
+
+                // Initialize Select2 for customer
+                $('#customer_id').select2({
+                    placeholder: 'Pilih Customer',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                // Set the current customer value
+                const currentCustomerId = '{{ $salesOrder->customer_id }}';
+                if (currentCustomerId) {
+                    $('#customer_id').val(currentCustomerId).trigger('change.select2');
+                }
+
+                // Sync customer select changes to Alpine store
+                $('#customer_id').on('change', function(e) {
+                    const store = alpineStore();
+                    if (store) {
+                        const newVal = $(this).val() ? parseInt($(this).val()) : '';
+                        if (String(store.customer_id) !== String(newVal)) {
+                            store.customer_id = newVal;
+                        }
+                    }
+                });
+
+                // Initialize Select2 for quotation
+                $('#quotation_id').select2({
+                    placeholder: 'Pilih Quotation (Opsional)',
+                    allowClear: true,
+                    width: '100%',
+                    ajax: {
+                        url: '{{ route('penjualan.api.quotations') }}',
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                search: params.term || '',
+                                page: params.page || 1,
+                                status: 'disetujui'
+                            };
+                        },
+                        processResults: function(data, params) {
+                            params.page = params.page || 1;
+                            const results = data.data.map(q => {
+                                let customerName = 'N/A';
+                                if (q.customer) {
+                                    customerName = q.customer.nama || q.customer.company || 'Customer';
+                                }
+                                return {
+                                    id: q.id,
+                                    text: `${q.nomor} - ${customerName}`
+                                };
+                            });
+                            return {
+                                results: results,
+                                pagination: {
+                                    more: data.current_page < data.last_page
+                                }
+                            };
+                        },
+                        cache: true
+                    }
+                });
+
+                // Set the current quotation value without triggering loadQuotationData on init
+                @if ($salesOrder->quotation)
+                    $('#quotation_id').val('{{ $salesOrder->quotation->id }}').trigger('change.select2');
+                @endif
+
+                // When user changes quotation, call loadQuotationData via Alpine store
+                $('#quotation_id').on('select2:select select2:clear', function(e) {
+                    const store = alpineStore();
+                    if (store && typeof store.loadQuotationData === 'function') {
+                        store.loadQuotationData();
+                    }
+                });
+
                 // Handle terms pembayaran changes
                 $('#terms_pembayaran').change(function() {
                     const selectedTerms = $(this).val();
