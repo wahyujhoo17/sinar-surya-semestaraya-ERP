@@ -655,7 +655,7 @@
                                 <strong>{{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</strong>
                             </div>
                             @if ($quotation->customer->kontak_person)
-                                <div>Kontak Person:
+                                <div>Kepada:
                                     <strong>{{ $quotation->customer->kontak_person }}</strong>
                                 </div>
                             @endif

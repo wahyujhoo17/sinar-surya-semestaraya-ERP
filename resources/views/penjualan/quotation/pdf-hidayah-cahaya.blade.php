@@ -372,7 +372,7 @@
                             </div>
                             @if ($quotation->customer->kontak_person)
                                 <div>
-                                    <span style="font-weight: 600; color: #1f2937;">Kontak Person:</span>
+                                    <span style="font-weight: 600; color: #1f2937;">Kepada:</span>
                                     <span
                                         style="color: var(--hcb-green); font-weight: 700;">{{ $quotation->customer->kontak_person }}</span>
                                 </div>
