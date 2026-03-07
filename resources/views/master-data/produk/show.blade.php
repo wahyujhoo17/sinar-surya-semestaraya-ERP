@@ -157,13 +157,15 @@
                                     class="py-4 px-1 font-medium text-sm border-b-2 whitespace-nowrap">
                                     Spesifikasi
                                 </button>
-                                <button @click="activeTab = 'pricing'"
-                                    :class="activeTab === 'pricing' ?
-                                        'border-primary-500 text-primary-600 dark:text-primary-400' :
-                                        'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
-                                    class="py-4 px-1 font-medium text-sm border-b-2 whitespace-nowrap">
-                                    Harga & Margin
-                                </button>
+                                @if (auth()->user()->hasPermission('produk.lihat_harga'))
+                                    <button @click="activeTab = 'pricing'"
+                                        :class="activeTab === 'pricing' ?
+                                            'border-primary-500 text-primary-600 dark:text-primary-400' :
+                                            'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'"
+                                        class="py-4 px-1 font-medium text-sm border-b-2 whitespace-nowrap">
+                                        Harga & Margin
+                                    </button>
+                                @endif
                                 <button @click="activeTab = 'stock'"
                                     :class="activeTab === 'stock' ?
                                         'border-primary-500 text-primary-600 dark:text-primary-400' :
@@ -303,145 +305,150 @@
                             </div>
 
                             <!-- Pricing Tab -->
-                            <div x-show="activeTab === 'pricing'">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <!-- Price Card -->
-                                    <div
-                                        class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                        <div class="px-4 py-5 sm:p-6">
-                                            <div class="flex flex-col">
-                                                <h3
-                                                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                                                    Informasi Harga</h3>
+                            @if (auth()->user()->hasPermission('produk.lihat_harga'))
+                                <div x-show="activeTab === 'pricing'">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <!-- Price Card -->
+                                        <div
+                                            class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                            <div class="px-4 py-5 sm:p-6">
+                                                <div class="flex flex-col">
+                                                    <h3
+                                                        class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                                        Informasi Harga</h3>
 
-                                                <div class="mt-5 grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <p
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                            Harga Beli</p>
-                                                        <p
-                                                            class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                                                            {{ 'Rp ' . number_format($produk->harga_beli, 0, ',', '.') }}
-                                                        </p>
-                                                    </div>
+                                                    <div class="mt-5 grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                                Harga Beli</p>
+                                                            <p
+                                                                class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+                                                                {{ 'Rp ' . number_format($produk->harga_beli, 0, ',', '.') }}
+                                                            </p>
+                                                        </div>
 
-                                                    <div>
-                                                        <p
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                            Harga Jual</p>
-                                                        <p
-                                                            class="mt-1 text-2xl font-semibold text-primary-600 dark:text-primary-400">
-                                                            {{ 'Rp ' . number_format($produk->harga_jual, 0, ',', '.') }}
-                                                        </p>
+                                                        <div>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                                Harga Jual</p>
+                                                            <p
+                                                                class="mt-1 text-2xl font-semibold text-primary-600 dark:text-primary-400">
+                                                                {{ 'Rp ' . number_format($produk->harga_jual, 0, ',', '.') }}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Margin Card -->
-                                    <div
-                                        class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                        <div class="px-4 py-5 sm:p-6">
-                                            <div class="flex flex-col">
-                                                <h3
-                                                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                                                    Margin Keuntungan</h3>
+                                        <!-- Margin Card -->
+                                        <div
+                                            class="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                            <div class="px-4 py-5 sm:p-6">
+                                                <div class="flex flex-col">
+                                                    <h3
+                                                        class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                                                        Margin Keuntungan</h3>
 
-                                                <div class="mt-5 grid grid-cols-2 gap-4">
-                                                    <div>
-                                                        <p
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                            Margin (%)</p>
-                                                        <p class="mt-1 flex items-center">
-                                                            <span
-                                                                class="text-2xl font-semibold 
+                                                    <div class="mt-5 grid grid-cols-2 gap-4">
+                                                        <div>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                                Margin (%)</p>
+                                                            <p class="mt-1 flex items-center">
+                                                                <span
+                                                                    class="text-2xl font-semibold 
                                                                 {{ $margin >= 30
                                                                     ? 'text-green-600 dark:text-green-400'
                                                                     : ($margin >= 15
                                                                         ? 'text-blue-600 dark:text-blue-400'
                                                                         : 'text-yellow-600 dark:text-yellow-400') }}">
-                                                                {{ number_format($margin, 1) }}%
-                                                            </span>
-                                                        </p>
-                                                    </div>
+                                                                    {{ number_format($margin, 1) }}%
+                                                                </span>
+                                                            </p>
+                                                        </div>
 
-                                                    <div>
-                                                        <p
-                                                            class="text-sm font-medium text-gray-500 dark:text-gray-400">
-                                                            Keuntungan</p>
-                                                        <p
-                                                            class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
-                                                            {{ 'Rp ' . number_format($produk->harga_jual - $produk->harga_beli, 0, ',', '.') }}
-                                                        </p>
+                                                        <div>
+                                                            <p
+                                                                class="text-sm font-medium text-gray-500 dark:text-gray-400">
+                                                                Keuntungan</p>
+                                                            <p
+                                                                class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+                                                                {{ 'Rp ' . number_format($produk->harga_jual - $produk->harga_beli, 0, ',', '.') }}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Profit Analysis -->
-                                    <div
-                                        class="sm:col-span-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                                        <div class="px-4 py-5 sm:p-6">
-                                            <h3
-                                                class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
-                                                Analisis Harga</h3>
+                                        <!-- Profit Analysis -->
+                                        <div
+                                            class="sm:col-span-2 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                            <div class="px-4 py-5 sm:p-6">
+                                                <h3
+                                                    class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                                                    Analisis Harga</h3>
 
-                                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4">
-                                                <div class="bg-primary-600 h-4 rounded-full"
-                                                    style="width: {{ min(100, $margin) }}%"></div>
-                                            </div>
-
-                                            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
-                                                <div>Risiko Kerugian</div>
-                                                <div>Margin Rendah</div>
-                                                <div>Margin Ideal</div>
-                                                <div>Margin Tinggi</div>
-                                            </div>
-
-                                            <div class="mt-4 flex items-center justify-between text-sm">
-                                                <div class="text-gray-600 dark:text-gray-300">
-                                                    <span class="font-medium">Evaluasi: </span>
-                                                    @if ($margin <= 0)
-                                                        <span
-                                                            class="text-red-600 dark:text-red-400 font-medium">Kerugian</span>
-                                                    @elseif($margin < 15)
-                                                        <span
-                                                            class="text-yellow-600 dark:text-yellow-400 font-medium">Margin
-                                                            Rendah</span>
-                                                    @elseif($margin < 30)
-                                                        <span
-                                                            class="text-blue-600 dark:text-blue-400 font-medium">Margin
-                                                            Normal</span>
-                                                    @else
-                                                        <span
-                                                            class="text-green-600 dark:text-green-400 font-medium">Margin
-                                                            Tinggi</span>
-                                                    @endif
+                                                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-4">
+                                                    <div class="bg-primary-600 h-4 rounded-full"
+                                                        style="width: {{ min(100, $margin) }}%"></div>
                                                 </div>
-                                                <div class="text-gray-700 dark:text-gray-300">
-                                                    <span class="font-medium">Rekomendasi: </span>
-                                                    @if ($margin <= 0)
-                                                        <span class="text-red-600 dark:text-red-400">Naikkan harga jual
-                                                            atau turunkan harga beli</span>
-                                                    @elseif($margin < 15)
-                                                        <span
-                                                            class="text-yellow-600 dark:text-yellow-400">Pertimbangkan
-                                                            untuk menaikkan harga jual</span>
-                                                    @elseif($margin < 30)
-                                                        <span class="text-blue-600 dark:text-blue-400">Harga sudah
-                                                            cukup baik</span>
-                                                    @else
-                                                        <span class="text-green-600 dark:text-green-400">Margin sangat
-                                                            baik, pertahankan</span>
-                                                    @endif
+
+                                                <div
+                                                    class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                                                    <div>Risiko Kerugian</div>
+                                                    <div>Margin Rendah</div>
+                                                    <div>Margin Ideal</div>
+                                                    <div>Margin Tinggi</div>
+                                                </div>
+
+                                                <div class="mt-4 flex items-center justify-between text-sm">
+                                                    <div class="text-gray-600 dark:text-gray-300">
+                                                        <span class="font-medium">Evaluasi: </span>
+                                                        @if ($margin <= 0)
+                                                            <span
+                                                                class="text-red-600 dark:text-red-400 font-medium">Kerugian</span>
+                                                        @elseif($margin < 15)
+                                                            <span
+                                                                class="text-yellow-600 dark:text-yellow-400 font-medium">Margin
+                                                                Rendah</span>
+                                                        @elseif($margin < 30)
+                                                            <span
+                                                                class="text-blue-600 dark:text-blue-400 font-medium">Margin
+                                                                Normal</span>
+                                                        @else
+                                                            <span
+                                                                class="text-green-600 dark:text-green-400 font-medium">Margin
+                                                                Tinggi</span>
+                                                        @endif
+                                                    </div>
+                                                    <div class="text-gray-700 dark:text-gray-300">
+                                                        <span class="font-medium">Rekomendasi: </span>
+                                                        @if ($margin <= 0)
+                                                            <span class="text-red-600 dark:text-red-400">Naikkan harga
+                                                                jual
+                                                                atau turunkan harga beli</span>
+                                                        @elseif($margin < 15)
+                                                            <span
+                                                                class="text-yellow-600 dark:text-yellow-400">Pertimbangkan
+                                                                untuk menaikkan harga jual</span>
+                                                        @elseif($margin < 30)
+                                                            <span class="text-blue-600 dark:text-blue-400">Harga sudah
+                                                                cukup baik</span>
+                                                        @else
+                                                            <span class="text-green-600 dark:text-green-400">Margin
+                                                                sangat
+                                                                baik, pertahankan</span>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            @endif
 
                             <!-- Stock Tab -->
                             <div x-show="activeTab === 'stock'">

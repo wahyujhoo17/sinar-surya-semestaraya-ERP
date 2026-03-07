@@ -139,14 +139,14 @@
         @endif
 
         {{-- Harga Jual --}}
-        @if ($visibleColumns['harga_jual'] ?? true)
+        @if (auth()->user()->hasPermission('produk.lihat_harga') && ($visibleColumns['harga_jual'] ?? true))
             <td class="px-5 py-4 whitespace-nowrap text-right text-sm text-gray-800 dark:text-gray-300">
                 Rp {{ number_format($produk->harga_jual, 0, ',', '.') }}
             </td>
         @endif
 
         {{-- Harga Beli --}}
-        @if ($visibleColumns['harga_beli'] ?? false)
+        @if (auth()->user()->hasPermission('produk.lihat_harga') && ($visibleColumns['harga_beli'] ?? false))
             <td class="px-5 py-4 whitespace-nowrap text-right text-sm text-gray-600 dark:text-gray-400">
                 Rp {{ number_format($produk->harga_beli ?? 0, 0, ',', '.') }}
             </td>

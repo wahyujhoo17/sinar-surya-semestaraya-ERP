@@ -763,8 +763,10 @@
                     jenis: true,
                     stok: true, // Combined total_stok & stok_minimum
                     satuan: true,
-                    harga_jual: true,
-                    harga_beli: false, // Default hidden
+                    @if (auth()->user()->hasPermission('produk.lihat_harga'))
+                        harga_jual: true,
+                        harga_beli: false, // Default hidden
+                    @endif
                     merek: false, // Default hidden
                     sku: false, // product_sku, default hidden
                     ukuran: false, // Default hidden
