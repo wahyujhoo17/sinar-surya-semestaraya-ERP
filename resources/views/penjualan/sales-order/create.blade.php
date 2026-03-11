@@ -469,7 +469,7 @@
 
                         <div x-show="items.length > 0" class="overflow-x-auto">
                             <div class="space-y-4 mt-4" id="items-container">
-                                <template x-for="(item, index) in items" :key="index">
+                                <template x-for="(item, index) in items" :key="item.id">
                                     <div class="relative">
                                         <!-- BUNDLE HEADER - Simple & Clean -->
                                         <div x-show="item.is_bundle"
@@ -1444,6 +1444,7 @@
                         @if (old('items'))
                             @foreach (old('items') as $index => $item)
                                 this.items.push({
+                                    id: Date.now() + {{ $index }},
                                     produk_id: "{{ $item['produk_id'] }}" ? parseInt("{{ $item['produk_id'] }}") : '',
                                     deskripsi: "{{ addslashes($item['deskripsi'] ?? '') }}",
                                     kuantitas: parseFloat("{{ $item['kuantitas'] ?? 1 }}"),
@@ -1458,6 +1459,7 @@
                         @elseif ($quotation)
                             @foreach ($quotation->details as $detail)
                                 this.items.push({
+                                    id: Date.now() + {{ $loop->index }},
                                     produk_id: {{ $detail->produk_id ?: "''" }},
                                     deskripsi: "{{ addslashes($detail->deskripsi ?? '') }}",
                                     kuantitas: parseFloat("{{ $detail->quantity }}"),
@@ -2060,11 +2062,30 @@
                     removeItem(index) {
                         const item = this.items[index];
 
+                        // Destroy Select2 instances for the row being removed to avoid memory leaks
+                        const produkSelectToRemove = $(`select[name="items[${index}][produk_id]"]`);
+                        const satuanSelectToRemove = $(`select[name="items[${index}][satuan_id]"]`);
+                        if (produkSelectToRemove.hasClass('select2-hidden-accessible')) {
+                            produkSelectToRemove.select2('destroy');
+                        }
+                        if (satuanSelectToRemove.hasClass('select2-hidden-accessible')) {
+                            satuanSelectToRemove.select2('destroy');
+                        }
+
                         // If removing a bundle, also remove all its items
                         if (item.is_bundle) {
                             // Find and remove all bundle items that belong to this bundle
                             for (let i = this.items.length - 1; i >= 0; i--) {
                                 if (this.items[i].bundle_id === item.bundle_id && this.items[i].is_bundle_item) {
+                                    // Destroy Select2 for bundle child rows too
+                                    const bProdukSelect = $(`select[name="items[${i}][produk_id]"]`);
+                                    const bSatuanSelect = $(`select[name="items[${i}][satuan_id]"]`);
+                                    if (bProdukSelect.hasClass('select2-hidden-accessible')) {
+                                        bProdukSelect.select2('destroy');
+                                    }
+                                    if (bSatuanSelect.hasClass('select2-hidden-accessible')) {
+                                        bSatuanSelect.select2('destroy');
+                                    }
                                     this.items.splice(i, 1);
                                     // Adjust index if we removed items before current index
                                     if (i < index) {
@@ -2077,6 +2098,14 @@
                         // Remove the main item
                         this.items.splice(index, 1);
                         this.calculateTotal();
+
+                        // Re-initialize Select2 for all remaining rows since DOM indices have shifted
+                        const self = this;
+                        this.$nextTick(() => {
+                            if (typeof self.refreshItemSelects === 'function') {
+                                self.refreshItemSelects();
+                            }
+                        });
                     },
 
                     updateSubtotal(index) {
