@@ -1006,7 +1006,7 @@ class QuotationController extends Controller
 
             // Generate WhatsApp QR Code for creator signature
             $whatsappQR = null;
-            if ($quotation->user && $quotation->user->karyawan->telepon) {
+            if ($quotation->user && $quotation->user->karyawan && $quotation->user->karyawan->telepon) {
                 $whatsappQR = generateWhatsAppQRCode(
                     $quotation->user->karyawan->telepon,
                     'Quotation',
