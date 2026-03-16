@@ -630,23 +630,50 @@
         </div>
 
         <!-- Summary Section -->
+        @php
+            $pdfSubtotal = 0;
+            $processedBundleIds = [];
+            foreach ($quotation->details as $_d) {
+                if ($_d->bundle_id && $_d->is_bundle_item && !in_array($_d->bundle_id, $processedBundleIds)) {
+                    $processedBundleIds[] = $_d->bundle_id;
+                    $_bItems = $quotation->details->where('bundle_id', $_d->bundle_id)->where('is_bundle_item', true);
+                    $_bDef = $_d->bundle;
+                    if ($_bDef) {
+                        $_defItem = $_bDef->items->where('produk_id', $_d->produk_id)->first();
+                        $_bQty = ($_defItem && $_defItem->quantity > 0)
+                            ? max(1, round((float)$_d->quantity / (float)$_defItem->quantity))
+                            : 1;
+                        $pdfSubtotal += (float)$_bDef->harga_bundle * $_bQty;
+                    } else {
+                        $pdfSubtotal += $_bItems->sum('subtotal');
+                    }
+                } elseif (!$_d->bundle_id) {
+                    $pdfSubtotal += $_d->subtotal;
+                }
+            }
+            $pdfDiskonNominal = $quotation->diskon_persen > 0
+                ? ($quotation->diskon_persen / 100) * $pdfSubtotal
+                : $quotation->diskon_nominal;
+            $pdfAfterDiskon = $pdfSubtotal - $pdfDiskonNominal;
+            $pdfPpnValue    = $quotation->ppn > 0 ? ($quotation->ppn / 100) * $pdfAfterDiskon : 0;
+            $pdfTotal       = $pdfAfterDiskon + $pdfPpnValue + ($quotation->ongkos_kirim ?? 0);
+        @endphp
         <div class="total-summary clearfix">
             <div class="summary-section">
                 <div class="summary-item clearfix">
                     <span class="label">Subtotal:</span>
-                    <span class="amount">Rp {{ number_format($quotation->subtotal, 0, ',', '.') }}</span>
+                    <span class="amount">Rp {{ number_format($pdfSubtotal, 0, ',', '.') }}</span>
                 </div>
-                @if ($quotation->diskon_nominal > 0)
+                @if ($pdfDiskonNominal > 0)
                     <div class="summary-item summary-highlight clearfix">
                         <span class="label">Diskon ({{ number_format($quotation->diskon_persen, 1) }}%):</span>
-                        <span class="amount">-Rp {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}</span>
+                        <span class="amount">-Rp {{ number_format($pdfDiskonNominal, 0, ',', '.') }}</span>
                     </div>
                 @endif
                 @if ($quotation->ppn > 0)
                     <div class="summary-item clearfix">
                         <span class="label">PPN ({{ $quotation->ppn }}%):</span>
-                        <span class="amount">Rp
-                            {{ number_format($quotation->subtotal * ($quotation->ppn / 100), 0, ',', '.') }}</span>
+                        <span class="amount">Rp {{ number_format($pdfPpnValue, 0, ',', '.') }}</span>
                     </div>
                 @endif
                 @if ($quotation->ongkos_kirim > 0)
@@ -657,7 +684,7 @@
                 @endif
                 <div class="total-final clearfix">
                     <span class="label">TOTAL:</span>
-                    <span class="amount">Rp {{ number_format($quotation->total, 0, ',', '.') }}</span>
+                    <span class="amount">Rp {{ number_format($pdfTotal, 0, ',', '.') }}</span>
                 </div>
             </div>
         </div>
