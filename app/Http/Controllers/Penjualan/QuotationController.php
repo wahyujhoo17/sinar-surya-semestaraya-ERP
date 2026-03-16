@@ -351,22 +351,33 @@ class QuotationController extends Controller
 
             $subtotal = 0;
 
-            // Calculate subtotal (skip bundle headers, only count bundle child items and regular items)
+            // Calculate subtotal:
+            // - Bundle header (is_bundle=true): use harga × kuantitas (= harga_bundle × qty, exact value)
+            // - Bundle child items (is_bundle_item=true): skip (already counted via header)
+            // - Regular items: use harga × kuantitas minus item discount
             foreach ($items as $item) {
-                // Skip bundle headers as they are only for display/organization
-                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+                $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+
+                if ($isBundleItem) {
+                    // Skip child items — bundle total is taken from the header
                     continue;
                 }
 
                 $productTotal = $item['harga'] * $item['kuantitas'];
-                $discountValue = 0;
 
-                $diskonPersen = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
-                if ($diskonPersen > 0) {
-                    $discountValue = ($diskonPersen / 100) * $productTotal;
+                if ($isBundle) {
+                    // Bundle header: use its harga directly (no additional discount at header level)
+                    $subtotal += $productTotal;
+                } else {
+                    // Regular item
+                    $discountValue = 0;
+                    $diskonPersen = $item['diskon_persen_item'] ?? $item['diskon_persen'] ?? 0;
+                    if ($diskonPersen > 0) {
+                        $discountValue = ($diskonPersen / 100) * $productTotal;
+                    }
+                    $subtotal += $productTotal - $discountValue;
                 }
-
-                $subtotal += $productTotal - $discountValue;
             }
 
             // Calculate discounts and taxes
@@ -659,21 +670,32 @@ class QuotationController extends Controller
             $items = $request->items;
             $subtotal = 0;
 
-            // Calculate subtotal (skip bundle headers, only count bundle child items and regular items)
+            // Calculate subtotal:
+            // - Bundle header (is_bundle=true): use harga × kuantitas (= harga_bundle × qty, exact value)
+            // - Bundle child items (is_bundle_item=true): skip (already counted via header)
+            // - Regular items: use harga × kuantitas minus item discount
             foreach ($items as $item) {
-                // Skip bundle headers as they are only for display/organization
-                if (isset($item['is_bundle']) && $item['is_bundle']) {
+                $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
+                $isBundleItem = isset($item['is_bundle_item']) && $item['is_bundle_item'];
+
+                if ($isBundleItem) {
+                    // Skip child items — bundle total is taken from the header
                     continue;
                 }
 
                 $productTotal = $item['harga'] * $item['kuantitas'];
-                $discountValue = 0;
 
-                if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
-                    $discountValue = ($item['diskon_persen_item'] / 100) * $productTotal;
+                if ($isBundle) {
+                    // Bundle header: use its harga directly (no additional discount at header level)
+                    $subtotal += $productTotal;
+                } else {
+                    // Regular item
+                    $discountValue = 0;
+                    if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
+                        $discountValue = ($item['diskon_persen_item'] / 100) * $productTotal;
+                    }
+                    $subtotal += $productTotal - $discountValue;
                 }
-
-                $subtotal += $productTotal - $discountValue;
             }
 
             // Calculate discounts and taxes

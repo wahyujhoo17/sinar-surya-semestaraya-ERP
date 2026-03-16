@@ -843,6 +843,46 @@
                                         $regularItems[] = $detail;
                                     }
                                 }
+
+                                // Recompute subtotal using harga_bundle for bundles (avoids per-item rounding)
+                                $displaySubtotal = 0;
+                                foreach ($bundleGroups as $bId => $bGroup) {
+                                    try {
+                                        $bMaster = \App\Models\ProductBundle::with('items')->find($bId);
+                                        if ($bMaster) {
+                                            $fc = collect($bGroup['items'])->first();
+                                            $bQty = 1;
+                                            if ($fc) {
+                                                $defI = $bMaster->items->where('produk_id', $fc->produk_id)->first();
+                                                if ($defI && $defI->quantity > 0) {
+                                                    $bQty = max(
+                                                        1,
+                                                        round((float) $fc->quantity / (float) $defI->quantity),
+                                                    );
+                                                }
+                                            }
+                                            $displaySubtotal += $bMaster->harga_bundle * $bQty;
+                                        } else {
+                                            // Fallback: sum child subtotals
+                                            $displaySubtotal += collect($bGroup['items'])->sum('subtotal');
+                                        }
+                                    } catch (\Exception $e) {
+                                        $displaySubtotal += collect($bGroup['items'])->sum('subtotal');
+                                    }
+                                }
+                                foreach ($regularItems as $ri) {
+                                    $displaySubtotal += $ri->subtotal;
+                                }
+                                // Recompute total based on displaySubtotal
+                                $displayDiskonNominal =
+                                    $quotation->diskon_persen > 0
+                                        ? ($quotation->diskon_persen / 100) * $displaySubtotal
+                                        : $quotation->diskon_nominal;
+                                $displayAfterDiskon = $displaySubtotal - $displayDiskonNominal;
+                                $displayPpnValue =
+                                    $quotation->ppn > 0 ? ($quotation->ppn / 100) * $displayAfterDiskon : 0;
+                                $displayTotal =
+                                    $displayAfterDiskon + $displayPpnValue + ($quotation->ongkos_kirim ?? 0);
                             @endphp
 
                             {{-- Display Bundle Groups --}}
@@ -1043,17 +1083,17 @@
                                     class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
                                     Subtotal:</td>
                                 <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                    {{ number_format($quotation->subtotal, 0, ',', '.') }}
+                                    {{ number_format($displaySubtotal, 0, ',', '.') }}
                                 </td>
                             </tr>
-                            @if ($quotation->diskon_nominal > 0)
+                            @if ($displayDiskonNominal > 0)
                                 <tr>
                                     <td colspan="6"
                                         class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
                                         Diskon ({{ $quotation->diskon_persen }}%):</td>
                                     <td colspan="2"
                                         class="px-6 py-4 text-sm font-medium text-green-600 dark:text-green-400">
-                                        - {{ number_format($quotation->diskon_nominal, 0, ',', '.') }}
+                                        - {{ number_format($displayDiskonNominal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endif
@@ -1063,7 +1103,7 @@
                                         class="px-6 py-4 font-medium text-sm text-gray-900 dark:text-white text-right">
                                         PPN ({{ $quotation->ppn }}%):</td>
                                     <td colspan="2" class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                        {{ number_format(($quotation->subtotal - $quotation->diskon_nominal) * ($quotation->ppn / 100), 0, ',', '.') }}
+                                        {{ number_format($displayPpnValue, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             @endif
@@ -1082,7 +1122,7 @@
                                     class="px-6 py-4 font-medium text-lg text-gray-900 dark:text-white text-right">
                                     Total:</td>
                                 <td colspan="2" class="px-6 py-4 text-lg font-bold text-gray-900 dark:text-white">
-                                    {{ number_format($quotation->total, 0, ',', '.') }}
+                                    {{ number_format($displayTotal, 0, ',', '.') }}
                                 </td>
                             </tr>
                         </tfoot>
