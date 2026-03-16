@@ -186,9 +186,46 @@
                 {{ ucfirst($quotation->status) }}
             </span>
         </td>
+        @php
+            // Recalculate total using harga_bundle to avoid per-item rounding mismatch
+            $tblBundleGroups = [];
+            $tblRegularItems = [];
+            foreach ($quotation->details as $det) {
+                if ($det->bundle_id && $det->is_bundle_item) {
+                    $tblBundleGroups[$det->bundle_id][] = $det;
+                } else {
+                    $tblRegularItems[] = $det;
+                }
+            }
+            $tblSubtotal = 0;
+            foreach ($tblBundleGroups as $bId => $bItems) {
+                $bMaster = optional($bItems[0]->bundle);
+                if ($bMaster && $bMaster->harga_bundle) {
+                    $fc = $bItems[0];
+                    $bQty = 1;
+                    $defI = $bMaster->items->where('produk_id', $fc->produk_id)->first();
+                    if ($defI && $defI->quantity > 0) {
+                        $bQty = max(1, round((float) $fc->quantity / (float) $defI->quantity));
+                    }
+                    $tblSubtotal += $bMaster->harga_bundle * $bQty;
+                } else {
+                    $tblSubtotal += collect($bItems)->sum('subtotal');
+                }
+            }
+            foreach ($tblRegularItems as $ri) {
+                $tblSubtotal += $ri->subtotal;
+            }
+            $tblDiskon =
+                $quotation->diskon_persen > 0
+                    ? ($quotation->diskon_persen / 100) * $tblSubtotal
+                    : $quotation->diskon_nominal ?? 0;
+            $tblAfterDiskon = $tblSubtotal - $tblDiskon;
+            $tblPpn = $quotation->ppn > 0 ? ($quotation->ppn / 100) * $tblAfterDiskon : 0;
+            $tblTotal = $tblAfterDiskon + $tblPpn + ($quotation->ongkos_kirim ?? 0);
+        @endphp
         <td class="px-5 py-4 text-right">
             <div class="text-sm font-medium text-gray-900 dark:text-white">
-                Rp {{ number_format($quotation->total, 0, ',', '.') }}
+                Rp {{ number_format($tblTotal, 0, ',', '.') }}
             </div>
             @if ($quotation->diskon > 0)
                 <div class="text-xs text-green-600 dark:text-green-400">

@@ -149,7 +149,7 @@ class QuotationController extends Controller
         }
 
         try {
-            $quotations = $query->with(['customer.sales.karyawan'])->paginate(10)->withQueryString();
+            $quotations = $query->with(['customer.sales.karyawan', 'details.bundle.items'])->paginate(10)->withQueryString();
 
             if ($request->ajax()) {
                 return response()->json([
