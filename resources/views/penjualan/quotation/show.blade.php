@@ -854,14 +854,33 @@
                                         $bundleCode = 'N/A';
                                         $bundleImage = null;
                                         $itemCount = count($bundleGroup['items']);
+                                        $bundleHargaDisplay = null;
+                                        $bundleQtyDisplay = 1;
 
                                         // Try to get bundle data from ProductBundle
                                         try {
-                                            $bundle = \App\Models\ProductBundle::find($bundleId);
+                                            $bundle = \App\Models\ProductBundle::with('items')->find($bundleId);
                                             if ($bundle) {
                                                 $bundleName = $bundle->nama;
                                                 $bundleCode = $bundle->kode ?? 'N/A';
                                                 $bundleImage = $bundle->gambar ?? null;
+                                                // Infer bundle quantity from first child item vs definition
+                                                $firstChild = collect($bundleGroup['items'])->first();
+                                                if ($firstChild) {
+                                                    $defItem = $bundle->items
+                                                        ->where('produk_id', $firstChild->produk_id)
+                                                        ->first();
+                                                    if ($defItem && $defItem->quantity > 0) {
+                                                        $bundleQtyDisplay = max(
+                                                            1,
+                                                            round(
+                                                                (float) $firstChild->quantity /
+                                                                    (float) $defItem->quantity,
+                                                            ),
+                                                        );
+                                                    }
+                                                }
+                                                $bundleHargaDisplay = $bundle->harga_bundle * $bundleQtyDisplay;
                                             }
                                         } catch (Exception $e) {
                                             // Keep default values
@@ -952,6 +971,20 @@
                                                     Rp {{ number_format($bundleItem->subtotal, 0, ',', '.') }}</td>
                                             </tr>
                                         @endforeach
+                                    @endif
+
+                                    {{-- Bundle Total Row --}}
+                                    @if ($bundleHargaDisplay !== null)
+                                        <tr class="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500">
+                                            <td colspan="7"
+                                                class="px-6 py-2 text-sm text-right font-semibold text-blue-900 dark:text-blue-200">
+                                                Total Harga Paket <span
+                                                    class="font-normal text-blue-700 dark:text-blue-300">({{ $bundleName }})</span>:
+                                            </td>
+                                            <td class="px-6 py-2 text-sm font-bold text-blue-900 dark:text-blue-200">
+                                                Rp {{ number_format($bundleHargaDisplay, 0, ',', '.') }}
+                                            </td>
+                                        </tr>
                                     @endif
                                 @endforeach
                             @endif

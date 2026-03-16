@@ -1001,7 +1001,7 @@ class QuotationController extends Controller
             // Log PDF generation start for debugging
             Log::info("PDF generation started for quotation ID: {$id}, template: {$template}");
 
-            $quotation = Quotation::with(['customer.sales.karyawan', 'user.karyawan', 'details.produk', 'details.satuan', 'details.bundle'])
+            $quotation = Quotation::with(['customer.sales.karyawan', 'user.karyawan', 'details.produk', 'details.satuan', 'details.bundle.items'])
                 ->findOrFail($id);
 
             // Generate WhatsApp QR Code for creator signature

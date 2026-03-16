@@ -330,9 +330,22 @@
                             $bundleHeader = $quotation->details->where('bundle_id', $detail->bundle_id)->first();
                         }
 
-                        // Compute actual bundle total from stored child item subtotals
-                        // (bundle headers are not saved to DB, so we cannot rely on master data harga_bundle)
-                        $bundleTotal = $bundleItems->sum('subtotal');
+                        // Compute bundle quantity by comparing stored child qty vs bundle definition qty
+                        // (bundle headers are not saved to DB, so we derive qty from the child items)
+                        $firstChild = $bundleItems->first();
+                        $bundleDef = $firstChild ? $firstChild->bundle : null;
+                        $bundleQty = 1;
+                        $bundleUnitPrice = 0;
+                        if ($bundleDef) {
+                            $defItem = $bundleDef->items->where('produk_id', $firstChild->produk_id)->first();
+                            if ($defItem && $defItem->quantity > 0) {
+                                $bundleQty = max(1, round((float) $firstChild->quantity / (float) $defItem->quantity));
+                            }
+                            $bundleUnitPrice = (float) $bundleDef->harga_bundle;
+                        } else {
+                            $bundleUnitPrice = $bundleItems->sum('subtotal');
+                        }
+                        $bundleTotal = $bundleUnitPrice * $bundleQty;
                     @endphp
 
                     {{-- Bundle Header --}}
@@ -381,20 +394,11 @@
                                 @endforeach
                             </div>
                         </td>
-                        <td class="text-center">
-                            @if (floor($bundleHeader->quantity) == $bundleHeader->quantity)
-                                {{ number_format($bundleHeader->quantity, 0, ',', '.') }}
-                            @else
-                                {{ number_format($bundleHeader->quantity, 2, ',', '.') }}
-                            @endif
-                        </td>
+                        <td class="text-center">{{ number_format($bundleQty, 0, ',', '.') }}</td>
                         <td class="text-center">Paket</td>
-                        <td class="text-right">Rp
-                            {{ number_format($bundleTotal, 0, ',', '.') }}</td>
+                        <td class="text-right">Rp {{ number_format($bundleUnitPrice, 0, ',', '.') }}</td>
                         <td class="text-center">-</td>
-                        <td class="text-right">Rp
-                            {{ number_format($bundleTotal, 0, ',', '.') }}
-                        </td>
+                        <td class="text-right">Rp {{ number_format($bundleTotal, 0, ',', '.') }}</td>
                     </tr>
                 @elseif (!$detail->bundle_id)
                     {{-- Regular Product (not part of any bundle) --}}
