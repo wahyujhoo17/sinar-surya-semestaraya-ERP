@@ -455,10 +455,11 @@
                 $_bDef = $_d->bundle;
                 if ($_bDef) {
                     $_defItem = $_bDef->items->where('produk_id', $_d->produk_id)->first();
-                    $_bQty = ($_defItem && $_defItem->quantity > 0)
-                        ? max(1, round((float)$_d->quantity / (float)$_defItem->quantity))
-                        : 1;
-                    $pdfSubtotal += (float)$_bDef->harga_bundle * $_bQty;
+                    $_bQty =
+                        $_defItem && $_defItem->quantity > 0
+                            ? max(1, round((float) $_d->quantity / (float) $_defItem->quantity))
+                            : 1;
+                    $pdfSubtotal += (float) $_bDef->harga_bundle * $_bQty;
                 } else {
                     $pdfSubtotal += $_bItems->sum('subtotal');
                 }
@@ -466,12 +467,13 @@
                 $pdfSubtotal += $_d->subtotal;
             }
         }
-        $pdfDiskonNominal = $quotation->diskon_persen > 0
-            ? ($quotation->diskon_persen / 100) * $pdfSubtotal
-            : $quotation->diskon_nominal;
+        $pdfDiskonNominal =
+            $quotation->diskon_persen > 0
+                ? ($quotation->diskon_persen / 100) * $pdfSubtotal
+                : $quotation->diskon_nominal;
         $pdfAfterDiskon = $pdfSubtotal - $pdfDiskonNominal;
-        $pdfPpnValue    = $quotation->ppn > 0 ? ($quotation->ppn / 100) * $pdfAfterDiskon : 0;
-        $pdfTotal       = $pdfAfterDiskon + $pdfPpnValue + ($quotation->ongkos_kirim ?? 0);
+        $pdfPpnValue = $quotation->ppn > 0 ? ($quotation->ppn / 100) * $pdfAfterDiskon : 0;
+        $pdfTotal = $pdfAfterDiskon + $pdfPpnValue + ($quotation->ongkos_kirim ?? 0);
     @endphp
 
     <!-- Summary Table -->
