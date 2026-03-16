@@ -506,6 +506,10 @@
                                         ->where('bundle_id', $detail->bundle_id)
                                         ->first();
                                 }
+
+                                // Compute actual bundle total from stored child item subtotals
+                                // (bundle headers are not saved to DB, so we cannot rely on master data harga_bundle)
+                                $bundleTotal = $bundleItems->sum('subtotal');
                             @endphp
 
                             {{-- Bundle Header --}}
@@ -565,11 +569,11 @@
                                 </td>
                                 <td style="text-align: center;">Paket</td>
                                 <td style="text-align: right;">
-                                    {{ number_format($bundleHeader->bundle->harga_bundle ?? 0, 0, ',', '.') }}
+                                    {{ number_format($bundleTotal, 0, ',', '.') }}
                                 </td>
                                 <td style="text-align: center; font-size: 9px;">-</td>
                                 <td style="text-align: right; font-weight: 600;">Rp
-                                    {{ number_format(($bundleHeader->bundle->harga_bundle ?? 0) * $bundleHeader->quantity, 0, ',', '.') }}
+                                    {{ number_format($bundleTotal, 0, ',', '.') }}
                                 </td>
                             </tr>
                         @elseif (!$detail->bundle_id)
