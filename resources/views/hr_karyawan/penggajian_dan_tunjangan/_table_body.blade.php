@@ -51,7 +51,26 @@
             </td>
             <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{{ $item->tahun }}</td>
             <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">Rp
-                {{ number_format($item->total_gaji, 0, ',', '.') }}</td>
+                {{ number_format(
+                    $item->gaji_pokok +
+                        ($item->karyawan->tunjangan_keluarga ?? 0) +
+                        ($item->karyawan->tunjangan_jabatan ?? 0) +
+                        ($item->karyawan->tunjangan_transport ?? 0) +
+                        ($item->karyawan->tunjangan_makan ?? 0) +
+                        ($item->tunjangan ?? 0) +
+                        ($item->bonus ?? 0) +
+                        ($item->lembur ?? 0) +
+                        $item->komponenGaji->where('jenis', 'pendapatan')->sum('nilai') -
+                        ($item->bpjs_karyawan ?? 0) -
+                        ($item->cash_bon ?? 0) -
+                        ($item->keterlambatan ?? 0) -
+                        ($item->potongan ?? 0) -
+                        $item->komponenGaji->where('jenis', 'potongan')->sum('nilai'),
+                    0,
+                    ',',
+                    '.',
+                ) }}
+            </td>
             <td class="px-3 py-4 whitespace-nowrap">
                 @if ($item->status == 'draft')
                     <span

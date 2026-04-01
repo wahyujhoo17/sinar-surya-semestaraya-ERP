@@ -1,3 +1,20 @@
+@php
+    $displayTotal =
+        $penggajian->gaji_pokok +
+        ($penggajian->karyawan->tunjangan_keluarga ?? 0) +
+        ($penggajian->karyawan->tunjangan_jabatan ?? 0) +
+        ($penggajian->karyawan->tunjangan_transport ?? 0) +
+        ($penggajian->karyawan->tunjangan_makan ?? 0) +
+        ($penggajian->tunjangan ?? 0) +
+        ($penggajian->bonus ?? 0) +
+        ($penggajian->lembur ?? 0) +
+        $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai') -
+        ($penggajian->bpjs_karyawan ?? 0) -
+        ($penggajian->cash_bon ?? 0) -
+        ($penggajian->keterlambatan ?? 0) -
+        ($penggajian->potongan ?? 0) -
+        $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
+@endphp
 <x-app-layout :breadcrumbs="$breadcrumbs ?? []" :currentPage="$currentPage ?? 'Detail Penggajian'">
     <div class="py-8 px-4 mx-auto max-w-full xl:max-w-screen-xl lg:py-10">
         <!-- Hero Banner with Action Bar -->
@@ -433,7 +450,7 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-base text-right font-bold text-gray-900 dark:text-white">
-                                            Rp {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
+                                            Rp {{ number_format($displayTotal, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1026,7 +1043,7 @@
                     <div class="p-6">
                         <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Total Gaji</h2>
                         <div class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-                            Rp {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
+                            Rp {{ number_format($displayTotal, 0, ',', '.') }}
                         </div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             Periode:
@@ -1296,7 +1313,7 @@
             <div>
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gaji</p>
                 <p class="text-xl font-bold text-primary-600 dark:text-primary-400">
-                    Rp {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
+                    Rp {{ number_format($displayTotal, 0, ',', '.') }}
                 </p>
             </div>
 

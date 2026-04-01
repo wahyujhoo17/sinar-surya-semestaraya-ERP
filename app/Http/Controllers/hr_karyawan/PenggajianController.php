@@ -471,6 +471,10 @@ class PenggajianController extends Controller
         // Hitung pendapatan
         $pendapatan = $request->gaji_pokok +
             ($request->tunjangan ?? 0) +
+            ($request->tunjangan_jabatan ?? 0) +
+            ($request->tunjangan_keluarga ?? 0) +
+            ($request->tunjangan_transport ?? 0) +
+            ($request->tunjangan_makan ?? 0) +
             ($request->bonus ?? 0) +
             ($request->lembur ?? 0) +
             $komisi;
@@ -659,6 +663,10 @@ class PenggajianController extends Controller
         // Hitung total gaji
         $totalGaji = $request->gaji_pokok +
             ($request->tunjangan ?? 0) +
+            ($request->tunjangan_jabatan ?? 0) +
+            ($request->tunjangan_keluarga ?? 0) +
+            ($request->tunjangan_transport ?? 0) +
+            ($request->tunjangan_makan ?? 0) +
             ($request->bonus ?? 0) +
             ($request->lembur ?? 0) -
             ($request->potongan ?? 0);
@@ -1317,8 +1325,24 @@ class PenggajianController extends Controller
         }
 
         try {
-            $penggajian = Penggajian::with('karyawan')->findOrFail($id);
+            $penggajian = Penggajian::with(['karyawan', 'komponenGaji'])->findOrFail($id);
             Log::info('Penggajian found', ['id' => $penggajian->id, 'status' => $penggajian->status]);
+
+            // Hitung nominal yang benar dari semua komponen
+            $paymentAmount = $penggajian->gaji_pokok
+                + ($penggajian->karyawan->tunjangan_keluarga ?? 0)
+                + ($penggajian->karyawan->tunjangan_jabatan ?? 0)
+                + ($penggajian->karyawan->tunjangan_transport ?? 0)
+                + ($penggajian->karyawan->tunjangan_makan ?? 0)
+                + ($penggajian->tunjangan ?? 0)
+                + ($penggajian->bonus ?? 0)
+                + ($penggajian->lembur ?? 0)
+                + $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai')
+                - ($penggajian->bpjs_karyawan ?? 0)
+                - ($penggajian->cash_bon ?? 0)
+                - ($penggajian->keterlambatan ?? 0)
+                - ($penggajian->potongan ?? 0)
+                - $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
 
             // Enhanced business logic validation
             if ($penggajian->status === 'dibayar') {
@@ -1333,8 +1357,8 @@ class PenggajianController extends Controller
             }
 
             // Validate payment amount
-            if ($penggajian->total_gaji <= 0) {
-                Log::warning('Invalid payment amount', ['total_gaji' => $penggajian->total_gaji]);
+            if ($paymentAmount <= 0) {
+                Log::warning('Invalid payment amount', ['paymentAmount' => $paymentAmount]);
                 return back()->with('error', 'Total gaji tidak valid untuk pembayaran.');
             }
 
@@ -1345,14 +1369,14 @@ class PenggajianController extends Controller
                     Log::warning('Inactive cash account selected', ['kas_id' => $kas->id]);
                     return back()->with('error', "Akun kas {$kas->nama} tidak aktif.");
                 }
-                if ($kas->saldo < $penggajian->total_gaji) {
+                if ($kas->saldo < $paymentAmount) {
                     Log::warning('Insufficient cash balance', [
                         'kas_saldo' => $kas->saldo,
-                        'payment_amount' => $penggajian->total_gaji
+                        'payment_amount' => $paymentAmount
                     ]);
                     return back()->with('error', "Saldo kas {$kas->nama} tidak mencukupi. Saldo: Rp " .
                         number_format($kas->saldo, 0, ',', '.') . ", Dibutuhkan: Rp " .
-                        number_format($penggajian->total_gaji, 0, ',', '.'));
+                        number_format($paymentAmount, 0, ',', '.'));
                 }
             } elseif ($request->payment_method === 'bank') {
                 $rekening = \App\Models\RekeningBank::findOrFail($request->rekening_id);
@@ -1360,14 +1384,14 @@ class PenggajianController extends Controller
                     Log::warning('Inactive bank account selected', ['rekening_id' => $rekening->id]);
                     return back()->with('error', "Rekening bank {$rekening->nama_bank} tidak aktif.");
                 }
-                if ($rekening->saldo < $penggajian->total_gaji) {
+                if ($rekening->saldo < $paymentAmount) {
                     Log::warning('Insufficient bank balance', [
                         'rekening_saldo' => $rekening->saldo,
-                        'payment_amount' => $penggajian->total_gaji
+                        'payment_amount' => $paymentAmount
                     ]);
                     return back()->with('error', "Saldo rekening {$rekening->nama_bank} {$rekening->nomor_rekening} tidak mencukupi. Saldo: Rp " .
                         number_format($rekening->saldo, 0, ',', '.') . ", Dibutuhkan: Rp " .
-                        number_format($penggajian->total_gaji, 0, ',', '.'));
+                        number_format($paymentAmount, 0, ',', '.'));
                 }
             }
 
@@ -1377,7 +1401,7 @@ class PenggajianController extends Controller
             // Get employee name for transaction description
             $employeeName = $penggajian->karyawan->nama_lengkap;
             $paymentDate = $request->payment_date;
-            $paymentAmount = $penggajian->total_gaji;
+            // $paymentAmount sudah dihitung di atas dari semua komponen
             $transactionDescription = "Pembayaran gaji {$employeeName} periode " .
                 $this->getNamaBulan($penggajian->bulan) . " {$penggajian->tahun}";
 
@@ -1410,6 +1434,8 @@ class PenggajianController extends Controller
             // Update payroll status to paid and save payment method information
             $updateData = [
                 'status' => 'dibayar',
+                'total_gaji' => $paymentAmount,
+                'thp' => $paymentAmount,
                 'tanggal_bayar' => $paymentDate,
                 'metode_pembayaran' => $request->payment_method === 'cash' ? 'kas' : 'bank',
                 'kas_id' => $request->payment_method === 'cash' ? $request->kas_id : null,
