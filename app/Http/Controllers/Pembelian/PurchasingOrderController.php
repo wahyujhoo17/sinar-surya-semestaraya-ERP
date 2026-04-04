@@ -294,28 +294,24 @@ class PurchasingOrderController extends Controller
         $suppliers = Supplier::orderBy('nama')->get();
 
         // Ambil PR yang bisa digunakan untuk membuat PO:
-        // 1. Status 'disetujui' (belum ada PO sama sekali atau semua PO dibatalkan)
-        // 2. Status 'selesai' tapi belum fully fulfilled (masih ada item yang bisa dibuat PO)
-        $purchaseRequests = PurchaseRequest::where(function ($query) {
-            // PR dengan status disetujui yang belum ada PO aktif
-            $query->where('status', 'disetujui')
-                ->whereDoesntHave('purchaseOrders', function ($q) {
-                    $q->where('status', '!=', 'dibatalkan');
-                });
-        })
-            ->orWhere(function ($query) {
-                // PR dengan status selesai tapi belum fully fulfilled
-                $query->where('status', 'selesai')
-                    ->whereHas('purchaseOrders', function ($q) {
-                        $q->where('status', '!=', 'dibatalkan');
-                    });
-            })
+        // 1. PR yang belum ada PO sama sekali (semua PO dibatalkan atau tidak ada PO)
+        // 2. PR yang sudah ada PO tapi belum fully fulfilled (masih ada item yang bisa dipenuhi)
+        $purchaseRequests = PurchaseRequest::where('status', '!=', 'draft')
+            ->where('status', '!=', 'ditolak')
+            ->where('status', '!=', 'dibatalkan')
             ->get()
             ->filter(function ($pr) {
-                // Filter manual: untuk PR status selesai, cek apakah masih bisa dibuat PO
-                if ($pr->status === 'selesai') {
+                // Check apakah PR sudah memiliki PO aktif (tidak dibatalkan)
+                $hasPOAktif = $pr->purchaseOrders()
+                    ->where('status', '!=', 'dibatalkan')
+                    ->exists();
+
+                // Jika sudah ada PO aktif, cek apakah masih belum fully fulfilled
+                if ($hasPOAktif) {
                     return !$this->isPurchaseRequestFullyFulfilled($pr->id);
                 }
+
+                // Jika belum ada PO aktif sama sekali, tampilkan
                 return true;
             });
 
@@ -579,34 +575,31 @@ class PurchasingOrderController extends Controller
         $suppliers = Supplier::orderBy('nama')->get();
 
         // Ambil PR yang bisa digunakan untuk edit PO:
-        // 1. Status 'disetujui' yang belum digunakan PO aktif lain (kecuali PO ini)
-        // 2. Status 'selesai' yang belum fully fulfilled (kecuali PO ini)
+        // 1. PR yang belum ada PO aktif lain (kecuali PO ini)
+        // 2. PR yang sudah ada PO tapi belum fully fulfilled (kecuali PO ini)
         // 3. PR yang sedang digunakan PO ini (selalu bisa dipilih)
-        $purchaseRequests = PurchaseRequest::where(function ($query) use ($purchaseOrder) {
-            // PR dengan status disetujui yang belum ada PO aktif lain
-            $query->where('status', 'disetujui')
-                ->where(function ($q) use ($purchaseOrder) {
-                    $q->whereDoesntHave('purchaseOrders', function ($subq) use ($purchaseOrder) {
-                        $subq->where('status', '!=', 'dibatalkan')
-                            ->where('id', '!=', $purchaseOrder->id);
-                    });
-                });
-        })
-            ->orWhere(function ($query) use ($purchaseOrder) {
-                // PR dengan status selesai tapi belum fully fulfilled
-                $query->where('status', 'selesai')
-                    ->whereHas('purchaseOrders', function ($q) use ($purchaseOrder) {
-                        $q->where('status', '!=', 'dibatalkan');
-                    });
-            })
-            ->orWhere('id', $purchaseOrder->pr_id) // PR yang sedang digunakan PO ini
-            ->distinct()
+        $purchaseRequests = PurchaseRequest::where('status', '!=', 'draft')
+            ->where('status', '!=', 'ditolak')
+            ->where('status', '!=', 'dibatalkan')
             ->get()
             ->filter(function ($pr) use ($purchaseOrder) {
-                // Filter manual: untuk PR status selesai, cek apakah masih bisa dibuat PO
-                if ($pr->status === 'selesai' && $pr->id !== $purchaseOrder->pr_id) {
+                // PR yang sedang digunakan PO ini, selalu tampilkan
+                if ($pr->id === $purchaseOrder->pr_id) {
+                    return true;
+                }
+
+                // Check apakah PR memiliki PO aktif lain (selain PO ini)
+                $hasOtherActivePO = $pr->purchaseOrders()
+                    ->where('status', '!=', 'dibatalkan')
+                    ->where('id', '!=', $purchaseOrder->id)
+                    ->exists();
+
+                // Jika ada PO aktif lain, cek apakah PR belum fully fulfilled
+                if ($hasOtherActivePO) {
                     return !$this->isPurchaseRequestFullyFulfilled($pr->id);
                 }
+
+                // Jika belum ada PO aktif lain, tampilkan
                 return true;
             });
 

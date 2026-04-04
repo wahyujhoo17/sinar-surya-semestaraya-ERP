@@ -179,7 +179,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="gaji_pokok" id="gaji_pokok" required min="0"
-                                step="1000" x-model="salaryComponents.gaji_pokok" @input="calculateTotal()"
+                                step="0.01" x-model="salaryComponents.gaji_pokok" @input="calculateTotal()"
                                 value="{{ old('gaji_pokok', $gajiPokok) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('gaji_pokok') border-red-500 @enderror">
                         </div>
@@ -201,7 +201,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_keluarga"
+                                step="0.01" x-model="salaryComponents.tunjangan_keluarga"
                                 @input="calculateTotal()"
                                 value="{{ old('tunjangan_keluarga', $salaryComponents['tunjangan_keluarga'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -219,7 +219,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_jabatan" @input="calculateTotal()"
+                                step="0.01" x-model="salaryComponents.tunjangan_jabatan" @input="calculateTotal()"
                                 value="{{ old('tunjangan_jabatan', $salaryComponents['tunjangan_jabatan'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
@@ -236,7 +236,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="tunjangan_transport" id="tunjangan_transport" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_transport"
+                                step="0.01" x-model="salaryComponents.tunjangan_transport"
                                 @input="calculateTotal()"
                                 value="{{ old('tunjangan_transport', $salaryComponents['tunjangan_transport'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -254,7 +254,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="tunjangan_makan" id="tunjangan_makan" min="0"
-                                step="1000" x-model="salaryComponents.tunjangan_makan" @input="calculateTotal()"
+                                step="0.01" x-model="salaryComponents.tunjangan_makan" @input="calculateTotal()"
                                 value="{{ old('tunjangan_makan', $salaryComponents['tunjangan_makan'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
@@ -270,7 +270,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan" id="tunjangan" min="0" step="1000"
+                            <input type="number" name="tunjangan" id="tunjangan" min="0" step="0.01"
                                 x-model="salaryComponents.tunjangan" @input="calculateTotal()"
                                 value="{{ old('tunjangan', $salaryComponents['default_tunjangan'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -286,7 +286,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="bonus" id="bonus" min="0" step="1000"
+                            <input type="number" name="bonus" id="bonus" min="0" step="0.01"
                                 x-model="salaryComponents.bonus" @input="calculateTotal()"
                                 value="{{ old('bonus', $salaryComponents['default_bonus'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -302,7 +302,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="lembur" id="lembur" min="0" step="1000"
+                            <input type="number" name="lembur" id="lembur" min="0" step="0.01"
                                 x-model="salaryComponents.lembur" @input="calculateTotal()"
                                 value="{{ old('lembur', 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -333,7 +333,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="bpjs_karyawan" id="bpjs_karyawan" min="0"
-                                step="1000" x-model="salaryComponents.bpjs_karyawan" @input="calculateTotal()"
+                                step="0.01" x-model="salaryComponents.bpjs_karyawan" @input="calculateTotal()"
                                 value="{{ old('bpjs_karyawan', $salaryComponents['bpjs'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
@@ -348,7 +348,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="cash_bon" id="cash_bon" min="0" step="1000"
+                            <input type="number" name="cash_bon" id="cash_bon" min="0" step="0.01"
                                 x-model="salaryComponents.cash_bon" @input="calculateTotal()"
                                 value="{{ old('cash_bon', 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -366,7 +366,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="keterlambatan" id="keterlambatan" min="0"
-                                step="1000" x-model="salaryComponents.keterlambatan" @input="calculateTotal()"
+                                step="0.01" x-model="salaryComponents.keterlambatan" @input="calculateTotal()"
                                 value="{{ old('keterlambatan', 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
@@ -381,7 +381,7 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="potongan" id="potongan" min="0" step="1000"
+                            <input type="number" name="potongan" id="potongan" min="0" step="0.01"
                                 x-model="salaryComponents.potongan" @input="calculateTotal()"
                                 value="{{ old('potongan', $salaryComponents['default_potongan'] ?? 0) }}"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
@@ -484,7 +484,7 @@
                                             <input type="number"
                                                 x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0"
                                                 @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', $event.target.value)"
-                                                min="0" step="1000"
+                                                min="0" step="0.01"
                                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm"
                                                 placeholder="0">
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
