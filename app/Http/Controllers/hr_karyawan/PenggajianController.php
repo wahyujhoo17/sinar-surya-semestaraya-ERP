@@ -419,6 +419,12 @@ class PenggajianController extends Controller
             'tahun' => 'required|integer|min:2000|max:2100',
             'gaji_pokok' => 'required|numeric|min:0',
             'tunjangan' => 'nullable|numeric|min:0',
+            'tunjangan_keluarga' => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'tunjangan_transport' => 'nullable|numeric|min:0',
+            'tunjangan_makan' => 'nullable|numeric|min:0',
+            'tunjangan_btn' => 'nullable|numeric|min:0',
+            'tunjangan_pulsa' => 'nullable|numeric|min:0',
             'bonus' => 'nullable|numeric|min:0',
             'lembur' => 'nullable|numeric|min:0',
             'potongan' => 'nullable|numeric|min:0',
@@ -475,6 +481,8 @@ class PenggajianController extends Controller
             ($request->tunjangan_keluarga ?? 0) +
             ($request->tunjangan_transport ?? 0) +
             ($request->tunjangan_makan ?? 0) +
+            ($request->tunjangan_btn ?? 0) +
+            ($request->tunjangan_pulsa ?? 0) +
             ($request->bonus ?? 0) +
             ($request->lembur ?? 0) +
             $komisi;
@@ -1493,7 +1501,8 @@ class PenggajianController extends Controller
 
         $penggajian = Penggajian::with([
             'karyawan',
-            'approver'
+            'approver',
+            'komponenGaji'
         ])->findOrFail($id);
 
         // Generate QR codes for signatures

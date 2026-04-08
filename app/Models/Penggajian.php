@@ -42,17 +42,17 @@ class Penggajian extends Model
      * The attributes that should be cast.
      */
     protected $casts = [
-        'gaji_pokok' => 'decimal:0',
-        'tunjangan' => 'decimal:0',
-        'bonus' => 'decimal:0',
-        'lembur' => 'decimal:0',
-        'potongan' => 'decimal:0',
-        'komisi' => 'decimal:0',
-        'cash_bon' => 'decimal:0',
-        'keterlambatan' => 'decimal:0',
-        'bpjs_karyawan' => 'decimal:0',
-        'total_gaji' => 'decimal:0',
-        'thp' => 'decimal:0',
+        'gaji_pokok' => 'decimal:2',
+        'tunjangan' => 'decimal:2',
+        'bonus' => 'decimal:2',
+        'lembur' => 'decimal:2',
+        'potongan' => 'decimal:2',
+        'komisi' => 'decimal:2',
+        'cash_bon' => 'decimal:2',
+        'keterlambatan' => 'decimal:2',
+        'bpjs_karyawan' => 'decimal:2',
+        'total_gaji' => 'decimal:2',
+        'thp' => 'decimal:2',
         'tanggal_bayar' => 'date',
     ];
 

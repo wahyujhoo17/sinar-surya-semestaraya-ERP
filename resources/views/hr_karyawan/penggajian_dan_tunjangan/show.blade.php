@@ -220,7 +220,7 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-900 dark:text-white">
-                                            Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}
+                                            Rp {{ number_format($penggajian->gaji_pokok, 2, ',', '.') }}
                                         </td>
                                     </tr>
 
@@ -234,7 +234,7 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 0, ',', '.') }}
+                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -248,7 +248,7 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 0, ',', '.') }}
+                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -262,7 +262,7 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 0, ',', '.') }}
+                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -276,7 +276,35 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 0, ',', '.') }}
+                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan BTN
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}
+                                            </td>
+                                        </tr>
+                                    @endif
+
+                                    @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                                        <tr>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                                                Tunjangan Pulsa
+                                            </td>
+                                            <td
+                                                class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
+                                                Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -294,7 +322,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                Rp {{ number_format($komponen->nilai, 0, ',', '.') }}
+                                                Rp {{ number_format($komponen->nilai, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -308,7 +336,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                Rp {{ number_format($penggajian->tunjangan, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->tunjangan, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -321,7 +349,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                Rp {{ number_format($penggajian->bonus, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->bonus, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -334,7 +362,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
-                                                Rp {{ number_format($penggajian->lembur, 0, ',', '.') }}
+                                                Rp {{ number_format($penggajian->lembur, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
@@ -372,7 +400,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                (Rp {{ number_format($penggajian->bpjs_karyawan, 0, ',', '.') }})
+                                                (Rp {{ number_format($penggajian->bpjs_karyawan, 2, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -386,7 +414,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                (Rp {{ number_format($penggajian->cash_bon, 0, ',', '.') }})
+                                                (Rp {{ number_format($penggajian->cash_bon, 2, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -400,7 +428,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                (Rp {{ number_format($penggajian->keterlambatan, 0, ',', '.') }})
+                                                (Rp {{ number_format($penggajian->keterlambatan, 2, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -418,7 +446,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                (Rp {{ number_format($komponen->nilai, 0, ',', '.') }})
+                                                (Rp {{ number_format($komponen->nilai, 2, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endforeach
@@ -432,7 +460,7 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-red-600 dark:text-red-400">
-                                                (Rp {{ number_format($penggajian->potongan, 0, ',', '.') }})
+                                                (Rp {{ number_format($penggajian->potongan, 2, ',', '.') }})
                                             </td>
                                         </tr>
                                     @endif
@@ -450,7 +478,7 @@
                                         </td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-base text-right font-bold text-gray-900 dark:text-white">
-                                            Rp {{ number_format($displayTotal, 0, ',', '.') }}
+                                            Rp {{ number_format($displayTotal, 2, ',', '.') }}
                                         </td>
                                     </tr>
                                 </tbody>
@@ -493,7 +521,7 @@
                                         <div>
                                             <span class="text-gray-500 dark:text-gray-400">Total Komisi:</span>
                                             <div class="font-bold text-lg text-blue-600 dark:text-blue-400">
-                                                Rp {{ number_format($totalKomisi, 0, ',', '.') }}
+                                                Rp {{ number_format($totalKomisi, 2, ',', '.') }}
                                             </div>
                                         </div>
                                         <div>
@@ -539,7 +567,7 @@
                                                 <div class="text-right">
                                                     <div
                                                         class="text-lg font-semibold text-green-600 dark:text-green-400">
-                                                        Rp {{ number_format($komponen->nilai, 0, ',', '.') }}
+                                                        Rp {{ number_format($komponen->nilai, 2, ',', '.') }}
                                                     </div>
                                                     @if ($komponen->margin_persen)
                                                         <div class="text-sm text-gray-500 dark:text-gray-400">
@@ -557,7 +585,7 @@
                                                             Penjualan:</span>
                                                         <div class="font-medium text-gray-900 dark:text-white">
                                                             Rp
-                                                            {{ number_format($komponen->netto_penjualan_original, 0, ',', '.') }}
+                                                            {{ number_format($komponen->netto_penjualan_original, 2, ',', '.') }}
                                                         </div>
                                                     </div>
                                                 @endif
@@ -568,7 +596,7 @@
                                                             Beli:</span>
                                                         <div class="font-medium text-gray-900 dark:text-white">
                                                             Rp
-                                                            {{ number_format($komponen->netto_beli_original, 0, ',', '.') }}
+                                                            {{ number_format($komponen->netto_beli_original, 2, ',', '.') }}
                                                         </div>
                                                     </div>
                                                 @endif
@@ -701,13 +729,13 @@
                                                                             <div
                                                                                 class="text-gray-900 dark:text-white font-medium">
                                                                                 Rp
-                                                                                {{ number_format($product['harga_jual_adjusted'] ?? ($product['harga_jual'] ?? 0), 0, ',', '.') }}
+                                                                                {{ number_format($product['harga_jual_adjusted'] ?? ($product['harga_jual'] ?? 0), 2, ',', '.') }}
                                                                             </div>
                                                                             @if (isset($product['harga_jual_adjusted']) && $product['harga_jual_adjusted'] != $product['harga_jual'])
                                                                                 <div
                                                                                     class="text-gray-500 text-xs line-through">
                                                                                     Rp
-                                                                                    {{ number_format($product['harga_jual'], 0, ',', '.') }}
+                                                                                    {{ number_format($product['harga_jual'], 2, ',', '.') }}
                                                                                 </div>
                                                                             @endif
                                                                         </td>
@@ -715,13 +743,13 @@
                                                                             <div
                                                                                 class="text-gray-900 dark:text-white font-medium">
                                                                                 Rp
-                                                                                {{ number_format($product['harga_beli_adjusted'] ?? ($product['harga_beli'] ?? 0), 0, ',', '.') }}
+                                                                                {{ number_format($product['harga_beli_adjusted'] ?? ($product['harga_beli'] ?? 0), 2, ',', '.') }}
                                                                             </div>
                                                                             @if (isset($product['harga_beli_adjusted']) && $product['harga_beli_adjusted'] != $product['harga_beli'])
                                                                                 <div
                                                                                     class="text-gray-500 text-xs line-through">
                                                                                     Rp
-                                                                                    {{ number_format($product['harga_beli'], 0, ',', '.') }}
+                                                                                    {{ number_format($product['harga_beli'], 2, ',', '.') }}
                                                                                 </div>
                                                                             @endif
                                                                         </td>
@@ -738,7 +766,7 @@
                                                                         <td
                                                                             class="px-3 py-2 text-right text-gray-900 dark:text-white font-medium">
                                                                             Rp
-                                                                            {{ number_format($margin, 0, ',', '.') }}
+                                                                            {{ number_format($margin, 2, ',', '.') }}
                                                                         </td>
                                                                         <td class="px-3 py-2 text-right">
                                                                             <span
@@ -808,7 +836,7 @@
                                                                     Cashback:</span>
                                                                 <span style="color: #b71c1c; font-weight: 600;">
                                                                     -Rp
-                                                                    {{ number_format($cashbackValue, 0, ',', '.') }}
+                                                                    {{ number_format($cashbackValue, 2, ',', '.') }}
                                                                 </span>
                                                             </div>
                                                         @endif
@@ -842,7 +870,7 @@
                                                                 <div
                                                                     class="font-medium text-blue-900 dark:text-blue-100">
                                                                     Rp
-                                                                    {{ number_format($komponen->netto_penjualan_adjusted, 0, ',', '.') }}
+                                                                    {{ number_format($komponen->netto_penjualan_adjusted, 2, ',', '.') }}
                                                                 </div>
                                                             </div>
                                                             <div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
@@ -851,7 +879,7 @@
                                                                 <div
                                                                     class="font-medium text-blue-900 dark:text-blue-100">
                                                                     Rp
-                                                                    {{ number_format($komponen->netto_beli_adjusted, 0, ',', '.') }}
+                                                                    {{ number_format($komponen->netto_beli_adjusted, 2, ',', '.') }}
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -905,6 +933,8 @@
                             $totalPendapatan += $penggajian->karyawan->tunjangan_jabatan ?? 0;
                             $totalPendapatan += $penggajian->karyawan->tunjangan_transport ?? 0;
                             $totalPendapatan += $penggajian->karyawan->tunjangan_makan ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_btn ?? 0;
+                            $totalPendapatan += $penggajian->karyawan->tunjangan_pulsa ?? 0;
                             $totalPendapatan += $penggajian->tunjangan;
                             $totalPendapatan += $penggajian->bonus;
                             $totalPendapatan += $penggajian->lembur;
@@ -924,64 +954,78 @@
                                     <h3 class="text-sm font-medium text-green-800 dark:text-green-300">Total Pendapatan
                                     </h3>
                                     <span class="text-lg font-bold text-green-600 dark:text-green-400">
-                                        Rp {{ number_format($totalPendapatan, 0, ',', '.') }}
+                                        Rp {{ number_format($totalPendapatan, 2, ',', '.') }}
                                     </span>
                                 </div>
                                 <div class="text-xs text-green-600 dark:text-green-400 space-y-1">
                                     <div class="flex justify-between">
                                         <span>Gaji Pokok:</span>
-                                        <span>Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}</span>
+                                        <span>Rp {{ number_format($penggajian->gaji_pokok, 2, ',', '.') }}</span>
                                     </div>
                                     @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Keluarga:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 0, ',', '.') }}</span>
+                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Jabatan:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 0, ',', '.') }}</span>
+                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Transport:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 0, ',', '.') }}</span>
+                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Makan:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 0, ',', '.') }}</span>
+                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan BTN:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}</span>
+                                        </div>
+                                    @endif
+                                    @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                                        <div class="flex justify-between">
+                                            <span>Tunjangan Pulsa:</span>
+                                            <span>Rp
+                                                {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if ($penggajian->tunjangan > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Lainnya:</span>
-                                            <span>Rp {{ number_format($penggajian->tunjangan, 0, ',', '.') }}</span>
+                                            <span>Rp {{ number_format($penggajian->tunjangan, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if ($penggajian->bonus > 0)
                                         <div class="flex justify-between">
                                             <span>Bonus:</span>
-                                            <span>Rp {{ number_format($penggajian->bonus, 0, ',', '.') }}</span>
+                                            <span>Rp {{ number_format($penggajian->bonus, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if ($penggajian->lembur > 0)
                                         <div class="flex justify-between">
                                             <span>Lembur:</span>
-                                            <span>Rp {{ number_format($penggajian->lembur, 0, ',', '.') }}</span>
+                                            <span>Rp {{ number_format($penggajian->lembur, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
                                         <div class="flex justify-between">
                                             <span>{{ $komponen->nama_komponen }}:</span>
-                                            <span>Rp {{ number_format($komponen->nilai, 0, ',', '.') }}</span>
+                                            <span>Rp {{ number_format($komponen->nilai, 2, ',', '.') }}</span>
                                         </div>
                                     @endforeach
                                 </div>
@@ -994,7 +1038,7 @@
                                         <h3 class="text-sm font-medium text-red-800 dark:text-red-300">Total Potongan
                                         </h3>
                                         <span class="text-lg font-bold text-red-600 dark:text-red-400">
-                                            Rp {{ number_format($totalPotongan, 0, ',', '.') }}
+                                            Rp {{ number_format($totalPotongan, 2, ',', '.') }}
                                         </span>
                                     </div>
                                     <div class="text-xs text-red-600 dark:text-red-400 space-y-1">
@@ -1002,32 +1046,32 @@
                                             <div class="flex justify-between">
                                                 <span>BPJS:</span>
                                                 <span>Rp
-                                                    {{ number_format($penggajian->bpjs_karyawan, 0, ',', '.') }}</span>
+                                                    {{ number_format($penggajian->bpjs_karyawan, 2, ',', '.') }}</span>
                                             </div>
                                         @endif
                                         @if (($penggajian->cash_bon ?? 0) > 0)
                                             <div class="flex justify-between">
                                                 <span>Cash Bon:</span>
-                                                <span>Rp {{ number_format($penggajian->cash_bon, 0, ',', '.') }}</span>
+                                                <span>Rp {{ number_format($penggajian->cash_bon, 2, ',', '.') }}</span>
                                             </div>
                                         @endif
                                         @if (($penggajian->keterlambatan ?? 0) > 0)
                                             <div class="flex justify-between">
                                                 <span>Keterlambatan:</span>
                                                 <span>Rp
-                                                    {{ number_format($penggajian->keterlambatan, 0, ',', '.') }}</span>
+                                                    {{ number_format($penggajian->keterlambatan, 2, ',', '.') }}</span>
                                             </div>
                                         @endif
                                         @if ($penggajian->potongan > 0)
                                             <div class="flex justify-between">
                                                 <span>Potongan Lainnya:</span>
-                                                <span>Rp {{ number_format($penggajian->potongan, 0, ',', '.') }}</span>
+                                                <span>Rp {{ number_format($penggajian->potongan, 2, ',', '.') }}</span>
                                             </div>
                                         @endif
                                         @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
                                             <div class="flex justify-between">
                                                 <span>{{ $komponen->nama_komponen }}:</span>
-                                                <span>Rp {{ number_format($komponen->nilai, 0, ',', '.') }}</span>
+                                                <span>Rp {{ number_format($komponen->nilai, 2, ',', '.') }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -1043,7 +1087,7 @@
                     <div class="p-6">
                         <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Total Gaji</h2>
                         <div class="text-3xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-                            Rp {{ number_format($displayTotal, 0, ',', '.') }}
+                            Rp {{ number_format($displayTotal, 2, ',', '.') }}
                         </div>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
                             Periode:
@@ -1313,7 +1357,7 @@
             <div>
                 <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Gaji</p>
                 <p class="text-xl font-bold text-primary-600 dark:text-primary-400">
-                    Rp {{ number_format($displayTotal, 0, ',', '.') }}
+                    Rp {{ number_format($displayTotal, 2, ',', '.') }}
                 </p>
             </div>
 

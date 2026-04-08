@@ -354,58 +354,160 @@
                 </tr>
                 <tr>
                     <td>Gaji Pokok</td>
-                    <td class="text-right positive-amount">Rp {{ number_format($penggajian->gaji_pokok, 0, ',', '.') }}
+                    <td class="text-right positive-amount">Rp {{ number_format($penggajian->gaji_pokok, 2, ',', '.') }}
                     </td>
                 </tr>
+                @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan Keluarga</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan Jabatan</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan Transport</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan Makan</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan BTN</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                    <tr>
+                        <td>Tunjangan Pulsa</td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}</td>
+                    </tr>
+                @endif
+                @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                    <tr>
+                        <td>{{ $komponen->nama_komponen }}
+                            @if ($komponen->keterangan)
+                                <br><small style="color: #6b7280;">{{ $komponen->keterangan }}</small>
+                            @endif
+                        </td>
+                        <td class="text-right positive-amount">Rp
+                            {{ number_format($komponen->nilai, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
                 @if ($penggajian->tunjangan > 0)
                     <tr>
-                        <td>Tunjangan</td>
+                        <td>Tunjangan Lainnya</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->tunjangan, 0, ',', '.') }}</td>
+                            {{ number_format($penggajian->tunjangan, 2, ',', '.') }}</td>
                     </tr>
                 @endif
                 @if ($penggajian->bonus > 0)
                     <tr>
                         <td>Bonus</td>
-                        <td class="text-right positive-amount">Rp {{ number_format($penggajian->bonus, 0, ',', '.') }}
+                        <td class="text-right positive-amount">Rp {{ number_format($penggajian->bonus, 2, ',', '.') }}
                         </td>
                     </tr>
                 @endif
                 @if ($penggajian->lembur > 0)
                     <tr>
                         <td>Lembur</td>
-                        <td class="text-right positive-amount">Rp {{ number_format($penggajian->lembur, 0, ',', '.') }}
+                        <td class="text-right positive-amount">Rp {{ number_format($penggajian->lembur, 2, ',', '.') }}
                         </td>
                     </tr>
                 @endif
 
                 @php
                     $totalPendapatan =
-                        $penggajian->gaji_pokok + $penggajian->tunjangan + $penggajian->bonus + $penggajian->lembur;
+                        $penggajian->gaji_pokok +
+                        ($penggajian->karyawan->tunjangan_keluarga ?? 0) +
+                        ($penggajian->karyawan->tunjangan_jabatan ?? 0) +
+                        ($penggajian->karyawan->tunjangan_transport ?? 0) +
+                        ($penggajian->karyawan->tunjangan_makan ?? 0) +
+                        ($penggajian->karyawan->tunjangan_btn ?? 0) +
+                        ($penggajian->karyawan->tunjangan_pulsa ?? 0) +
+                        $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai') +
+                        $penggajian->tunjangan +
+                        $penggajian->bonus +
+                        $penggajian->lembur;
                 @endphp
                 <tr style="border-top: 2px solid #059669;">
                     <td class="font-bold">Total Pendapatan</td>
                     <td class="text-right font-bold positive-amount">Rp
-                        {{ number_format($totalPendapatan, 0, ',', '.') }}</td>
+                        {{ number_format($totalPendapatan, 2, ',', '.') }}</td>
                 </tr>
 
-                @if ($penggajian->potongan > 0)
+                @if (
+                    ($penggajian->bpjs_karyawan ?? 0) > 0 ||
+                        ($penggajian->cash_bon ?? 0) > 0 ||
+                        ($penggajian->keterlambatan ?? 0) > 0 ||
+                        $penggajian->komponenGaji->where('jenis', 'potongan')->count() > 0 ||
+                        $penggajian->potongan > 0)
                     <!-- Deduction Section -->
                     <tr style="background-color: #fef8f8;">
                         <td colspan="2" class="font-bold" style="color: #dc2626;">POTONGAN</td>
                     </tr>
-                    <tr>
-                        <td>Total Potongan</td>
-                        <td class="text-right negative-amount">- Rp
-                            {{ number_format($penggajian->potongan, 0, ',', '.') }}</td>
-                    </tr>
+                    @if (($penggajian->bpjs_karyawan ?? 0) > 0)
+                        <tr>
+                            <td>BPJS Karyawan</td>
+                            <td class="text-right negative-amount">- Rp
+                                {{ number_format($penggajian->bpjs_karyawan, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                    @if (($penggajian->cash_bon ?? 0) > 0)
+                        <tr>
+                            <td>Cash Bon</td>
+                            <td class="text-right negative-amount">- Rp
+                                {{ number_format($penggajian->cash_bon, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                    @if (($penggajian->keterlambatan ?? 0) > 0)
+                        <tr>
+                            <td>Keterlambatan</td>
+                            <td class="text-right negative-amount">- Rp
+                                {{ number_format($penggajian->keterlambatan, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
+                    @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                        <tr>
+                            <td>{{ $komponen->nama_komponen }}
+                                @if ($komponen->keterangan)
+                                    <br><small style="color: #6b7280;">{{ $komponen->keterangan }}</small>
+                                @endif
+                            </td>
+                            <td class="text-right negative-amount">- Rp
+                                {{ number_format($komponen->nilai, 2, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                    @if ($penggajian->potongan > 0)
+                        <tr>
+                            <td>Potongan Lainnya</td>
+                            <td class="text-right negative-amount">- Rp
+                                {{ number_format($penggajian->potongan, 2, ',', '.') }}</td>
+                        </tr>
+                    @endif
                 @endif
 
                 <!-- Total Section -->
                 <tr style="background-color: #f3f4f6; border-top: 3px solid #4a6fa5;">
                     <td class="font-bold" style="font-size: 14px;">TOTAL GAJI BERSIH</td>
                     <td class="text-right font-bold" style="font-size: 14px; color: #2c3e50;">
-                        Rp {{ number_format($penggajian->total_gaji, 0, ',', '.') }}
+                        Rp {{ number_format($penggajian->total_gaji, 2, ',', '.') }}
                     </td>
                 </tr>
             </tbody>
