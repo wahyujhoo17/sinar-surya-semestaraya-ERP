@@ -133,9 +133,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="gaji_pokok" id="gaji_pokok" required min="0"
-                                step="0.01" x-model="salaryComponents.gaji_pokok" @input="calculateTotal()"
-                                value="{{ old('gaji_pokok', $penggajian->gaji_pokok) }}"
+                            <input type="hidden" name="gaji_pokok" :value="salaryComponents.gaji_pokok">
+                            <input type="text" id="gaji_pokok" required x-init="$el.value = formatRibu(salaryComponents.gaji_pokok)"
+                                @focus="$el.value = salaryComponents.gaji_pokok; $el.select()"
+                                @input="salaryComponents.gaji_pokok = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.gaji_pokok)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('gaji_pokok') border-red-500 @enderror">
                         </div>
                         @error('gaji_pokok')
@@ -153,9 +155,12 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga" min="0"
-                                step="0.01" x-model="salaryComponents.tunjangan_keluarga" @input="calculateTotal()"
-                                value="{{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }}"
+                            <input type="hidden" name="tunjangan_keluarga"
+                                :value="salaryComponents.tunjangan_keluarga">
+                            <input type="text" id="tunjangan_keluarga" x-init="$el.value = formatRibu(salaryComponents.tunjangan_keluarga)"
+                                @focus="$el.value = salaryComponents.tunjangan_keluarga; $el.select()"
+                                @input="salaryComponents.tunjangan_keluarga = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_keluarga)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -170,9 +175,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan" min="0"
-                                step="0.01" x-model="salaryComponents.tunjangan_jabatan" @input="calculateTotal()"
-                                value="{{ old('tunjangan_jabatan', $penggajian->karyawan->tunjangan_jabatan ?? 0) }}"
+                            <input type="hidden" name="tunjangan_jabatan" :value="salaryComponents.tunjangan_jabatan">
+                            <input type="text" id="tunjangan_jabatan" x-init="$el.value = formatRibu(salaryComponents.tunjangan_jabatan)"
+                                @focus="$el.value = salaryComponents.tunjangan_jabatan; $el.select()"
+                                @input="salaryComponents.tunjangan_jabatan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_jabatan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -187,10 +194,12 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan_transport" id="tunjangan_transport" min="0"
-                                step="0.01" x-model="salaryComponents.tunjangan_transport"
-                                @input="calculateTotal()"
-                                value="{{ old('tunjangan_transport', $penggajian->karyawan->tunjangan_transport ?? 0) }}"
+                            <input type="hidden" name="tunjangan_transport"
+                                :value="salaryComponents.tunjangan_transport">
+                            <input type="text" id="tunjangan_transport" x-init="$el.value = formatRibu(salaryComponents.tunjangan_transport)"
+                                @focus="$el.value = salaryComponents.tunjangan_transport; $el.select()"
+                                @input="salaryComponents.tunjangan_transport = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_transport)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -205,9 +214,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan_makan" id="tunjangan_makan" min="0"
-                                step="0.01" x-model="salaryComponents.tunjangan_makan" @input="calculateTotal()"
-                                value="{{ old('tunjangan_makan', $penggajian->karyawan->tunjangan_makan ?? 0) }}"
+                            <input type="hidden" name="tunjangan_makan" :value="salaryComponents.tunjangan_makan">
+                            <input type="text" id="tunjangan_makan" x-init="$el.value = formatRibu(salaryComponents.tunjangan_makan)"
+                                @focus="$el.value = salaryComponents.tunjangan_makan; $el.select()"
+                                @input="salaryComponents.tunjangan_makan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_makan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -222,9 +233,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="tunjangan" id="tunjangan" min="0" step="0.01"
-                                x-model="salaryComponents.tunjangan" @input="calculateTotal()"
-                                value="{{ old('tunjangan', $penggajian->tunjangan ?? 0) }}"
+                            <input type="hidden" name="tunjangan" :value="salaryComponents.tunjangan">
+                            <input type="text" id="tunjangan" x-init="$el.value = formatRibu(salaryComponents.tunjangan)"
+                                @focus="$el.value = salaryComponents.tunjangan; $el.select()"
+                                @input="salaryComponents.tunjangan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -238,9 +251,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="bonus" id="bonus" min="0" step="0.01"
-                                x-model="salaryComponents.bonus" @input="calculateTotal()"
-                                value="{{ old('bonus', $penggajian->bonus ?? 0) }}"
+                            <input type="hidden" name="bonus" :value="salaryComponents.bonus">
+                            <input type="text" id="bonus" x-init="$el.value = formatRibu(salaryComponents.bonus)"
+                                @focus="$el.value = salaryComponents.bonus; $el.select()"
+                                @input="salaryComponents.bonus = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.bonus)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -254,9 +269,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="lembur" id="lembur" min="0" step="0.01"
-                                x-model="salaryComponents.lembur" @input="calculateTotal()"
-                                value="{{ old('lembur', $penggajian->lembur ?? 0) }}"
+                            <input type="hidden" name="lembur" :value="salaryComponents.lembur">
+                            <input type="text" id="lembur" x-init="$el.value = formatRibu(salaryComponents.lembur)"
+                                @focus="$el.value = salaryComponents.lembur; $el.select()"
+                                @input="salaryComponents.lembur = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.lembur)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -284,9 +301,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="bpjs_karyawan" id="bpjs_karyawan" min="0"
-                                step="0.01" x-model="salaryComponents.bpjs_karyawan" @input="calculateTotal()"
-                                value="{{ old('bpjs_karyawan', $penggajian->bpjs_karyawan ?? 0) }}"
+                            <input type="hidden" name="bpjs_karyawan" :value="salaryComponents.bpjs_karyawan">
+                            <input type="text" id="bpjs_karyawan" x-init="$el.value = formatRibu(salaryComponents.bpjs_karyawan)"
+                                @focus="$el.value = salaryComponents.bpjs_karyawan; $el.select()"
+                                @input="salaryComponents.bpjs_karyawan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.bpjs_karyawan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -300,9 +319,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="cash_bon" id="cash_bon" min="0" step="0.01"
-                                x-model="salaryComponents.cash_bon" @input="calculateTotal()"
-                                value="{{ old('cash_bon', $penggajian->cash_bon ?? 0) }}"
+                            <input type="hidden" name="cash_bon" :value="salaryComponents.cash_bon">
+                            <input type="text" id="cash_bon" x-init="$el.value = formatRibu(salaryComponents.cash_bon)"
+                                @focus="$el.value = salaryComponents.cash_bon; $el.select()"
+                                @input="salaryComponents.cash_bon = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.cash_bon)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -317,9 +338,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="keterlambatan" id="keterlambatan" min="0"
-                                step="0.01" x-model="salaryComponents.keterlambatan" @input="calculateTotal()"
-                                value="{{ old('keterlambatan', $penggajian->keterlambatan ?? 0) }}"
+                            <input type="hidden" name="keterlambatan" :value="salaryComponents.keterlambatan">
+                            <input type="text" id="keterlambatan" x-init="$el.value = formatRibu(salaryComponents.keterlambatan)"
+                                @focus="$el.value = salaryComponents.keterlambatan; $el.select()"
+                                @input="salaryComponents.keterlambatan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.keterlambatan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -333,9 +356,11 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" name="potongan" id="potongan" min="0" step="0.01"
-                                x-model="salaryComponents.potongan" @input="calculateTotal()"
-                                value="{{ old('potongan', $penggajian->potongan ?? 0) }}"
+                            <input type="hidden" name="potongan" :value="salaryComponents.potongan">
+                            <input type="text" id="potongan" x-init="$el.value = formatRibu(salaryComponents.potongan)"
+                                @focus="$el.value = salaryComponents.potongan; $el.select()"
+                                @input="salaryComponents.potongan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.potongan)"
                                 class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                         </div>
                     </div>
@@ -654,6 +679,13 @@
                             currency: 'IDR',
                             minimumFractionDigits: 0
                         }).format(amount || 0);
+                    },
+
+                    formatRibu(value) {
+                        return new Intl.NumberFormat('id-ID', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(parseFloat(value) || 0);
                     }
                 }
             }
