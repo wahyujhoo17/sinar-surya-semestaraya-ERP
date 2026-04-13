@@ -545,10 +545,10 @@
                                                 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                                 Cashback (Nominal)
                                             </label>
-                                            <input type="number"
-                                                x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0"
-                                                @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', $event.target.value)"
-                                                min="0" step="0.01"
+                                            <input type="text" x-init="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
+                                                @focus="$el.value = (salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0); $el.select()"
+                                                @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', parseFloat(($event.target.value+'').replace(/\./g,'').replace(',','.')) || 0)"
+                                                @blur="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
                                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm"
                                                 placeholder="0">
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -1259,6 +1259,17 @@
 
                     init() {
                         this.calculateTotal();
+                        this.$nextTick(() => {
+                            const fields = ['gaji_pokok', 'tunjangan_keluarga', 'tunjangan_jabatan',
+                                'tunjangan_transport', 'tunjangan_makan', 'tunjangan_btn', 'tunjangan_pulsa',
+                                'tunjangan', 'bonus', 'lembur', 'bpjs_karyawan', 'cash_bon', 'keterlambatan',
+                                'potongan'
+                            ];
+                            fields.forEach(f => {
+                                const el = document.getElementById(f);
+                                if (el) el.value = this.formatRibu(this.salaryComponents[f] || 0);
+                            });
+                        });
                         if (this.selectedEmployee) {
                             this.onEmployeeChange();
                             this.calculateCommission();

@@ -319,7 +319,7 @@
                 <div class="section-title">Informasi Karyawan</div>
                 <div style="padding: 8px;">
                     <strong>{{ $penggajian->karyawan->nama_lengkap }}</strong><br>
-                    NIK: {{ $penggajian->karyawan->nik ?? '-' }}<br>
+                    NIP: {{ $penggajian->karyawan->nik ?? ($penggajian->karyawan->nip ?? '-') }}<br>
                     @if ($penggajian->karyawan->posisi)
                         Posisi: {{ $penggajian->karyawan->posisi }}<br>
                     @endif
@@ -357,49 +357,85 @@
                     <td class="text-right positive-amount">Rp {{ number_format($penggajian->gaji_pokok, 2, ',', '.') }}
                     </td>
                 </tr>
-                @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                @php
+                    $tunjanganKeluarga =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_KELUARGA__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_keluarga ?? 0);
+                    $tunjanganJabatan =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_JABATAN__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_jabatan ?? 0);
+                    $tunjanganTransport =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_TRANSPORT__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_transport ?? 0);
+                    $tunjanganMakan =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_MAKAN__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_makan ?? 0);
+                    $tunjanganBtn =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_BTN__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_btn ?? 0);
+                    $tunjanganPulsa =
+                        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_PULSA__'))
+                            ->nilai ??
+                        ($penggajian->karyawan->tunjangan_pulsa ?? 0);
+
+                    $manualKomponenPendapatan = $penggajian->komponenGaji
+                        ->where('jenis', 'pendapatan')
+                        ->reject(
+                            fn($komponen) => str_starts_with(
+                                (string) ($komponen->keterangan ?? ''),
+                                '__AUTO_TUNJANGAN_',
+                            ),
+                        );
+                    $manualKomponenPotongan = $penggajian->komponenGaji->where('jenis', 'potongan');
+                @endphp
+                @if (($tunjanganKeluarga ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Keluarga</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganKeluarga, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                @if (($tunjanganJabatan ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Jabatan</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganJabatan, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                @if (($tunjanganTransport ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Transport</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganTransport, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                @if (($tunjanganMakan ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Makan</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganMakan, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                @if (($tunjanganBtn ?? 0) > 0)
                     <tr>
                         <td>Tunjangan BTN</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganBtn, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                @if (($tunjanganPulsa ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Pulsa</td>
                         <td class="text-right positive-amount">Rp
-                            {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}</td>
+                            {{ number_format($tunjanganPulsa, 2, ',', '.') }}</td>
                     </tr>
                 @endif
-                @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                @foreach ($manualKomponenPendapatan as $komponen)
                     <tr>
                         <td>{{ $komponen->nama_komponen }}
                             @if ($komponen->keterangan)
@@ -435,13 +471,13 @@
                 @php
                     $totalPendapatan =
                         $penggajian->gaji_pokok +
-                        ($penggajian->karyawan->tunjangan_keluarga ?? 0) +
-                        ($penggajian->karyawan->tunjangan_jabatan ?? 0) +
-                        ($penggajian->karyawan->tunjangan_transport ?? 0) +
-                        ($penggajian->karyawan->tunjangan_makan ?? 0) +
-                        ($penggajian->karyawan->tunjangan_btn ?? 0) +
-                        ($penggajian->karyawan->tunjangan_pulsa ?? 0) +
-                        $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai') +
+                        ($tunjanganKeluarga ?? 0) +
+                        ($tunjanganJabatan ?? 0) +
+                        ($tunjanganTransport ?? 0) +
+                        ($tunjanganMakan ?? 0) +
+                        ($tunjanganBtn ?? 0) +
+                        ($tunjanganPulsa ?? 0) +
+                        $manualKomponenPendapatan->sum('nilai') +
                         $penggajian->tunjangan +
                         $penggajian->bonus +
                         $penggajian->lembur;
@@ -456,7 +492,7 @@
                     ($penggajian->bpjs_karyawan ?? 0) > 0 ||
                         ($penggajian->cash_bon ?? 0) > 0 ||
                         ($penggajian->keterlambatan ?? 0) > 0 ||
-                        $penggajian->komponenGaji->where('jenis', 'potongan')->count() > 0 ||
+                        $manualKomponenPotongan->count() > 0 ||
                         $penggajian->potongan > 0)
                     <!-- Deduction Section -->
                     <tr style="background-color: #fef8f8;">
@@ -483,7 +519,7 @@
                                 {{ number_format($penggajian->keterlambatan, 2, ',', '.') }}</td>
                         </tr>
                     @endif
-                    @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                    @foreach ($manualKomponenPotongan as $komponen)
                         <tr>
                             <td>{{ $komponen->nama_komponen }}
                                 @if ($komponen->keterangan)

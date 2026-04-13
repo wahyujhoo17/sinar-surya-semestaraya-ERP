@@ -496,9 +496,6 @@ class PenggajianController extends Controller
         // Total gaji (bruto)
         $totalGaji = $pendapatan - $potongan;
 
-        // THP (Take Home Pay) sama dengan total gaji dalam hal ini
-        $thp = $totalGaji;
-
         // Tambahkan komponen gaji lainnya jika ada
         if ($request->has('komponenGaji')) {
             foreach ($request->komponenGaji as $komponen) {
@@ -509,6 +506,9 @@ class PenggajianController extends Controller
                 }
             }
         }
+
+        // THP (Take Home Pay) mengikuti total akhir setelah semua komponen
+        $thp = $totalGaji;
 
         DB::beginTransaction();
         try {
@@ -533,6 +533,9 @@ class PenggajianController extends Controller
                 'catatan' => $request->catatan,
                 'disetujui_oleh' => $request->status == 'disetujui' ? Auth::id() : null,
             ]);
+
+            // Simpan snapshot tunjangan berbasis form agar nilai tetap konsisten saat edit/show.
+            $this->syncAutoAllowanceComponents($penggajian, $request);
 
             // Tambahkan komponen komisi per sales order jika ada
             if (!empty($komisiDetails)) {
@@ -652,9 +655,18 @@ class PenggajianController extends Controller
         $request->validate([
             'gaji_pokok' => 'required|numeric|min:0',
             'tunjangan' => 'nullable|numeric|min:0',
+            'tunjangan_keluarga' => 'nullable|numeric|min:0',
+            'tunjangan_jabatan' => 'nullable|numeric|min:0',
+            'tunjangan_transport' => 'nullable|numeric|min:0',
+            'tunjangan_makan' => 'nullable|numeric|min:0',
+            'tunjangan_btn' => 'nullable|numeric|min:0',
+            'tunjangan_pulsa' => 'nullable|numeric|min:0',
             'bonus' => 'nullable|numeric|min:0',
             'lembur' => 'nullable|numeric|min:0',
             'potongan' => 'nullable|numeric|min:0',
+            'cash_bon' => 'nullable|numeric|min:0',
+            'keterlambatan' => 'nullable|numeric|min:0',
+            'bpjs_karyawan' => 'nullable|numeric|min:0',
             'tanggal_bayar' => 'nullable|date',
             'status' => 'required|in:draft,disetujui,dibayar',
             'catatan' => 'nullable|string',
@@ -675,9 +687,14 @@ class PenggajianController extends Controller
             ($request->tunjangan_keluarga ?? 0) +
             ($request->tunjangan_transport ?? 0) +
             ($request->tunjangan_makan ?? 0) +
+            ($request->tunjangan_btn ?? 0) +
+            ($request->tunjangan_pulsa ?? 0) +
             ($request->bonus ?? 0) +
             ($request->lembur ?? 0) -
-            ($request->potongan ?? 0);
+            ($request->potongan ?? 0) -
+            ($request->cash_bon ?? 0) -
+            ($request->keterlambatan ?? 0) -
+            ($request->bpjs_karyawan ?? 0);
 
         // Tambahkan komponen gaji
         if ($request->has('komponenGaji')) {
@@ -692,6 +709,8 @@ class PenggajianController extends Controller
 
         DB::beginTransaction();
         try {
+            $autoComponentIds = $this->syncAutoAllowanceComponents($penggajian, $request);
+
             // Update data penggajian
             $penggajian->update([
                 'gaji_pokok' => $request->gaji_pokok,
@@ -699,7 +718,11 @@ class PenggajianController extends Controller
                 'bonus' => $request->bonus,
                 'lembur' => $request->lembur,
                 'potongan' => $request->potongan,
+                'cash_bon' => $request->cash_bon ?? 0,
+                'keterlambatan' => $request->keterlambatan ?? 0,
+                'bpjs_karyawan' => $request->bpjs_karyawan ?? 0,
                 'total_gaji' => $totalGaji,
+                'thp' => $totalGaji,
                 'tanggal_bayar' => $request->tanggal_bayar,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
@@ -708,7 +731,7 @@ class PenggajianController extends Controller
 
             // Update atau tambah komponen gaji
             if ($request->has('komponenGaji')) {
-                $existingIds = [];
+                $existingIds = $autoComponentIds;
 
                 foreach ($request->komponenGaji as $komponen) {
                     if (isset($komponen['id'])) {
@@ -739,8 +762,10 @@ class PenggajianController extends Controller
                     ->whereNotIn('id', $existingIds)
                     ->delete();
             } else {
-                // Hapus semua komponen jika tidak ada di request
-                KomponenGaji::where('penggajian_id', $penggajian->id)->delete();
+                // Hapus semua komponen manual jika tidak ada di request, pertahankan snapshot tunjangan.
+                KomponenGaji::where('penggajian_id', $penggajian->id)
+                    ->whereNotIn('id', $autoComponentIds)
+                    ->delete();
             }
 
             DB::commit();
@@ -1142,6 +1167,56 @@ class PenggajianController extends Controller
     }
 
     /**
+     * Sinkronisasi komponen tunjangan berbasis input form agar tersimpan sebagai snapshot per penggajian.
+     * Mengembalikan ID komponen auto yang aktif.
+     */
+    private function syncAutoAllowanceComponents(Penggajian $penggajian, Request $request): array
+    {
+        $definitions = [
+            'tunjangan_keluarga' => ['nama' => 'Tunjangan Keluarga', 'marker' => '__AUTO_TUNJANGAN_KELUARGA__'],
+            'tunjangan_jabatan' => ['nama' => 'Tunjangan Jabatan', 'marker' => '__AUTO_TUNJANGAN_JABATAN__'],
+            'tunjangan_transport' => ['nama' => 'Tunjangan Transport', 'marker' => '__AUTO_TUNJANGAN_TRANSPORT__'],
+            'tunjangan_makan' => ['nama' => 'Tunjangan Makan', 'marker' => '__AUTO_TUNJANGAN_MAKAN__'],
+            'tunjangan_btn' => ['nama' => 'Tunjangan BTN', 'marker' => '__AUTO_TUNJANGAN_BTN__'],
+            'tunjangan_pulsa' => ['nama' => 'Tunjangan Pulsa', 'marker' => '__AUTO_TUNJANGAN_PULSA__'],
+        ];
+
+        $activeIds = [];
+
+        foreach ($definitions as $field => $meta) {
+            $nilai = (float) ($request->input($field, 0) ?? 0);
+
+            $existing = KomponenGaji::where('penggajian_id', $penggajian->id)
+                ->where('keterangan', $meta['marker'])
+                ->first();
+
+            if ($nilai > 0) {
+                if ($existing) {
+                    $existing->update([
+                        'nama_komponen' => $meta['nama'],
+                        'jenis' => 'pendapatan',
+                        'nilai' => $nilai,
+                    ]);
+                    $activeIds[] = $existing->id;
+                } else {
+                    $newComponent = KomponenGaji::create([
+                        'penggajian_id' => $penggajian->id,
+                        'nama_komponen' => $meta['nama'],
+                        'jenis' => 'pendapatan',
+                        'nilai' => $nilai,
+                        'keterangan' => $meta['marker'],
+                    ]);
+                    $activeIds[] = $newComponent->id;
+                }
+            } elseif ($existing) {
+                $existing->delete();
+            }
+        }
+
+        return $activeIds;
+    }
+
+    /**
      * Ambil data komisi karyawan (untuk API)
      */
     public function getKomisiKaryawan(Request $request)
@@ -1336,21 +1411,8 @@ class PenggajianController extends Controller
             $penggajian = Penggajian::with(['karyawan', 'komponenGaji'])->findOrFail($id);
             Log::info('Penggajian found', ['id' => $penggajian->id, 'status' => $penggajian->status]);
 
-            // Hitung nominal yang benar dari semua komponen
-            $paymentAmount = $penggajian->gaji_pokok
-                + ($penggajian->karyawan->tunjangan_keluarga ?? 0)
-                + ($penggajian->karyawan->tunjangan_jabatan ?? 0)
-                + ($penggajian->karyawan->tunjangan_transport ?? 0)
-                + ($penggajian->karyawan->tunjangan_makan ?? 0)
-                + ($penggajian->tunjangan ?? 0)
-                + ($penggajian->bonus ?? 0)
-                + ($penggajian->lembur ?? 0)
-                + $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai')
-                - ($penggajian->bpjs_karyawan ?? 0)
-                - ($penggajian->cash_bon ?? 0)
-                - ($penggajian->keterlambatan ?? 0)
-                - ($penggajian->potongan ?? 0)
-                - $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
+            // Gunakan nilai total tersimpan agar nominal pembayaran konsisten dengan hasil simpan/edit.
+            $paymentAmount = (float) $penggajian->total_gaji;
 
             // Enhanced business logic validation
             if ($penggajian->status === 'dibayar') {

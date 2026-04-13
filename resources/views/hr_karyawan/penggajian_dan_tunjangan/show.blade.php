@@ -1,19 +1,30 @@
 @php
-    $displayTotal =
-        $penggajian->gaji_pokok +
-        ($penggajian->karyawan->tunjangan_keluarga ?? 0) +
-        ($penggajian->karyawan->tunjangan_jabatan ?? 0) +
-        ($penggajian->karyawan->tunjangan_transport ?? 0) +
-        ($penggajian->karyawan->tunjangan_makan ?? 0) +
-        ($penggajian->tunjangan ?? 0) +
-        ($penggajian->bonus ?? 0) +
-        ($penggajian->lembur ?? 0) +
-        $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai') -
-        ($penggajian->bpjs_karyawan ?? 0) -
-        ($penggajian->cash_bon ?? 0) -
-        ($penggajian->keterlambatan ?? 0) -
-        ($penggajian->potongan ?? 0) -
-        $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
+    // Gunakan total tersimpan agar nominal pembayaran selalu konsisten dengan hasil simpan.
+    $displayTotal = $penggajian->total_gaji;
+
+    $tunjanganKeluarga =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_KELUARGA__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_keluarga ?? 0);
+    $tunjanganJabatan =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_JABATAN__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_jabatan ?? 0);
+    $tunjanganTransport =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_TRANSPORT__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_transport ?? 0);
+    $tunjanganMakan =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_MAKAN__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_makan ?? 0);
+    $tunjanganBtn =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_BTN__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_btn ?? 0);
+    $tunjanganPulsa =
+        optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_PULSA__'))->nilai ??
+        ($penggajian->karyawan->tunjangan_pulsa ?? 0);
+
+    $manualKomponenPendapatan = $penggajian->komponenGaji
+        ->where('jenis', 'pendapatan')
+        ->reject(fn($komponen) => str_starts_with((string) ($komponen->keterangan ?? ''), '__AUTO_TUNJANGAN_'));
+    $manualKomponenPotongan = $penggajian->komponenGaji->where('jenis', 'potongan');
 @endphp
 <x-app-layout :breadcrumbs="$breadcrumbs ?? []" :currentPage="$currentPage ?? 'Detail Penggajian'">
     <div class="py-8 px-4 mx-auto max-w-full xl:max-w-screen-xl lg:py-10">
@@ -225,7 +236,7 @@
                                     </tr>
 
                                     <!-- Employee Salary Components from Karyawan -->
-                                    @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                                    @if (($tunjanganKeluarga ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -234,12 +245,12 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}
+                                                {{ number_format($tunjanganKeluarga, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
-                                    @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                                    @if (($tunjanganJabatan ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -248,12 +259,12 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}
+                                                {{ number_format($tunjanganJabatan, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
-                                    @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                                    @if (($tunjanganTransport ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -262,12 +273,12 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}
+                                                {{ number_format($tunjanganTransport, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
-                                    @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                                    @if (($tunjanganMakan ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -276,12 +287,12 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}
+                                                {{ number_format($tunjanganMakan, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
-                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                    @if (($tunjanganBtn ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -290,12 +301,12 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}
+                                                {{ number_format($tunjanganBtn, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
-                                    @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                                    @if (($tunjanganPulsa ?? 0) > 0)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -304,13 +315,13 @@
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium text-green-600 dark:text-green-400">
                                                 Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}
+                                                {{ number_format($tunjanganPulsa, 2, ',', '.') }}
                                             </td>
                                         </tr>
                                     @endif
 
                                     <!-- Komponen Pendapatan -->
-                                    @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                                    @foreach ($manualKomponenPendapatan as $komponen)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -372,7 +383,7 @@
                                         ($penggajian->bpjs_karyawan ?? 0) > 0 ||
                                             ($penggajian->cash_bon ?? 0) > 0 ||
                                             ($penggajian->keterlambatan ?? 0) > 0 ||
-                                            $penggajian->komponenGaji->where('jenis', 'potongan')->count() > 0 ||
+                                            $manualKomponenPotongan->count() > 0 ||
                                             $penggajian->potongan > 0)
                                         <tr class="bg-red-50 dark:bg-red-900/20">
                                             <td colspan="2" class="px-6 py-3">
@@ -434,7 +445,7 @@
                                     @endif
 
                                     <!-- Komponen Potongan -->
-                                    @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                                    @foreach ($manualKomponenPotongan as $komponen)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
@@ -929,22 +940,22 @@
                         @php
                             // Calculate totals
                             $totalPendapatan = $penggajian->gaji_pokok;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_keluarga ?? 0;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_jabatan ?? 0;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_transport ?? 0;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_makan ?? 0;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_btn ?? 0;
-                            $totalPendapatan += $penggajian->karyawan->tunjangan_pulsa ?? 0;
+                            $totalPendapatan += $tunjanganKeluarga ?? 0;
+                            $totalPendapatan += $tunjanganJabatan ?? 0;
+                            $totalPendapatan += $tunjanganTransport ?? 0;
+                            $totalPendapatan += $tunjanganMakan ?? 0;
+                            $totalPendapatan += $tunjanganBtn ?? 0;
+                            $totalPendapatan += $tunjanganPulsa ?? 0;
                             $totalPendapatan += $penggajian->tunjangan;
                             $totalPendapatan += $penggajian->bonus;
                             $totalPendapatan += $penggajian->lembur;
-                            $totalPendapatan += $penggajian->komponenGaji->where('jenis', 'pendapatan')->sum('nilai');
+                            $totalPendapatan += $manualKomponenPendapatan->sum('nilai');
 
                             $totalPotongan = $penggajian->bpjs_karyawan ?? 0;
                             $totalPotongan += $penggajian->cash_bon ?? 0;
                             $totalPotongan += $penggajian->keterlambatan ?? 0;
                             $totalPotongan += $penggajian->potongan;
-                            $totalPotongan += $penggajian->komponenGaji->where('jenis', 'potongan')->sum('nilai');
+                            $totalPotongan += $manualKomponenPotongan->sum('nilai');
                         @endphp
 
                         <div class="space-y-4">
@@ -962,46 +973,46 @@
                                         <span>Gaji Pokok:</span>
                                         <span>Rp {{ number_format($penggajian->gaji_pokok, 2, ',', '.') }}</span>
                                     </div>
-                                    @if (($penggajian->karyawan->tunjangan_keluarga ?? 0) > 0)
+                                    @if (($tunjanganKeluarga ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Keluarga:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_keluarga, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganKeluarga, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @if (($penggajian->karyawan->tunjangan_jabatan ?? 0) > 0)
+                                    @if (($tunjanganJabatan ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Jabatan:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_jabatan, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganJabatan, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @if (($penggajian->karyawan->tunjangan_transport ?? 0) > 0)
+                                    @if (($tunjanganTransport ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Transport:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_transport, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganTransport, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @if (($penggajian->karyawan->tunjangan_makan ?? 0) > 0)
+                                    @if (($tunjanganMakan ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Makan:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_makan, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganMakan, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @if (($penggajian->karyawan->tunjangan_btn ?? 0) > 0)
+                                    @if (($tunjanganBtn ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan BTN:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_btn, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganBtn, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @if (($penggajian->karyawan->tunjangan_pulsa ?? 0) > 0)
+                                    @if (($tunjanganPulsa ?? 0) > 0)
                                         <div class="flex justify-between">
                                             <span>Tunjangan Pulsa:</span>
                                             <span>Rp
-                                                {{ number_format($penggajian->karyawan->tunjangan_pulsa, 2, ',', '.') }}</span>
+                                                {{ number_format($tunjanganPulsa, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
                                     @if ($penggajian->tunjangan > 0)
@@ -1022,7 +1033,7 @@
                                             <span>Rp {{ number_format($penggajian->lembur, 2, ',', '.') }}</span>
                                         </div>
                                     @endif
-                                    @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                                    @foreach ($manualKomponenPendapatan as $komponen)
                                         <div class="flex justify-between">
                                             <span>{{ $komponen->nama_komponen }}:</span>
                                             <span>Rp {{ number_format($komponen->nilai, 2, ',', '.') }}</span>
@@ -1068,7 +1079,7 @@
                                                 <span>Rp {{ number_format($penggajian->potongan, 2, ',', '.') }}</span>
                                             </div>
                                         @endif
-                                        @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                                        @foreach ($manualKomponenPotongan as $komponen)
                                             <div class="flex justify-between">
                                                 <span>{{ $komponen->nama_komponen }}:</span>
                                                 <span>Rp {{ number_format($komponen->nilai, 2, ',', '.') }}</span>
@@ -1212,7 +1223,8 @@
                             </form>
                         @elseif($penggajian->status == 'disetujui')
                             <form action="{{ route('hr.penggajian.process-payment', $penggajian->id) }}"
-                                method="POST" id="payment-form">
+                                method="POST" id="payment-form"
+                                data-payment-amount="{{ (float) $penggajian->total_gaji }}">
                                 @csrf
 
                                 <div class="mb-4">
@@ -1390,6 +1402,42 @@
         </div>
     </div>
 
+    <!-- Payment Confirmation Modal -->
+    <div id="payment-confirm-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Konfirmasi Pembayaran</h3>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Pastikan detail pembayaran sudah benar.</p>
+            </div>
+            <div class="px-6 py-5 space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-300">Tanggal Bayar</span>
+                    <span id="confirm-payment-date" class="font-medium text-gray-900 dark:text-white">-</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-300">Metode</span>
+                    <span id="confirm-payment-method" class="font-medium text-gray-900 dark:text-white">-</span>
+                </div>
+                <div class="border-t border-gray-200 dark:border-gray-700 pt-3 flex justify-between items-center">
+                    <span class="text-gray-800 dark:text-gray-200 font-medium">Jumlah Dibayar</span>
+                    <span id="confirm-payment-amount" class="text-xl font-bold text-green-600 dark:text-green-400">Rp
+                        0,00</span>
+                </div>
+            </div>
+            <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
+                <button type="button" onclick="closePaymentConfirmModal()"
+                    class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+                    Batal
+                </button>
+                <button type="button" onclick="confirmPaymentSubmission()"
+                    class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white font-medium">
+                    Ya, Proses Pembayaran
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 items-center justify-center hidden">
         <div class="bg-white dark:bg-gray-800 rounded-lg p-5 max-w-md w-full mx-4">
@@ -1502,6 +1550,17 @@
                     }, 100);
                 });
 
+                let activePaymentForm = null;
+
+                function formatCurrency(amount) {
+                    return new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(parseFloat(amount || 0));
+                }
+
                 function initializePaymentForm() {
                     // Handle form submission
                     const paymentForm = document.getElementById('payment-form');
@@ -1545,14 +1604,45 @@
                             }
 
                             if (isValid) {
-                                // Show loading overlay
-                                showLoadingOverlay('Memproses pembayaran...');
-                                // Submit the form
-                                this.submit();
+                                activePaymentForm = this;
+
+                                const paymentDate = document.getElementById('payment_date')?.value || '-';
+                                const methodLabel = paymentMethod === 'cash' ? 'Kas / Tunai' : 'Transfer Bank';
+                                const amount = parseFloat(this.dataset.paymentAmount || 0);
+
+                                const dateEl = document.getElementById('confirm-payment-date');
+                                const methodEl = document.getElementById('confirm-payment-method');
+                                const amountEl = document.getElementById('confirm-payment-amount');
+
+                                if (dateEl) dateEl.textContent = paymentDate;
+                                if (methodEl) methodEl.textContent = methodLabel;
+                                if (amountEl) amountEl.textContent = formatCurrency(amount);
+
+                                const modal = document.getElementById('payment-confirm-modal');
+                                if (modal) {
+                                    modal.classList.remove('hidden');
+                                    modal.classList.add('flex');
+                                }
                             }
                         });
                     }
                 }
+
+                window.closePaymentConfirmModal = function() {
+                    const modal = document.getElementById('payment-confirm-modal');
+                    if (modal) {
+                        modal.classList.add('hidden');
+                        modal.classList.remove('flex');
+                    }
+                };
+
+                window.confirmPaymentSubmission = function() {
+                    if (!activePaymentForm) return;
+
+                    closePaymentConfirmModal();
+                    showLoadingOverlay('Memproses pembayaran...');
+                    activePaymentForm.submit();
+                };
 
                 // Function to set up sticky action bar on mobile
                 function setupStickyActionBar() {

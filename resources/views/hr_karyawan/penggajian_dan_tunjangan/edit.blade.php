@@ -223,6 +223,44 @@
                         </div>
                     </div>
 
+                    {{-- Tunjangan BTN --}}
+                    <div>
+                        <label for="tunjangan_btn"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan BTN
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="hidden" name="tunjangan_btn" :value="salaryComponents.tunjangan_btn">
+                            <input type="text" id="tunjangan_btn" x-init="$el.value = formatRibu(salaryComponents.tunjangan_btn)"
+                                @focus="$el.value = salaryComponents.tunjangan_btn; $el.select()"
+                                @input="salaryComponents.tunjangan_btn = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_btn)"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
+                    {{-- Tunjangan Pulsa --}}
+                    <div>
+                        <label for="tunjangan_pulsa"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tunjangan Pulsa
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">Rp</span>
+                            </div>
+                            <input type="hidden" name="tunjangan_pulsa" :value="salaryComponents.tunjangan_pulsa">
+                            <input type="text" id="tunjangan_pulsa" x-init="$el.value = formatRibu(salaryComponents.tunjangan_pulsa)"
+                                @focus="$el.value = salaryComponents.tunjangan_pulsa; $el.select()"
+                                @input="salaryComponents.tunjangan_pulsa = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
+                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_pulsa)"
+                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
+                        </div>
+                    </div>
+
                     {{-- Allowances (General) --}}
                     <div>
                         <label for="tunjangan"
@@ -378,8 +416,14 @@
                 </div>
             </div>
 
+            @php
+                $manualKomponenGaji = $penggajian->komponenGaji->reject(function ($komponen) {
+                    return str_starts_with((string) ($komponen->keterangan ?? ''), '__AUTO_TUNJANGAN_');
+                });
+            @endphp
+
             {{-- Existing Salary Components --}}
-            @if ($penggajian->komponenGaji->count() > 0)
+            @if ($manualKomponenGaji->count() > 0)
                 <div
                     class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
                     <div
@@ -420,7 +464,7 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    @foreach ($penggajian->komponenGaji as $komponen)
+                                    @foreach ($manualKomponenGaji as $komponen)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
@@ -482,10 +526,46 @@
                                     <span class="font-medium"
                                         x-text="formatRupiah(salaryComponents.gaji_pokok)"></span>
                                 </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_keluarga) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Keluarga:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_keluarga)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_jabatan) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Jabatan:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_jabatan)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_transport) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Transport:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_transport)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_makan) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Makan:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_makan)"></span>
+                                </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Tunjangan:</span>
                                     <span class="font-medium"
                                         x-text="formatRupiah(salaryComponents.tunjangan)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_btn) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan BTN:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_btn)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.tunjangan_pulsa) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Pulsa:</span>
+                                    <span class="font-medium"
+                                        x-text="formatRupiah(salaryComponents.tunjangan_pulsa)"></span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-gray-600 dark:text-gray-400">Bonus:</span>
@@ -495,7 +575,7 @@
                                     <span class="text-gray-600 dark:text-gray-400">Lembur:</span>
                                     <span class="font-medium" x-text="formatRupiah(salaryComponents.lembur)"></span>
                                 </div>
-                                @foreach ($penggajian->komponenGaji->where('jenis', 'pendapatan') as $komponen)
+                                @foreach ($manualKomponenGaji->where('jenis', 'pendapatan') as $komponen)
                                     <div class="flex justify-between border-t pt-2">
                                         <span
                                             class="text-gray-600 dark:text-gray-400">{{ $komponen->nama_komponen }}:</span>
@@ -511,12 +591,29 @@
                         <div class="space-y-3">
                             <h4 class="text-sm font-medium text-gray-900 dark:text-white">Potongan</h4>
                             <div class="space-y-2 text-sm">
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.bpjs_karyawan) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">BPJS:</span>
+                                    <span class="font-medium text-red-600 dark:text-red-400"
+                                        x-text="formatRupiah(salaryComponents.bpjs_karyawan)"></span>
+                                </div>
+                                <div class="flex justify-between" x-show="parseFloat(salaryComponents.cash_bon) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Cash Bon:</span>
+                                    <span class="font-medium text-red-600 dark:text-red-400"
+                                        x-text="formatRupiah(salaryComponents.cash_bon)"></span>
+                                </div>
+                                <div class="flex justify-between"
+                                    x-show="parseFloat(salaryComponents.keterlambatan) > 0">
+                                    <span class="text-gray-600 dark:text-gray-400">Keterlambatan:</span>
+                                    <span class="font-medium text-red-600 dark:text-red-400"
+                                        x-text="formatRupiah(salaryComponents.keterlambatan)"></span>
+                                </div>
                                 <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Potongan:</span>
+                                    <span class="text-gray-600 dark:text-gray-400">Potongan Lainnya:</span>
                                     <span class="font-medium text-red-600 dark:text-red-400"
                                         x-text="formatRupiah(salaryComponents.potongan)"></span>
                                 </div>
-                                @foreach ($penggajian->komponenGaji->where('jenis', 'potongan') as $komponen)
+                                @foreach ($manualKomponenGaji->where('jenis', 'potongan') as $komponen)
                                     <div class="flex justify-between">
                                         <span
                                             class="text-gray-600 dark:text-gray-400">{{ $komponen->nama_komponen }}:</span>
@@ -621,10 +718,12 @@
                 return {
                     salaryComponents: {
                         gaji_pokok: {{ old('gaji_pokok', $penggajian->gaji_pokok ?? 0) }},
-                        tunjangan_keluarga: {{ old('tunjangan_keluarga', $penggajian->karyawan->tunjangan_keluarga ?? 0) }},
-                        tunjangan_jabatan: {{ old('tunjangan_jabatan', $penggajian->karyawan->tunjangan_jabatan ?? 0) }},
-                        tunjangan_transport: {{ old('tunjangan_transport', $penggajian->karyawan->tunjangan_transport ?? 0) }},
-                        tunjangan_makan: {{ old('tunjangan_makan', $penggajian->karyawan->tunjangan_makan ?? 0) }},
+                        tunjangan_keluarga: {{ old('tunjangan_keluarga', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_KELUARGA__'))->nilai ?? ($penggajian->karyawan->tunjangan_keluarga ?? 0)) }},
+                        tunjangan_jabatan: {{ old('tunjangan_jabatan', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_JABATAN__'))->nilai ?? ($penggajian->karyawan->tunjangan_jabatan ?? 0)) }},
+                        tunjangan_transport: {{ old('tunjangan_transport', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_TRANSPORT__'))->nilai ?? ($penggajian->karyawan->tunjangan_transport ?? 0)) }},
+                        tunjangan_makan: {{ old('tunjangan_makan', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_MAKAN__'))->nilai ?? ($penggajian->karyawan->tunjangan_makan ?? 0)) }},
+                        tunjangan_btn: {{ old('tunjangan_btn', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_BTN__'))->nilai ?? ($penggajian->karyawan->tunjangan_btn ?? 0)) }},
+                        tunjangan_pulsa: {{ old('tunjangan_pulsa', optional($penggajian->komponenGaji->firstWhere('keterangan', '__AUTO_TUNJANGAN_PULSA__'))->nilai ?? ($penggajian->karyawan->tunjangan_pulsa ?? 0)) }},
                         tunjangan: {{ old('tunjangan', $penggajian->tunjangan ?? 0) }},
                         bonus: {{ old('bonus', $penggajian->bonus ?? 0) }},
                         lembur: {{ old('lembur', $penggajian->lembur ?? 0) }},
@@ -636,10 +735,21 @@
 
                     totalSalary: 0,
                     totalGaji: 0, // Total bruto sebelum potongan
-                    existingComponents: @json($penggajian->komponenGaji),
+                    existingComponents: @json($manualKomponenGaji->values()),
 
                     init() {
                         this.calculateTotal();
+                        this.$nextTick(() => {
+                            const fields = ['gaji_pokok', 'tunjangan_keluarga', 'tunjangan_jabatan',
+                                'tunjangan_transport', 'tunjangan_makan', 'tunjangan_btn', 'tunjangan_pulsa',
+                                'tunjangan', 'bonus', 'lembur',
+                                'bpjs_karyawan', 'cash_bon', 'keterlambatan', 'potongan'
+                            ];
+                            fields.forEach(f => {
+                                const el = document.getElementById(f);
+                                if (el) el.value = this.formatRibu(this.salaryComponents[f] || 0);
+                            });
+                        });
                     },
 
                     calculateTotal() {
@@ -649,6 +759,8 @@
                             parseFloat(this.salaryComponents.tunjangan_jabatan || 0) +
                             parseFloat(this.salaryComponents.tunjangan_transport || 0) +
                             parseFloat(this.salaryComponents.tunjangan_makan || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_btn || 0) +
+                            parseFloat(this.salaryComponents.tunjangan_pulsa || 0) +
                             parseFloat(this.salaryComponents.tunjangan || 0) +
                             parseFloat(this.salaryComponents.bonus || 0) +
                             parseFloat(this.salaryComponents.lembur || 0);
