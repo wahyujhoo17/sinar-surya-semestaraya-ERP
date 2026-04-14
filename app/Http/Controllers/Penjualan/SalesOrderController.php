@@ -255,11 +255,11 @@ class SalesOrderController extends Controller
     public function create(Request $request)
     {
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            // Allow access to all customers
-            $customers = Customer::orderBy('nama', 'asc')->get();
+            // Allow access to all active customers
+            $customers = Customer::where('is_active', 1)->orderBy('nama', 'asc')->get();
         } else {
-            // Only show customers assigned to the sales user
-            $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
+            // Only show active customers assigned to the sales user
+            $customers = Customer::where('sales_id', Auth::id())->where('is_active', 1)->orderBy('nama', 'asc')->get();
         }
         // $customers = Customer::where('sales_id', Auth::id())->orderBy('nama', 'asc')->get();
         $products = Produk::orderBy('nama', 'asc')->get();
