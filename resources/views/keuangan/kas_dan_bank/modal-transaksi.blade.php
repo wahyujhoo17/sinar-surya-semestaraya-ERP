@@ -302,18 +302,74 @@
                 this.showJournalPreview = true;
             },
 
-            formatCurrency(event) {
-                let value = event.target.value.replace(/[^\d]/g, '');
-                let numericValue = parseInt(value) || 0;
+            normalizeLocalizedAmount(rawValue) {
+                const raw = String(rawValue || '').replace(/\s+/g, '');
+                const cleaned = raw.replace(/[^0-9.,]/g, '');
 
-                this.formData.jumlah = numericValue;
-                this.formData.jumlah_display = this.formatNumber(numericValue);
+                if (!cleaned) {
+                    return {
+                        numeric: 0,
+                        display: ''
+                    };
+                }
+
+                const lastComma = cleaned.lastIndexOf(',');
+                const lastDot = cleaned.lastIndexOf('.');
+                let decimalSeparator = null;
+
+                if (lastComma !== -1 && lastDot !== -1) {
+                    decimalSeparator = lastComma > lastDot ? ',' : '.';
+                } else if (lastComma !== -1) {
+                    const commaAsThousand = /^\d{1,3}(,\d{3})+$/.test(cleaned);
+                    decimalSeparator = commaAsThousand ? null : ',';
+                } else if (lastDot !== -1) {
+                    decimalSeparator = null;
+                }
+
+                let integerPart = cleaned;
+                let fractionPart = '';
+                let hasTrailingDecimalSeparator = false;
+
+                if (decimalSeparator) {
+                    hasTrailingDecimalSeparator = cleaned.endsWith(decimalSeparator);
+                    const segments = cleaned.split(decimalSeparator);
+                    integerPart = segments.shift() || '0';
+                    fractionPart = segments.join('');
+                }
+
+                integerPart = integerPart.replace(/[.,]/g, '');
+                fractionPart = fractionPart.replace(/[.,]/g, '').slice(0, 4);
+
+                const normalizedInteger = integerPart || '0';
+                const numericString = fractionPart ? `${normalizedInteger}.${fractionPart}` : normalizedInteger;
+                const numericValue = parseFloat(numericString) || 0;
+
+                const formattedInteger = new Intl.NumberFormat('id-ID', {
+                    maximumFractionDigits: 0
+                }).format(parseInt(normalizedInteger, 10) || 0);
+
+                return {
+                    numeric: numericValue,
+                    display: (fractionPart || hasTrailingDecimalSeparator) ? `${formattedInteger},${fractionPart}` :
+                        formattedInteger
+                };
+            },
+
+            formatCurrency(event) {
+                const normalized = this.normalizeLocalizedAmount(event.target.value);
+
+                this.formData.jumlah = normalized.numeric;
+                this.formData.jumlah_display = normalized.display;
+                event.target.value = normalized.display;
 
                 this.updateJournalPreview();
             },
 
             formatNumber(num) {
-                return new Intl.NumberFormat('id-ID').format(num);
+                return new Intl.NumberFormat('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4
+                }).format(Number(num) || 0);
             },
 
             validateAmount() {
@@ -686,8 +742,10 @@
                                     <template x-for="account in searchedContraAccounts" :key="account.id">
                                         <button type="button" @click="selectContraAccount(account)"
                                             class="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            :class="{ 'bg-primary-50 dark:bg-primary-900/20': String(formData
-                                                    .contra_account_id) === String(account.id) }"
+                                            :class="{
+                                                'bg-primary-50 dark:bg-primary-900/20': String(formData
+                                                    .contra_account_id) === String(account.id)
+                                            }"
                                             x-text="account.kode + ' - ' + account.nama">
                                         </button>
                                     </template>

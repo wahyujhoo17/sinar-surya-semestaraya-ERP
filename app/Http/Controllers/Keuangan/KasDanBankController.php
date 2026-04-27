@@ -332,6 +332,10 @@ class KasDanBankController extends Controller
      */
     public function storeKas(Request $request)
     {
+        $request->merge([
+            'saldo' => $this->normalizeLocalizedNumber($request->input('saldo')),
+        ]);
+
         // Validasi data input
         $validator = Validator::make($request->all(), [
             'nama' => 'required|string|max:255',
@@ -528,6 +532,10 @@ class KasDanBankController extends Controller
      */
     public function storeRekening(Request $request)
     {
+        $request->merge([
+            'saldo' => $this->normalizeLocalizedNumber($request->input('saldo')),
+        ]);
+
         // Validasi data input
         $validator = Validator::make($request->all(), [
             'nama_bank' => 'required|string|max:255',
@@ -831,6 +839,10 @@ class KasDanBankController extends Controller
      */
     public function storeTransaksi(Request $request)
     {
+        $request->merge([
+            'jumlah' => $this->normalizeLocalizedNumber($request->input('jumlah')),
+        ]);
+
         // Validasi input
         $validator = Validator::make($request->all(), [
             'tanggal' => 'required|date',
@@ -1140,6 +1152,80 @@ class KasDanBankController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Normalize localized number formats (e.g. 1.234,5678 or 1,234.5678) into float.
+     */
+    private function normalizeLocalizedNumber($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return round((float) $value, 4);
+        }
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $normalized = trim($value);
+        if ($normalized === '') {
+            return null;
+        }
+
+        $normalized = preg_replace('/\s+/', '', $normalized);
+        $normalized = preg_replace('/[^0-9,\.\-]/', '', $normalized);
+
+        if ($normalized === '' || $normalized === '-' || $normalized === null) {
+            return null;
+        }
+
+        $isNegative = str_starts_with($normalized, '-');
+        $unsigned = ltrim($normalized, '-');
+
+        $lastComma = strrpos($unsigned, ',');
+        $lastDot = strrpos($unsigned, '.');
+
+        if ($lastComma !== false && $lastDot !== false) {
+            // Last symbol is treated as decimal separator.
+            if ($lastComma > $lastDot) {
+                $unsigned = str_replace('.', '', $unsigned);
+                $unsigned = str_replace(',', '.', $unsigned);
+            } else {
+                $unsigned = str_replace(',', '', $unsigned);
+            }
+        } elseif ($lastComma !== false) {
+            // Comma can be decimal separator (12,3456) or thousand grouping (1,000).
+            if (preg_match('/^\d{1,3}(,\d{3})+$/', $unsigned)) {
+                $unsigned = str_replace(',', '', $unsigned);
+            } else {
+                $unsigned = str_replace('.', '', $unsigned);
+                $unsigned = str_replace(',', '.', $unsigned);
+            }
+        } elseif ($lastDot !== false) {
+            // If dots are used only as thousand separators, remove all dots.
+            if (preg_match('/^\d{1,3}(\.\d{3})+$/', $unsigned)) {
+                $unsigned = str_replace('.', '', $unsigned);
+            } else {
+                $unsigned = str_replace(',', '', $unsigned);
+            }
+        }
+
+        $unsigned = preg_replace('/\.(?=.*\.)/', '', $unsigned);
+
+        if (!is_numeric($unsigned)) {
+            return null;
+        }
+
+        $numeric = (float) $unsigned;
+        if ($isNegative) {
+            $numeric *= -1;
+        }
+
+        return round($numeric, 4);
     }
 
     /**

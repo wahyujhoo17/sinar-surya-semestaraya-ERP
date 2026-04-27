@@ -190,8 +190,8 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                             </div>
-                            <input type="number" id="jumlah_transaksi" x-model="form.jumlah" required
-                                min="1000" step="1000"
+                            <input type="text" id="jumlah_transaksi" x-model="jumlahDisplay"
+                                @input="formatJumlahInput($event)" inputmode="decimal" required
                                 class="block w-full pl-8 pr-3 border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500 sm:text-sm"
                                 placeholder="0">
                         </div>
@@ -277,6 +277,7 @@
                     rekening_bank_id: '',
                     kategori_penggunaan: ''
                 },
+                jumlahDisplay: '',
                 errors: {},
                 projectInfo: {
                     id: null,
@@ -330,6 +331,7 @@
                         rekening_bank_id: '',
                         kategori_penggunaan: ''
                     };
+                    this.jumlahDisplay = '';
                     this.projectInfo = {
                         id: null,
                         saldo: 0,
@@ -383,7 +385,68 @@
                 },
 
                 formatNumber(value) {
-                    return new Intl.NumberFormat('id-ID').format(value || 0);
+                    return new Intl.NumberFormat('id-ID', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 4
+                    }).format(value || 0);
+                },
+
+                normalizeLocalizedAmount(rawValue) {
+                    const raw = String(rawValue || '').replace(/\s+/g, '');
+                    const cleaned = raw.replace(/[^0-9.,]/g, '');
+
+                    if (!cleaned) {
+                        return {
+                            numeric: 0,
+                            display: ''
+                        };
+                    }
+
+                    const lastComma = cleaned.lastIndexOf(',');
+                    const lastDot = cleaned.lastIndexOf('.');
+                    let decimalSeparator = null;
+
+                    if (lastComma !== -1 && lastDot !== -1) {
+                        decimalSeparator = lastComma > lastDot ? ',' : '.';
+                    } else if (lastComma !== -1) {
+                        const commaAsThousand = /^\d{1,3}(,\d{3})+$/.test(cleaned);
+                        decimalSeparator = commaAsThousand ? null : ',';
+                    } else if (lastDot !== -1) {
+                        const dotAsThousand = /^\d{1,3}(\.\d{3})+$/.test(cleaned);
+                        decimalSeparator = dotAsThousand ? null : '.';
+                    }
+
+                    let integerPart = cleaned;
+                    let fractionPart = '';
+
+                    if (decimalSeparator) {
+                        const segments = cleaned.split(decimalSeparator);
+                        integerPart = segments.shift() || '0';
+                        fractionPart = segments.join('');
+                    }
+
+                    integerPart = integerPart.replace(/[.,]/g, '');
+                    fractionPart = fractionPart.replace(/[.,]/g, '').slice(0, 4);
+
+                    const normalizedInteger = integerPart || '0';
+                    const numericString = fractionPart ? `${normalizedInteger}.${fractionPart}` : normalizedInteger;
+                    const numericValue = parseFloat(numericString) || 0;
+
+                    const formattedInteger = new Intl.NumberFormat('id-ID', {
+                        maximumFractionDigits: 0
+                    }).format(parseInt(normalizedInteger, 10) || 0);
+
+                    return {
+                        numeric: numericValue,
+                        display: fractionPart ? `${formattedInteger},${fractionPart}` : formattedInteger
+                    };
+                },
+
+                formatJumlahInput(event) {
+                    const normalized = this.normalizeLocalizedAmount(event.target.value);
+                    this.form.jumlah = normalized.numeric;
+                    this.jumlahDisplay = normalized.display;
+                    event.target.value = normalized.display;
                 },
 
                 async submitForm() {

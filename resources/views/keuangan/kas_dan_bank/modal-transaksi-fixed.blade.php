@@ -175,7 +175,7 @@
                     });
 
                     const contraAccount = this.contraAccounts.find(acc => acc.id == this.formData
-                    .contra_account_id);
+                        .contra_account_id);
                     if (contraAccount) {
                         this.journalPreview.push({
                             account: `${contraAccount.kode} - ${contraAccount.nama}`,
@@ -186,7 +186,7 @@
                 } else if (this.formData.jenis === 'keluar') {
                     // Expense: Debit Contra Account, Credit Kas/Bank
                     const contraAccount = this.contraAccounts.find(acc => acc.id == this.formData
-                    .contra_account_id);
+                        .contra_account_id);
                     if (contraAccount) {
                         this.journalPreview.push({
                             account: `${contraAccount.kode} - ${contraAccount.nama}`,
@@ -206,18 +206,75 @@
                 this.showJournalPreview = true;
             },
 
-            formatCurrency(event) {
-                let value = event.target.value.replace(/[^\d]/g, '');
-                let numericValue = parseInt(value) || 0;
+            normalizeLocalizedAmount(rawValue) {
+                const raw = String(rawValue || '').replace(/\s+/g, '');
+                const cleaned = raw.replace(/[^0-9.,]/g, '');
 
-                this.formData.jumlah = numericValue;
-                this.formData.jumlah_display = this.formatNumber(numericValue);
+                if (!cleaned) {
+                    return {
+                        numeric: 0,
+                        display: ''
+                    };
+                }
+
+                const lastComma = cleaned.lastIndexOf(',');
+                const lastDot = cleaned.lastIndexOf('.');
+                let decimalSeparator = null;
+
+                if (lastComma !== -1 && lastDot !== -1) {
+                    decimalSeparator = lastComma > lastDot ? ',' : '.';
+                } else if (lastComma !== -1) {
+                    const commaAsThousand = /^\d{1,3}(,\d{3})+$/.test(cleaned);
+                    decimalSeparator = commaAsThousand ? null : ',';
+                } else if (lastDot !== -1) {
+                    const dotAsThousand = /^\d{1,3}(\.\d{3})+$/.test(cleaned);
+                    decimalSeparator = dotAsThousand ? null : '.';
+                }
+
+                let integerPart = cleaned;
+                let fractionPart = '';
+                let hasTrailingDecimalSeparator = false;
+
+                if (decimalSeparator) {
+                    hasTrailingDecimalSeparator = cleaned.endsWith(decimalSeparator);
+                    const segments = cleaned.split(decimalSeparator);
+                    integerPart = segments.shift() || '0';
+                    fractionPart = segments.join('');
+                }
+
+                integerPart = integerPart.replace(/[.,]/g, '');
+                fractionPart = fractionPart.replace(/[.,]/g, '').slice(0, 4);
+
+                const normalizedInteger = integerPart || '0';
+                const numericString = fractionPart ? `${normalizedInteger}.${fractionPart}` : normalizedInteger;
+                const numericValue = parseFloat(numericString) || 0;
+
+                const formattedInteger = new Intl.NumberFormat('id-ID', {
+                    maximumFractionDigits: 0
+                }).format(parseInt(normalizedInteger, 10) || 0);
+
+                return {
+                    numeric: numericValue,
+                    display: (fractionPart || hasTrailingDecimalSeparator) ? `${formattedInteger},${fractionPart}` :
+                        formattedInteger
+                };
+            },
+
+            formatCurrency(event) {
+                const normalized = this.normalizeLocalizedAmount(event.target.value);
+
+                this.formData.jumlah = normalized.numeric;
+                this.formData.jumlah_display = normalized.display;
+                event.target.value = normalized.display;
 
                 this.updateJournalPreview();
             },
 
             formatNumber(num) {
-                return new Intl.NumberFormat('id-ID').format(num);
+                return new Intl.NumberFormat('id-ID', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 4
+                }).format(Number(num) || 0);
             },
 
             validateAmount() {
