@@ -110,7 +110,7 @@
                                     </svg>
                                 </div>
                                 <input type="text" name="search"
-                                    placeholder="Cari nama, perusahaan, atau no. invoice" x-model="search"
+                                    placeholder="Cari nama, perusahaan, no. invoice, atau no. SO" x-model="search"
                                     class="pl-8 py-1.5 block w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded-md shadow-sm text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white">
                             </div>
                         </div>
@@ -538,7 +538,7 @@
                 // Initialize modal functionality
                 initializeModals() {
                     this.$nextTick(() => {
-                        
+
                         // Handle opening modals
                         const modalToggles = document.querySelectorAll('[data-modal-toggle]');
                         modalToggles.forEach(toggle => {
@@ -548,7 +548,7 @@
 
                             newToggle.addEventListener('click', function() {
                                 const targetId = this.getAttribute('data-modal-toggle');
-                                
+
                                 const modal = document.getElementById(targetId);
                                 if (modal) {
                                     modal.classList.remove('hidden');
@@ -569,7 +569,7 @@
 
                             newHide.addEventListener('click', function() {
                                 const targetId = this.getAttribute('data-modal-hide');
-                                
+
                                 const modal = document.getElementById(targetId);
                                 if (modal) {
                                     modal.classList.add('hidden');

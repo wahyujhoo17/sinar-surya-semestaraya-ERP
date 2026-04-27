@@ -112,6 +112,7 @@ class InvoiceController extends Controller
         $sortMapping = [
             'no' => 'nomor',
             'no_invoice' => 'nomor',
+            'no_so' => 'no_so',
             'tanggal' => 'tanggal',
             'customer' => 'customer_id',
             'kontak' => 'customer_id',
@@ -131,6 +132,11 @@ class InvoiceController extends Controller
             $query->leftJoin('customer', 'invoice.customer_id', '=', 'customer.id')
                 ->orderBy('customer.nama', $direction)
                 ->select('invoice.*');
+        } elseif ($sort === 'no_so') {
+            // Join with sales order table to sort by sales order number
+            $query->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
+                ->orderBy('sales_order.nomor', $direction)
+                ->select('invoice.*');
         } else {
             $query->orderBy('tanggal', 'desc');
         }
@@ -141,6 +147,9 @@ class InvoiceController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nomor', 'like', "%{$search}%")
                     ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhereHas('salesOrder', function ($q_salesOrder) use ($search) {
+                        $q_salesOrder->where('nomor', 'like', "%{$search}%");
+                    })
                     ->orWhereHas('customer', function ($q_customer) use ($search) {
                         $q_customer->where('nama', 'like', "%{$search}%")
                             ->orWhere('company', 'like', "%{$search}%");

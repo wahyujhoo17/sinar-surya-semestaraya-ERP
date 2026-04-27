@@ -78,7 +78,7 @@ class ProdukController extends Controller
             $visibleColumns = $finalColumns; // Assign the merged and validated array
         }
 
-        $query = Produk::with(['kategori', 'satuan', 'jenis', 'stok'])->latest(); // Eager load relations
+        $query = Produk::with(['kategori', 'satuan', 'jenis', 'stok']); // Eager load relations
 
         // --- Apply Filters (Search, Kategori, Jenis, Harga) ---
         if ($request->filled('search')) {
@@ -109,10 +109,10 @@ class ProdukController extends Controller
 
         // --- Apply Sorting ---
         $sortField = $request->input('sort', 'created_at');
-        $sortDirection = $request->input('direction', 'desc');
+        $sortDirection = strtolower($request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         // Basic validation for sort field to prevent arbitrary column sorting
-        $allowedSortFields = ['nama', 'kategori_id', 'harga_jual', 'created_at']; // Hapus total_stok dari allowed fields biasa
+        $allowedSortFields = ['nama', 'kategori_id', 'jenis_id', 'harga_jual', 'created_at']; // Hapus total_stok dari allowed fields biasa
 
         if (in_array($sortField, $allowedSortFields)) {
             $query->orderBy($sortField, $sortDirection);
