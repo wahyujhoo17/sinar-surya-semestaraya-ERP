@@ -9,7 +9,7 @@
                 </p>
             </div>
             <div class="mt-4 md:mt-0">
-                <a href="{{ route('hr.penggajian.index') }}"
+                <a href="{{ route('hr.penggajian.index', request()->query()) }}"
                     class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
@@ -1189,7 +1189,7 @@
 
             {{-- Form Actions --}}
             <div class="flex justify-between items-center pt-6">
-                <a href="{{ route('hr.penggajian.index') }}"
+                <a href="{{ route('hr.penggajian.index', request()->query()) }}"
                     class="px-6 py-3 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200 font-medium">
                     Batal
                 </a>

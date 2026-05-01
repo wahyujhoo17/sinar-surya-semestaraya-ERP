@@ -76,7 +76,7 @@
             </td>
             <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div class="flex justify-end space-x-2">
-                    <a href="{{ route('hr.penggajian.show', $item->id) }}"
+                    <a href="{{ route('hr.penggajian.show', array_merge(request()->except('ajax_request'), ['penggajian' => $item->id])) }}"
                         class="inline-flex items-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         title="Detail">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -90,7 +90,7 @@
 
                     {{-- Hide Edit and Delete buttons if status is 'disetujui' or 'dibayar' --}}
                     @if ($item->status === 'draft')
-                        <a href="{{ route('hr.penggajian.edit', $item->id) }}"
+                        <a href="{{ route('hr.penggajian.edit', array_merge(request()->except('ajax_request'), ['penggajian' => $item->id])) }}"
                             class="inline-flex items-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
                             title="Edit">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -193,11 +193,11 @@
                 <td class="px-3 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">-</td>
                 <td class="px-3 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div class="flex justify-end">
-                        <a href="{{ route('hr.penggajian.create', [
+                        <a href="{{ route('hr.penggajian.create', array_merge(request()->except('ajax_request'), [
                             'karyawan_id' => $employee->id,
                             'bulan' => isset($selectedMonth) ? $selectedMonth : $currentMonth,
                             'tahun' => isset($selectedYear) ? $selectedYear : $currentYear,
-                        ]) }}"
+                        ])) }}"
                             class="inline-flex items-center px-2.5 py-1.5 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor">
