@@ -648,7 +648,7 @@
                 <a href="{{ route('hr.slip-gaji.index') }}"
                     class="{{ request()->routeIs('hr.slip-gaji.*') ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 menu-active-item' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700' }} group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors"
                     :class="{ 'justify-center': sidebarCollapsed }"
-                    x-tooltip="sidebarCollapsed ? 'Slip Gaji Saya' : ''">
+                    x-tooltip="sidebarCollapsed ? 'Slip Gaji' : ''">
                     <div class="flex-shrink-0 h-9 w-9 flex items-center justify-center rounded-lg bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 shadow-sm sidebar-card-icon"
                         :class="{ 'mr-0': sidebarCollapsed, 'mr-3': !sidebarCollapsed }">
                         <svg class="h-5 w-5 {{ request()->routeIs('hr.slip-gaji.*') ? 'text-blue-600' : '' }}"
@@ -657,7 +657,7 @@
                                 d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                     </div>
-                    <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Slip Gaji Saya</span>
+                    <span x-show="!sidebarCollapsed" class="transition-opacity duration-300">Slip Gaji</span>
                 </a>
             @endif
 
