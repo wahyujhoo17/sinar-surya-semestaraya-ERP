@@ -627,6 +627,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('penggajian/{id}/print', [App\Http\Controllers\hr_karyawan\PenggajianController::class, 'printPdf'])->name('penggajian.print');
         Route::resource('penggajian', App\Http\Controllers\hr_karyawan\PenggajianController::class);
 
+        // Slip Gaji Karyawan routes
+        Route::get('slip-gaji', [App\Http\Controllers\hr_karyawan\SlipGajiController::class, 'index'])->name('slip-gaji.index');
+        Route::get('slip-gaji/{id}/download', [App\Http\Controllers\hr_karyawan\SlipGajiController::class, 'downloadPdf'])->name('slip-gaji.download');
+
         // Cuti & Izin routes
         Route::get('cuti/export-excel', [App\Http\Controllers\hr_karyawan\CutiController::class, 'exportExcel'])->name('cuti.export-excel');
         Route::get('cuti/export-pdf', [App\Http\Controllers\hr_karyawan\CutiController::class, 'exportPdf'])->name('cuti.export-pdf');
