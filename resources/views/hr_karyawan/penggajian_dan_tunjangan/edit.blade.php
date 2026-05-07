@@ -223,24 +223,8 @@
                         </div>
                     </div>
 
-                    {{-- Tunjangan BTN --}}
-                    <div>
-                        <label for="tunjangan_btn"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tunjangan BTN
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-gray-500 sm:text-sm">Rp</span>
-                            </div>
-                            <input type="hidden" name="tunjangan_btn" :value="salaryComponents.tunjangan_btn">
-                            <input type="text" id="tunjangan_btn" x-init="$el.value = formatRibu(salaryComponents.tunjangan_btn)"
-                                @focus="$el.value = salaryComponents.tunjangan_btn; $el.select()"
-                                @input="salaryComponents.tunjangan_btn = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
-                                @blur="$el.value = formatRibu(salaryComponents.tunjangan_btn)"
-                                class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
-                        </div>
-                    </div>
+                    {{-- Tunjangan BTN (Hidden as requested) --}}
+                    <input type="hidden" name="tunjangan_btn" :value="salaryComponents.tunjangan_btn">
 
                     {{-- Tunjangan Pulsa --}}
                     <div>

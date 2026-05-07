@@ -292,6 +292,7 @@
                                         </tr>
                                     @endif
 
+                                    {{-- Tunjangan BTN Hidden
                                     @if (($tunjanganBtn ?? 0) > 0)
                                         <tr>
                                             <td
@@ -305,6 +306,7 @@
                                             </td>
                                         </tr>
                                     @endif
+                                    --}}
 
                                     @if (($tunjanganPulsa ?? 0) > 0)
                                         <tr>

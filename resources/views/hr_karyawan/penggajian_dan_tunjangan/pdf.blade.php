@@ -421,6 +421,7 @@
                             {{ number_format($tunjanganMakan, 2, ',', '.') }}</td>
                     </tr>
                 @endif
+                {{-- Tunjangan BTN Hidden
                 @if (($tunjanganBtn ?? 0) > 0)
                     <tr>
                         <td>Tunjangan BTN</td>
@@ -428,6 +429,7 @@
                             {{ number_format($tunjanganBtn, 2, ',', '.') }}</td>
                     </tr>
                 @endif
+                --}}
                 @if (($tunjanganPulsa ?? 0) > 0)
                     <tr>
                         <td>Tunjangan Pulsa</td>
