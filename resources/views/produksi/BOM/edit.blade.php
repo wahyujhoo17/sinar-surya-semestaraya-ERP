@@ -545,10 +545,10 @@
                                         class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                         Jumlah <span class="text-red-500">*</span>
                                     </label>
-                                    <input type="number" step="0.01" name="quantity" id="quantity"
+                                    <input type="number" step="any" name="quantity" id="quantity"
                                         x-model="componentForm.quantity"
                                         class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                                        required min="0.01">
+                                        required min="0.000001">
                                     <div x-show="componentErrors.quantity" class="text-red-500 text-sm mt-1"
                                         x-text="componentErrors.quantity"></div>
                                 </div>

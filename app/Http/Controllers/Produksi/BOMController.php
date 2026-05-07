@@ -287,7 +287,7 @@ class BOMController extends Controller
     {
         $request->validate([
             'komponen_id' => 'required|exists:produk,id',
-            'quantity' => 'required|numeric|min:0.01',
+            'quantity' => 'required|numeric|gt:0',
             'satuan_id' => 'required|exists:satuan,id',
             'catatan' => 'nullable|string'
         ]);
@@ -335,7 +335,7 @@ class BOMController extends Controller
     {
         $request->validate([
             'komponen_id' => 'required|exists:produk,id',
-            'quantity' => 'required|numeric|min:0.01',
+            'quantity' => 'required|numeric|gt:0',
             'satuan_id' => 'required|exists:satuan,id',
             'catatan' => 'nullable|string'
         ]);
