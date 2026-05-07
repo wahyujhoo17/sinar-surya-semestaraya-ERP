@@ -464,10 +464,15 @@
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    @foreach ($manualKomponenGaji as $komponen)
+                                    @foreach ($manualKomponenGaji as $index => $komponen)
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][id]" value="{{ $komponen->id }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][nama_komponen]" value="{{ $komponen->nama_komponen }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][jenis]" value="{{ $komponen->jenis }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][nilai]" value="{{ $komponen->nilai }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][keterangan]" value="{{ $komponen->keterangan }}">
                                                 {{ $komponen->nama_komponen }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">

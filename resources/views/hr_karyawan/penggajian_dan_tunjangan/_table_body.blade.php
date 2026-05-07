@@ -88,8 +88,8 @@
                         </svg>
                     </a>
 
-                    {{-- Hide Edit and Delete buttons if status is 'disetujui' or 'dibayar' --}}
-                    @if ($item->status === 'draft')
+                    {{-- Hide Edit and Delete buttons if status is 'dibayar' --}}
+                    @if ($item->status !== 'dibayar')
                         <a href="{{ route('hr.penggajian.edit', array_merge(request()->except('ajax_request'), ['penggajian' => $item->id])) }}"
                             class="inline-flex items-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
                             title="Edit">

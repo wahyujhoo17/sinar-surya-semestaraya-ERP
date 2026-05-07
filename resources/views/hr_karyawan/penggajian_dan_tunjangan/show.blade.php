@@ -60,7 +60,7 @@
                         Kembali
                     </a>
 
-                    @if ($penggajian->status === 'draft')
+                    @if ($penggajian->status !== 'dibayar')
                         <a href="{{ route('hr.penggajian.edit', array_merge(request()->query(), ['penggajian' => $penggajian->id])) }}"
                             class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary-900/40 backdrop-blur-sm border border-dashed border-white/30 rounded-lg hover:bg-primary-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all duration-200">
                             <svg class="w-4 h-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"

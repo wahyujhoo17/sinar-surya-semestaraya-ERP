@@ -707,6 +707,16 @@ class PenggajianController extends Controller
             }
         }
 
+        // Hitung ulang komisi dari komponen yang dikirim
+        $newKomisi = 0;
+        if ($request->has('komponenGaji')) {
+            foreach ($request->komponenGaji as $komponen) {
+                if ($komponen['nama_komponen'] === 'Komisi Penjualan') {
+                    $newKomisi += $komponen['nilai'];
+                }
+            }
+        }
+
         DB::beginTransaction();
         try {
             $autoComponentIds = $this->syncAutoAllowanceComponents($penggajian, $request);
@@ -717,6 +727,7 @@ class PenggajianController extends Controller
                 'tunjangan' => $request->tunjangan,
                 'bonus' => $request->bonus,
                 'lembur' => $request->lembur,
+                'komisi' => $newKomisi,
                 'potongan' => $request->potongan,
                 'cash_bon' => $request->cash_bon ?? 0,
                 'keterlambatan' => $request->keterlambatan ?? 0,
