@@ -798,10 +798,16 @@ class PenggajianController extends Controller
             // Hapus komponen gaji terkait
             KomponenGaji::where('penggajian_id', $id)->delete();
 
+            $bulan = $penggajian->bulan;
+            $tahun = $penggajian->tahun;
+
             // Hapus data penggajian
             $penggajian->delete();
 
-            return redirect()->route('hr.penggajian.index')->with('success', 'Data penggajian berhasil dihapus');
+            return redirect()->route('hr.penggajian.index', [
+                'bulan' => $bulan,
+                'tahun' => $tahun
+            ])->with('success', 'Data penggajian berhasil dihapus');
         } catch (\Exception $e) {
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }

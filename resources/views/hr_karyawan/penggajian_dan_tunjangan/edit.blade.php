@@ -112,16 +112,32 @@
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
                 <div
                     class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
-                            </path>
-                        </svg>
-                        Komponen Gaji
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Komponen pendapatan dan potongan gaji</p>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-green-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1">
+                                    </path>
+                                </svg>
+                                Komponen Gaji
+                            </h3>
+                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Komponen pendapatan dan potongan gaji</p>
+                        </div>
+                        <button type="button" @click="calculateCommission()"
+                            :disabled="commissionLoading"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 disabled:opacity-50">
+                            <svg x-show="!commissionLoading" class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <svg x-show="commissionLoading" class="animate-spin h-4 w-4 mr-2 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-text="commissionLoading ? 'Memproses...' : 'Hitung Ulang Komisi'"></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {{-- Basic Salary --}}
@@ -488,6 +504,166 @@
                 </div>
             @endif
 
+            {{-- Commission Calculation Card (Dynamic for Edit) --}}
+            <div x-show="commissionData.orders.length > 0" x-transition
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden mb-6">
+                <div
+                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-700">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-500" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                        Perhitungan Komisi Penjualan
+                    </h3>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                        Komisi dihitung berdasarkan margin penjualan dari sales order yang sudah lunas
+                    </p>
+                </div>
+                <div class="p-6">
+                    {{-- Commission Rules Info --}}
+                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Informasi Sistem Komisi:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-800 dark:text-blue-200">
+                            <div>
+                                <p class="font-medium mb-2">Basis Perhitungan:</p>
+                                <ul class="space-y-1 ml-4">
+                                    <li>• Komisi dihitung berdasarkan tanggal pembayaran invoice</li>
+                                    <li>• Menggunakan margin % = (Harga Jual - Harga Beli) / Harga Beli × 100</li>
+                                    <li>• Rate komisi mengikuti tier system (1% - 30%)</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <p class="font-medium mb-2">Contoh Tier:</p>
+                                <div class="space-y-1">
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-red-400 rounded-full mr-2"></div>
+                                        <span>Margin 18-20%: 1% komisi</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                                        <span>Margin 45.5-50%: 2.5% komisi</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <div class="w-3 h-3 bg-green-400 rounded-full mr-2"></div>
+                                        <span>Margin 451-500%: 10% komisi</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Penyesuaian Komisi Per Sales Order --}}
+                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-orange-900 dark:text-orange-100 mb-4">
+                            Penyesuaian Komisi Per Sales Order:
+                        </h4>
+                        <div class="space-y-4">
+                            <template x-for="order in commissionData.orders" :key="order.id">
+                                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800">
+                                    <input type="hidden" :name="'sales_order_adjustments['+order.id+'][sales_order_id]'" :value="order.id">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h5 class="font-medium text-gray-900 dark:text-white" x-text="'SO: ' + order.nomor"></h5>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400" x-text="'Netto Penjualan: ' + formatRupiah(order.netto_penjualan)"></p>
+                                        </div>
+                                        <div class="text-right">
+                                            <p class="text-sm text-green-600 dark:text-green-400 font-medium" x-text="'Komisi: ' + formatRupiah(order.komisi)"></p>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cashback (Nominal)</label>
+                                            <input type="text" x-init="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
+                                                @focus="$el.value = (salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0); $el.select()"
+                                                @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', parseFloat(($event.target.value+'').replace(/\./g,'').replace(',','.')) || 0)"
+                                                @blur="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm">
+                                            <input type="hidden" :name="'sales_order_adjustments['+order.id+'][cashback_nominal]'" :value="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Overhead (%)</label>
+                                            <input type="number" step="0.01" :name="'sales_order_adjustments['+order.id+'][overhead_persen]'"
+                                                x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].overhead_persen : 0"
+                                                @input="setSalesOrderAdjustment(order.id, 'overhead_persen', $event.target.value)"
+                                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="mt-4">
+                            <button type="button" @click="calculateCommission()"
+                                class="px-4 py-2 bg-orange-600 text-white text-sm rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors duration-200">
+                                Hitung Ulang Komisi dengan Penyesuaian
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Loading State --}}
+                    <div x-show="commissionLoading" class="text-center py-8">
+                        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-500 bg-white dark:bg-gray-800 transition ease-in-out duration-150">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Menghitung komisi...
+                        </div>
+                    </div>
+
+                    {{-- Commission Details Table --}}
+                    <div x-show="!commissionLoading && commissionData.orders.length > 0" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Sales Order</span>
+                                <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="commissionData.orders.length"></p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Netto Penjualan</span>
+                                <p class="text-xl font-bold text-primary-600" x-text="formatRupiah(commissionData.total_sales)"></p>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Rata-rata Margin</span>
+                                <p class="text-xl font-bold text-purple-600" x-text="(parseFloat(commissionData.average_margin || 0)).toFixed(2) + '%'"></p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead>
+                                <tr class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th class="px-2 py-3">Produk</th>
+                                    <th class="px-2 py-3 text-right">Harga Jual</th>
+                                    <th class="px-2 py-3 text-right">Harga Beli</th>
+                                    <th class="px-2 py-3 text-right">Margin %</th>
+                                    <th class="px-2 py-3 text-right">Rate</th>
+                                    <th class="px-2 py-3 text-right">Komisi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                <template x-for="order in commissionData.orders" :key="'details-'+order.id">
+                                    <template x-for="item in order.product_details" :key="item.produk">
+                                        <tr class="text-sm">
+                                            <td class="px-2 py-3 dark:text-gray-300" x-text="item.produk"></td>
+                                            <td class="px-2 py-3 text-right dark:text-gray-300" x-text="formatRupiah(item.harga_jual)"></td>
+                                            <td class="px-2 py-3 text-right dark:text-gray-300" x-text="formatRupiah(item.harga_beli)"></td>
+                                            <td class="px-2 py-3 text-right">
+                                                <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                                                    :class="item.margin_persen > 40 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
+                                                    x-text="(parseFloat(item.margin_persen)).toFixed(2) + '%'"></span>
+                                            </td>
+                                            <td class="px-2 py-3 text-right font-medium text-blue-600" x-text="item.commission_rate + '%'"></td>
+                                            <td class="px-2 py-3 text-right font-semibold text-green-600" x-text="formatRupiah(item.komisi)"></td>
+                                        </tr>
+                                    </template>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             {{-- Total Calculation Card --}}
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
@@ -564,15 +740,20 @@
                                     <span class="text-gray-600 dark:text-gray-400">Lembur:</span>
                                     <span class="font-medium" x-text="formatRupiah(salaryComponents.lembur)"></span>
                                 </div>
-                                @foreach ($manualKomponenGaji->where('jenis', 'pendapatan') as $komponen)
+
+                                {{-- Dynamic Commission from Alpine --}}
+                                <div class="flex justify-between border-t pt-2" x-show="commissionData.total_commission > 0">
+                                    <span class="text-gray-600 dark:text-gray-400 font-medium italic">Komisi Penjualan:</span>
+                                    <span class="font-bold text-green-600 dark:text-green-400" x-text="formatRupiah(commissionData.total_commission)"></span>
+                                </div>
+
+                                {{-- Manual Components --}}
+                                <template x-for="comp in existingComponents.filter(c => c.jenis === 'pendapatan')" :key="comp.id || comp.nama_komponen">
                                     <div class="flex justify-between border-t pt-2">
-                                        <span
-                                            class="text-gray-600 dark:text-gray-400">{{ $komponen->nama_komponen }}:</span>
-                                        <span class="font-medium text-green-600 dark:text-green-400">
-                                            Rp {{ number_format($komponen->nilai, 0, ',', '.') }}
-                                        </span>
+                                        <span class="text-gray-600 dark:text-gray-400" x-text="comp.nama_komponen + ':'"></span>
+                                        <span class="font-medium text-green-600 dark:text-green-400" x-text="formatRupiah(comp.nilai)"></span>
                                     </div>
-                                @endforeach
+                                </template>
                             </div>
                         </div>
 
@@ -602,15 +783,14 @@
                                     <span class="font-medium text-red-600 dark:text-red-400"
                                         x-text="formatRupiah(salaryComponents.potongan)"></span>
                                 </div>
-                                @foreach ($manualKomponenGaji->where('jenis', 'potongan') as $komponen)
-                                    <div class="flex justify-between">
-                                        <span
-                                            class="text-gray-600 dark:text-gray-400">{{ $komponen->nama_komponen }}:</span>
-                                        <span class="font-medium text-red-600 dark:text-red-400">
-                                            Rp {{ number_format($komponen->nilai, 0, ',', '.') }}
-                                        </span>
+
+                                {{-- Manual Deduction Components --}}
+                                <template x-for="comp in existingComponents.filter(c => c.jenis === 'potongan')" :key="comp.id || comp.nama_komponen">
+                                    <div class="flex justify-between border-t pt-2">
+                                        <span class="text-gray-600 dark:text-gray-400" x-text="comp.nama_komponen + ':'"></span>
+                                        <span class="font-medium text-red-600 dark:text-red-400" x-text="formatRupiah(comp.nilai)"></span>
                                     </div>
-                                @endforeach
+                                </template>
                             </div>
 
                             {{-- Total --}}
@@ -723,11 +903,52 @@
                     },
 
                     totalSalary: 0,
-                    totalGaji: 0, // Total bruto sebelum potongan
+                    totalGaji: 0,
                     existingComponents: @json($manualKomponenGaji->values()),
 
+                    @php
+                        $ordersData = $penggajian->komponenGaji->whereNotNull('sales_order_id')->map(function($c) {
+                            return [
+                                'id' => $c->sales_order_id,
+                                'nomor' => $c->salesOrder->nomor ?? 'N/A',
+                                'netto_penjualan' => $c->netto_penjualan_adjusted ?? $c->netto_penjualan_original,
+                                'komisi' => $c->nilai,
+                                'product_details' => $c->product_details ?? []
+                            ];
+                        })->values();
+
+                        $adjustmentsData = $penggajian->komponenGaji->whereNotNull('sales_order_id')->mapWithKeys(function($c) {
+                            return [$c->sales_order_id => [
+                                'sales_order_id' => $c->sales_order_id,
+                                'cashback_nominal' => $c->cashback_nominal ?? 0,
+                                'overhead_persen' => $c->overhead_persen ?? 0
+                            ]];
+                        });
+                    @endphp
+
+                    // Commission Data
+                    selectedEmployee: '{{ $penggajian->karyawan_id }}',
+                    selectedMonth: {{ $penggajian->bulan }},
+                    selectedYear: {{ $penggajian->tahun }},
+                    commissionData: {
+                        total_commission: {{ $penggajian->komisi ?? 0 }},
+                        total_sales: 0,
+                        average_margin: 0,
+                        orders: @json($ordersData)
+                    },
+                    commissionLoading: false,
+                    salesOrderAdjustments: @json($adjustmentsData),
+
                     init() {
+                        // 1. Calculate total
                         this.calculateTotal();
+
+                        // 2. Auto-trigger commission to ensure data is synced
+                        if (this.selectedEmployee && this.selectedMonth && this.selectedYear) {
+                            this.calculateCommission();
+                        }
+
+                        // 3. Formatting
                         this.$nextTick(() => {
                             const fields = ['gaji_pokok', 'tunjangan_keluarga', 'tunjangan_jabatan',
                                 'tunjangan_transport', 'tunjangan_makan', 'tunjangan_btn', 'tunjangan_pulsa',
@@ -739,6 +960,46 @@
                                 if (el) el.value = this.formatRibu(this.salaryComponents[f] || 0);
                             });
                         });
+                    },
+
+                    async calculateCommission() {
+                        this.commissionLoading = true;
+                        try {
+                            const response = await fetch('{{ route('hr.penggajian.get-komisi') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                },
+                                body: JSON.stringify({
+                                    karyawan_id: this.selectedEmployee,
+                                    bulan: this.selectedMonth,
+                                    tahun: this.selectedYear,
+                                    sales_order_adjustments: this.salesOrderAdjustments
+                                })
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                this.commissionData = result.data;
+                                this.calculateTotal();
+                            }
+                        } catch (error) {
+                            console.error('Error calculating commission:', error);
+                        } finally {
+                            this.commissionLoading = false;
+                        }
+                    },
+
+                    setSalesOrderAdjustment(orderId, field, value) {
+                        if (!this.salesOrderAdjustments[orderId]) {
+                            this.salesOrderAdjustments[orderId] = {
+                                sales_order_id: orderId,
+                                cashback_nominal: 0,
+                                overhead_persen: 0
+                            };
+                        }
+                        this.salesOrderAdjustments[orderId][field] = parseFloat(value) || 0;
                     },
 
                     calculateTotal() {
@@ -754,9 +1015,12 @@
                             parseFloat(this.salaryComponents.bonus || 0) +
                             parseFloat(this.salaryComponents.lembur || 0);
 
-                        // Add existing income components (like commission)
+                        // Add commission from Alpine
+                        const commission = parseFloat(this.commissionData.total_commission || 0);
+
+                        // Add existing income components (filter out automated ones that are already in income above)
                         const existingIncome = this.existingComponents
-                            .filter(comp => comp.jenis === 'pendapatan')
+                            .filter(comp => comp.jenis === 'pendapatan' && !comp.nama_komponen.includes('Komisi Penjualan'))
                             .reduce((sum, comp) => sum + parseFloat(comp.nilai || 0), 0);
 
                         // Calculate deductions from form inputs
@@ -770,7 +1034,7 @@
                             .filter(comp => comp.jenis === 'potongan')
                             .reduce((sum, comp) => sum + parseFloat(comp.nilai || 0), 0);
 
-                        this.totalGaji = income + existingIncome;
+                        this.totalGaji = income + commission + existingIncome;
                         this.totalSalary = Math.max(0, this.totalGaji - deductions - existingDeductions);
                     },
 
