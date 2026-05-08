@@ -410,7 +410,12 @@ class SalesOrderController extends Controller
         // dd($validationRules);
 
         // Clean and validate items based on their type
-        $items = $request->items;
+        $items = collect($request->items ?? [])->map(function ($item) {
+            if (isset($item['subtotal']) && is_string($item['subtotal'])) {
+                $item['subtotal'] = (float) preg_replace('/[^\d.]/', '', $item['subtotal']);
+            }
+            return $item;
+        })->toArray();
         foreach ($items as $index => $item) {
             // Clean invalid flag combinations and missing data
             $isBundle = isset($item['is_bundle']) && $item['is_bundle'];
@@ -499,13 +504,19 @@ class SalesOrderController extends Controller
 
                 $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : ($item['quantity'] ?? 1);
                 $productTotal = $item['harga'] * $quantity;
-                $discountValue = 0;
-
-                if (isset($item['diskon_persen']) && $item['diskon_persen'] > 0) {
-                    $discountValue = ($item['diskon_persen'] / 100) * $productTotal;
+                
+                // If subtotal is provided (e.g. from frontend with rounding adjustment), use it
+                if (isset($item['subtotal'])) {
+                    $itemSubtotal = (float) $item['subtotal'];
+                } else {
+                    $discountValue = 0;
+                    if (isset($item['diskon_persen']) && $item['diskon_persen'] > 0) {
+                        $discountValue = ($item['diskon_persen'] / 100) * $productTotal;
+                    }
+                    $itemSubtotal = $productTotal - $discountValue;
                 }
 
-                $subtotal += $productTotal - $discountValue;
+                $subtotal += $itemSubtotal;
             }
 
             // Calculate discounts and taxes
@@ -569,7 +580,7 @@ class SalesOrderController extends Controller
                     $diskonNominalItem = ($diskonPersenItem / 100) * $productTotal;
                 }
 
-                $subtotalItem = $productTotal - $diskonNominalItem;
+                $subtotalItem = isset($item["subtotal"]) ? (float)$item["subtotal"] : ($productTotal - $diskonNominalItem);
 
                 $salesOrderDetail = new SalesOrderDetail();
                 $salesOrderDetail->sales_order_id = $salesOrder->id;
@@ -1016,24 +1027,28 @@ class SalesOrderController extends Controller
 
                 $quantity = isset($item['kuantitas']) ? $item['kuantitas'] : $item['quantity'];
                 $productTotal = $item['harga'] * $quantity;
-                $discountValue = 0;
 
-                if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
-                    $discountValue = ($item['diskon_persen_item'] / 100) * $productTotal;
-                } elseif (isset($item['diskon_persen']) && $item['diskon_persen'] > 0) {
-                    $discountValue = ($item['diskon_persen'] / 100) * $productTotal;
-                } elseif (isset($item['diskon_nominal_item']) && $item['diskon_nominal_item'] > 0) {
-                    $discountValue = $item['diskon_nominal_item'];
+                // Use provided subtotal if available to preserve rounding adjustments
+                if (isset($item['subtotal'])) {
+                    $itemSubtotal = (float) $item['subtotal'];
+                } else {
+                    $discountValue = 0;
+                    if (isset($item['diskon_persen_item']) && $item['diskon_persen_item'] > 0) {
+                        $discountValue = ($item['diskon_persen_item'] / 100) * $productTotal;
+                    } elseif (isset($item['diskon_persen']) && $item['diskon_persen'] > 0) {
+                        $discountValue = ($item['diskon_persen'] / 100) * $productTotal;
+                    } elseif (isset($item['diskon_nominal_item']) && $item['diskon_nominal_item'] > 0) {
+                        $discountValue = $item['diskon_nominal_item'];
+                    }
+                    $itemSubtotal = $productTotal - $discountValue;
                 }
 
-                $itemSubtotal = $productTotal - $discountValue;
                 $subtotal += $itemSubtotal;
 
                 Log::info("Including item in total calculation", [
                     'harga' => $item['harga'],
                     'quantity' => $quantity,
                     'productTotal' => $productTotal,
-                    'discountValue' => $discountValue,
                     'itemSubtotal' => $itemSubtotal,
                     'runningSubtotal' => $subtotal
                 ]);
@@ -1109,7 +1124,7 @@ class SalesOrderController extends Controller
                     $diskonNominalItem = ($diskonPersenItem / 100) * $productTotal;
                 }
 
-                $subtotalItem = $productTotal - $diskonNominalItem;
+                $subtotalItem = isset($item["subtotal"]) ? (float)$item["subtotal"] : ($productTotal - $diskonNominalItem);
 
                 $salesOrderDetail = new SalesOrderDetail();
                 $salesOrderDetail->sales_order_id = $salesOrder->id;

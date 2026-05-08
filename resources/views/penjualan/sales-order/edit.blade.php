@@ -1444,7 +1444,27 @@
                 },
 
                 removeItem(index) {
-                    this.items.splice(index, 1);
+                    const item = this.items[index];
+
+                    // If removing a bundle header, also remove all its bundle items
+                    if (item.is_bundle && item.bundle_id) {
+                        // Find all bundle items with the same bundle_id
+                        const bundleItemsToRemove = [];
+                        for (let i = this.items.length - 1; i >= 0; i--) {
+                            if (this.items[i].is_bundle_item && this.items[i].bundle_id === item.bundle_id) {
+                                bundleItemsToRemove.push(i);
+                            }
+                        }
+
+                        // Remove child items first (descending order to maintain indices)
+                        bundleItemsToRemove.sort((a, b) => b - a).forEach(i => {
+                            this.items.splice(i, 1);
+                        });
+                    } else {
+                        // Simple item removal
+                        this.items.splice(index, 1);
+                    }
+
                     this.calculateTotal();
                     // Re-initialize selects to sync indices and prevent stale events
                     Alpine.nextTick(() => {
@@ -1717,27 +1737,50 @@
                     };
                 },
 
-                updateBundleCalculations(index) {
-                    const item = this.items[index];
-                    if (item && item.is_bundle) {
-                        item.subtotal = (parseFloat(item.harga) || 0) * (parseFloat(item.kuantitas) || 1);
+                updateBundleCalculations(bundleIndex) {
+                    const bundleHeader = this.items[bundleIndex];
+                    if (!bundleHeader || !bundleHeader.is_bundle) return;
 
-                        const bundleId = item.bundle_id;
-                        const bundleQuantity = parseFloat(item.kuantitas) || 1;
+                    const bundleQuantity = parseFloat(bundleHeader.kuantitas) || 1;
+                    const targetBundleTotal = (parseFloat(bundleHeader.harga) || 0) * bundleQuantity;
+                    
+                    // Update bundle header subtotal
+                    bundleHeader.subtotal = targetBundleTotal;
 
-                        this.items.forEach((bundleItem, itemIndex) => {
-                            if (bundleItem.is_bundle_item && bundleItem.bundle_id === bundleId) {
-                                const baseQuantity = parseFloat(bundleItem.base_quantity) ||
-                                    parseFloat(bundleItem
-                                        .kuantitas) || 1;
-                                bundleItem.kuantitas = baseQuantity * bundleQuantity;
-                                bundleItem.subtotal = (parseFloat(bundleItem.harga) || 0) *
-                                    bundleItem.kuantitas;
+                    const bundleItems = this.items.filter(item =>
+                        item.is_bundle_item && item.bundle_id === bundleHeader.bundle_id
+                    );
+
+                    if (bundleItems.length > 0) {
+                        let currentItemsTotal = 0;
+                        let largestItem = null;
+                        let largestSubtotal = -1;
+
+                        bundleItems.forEach(item => {
+                            // Update quantity based on bundle quantity and base quantity
+                            item.kuantitas = (parseFloat(item.base_quantity) || 1) * bundleQuantity;
+
+                            // Recalculate subtotal with discount
+                            const itemSubtotalBefore = (parseFloat(item.harga) || 0) * item.kuantitas;
+                            const itemDiskonNominal = Math.round((itemSubtotalBefore * (parseFloat(item.diskon_persen) || 0)) / 100);
+                            item.subtotal = itemSubtotalBefore - itemDiskonNominal;
+                            
+                            currentItemsTotal += item.subtotal;
+                            if (item.subtotal > largestSubtotal) {
+                                largestSubtotal = item.subtotal;
+                                largestItem = item;
                             }
                         });
 
-                        this.calculateTotal();
+                        // Adjustment for rounding error to ensure sum(items) == bundle_price * quantity
+                        const roundingDiff = targetBundleTotal - currentItemsTotal;
+                        if (roundingDiff !== 0 && largestItem) {
+                            console.log(`Rounding adjustment (edit update): adding ${roundingDiff} to ${largestItem.nama}`);
+                            largestItem.subtotal += roundingDiff;
+                        }
                     }
+
+                    this.calculateTotal();
                 },
 
                 selectBundle(bundle) {
@@ -1841,16 +1884,23 @@
 
                         this.items.push(bundleMainItem);
 
+                        // Calculate total target for the bundle
+                        const targetBundleTotal = parseFloat(bundleData.harga_bundle || 0);
+                        let currentItemsTotal = 0;
+                        let largestItemIndex = -1;
+                        let largestItemSubtotal = -1;
+                        const addedItemsIndices = [];
+
                         // Add individual bundle items immediately after the header
-                        bundleItems.forEach((item) => {
+                        bundleItems.forEach((item, itemIndex) => {
                             // Apply bundle discount to each child item
                             const itemSubtotalBefore = (item.harga_satuan || 0) * item.quantity;
-                            const itemDiskonNominal = (itemSubtotalBefore *
-                                bundleDiskonPersen) / 100;
+                            // Use Math.round for consistent nominal discount calculation
+                            const itemDiskonNominal = Math.round((itemSubtotalBefore * bundleDiskonPersen) / 100);
                             const itemSubtotal = itemSubtotalBefore - itemDiskonNominal;
 
                             const childItem = {
-                                id: Date.now() + Math.random(),
+                                id: Date.now() + Math.random() + itemIndex,
                                 produk_id: item.produk_id,
                                 bundle_id: bundleData.id,
                                 item_type: 'bundle_item',
@@ -1860,8 +1910,7 @@
                                 satuan_nama: item.satuan_nama || '',
                                 deskripsi: `└─ ${item.produk_nama} (dari bundle ${bundleData.nama})`,
                                 kuantitas: item.quantity,
-                                base_quantity: item
-                                    .quantity, // Store original quantity for calculation
+                                base_quantity: item.quantity, // Store original quantity for calculation
                                 satuan_id: item.satuan_id,
                                 harga: item.harga_satuan,
                                 diskon_persen: bundleDiskonPersen, // Apply bundle discount
@@ -1872,7 +1921,24 @@
                             };
 
                             this.items.push(childItem);
+                            
+                            // Tracking for rounding adjustment
+                            const currentIdx = this.items.length - 1;
+                            addedItemsIndices.push(currentIdx);
+                            currentItemsTotal += itemSubtotal;
+                            
+                            if (itemSubtotal > largestItemSubtotal) {
+                                largestItemSubtotal = itemSubtotal;
+                                largestItemIndex = currentIdx;
+                            }
                         });
+
+                        // Adjustment for rounding error to ensure sum(items) == bundle_price
+                        const roundingDiff = targetBundleTotal - currentItemsTotal;
+                        if (roundingDiff !== 0 && largestItemIndex !== -1) {
+                            console.log(`Rounding adjustment (edit): adding ${roundingDiff} to item index ${largestItemIndex}`);
+                            this.items[largestItemIndex].subtotal += roundingDiff;
+                        }
 
                         // Reorganize items to group bundles properly
                         this.reorganizeItems();
