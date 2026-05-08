@@ -42,8 +42,10 @@ class CustomerController extends Controller
             $query = Customer::where('sales_id', Auth::id());
         }
 
-        // Get active users for sales_id dropdown
-        $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
+        // Get only users who are assigned as sales for at least one customer
+        $salesUsers = \App\Models\User::whereIn('id', function($q) {
+            $q->select('sales_id')->from('customer')->whereNotNull('sales_id')->distinct();
+        })->where('is_active', true)->orderBy('name')->get();
 
         // Decode visible columns from request, default to all true if not provided or invalid
         $visibleColumnsInput = $request->input('visible_columns', '{}');
@@ -91,6 +93,13 @@ class CustomerController extends Controller
         }
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active);
+        }
+        if ($request->filled('sales_id')) {
+            if ($request->sales_id === 'none') {
+                $query->whereNull('sales_id');
+            } else {
+                $query->where('sales_id', $request->sales_id);
+            }
         }
 
         // Sorting

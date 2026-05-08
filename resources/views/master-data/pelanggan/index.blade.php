@@ -223,34 +223,129 @@
                                     </div>
                                 </div>
 
-                                <div class="relative w-full sm:w-auto grow sm:grow-0">
-                                    <div class="relative w-full">
-                                        <div
-                                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
-                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                                stroke-width="1.5" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round"
-                                                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                                            </svg>
-                                        </div>
-                                        <input type="text" x-model.debounce.300ms="search"
-                                            placeholder="Cari pelanggan..."
-                                            class="pl-10 pr-10 py-2 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white shadow-sm">
-                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                            <button type="button" @click="search = ''; applyFilters()"
-                                                x-show="search" x-transition
-                                                class="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 rounded-full">
-                                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
-                                                    fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                                    stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                 {{-- Sales Filter --}}
+                                 <div class="relative w-full sm:w-auto min-w-[200px]" x-data="salesFilterDropdown()" x-init="init()">
+                                     <div @click="toggleDropdown" @keydown.enter="toggleDropdown" tabindex="0"
+                                         class="flex items-center justify-between cursor-pointer px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white shadow-sm transition-all duration-200 hover:border-primary-400">
+                                         <div class="flex items-center">
+                                             <svg class="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400"
+                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                 stroke-width="1.5" stroke="currentColor">
+                                                 <path stroke-linecap="round" stroke-linejoin="round"
+                                                     d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                             </svg>
+                                             <span x-text="selectedSales ? selectedSales.name : 'Semua'"
+                                                 :class="!selectedSales ? 'text-gray-500 dark:text-gray-400' : ''"></span>
+                                         </div>
+                                         <div class="flex items-center">
+                                             <button x-show="selectedSales" @click.stop="clearSelection" type="button"
+                                                 class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 mr-1.5 transition-colors">
+                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                                                     viewBox="0 0 20 20" fill="currentColor">
+                                                     <path fill-rule="evenodd"
+                                                         d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                                         clip-rule="evenodd" />
+                                                 </svg>
+                                             </button>
+                                             <svg class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                                                 :class="isOpen ? 'rotate-180' : ''" xmlns="http://www.w3.org/2000/svg"
+                                                 viewBox="0 0 20 20" fill="currentColor">
+                                                 <path fill-rule="evenodd"
+                                                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                     clip-rule="evenodd" />
+                                             </svg>
+                                         </div>
+                                     </div>
+                                     <div x-show="isOpen" @click.away="closeDropdown" x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="transform opacity-0 scale-95"
+                                         x-transition:enter-end="transform opacity-100 scale-100"
+                                         x-transition:leave="transition ease-in duration-75"
+                                         x-transition:leave-start="transform opacity-100 scale-100"
+                                         x-transition:leave-end="transform opacity-0 scale-95"
+                                         class="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden focus:outline-none"
+                                         style="display: none;">
+                                         <div class="p-2 border-b border-gray-100 dark:border-gray-700">
+                                             <div class="relative">
+                                                 <div
+                                                     class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                     <svg class="h-3.5 w-3.5 text-gray-400"
+                                                         xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                         viewBox="0 0 24 24" stroke="currentColor">
+                                                         <path stroke-linecap="round" stroke-linejoin="round"
+                                                             stroke-width="2"
+                                                             d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                     </svg>
+                                                 </div>
+                                                 <input type="text" x-model="searchTerm"
+                                                     @keydown.escape.prevent="closeDropdown"
+                                                     @keydown.arrow-down.prevent="navigateOptions('down')"
+                                                     @keydown.arrow-up.prevent="navigateOptions('up')"
+                                                     @keydown.enter.prevent="selectHighlightedOption"
+                                                     placeholder="Cari sales..."
+                                                     class="block w-full pl-8 pr-3 py-1.5 text-xs border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500">
+                                             </div>
+                                         </div>
+                                         <div class="max-h-60 overflow-y-auto py-1 custom-scrollbar">
+                                             <div @click="selectSales(null)"
+                                                 class="px-4 py-2 text-xs cursor-pointer transition-colors"
+                                                 :class="!selectedSales ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                                 Semua
+                                             </div>
+                                             <template x-for="(sales, index) in filteredSales" :key="sales.id">
+                                                 <div @click="selectSales(sales)" @mouseover="highlightedIndex = index"
+                                                     class="px-4 py-2 text-xs cursor-pointer transition-colors"
+                                                     :class="{
+                                                         'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold': selectedSales &&
+                                                             selectedSales.id == sales.id,
+                                                         'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50': !(
+                                                             selectedSales && selectedSales.id == sales.id),
+                                                         'bg-gray-50 dark:bg-gray-700/50': highlightedIndex === index
+                                                     }"
+                                                     x-text="sales.name"></div>
+                                             </template>
+                                             <div x-show="filteredSales.length === 0"
+                                                 class="px-4 py-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                                 Sales tidak ditemukan
+                                             </div>
+                                             <div class="border-t border-gray-100 dark:border-gray-700 mt-1">
+                                                 <div @click="selectSales({id: 'none', name: 'Tanpa Sales'})"
+                                                     class="px-4 py-2 text-xs cursor-pointer transition-colors"
+                                                     :class="selectedSales && selectedSales.id === 'none' ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 font-semibold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'">
+                                                     Tanpa Sales
+                                                 </div>
+                                             </div>
+                                         </div>
+                                     </div>
+                                 </div>
+
+                                 <div class="relative w-full sm:w-auto grow sm:grow-0">
+                                     <div class="relative w-full">
+                                         <div
+                                             class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                             <svg class="w-4 h-4 text-gray-500 dark:text-gray-400"
+                                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                 stroke-width="1.5" stroke="currentColor">
+                                                 <path stroke-linecap="round" stroke-linejoin="round"
+                                                     d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                             </svg>
+                                         </div>
+                                         <input type="text" x-model.debounce.300ms="search"
+                                             placeholder="Cari pelanggan..."
+                                             class="pl-10 pr-10 py-2 w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-primary-500 focus:border-primary-500 dark:text-white shadow-sm">
+                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                             <button type="button" @click="search = ''; applyFilters()"
+                                                 x-show="search" x-transition
+                                                 class="p-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 rounded-full">
+                                                 <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg"
+                                                     fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                     stroke="currentColor">
+                                                     <path stroke-linecap="round" stroke-linejoin="round"
+                                                         d="M6 18L18 6M6 6l12 12" />
+                                                 </svg>
+                                             </button>
+                                         </div>
+                                     </div>
+                                 </div>
                                 <!-- Export and Import buttons with permission checks -->
                                 <div class="flex items-center space-x-2">
                                     {{-- Export --}}
@@ -687,6 +782,7 @@
 
             return {
                 search: '{{ request('search', '') }}',
+                salesId: '{{ request('sales_id', '') }}',
                 perPage: '{{ request('per_page', 10) }}',
                 currentPage: '{{ $customers->currentPage() }}',
                 sortField: '{{ request('sort', 'nama') }}', // Default sort field
@@ -783,6 +879,7 @@
                     params.append('page', this.currentPage);
                     params.append('per_page', this.perPage);
                     if (this.search) params.append('search', this.search);
+                    if (this.salesId) params.append('sales_id', this.salesId);
                     if (this.sortField) params.append('sort', this.sortField);
                     if (this.sortDirection) params.append('direction', this.sortDirection);
                     // Send visible columns state
@@ -902,5 +999,93 @@
                 history.replaceState({}, document.title, newUrl);
             }
         });
+        function salesFilterDropdown() {
+            return {
+                isOpen: false,
+                searchTerm: '',
+                highlightedIndex: -1,
+                salesUsers: @json($salesUsers),
+                selectedSales: null,
+
+                init() {
+                    // Watch for salesId changes from parent to update local selection
+                    this.$watch('salesId', (value) => {
+                        if (!value) {
+                            this.selectedSales = null;
+                        } else {
+                            this.selectedSales = this.salesUsers.find(s => s.id == value);
+                        }
+                    });
+
+                    // Initialize selection if salesId already has a value
+                    if (this.salesId) {
+                        this.selectedSales = this.salesUsers.find(s => s.id == this.salesId);
+                    }
+                },
+
+                get filteredSales() {
+                    if (!this.searchTerm) return this.salesUsers;
+                    const search = this.searchTerm.toLowerCase();
+                    return this.salesUsers.filter(s => 
+                        (s.name && s.name.toLowerCase().includes(search)) || 
+                        (s.email && s.email.toLowerCase().includes(search))
+                    );
+                },
+
+                toggleDropdown() {
+                    this.isOpen = !this.isOpen;
+                    if (this.isOpen) {
+                        this.highlightedIndex = -1;
+                        setTimeout(() => {
+                            const input = this.$el.querySelector('input');
+                            if (input) input.focus();
+                        }, 100);
+                    }
+                },
+
+                closeDropdown() {
+                    this.isOpen = false;
+                    this.searchTerm = '';
+                },
+
+                selectSales(sales) {
+                    this.selectedSales = sales;
+                    this.salesId = sales ? sales.id : '';
+                    this.closeDropdown();
+                    this.applyFilters();
+                },
+
+                clearSelection(event) {
+                    if (event) event.stopPropagation();
+                    this.selectSales(null);
+                },
+
+                navigateOptions(direction) {
+                    const count = this.filteredSales.length;
+                    if (count === 0) return;
+
+                    if (direction === 'down') {
+                        this.highlightedIndex = (this.highlightedIndex + 1) % count;
+                    } else {
+                        this.highlightedIndex = (this.highlightedIndex - 1 + count) % count;
+                    }
+
+                    this.$nextTick(() => {
+                        const items = this.$el.querySelectorAll('.px-4.py-2.text-xs.cursor-pointer');
+                        // Add 1 to index because of "Semua Sales" item
+                        const target = items[this.highlightedIndex + 1];
+                        if (target) target.scrollIntoView({ block: 'nearest' });
+                    });
+                },
+
+                selectHighlightedOption() {
+                    if (this.highlightedIndex >= 0 && this.highlightedIndex < this.filteredSales.length) {
+                        this.selectSales(this.filteredSales[this.highlightedIndex]);
+                    } else if (this.highlightedIndex === -1 && !this.searchTerm) {
+                        this.selectSales(null);
+                    }
+                }
+            }
+        }
     </script>
 </x-app-layout>
