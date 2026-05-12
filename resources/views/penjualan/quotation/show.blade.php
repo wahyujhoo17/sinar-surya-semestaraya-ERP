@@ -4,6 +4,62 @@
     ['label' => 'Detail'],
 ]" :currentPage="'Detail Quotation'">
 
+    @push('styles')
+        <style>
+            /* Bundle package styling (supports dark mode) */
+            .bundle-header {
+                color: #ffffff;
+                background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+                border: 2px solid #1e40af;
+            }
+
+            .dark .bundle-header {
+                background: linear-gradient(135deg, #0f172a, #111827);
+                border-color: #0b1220;
+                color: #f9fafb;
+            }
+
+            .bundle-icon-container {
+                background: rgba(255, 255, 255, 0.12);
+                padding: 8px;
+                border-radius: 8px;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            .bundle-package-badge {
+                background: rgba(255, 255, 255, 0.12);
+                padding: 6px 12px;
+                border-radius: 15px;
+                font-size: 12px;
+                font-weight: 700;
+                color: #ffffff;
+            }
+
+            .bundle-item-row {
+                background: #f1f5f9;
+                border-left: 3px solid #94a3b8;
+            }
+
+            .dark .bundle-item-row {
+                background: transparent;
+                border-left-color: #475569;
+            }
+
+            .bundle-item-indent {
+                margin-left: 25px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+        </style>
+    @endpush
+
+
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         {{-- Header --}}
         <div class="mb-8">
@@ -929,44 +985,41 @@
                                     @endphp
 
                                     {{-- Bundle Header Row --}}
-                                    <tr class="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-blue-500">
-                                        <td colspan="8" class="px-6 py-4">
-                                            <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-3">
-                                                    <div
-                                                        class="w-8 h-8 rounded-md bg-blue-500 flex items-center justify-center overflow-hidden">
-                                                        @if ($bundleImage && file_exists(public_path('storage/' . $bundleImage)))
-                                                            <img src="{{ asset('storage/' . $bundleImage) }}"
-                                                                alt="Bundle {{ $bundleName }}"
-                                                                class="w-full h-full object-cover rounded-sm"
-                                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                            <span class="hidden text-white">📦</span>
-                                                        @elseif($bundleImage)
-                                                            <img src="{{ asset($bundleImage) }}"
-                                                                alt="Bundle {{ $bundleName }}"
-                                                                class="w-full h-full object-cover rounded-sm"
-                                                                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                                            <span class="hidden text-white">📦</span>
-                                                        @else
-                                                            <svg class="w-5 h-5 text-white" fill="currentColor"
-                                                                viewBox="0 0 20 20">
-                                                                <path
-                                                                    d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
-                                                                </path>
-                                                            </svg>
-                                                        @endif
-                                                    </div>
-                                                    <div>
-                                                        <h3
-                                                            class="font-semibold text-blue-900 dark:text-blue-200 text-sm">
-                                                            PAKET: {{ $bundleName }}</h3>
-                                                        <div class="text-xs text-blue-700 dark:text-blue-200 mt-1">
-                                                            {{ $bundleCode }} • {{ $itemCount }} item</div>
+                                    <tr class="bundle-header">
+                                        <td colspan="8" class="p-4">
+                                            <div class="flex items-center gap-4">
+                                                <div class="bundle-icon-container">
+                                                    @if ($bundleImage && file_exists(public_path('storage/' . $bundleImage)))
+                                                        <img src="{{ asset('storage/' . $bundleImage) }}"
+                                                            alt="Bundle {{ $bundleName }}"
+                                                            class="w-full h-full object-cover rounded-md"
+                                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                        <span
+                                                            style="color: white; font-size: 16px; display: none;">📦</span>
+                                                    @elseif($bundleImage)
+                                                        <img src="{{ asset($bundleImage) }}"
+                                                            alt="Bundle {{ $bundleName }}"
+                                                            class="w-full h-full object-cover rounded-md"
+                                                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                                        <span
+                                                            style="color: white; font-size: 16px; display: none;">📦</span>
+                                                    @else
+                                                        <svg class="w-6 h-6 text-white" fill="currentColor"
+                                                            viewBox="0 0 20 20">
+                                                            <path
+                                                                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z">
+                                                            </path>
+                                                        </svg>
+                                                    @endif
+                                                </div>
+                                                <div class="flex-1">
+                                                    <h2 class="text-white font-bold text-base md:text-lg m-0">
+                                                        PAKET: {{ $bundleName }}</h2>
+                                                    <div class="text-white/80 text-sm mt-1">Kode:
+                                                        {{ $bundleCode }} | Berisi {{ $itemCount }} produk
                                                     </div>
                                                 </div>
-                                                <div
-                                                    class="bg-blue-100 dark:bg-blue-900/20 px-2 py-1 rounded text-xs font-medium text-blue-700 dark:text-blue-200">
-                                                    BUNDLE</div>
+                                                <div class="bundle-package-badge">BUNDLE PACKAGE</div>
                                             </div>
                                         </td>
                                     </tr>
@@ -974,40 +1027,41 @@
                                     {{-- Bundle Items --}}
                                     @if (isset($bundleGroup['items']) && count($bundleGroup['items']) > 0)
                                         @foreach ($bundleGroup['items'] as $bundleItemIndex => $bundleItem)
-                                            <tr
-                                                class="bg-gray-50 dark:bg-gray-800 border-l-2 border-gray-200 dark:border-gray-700">
+                                            <tr class="bundle-item-row">
                                                 <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                    <span class="ml-4">└─</span>
+                                                    
                                                 </td>
                                                 <td class="px-6 py-3 text-sm text-gray-900 dark:text-white">
-                                                    <div class="ml-4">
-                                                        <div class="font-medium text-gray-900 dark:text-white text-sm">
-                                                            {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                    <div class="bundle-item-indent">
+                                                        <span class="text-slate-400 text-sm">└─</span>
+                                                        <div>
+                                                            <div class="font-medium text-gray-700 dark:text-gray-300 text-sm break-words">
+                                                                {{ $bundleItem->produk->nama ?? 'Produk tidak ditemukan' }}
+                                                            </div>
+                                                            <div class="text-sm text-slate-400 italic">
+                                                                Item dalam paket • {{ $bundleItem->produk->kode ?? '' }}
+                                                            </div>
                                                         </div>
-                                                        <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ $bundleItem->produk->kode ?? '' }}</div>
                                                     </div>
                                                 </td>
-                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400 break-words">
                                                     {{ $bundleItem->deskripsi ?? '-' }}</td>
-                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                     {{ $bundleItem->quantity }}</td>
-                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                     {{ $bundleItem->satuan->nama ?? '-' }}</td>
-                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">Rp
+                                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">Rp
                                                     {{ number_format($bundleItem->harga, 0, ',', '.') }}</td>
-                                                <td class="px-6 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                                <td class="px-6 py-3 text-sm text-gray-600 dark:text-gray-400">
                                                     @if ($bundleItem->diskon_persen > 0)
-                                                        <span
-                                                            class="text-green-600 dark:text-green-400">{{ $bundleItem->diskon_persen }}%</span>
+                                                        <span class="text-green-600 dark:text-green-400">{{ $bundleItem->diskon_persen }}%</span>
                                                         <span class="block text-xs">(Rp
                                                             {{ number_format($bundleItem->diskon_nominal, 0, ',', '.') }})</span>
                                                     @else
                                                         -
                                                     @endif
                                                 </td>
-                                                <td
-                                                    class="px-6 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                                                <td class="px-6 py-3 text-sm font-medium text-gray-600 dark:text-gray-400">
                                                     Rp {{ number_format($bundleItem->subtotal, 0, ',', '.') }}</td>
                                             </tr>
                                         @endforeach
