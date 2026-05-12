@@ -870,17 +870,17 @@ class QuotationController extends Controller
             $oldStatus = $quotation->status;
             $newStatus = $request->status;
 
+            if ($oldStatus === $newStatus) {
+                return redirect()->back()
+                    ->with('error', 'Status quotation sudah ' . $newStatus . '. Tidak ada perubahan yang dilakukan.');
+            }
+
             // Validate status workflow
-            $isValidStatusChange = $this->isValidStatusChange($oldStatus, $newStatus);
+            $isValidStatusChange = Auth::user()->hasRole('admin') ? true : $this->isValidStatusChange($oldStatus, $newStatus);
 
             if (!$isValidStatusChange) {
-                if ($oldStatus === $newStatus) {
-                    return redirect()->back()
-                        ->with('error', 'Status quotation sudah ' . $newStatus . '. Tidak ada perubahan yang dilakukan.');
-                } else {
-                    return redirect()->back()
-                        ->with('error', 'Perubahan status tidak valid. Status yang sudah disetujui atau ditolak tidak dapat dikembalikan ke status sebelumnya.');
-                }
+                return redirect()->back()
+                    ->with('error', 'Perubahan status tidak valid. Status yang sudah disetujui atau ditolak tidak dapat dikembalikan ke status sebelumnya.');
             }
 
             $quotation->status = $newStatus;

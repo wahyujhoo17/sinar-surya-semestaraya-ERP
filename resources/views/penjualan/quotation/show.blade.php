@@ -183,7 +183,7 @@
 
                     {{-- Status dropdown --}}
                     @if (auth()->user()->hasPermission('quotation.change_status'))
-                        <div x-data="{ statusDropdownOpen: false, confirmModal: false, newStatus: '{{ $quotation->status }}', currentStatus: '{{ $quotation->status }}' }">
+                        <div x-data="{ statusDropdownOpen: false, confirmModal: false, newStatus: '{{ $quotation->status }}', currentStatus: '{{ $quotation->status }}', isAdmin: {{ auth()->user()->hasRole('admin') ? 'true' : 'false' }} }">
                             <div class="relative">
                                 <button @click="statusDropdownOpen = !statusDropdownOpen"
                                     class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
@@ -204,10 +204,15 @@
                                     x-transition:leave-end="opacity-0 scale-95"
                                     class="origin-top-right absolute right-0 mt-2 w-64 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 dark:divide-gray-700 focus:outline-none z-10">
 
-                                    <!-- Draft option - only available if current status is draft -->
-                                    <div class="py-1" x-show="currentStatus === 'draft'">
-                                        <button
+                                    <!-- Draft option -->
+                                    <div class="py-1" x-show="isAdmin || currentStatus === 'draft'">
+                                        <button x-show="currentStatus !== 'draft'"
                                             @click="newStatus = 'draft'; confirmModal = true; statusDropdownOpen = false"
+                                            class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
+                                            <span class="h-2 w-2 bg-gray-500 rounded-full mr-3"></span>
+                                            Draft
+                                        </button>
+                                        <button x-show="currentStatus === 'draft'"
                                             class="group flex items-center px-4 py-2 text-sm dark:text-gray-300 w-full text-left cursor-not-allowed opacity-60"
                                             disabled>
                                             <span class="h-2 w-2 bg-gray-500 rounded-full mr-3"></span>
@@ -215,8 +220,8 @@
                                         </button>
                                     </div>
 
-                                    <!-- Dikirim option - available if current status is draft or dikirim (but disabled if current) -->
-                                    <div class="py-1" x-show="['draft', 'dikirim'].includes(currentStatus)">
+                                    <!-- Dikirim option -->
+                                    <div class="py-1" x-show="isAdmin || ['draft', 'dikirim'].includes(currentStatus)">
                                         <button x-show="currentStatus !== 'dikirim'"
                                             @click="newStatus = 'dikirim'; confirmModal = true; statusDropdownOpen = false"
                                             class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
@@ -232,8 +237,9 @@
                                     </div>
 
                                     @if (auth()->user()->hasPermission('quotation.approve'))
+                                        <!-- Disetujui option -->
                                         <div class="py-1"
-                                            x-show="['draft', 'dikirim', 'disetujui'].includes(currentStatus)">
+                                            x-show="isAdmin || ['draft', 'dikirim', 'disetujui'].includes(currentStatus)">
                                             <button x-show="currentStatus !== 'disetujui'"
                                                 @click="newStatus = 'disetujui'; confirmModal = true; statusDropdownOpen = false"
                                                 class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
@@ -248,11 +254,9 @@
                                             </button>
                                         </div>
 
-
-                                        <!-- Ditolak option - available if current status is draft or dikirim (but disabled if current) -->
-
+                                        <!-- Ditolak option -->
                                         <div class="py-1"
-                                            x-show="['draft', 'dikirim', 'ditolak'].includes(currentStatus)">
+                                            x-show="isAdmin || ['draft', 'dikirim', 'ditolak'].includes(currentStatus)">
                                             <button x-show="currentStatus !== 'ditolak'"
                                                 @click="newStatus = 'ditolak'; confirmModal = true; statusDropdownOpen = false"
                                                 class="group flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left">
@@ -268,7 +272,7 @@
                                         </div>
                                     @endif
 
-                                    <!-- Kedaluwarsa option - always available (but disabled if current) -->
+                                    <!-- Kedaluwarsa option -->
                                     <div class="py-1">
                                         <button x-show="currentStatus !== 'kedaluwarsa'"
                                             @click="newStatus = 'kedaluwarsa'; confirmModal = true; statusDropdownOpen = false"
@@ -285,9 +289,9 @@
                                     </div>
 
                                     <!-- Message about status constraints -->
-                                    <div
+                                    <div x-show="!isAdmin && ['disetujui', 'ditolak', 'kedaluwarsa'].includes(currentStatus)"
                                         class="py-2 px-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-700">
-                                        <div x-show="['disetujui', 'ditolak', 'kedaluwarsa'].includes(currentStatus)">
+                                        <div>
                                             <svg xmlns="http://www.w3.org/2000/svg"
                                                 class="h-4 w-4 inline-block mr-1 text-amber-500" viewBox="0 0 20 20"
                                                 fill="currentColor">
