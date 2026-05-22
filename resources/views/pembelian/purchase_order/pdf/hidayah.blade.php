@@ -453,6 +453,9 @@
                             <td>
                                 <div style="font-weight: 500; color: #111827;">
                                     {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
+                                @if ($detail->deskripsi)
+                                    <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Catatan: {{ $detail->deskripsi }}</div>
+                                @endif
                             </td>
                             <td style="text-align: center;">{{ number_format($detail->quantity, 0) }}</td>
                             <td style="text-align: center;">{{ $detail->satuan->nama ?? '-' }}</td>

@@ -653,7 +653,7 @@
                                     <div class="product-name">
                                         {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
                                     @if ($detail->deskripsi)
-                                        <p class="product-desc">{{ $detail->deskripsi }}</p>
+                                        <p class="product-desc">Catatan: {{ $detail->deskripsi }}</p>
                                     @endif
                                 </td>
                                 <td class="text-center">{{ number_format($detail->quantity, 0) }}</td>

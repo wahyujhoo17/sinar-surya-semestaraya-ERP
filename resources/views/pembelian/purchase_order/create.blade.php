@@ -598,8 +598,8 @@
                                         {{-- Deskripsi --}}
                                         <div class="md:col-span-5">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi</label>
-                                            <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="2" placeholder="Deskripsi item"
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan Item</label>
+                                            <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="2" placeholder="Catatan item..."
                                                 class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"></textarea>
                                         </div>
 
