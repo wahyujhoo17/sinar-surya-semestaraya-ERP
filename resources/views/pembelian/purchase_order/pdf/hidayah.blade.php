@@ -451,8 +451,9 @@
                         <tr>
                             <td style="text-align: center; font-weight: 600;">{{ $no++ }}</td>
                             <td>
-                                <div style="font-weight: 500; color: #111827;">
-                                    {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
+                                 <span style="font-size: 9px; color: #6b7280; font-weight: 600;">{{ $detail->produk->kode ?? '-' }}</span><br>
+                                 <div style="font-weight: 500; color: #111827;">
+                                     {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
                                 @if ($detail->deskripsi)
                                     <div style="font-size: 9px; color: #6b7280; margin-top: 2px;">Catatan: {{ $detail->deskripsi }}</div>
                                 @endif

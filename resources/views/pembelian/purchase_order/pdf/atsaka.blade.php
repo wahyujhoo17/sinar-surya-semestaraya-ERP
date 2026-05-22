@@ -650,6 +650,7 @@
                             <tr class="table-row">
                                 <td class="text-center">{{ $no++ }}</td>
                                 <td>
+                                    <span style="font-size: 9px; color: #64748b; font-weight: bold;">{{ $detail->produk->kode ?? '-' }}</span><br>
                                     <div class="product-name">
                                         {{ $detail->nama_item ?? ($detail->produk->nama ?? 'Produk') }}</div>
                                     @if ($detail->deskripsi)
