@@ -8,7 +8,7 @@
                     Edit data penggajian karyawan {{ $penggajian->karyawan->nama_lengkap }}
                 </p>
             </div>
-            <div class="mt-4 md:mt-0">
+            <div class="mt-4 md:mt-0 flex flex-col sm:flex-row sm:items-center gap-3">
                 <a href="{{ route('hr.penggajian.index', request()->query()) }}"
                     class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -17,6 +17,13 @@
                     </svg>
                     Kembali ke Daftar Penggajian
                 </a>
+                <button type="submit" form="payrollForm"
+                    class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 text-white font-medium rounded-md transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    Simpan Perubahan
+                </button>
             </div>
         </div>
 
@@ -123,17 +130,24 @@
                                 </svg>
                                 Komponen Gaji
                             </h3>
-                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Komponen pendapatan dan potongan gaji</p>
+                            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Komponen pendapatan dan potongan
+                                gaji</p>
                         </div>
-                        <button type="button" @click="calculateCommission()"
-                            :disabled="commissionLoading"
+                        <button type="button" @click="calculateCommission()" :disabled="commissionLoading"
                             class="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200 disabled:opacity-50">
-                            <svg x-show="!commissionLoading" class="w-4 h-4 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            <svg x-show="!commissionLoading" class="w-4 h-4 mr-2 text-primary-500" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                </path>
                             </svg>
-                            <svg x-show="commissionLoading" class="animate-spin h-4 w-4 mr-2 text-primary-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <svg x-show="commissionLoading" class="animate-spin h-4 w-4 mr-2 text-primary-500"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
                             </svg>
                             <span x-text="commissionLoading ? 'Memproses...' : 'Hitung Ulang Komisi'"></span>
                         </button>
@@ -191,7 +205,8 @@
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
-                            <input type="hidden" name="tunjangan_jabatan" :value="salaryComponents.tunjangan_jabatan">
+                            <input type="hidden" name="tunjangan_jabatan"
+                                :value="salaryComponents.tunjangan_jabatan">
                             <input type="text" id="tunjangan_jabatan" x-init="$el.value = formatRibu(salaryComponents.tunjangan_jabatan)"
                                 @focus="$el.value = salaryComponents.tunjangan_jabatan; $el.select()"
                                 @input="salaryComponents.tunjangan_jabatan = parseFloat(($el.value+'').replace(/\./g,'').replace(',','.')) || 0; calculateTotal()"
@@ -468,11 +483,18 @@
                                         <tr>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                                <input type="hidden" name="komponenGaji[{{ $index }}][id]" value="{{ $komponen->id }}">
-                                                <input type="hidden" name="komponenGaji[{{ $index }}][nama_komponen]" value="{{ $komponen->nama_komponen }}">
-                                                <input type="hidden" name="komponenGaji[{{ $index }}][jenis]" value="{{ $komponen->jenis }}">
-                                                <input type="hidden" name="komponenGaji[{{ $index }}][nilai]" value="{{ $komponen->nilai }}">
-                                                <input type="hidden" name="komponenGaji[{{ $index }}][keterangan]" value="{{ $komponen->keterangan }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][id]"
+                                                    value="{{ $komponen->id }}">
+                                                <input type="hidden"
+                                                    name="komponenGaji[{{ $index }}][nama_komponen]"
+                                                    value="{{ $komponen->nama_komponen }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][jenis]"
+                                                    value="{{ $komponen->jenis }}">
+                                                <input type="hidden" name="komponenGaji[{{ $index }}][nilai]"
+                                                    value="{{ $komponen->nilai }}">
+                                                <input type="hidden"
+                                                    name="komponenGaji[{{ $index }}][keterangan]"
+                                                    value="{{ $komponen->keterangan }}">
                                                 {{ $komponen->nama_komponen }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -523,8 +545,10 @@
                 </div>
                 <div class="p-6">
                     {{-- Commission Rules Info --}}
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Informasi Sistem Komisi:</h4>
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                        <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100 mb-2">Informasi Sistem Komisi:
+                        </h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-blue-800 dark:text-blue-200">
                             <div>
                                 <p class="font-medium mb-2">Basis Perhitungan:</p>
@@ -555,36 +579,51 @@
                     </div>
 
                     {{-- Penyesuaian Komisi Per Sales Order --}}
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+                    <div
+                        class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
                         <h4 class="text-sm font-medium text-orange-900 dark:text-orange-100 mb-4">
                             Penyesuaian Komisi Per Sales Order:
                         </h4>
                         <div class="space-y-4">
                             <template x-for="order in commissionData.orders" :key="order.id">
-                                <div class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800">
-                                    <input type="hidden" :name="'sales_order_adjustments['+order.id+'][sales_order_id]'" :value="order.id">
+                                <div
+                                    class="border border-gray-200 dark:border-gray-600 rounded-lg p-4 bg-white dark:bg-gray-800">
+                                    <input type="hidden"
+                                        :name="'sales_order_adjustments[' + order.id + '][sales_order_id]'"
+                                        :value="order.id">
                                     <div class="flex items-center justify-between mb-3">
                                         <div>
-                                            <h5 class="font-medium text-gray-900 dark:text-white" x-text="'SO: ' + order.nomor"></h5>
-                                            <p class="text-sm text-gray-600 dark:text-gray-400" x-text="'Netto Penjualan: ' + formatRupiah(order.netto_penjualan)"></p>
+                                            <h5 class="font-medium text-gray-900 dark:text-white"
+                                                x-text="'SO: ' + order.nomor"></h5>
+                                            <p class="text-sm text-gray-600 dark:text-gray-400"
+                                                x-text="'Netto Penjualan: ' + formatRupiah(order.netto_penjualan)"></p>
                                         </div>
                                         <div class="text-right">
-                                            <p class="text-sm text-green-600 dark:text-green-400 font-medium" x-text="'Komisi: ' + formatRupiah(order.komisi)"></p>
+                                            <p class="text-sm text-green-600 dark:text-green-400 font-medium"
+                                                x-text="'Komisi: ' + formatRupiah(order.komisi)"></p>
                                         </div>
                                     </div>
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cashback (Nominal)</label>
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cashback
+                                                (Nominal)</label>
                                             <input type="text" x-init="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
                                                 @focus="$el.value = (salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0); $el.select()"
                                                 @input="setSalesOrderAdjustment(order.id, 'cashback_nominal', parseFloat(($event.target.value+'').replace(/\./g,'').replace(',','.')) || 0)"
                                                 @blur="$el.value = formatRibu(salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0)"
                                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm">
-                                            <input type="hidden" :name="'sales_order_adjustments['+order.id+'][cashback_nominal]'" :value="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].cashback_nominal : 0">
+                                            <input type="hidden"
+                                                :name="'sales_order_adjustments[' + order.id + '][cashback_nominal]'"
+                                                :value="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id]
+                                                    .cashback_nominal : 0">
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Overhead (%)</label>
-                                            <input type="number" step="0.01" :name="'sales_order_adjustments['+order.id+'][overhead_persen]'"
+                                            <label
+                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Overhead
+                                                (%)</label>
+                                            <input type="number" step="0.01"
+                                                :name="'sales_order_adjustments[' + order.id + '][overhead_persen]'"
                                                 x-model="salesOrderAdjustments[order.id] ? salesOrderAdjustments[order.id].overhead_persen : 0"
                                                 @input="setSalesOrderAdjustment(order.id, 'overhead_persen', $event.target.value)"
                                                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white text-sm">
@@ -603,10 +642,15 @@
 
                     {{-- Loading State --}}
                     <div x-show="commissionLoading" class="text-center py-8">
-                        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-500 bg-white dark:bg-gray-800 transition ease-in-out duration-150">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <div
+                            class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-gray-500 bg-white dark:bg-gray-800 transition ease-in-out duration-150">
+                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500"
+                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10"
+                                    stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
                             </svg>
                             Menghitung komisi...
                         </div>
@@ -615,269 +659,302 @@
                     {{-- Commission Details Table --}}
                     <div x-show="!commissionLoading && commissionData.orders.length > 0" class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
-                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Sales Order</span>
-                                <p class="text-xl font-bold text-gray-900 dark:text-white" x-text="commissionData.orders.length"></p>
+                            <div
+                                class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Sales
+                                    Order</span>
+                                <p class="text-xl font-bold text-gray-900 dark:text-white"
+                                    x-text="commissionData.orders.length"></p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
-                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Netto Penjualan</span>
-                                <p class="text-xl font-bold text-primary-600" x-text="formatRupiah(commissionData.total_sales)"></p>
+                            <div
+                                class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Total Netto
+                                    Penjualan</span>
+                                <p class="text-xl font-bold text-primary-600"
+                                    x-text="formatRupiah(commissionData.total_sales)"></p>
                             </div>
-                            <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
-                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Rata-rata Margin</span>
-                                <p class="text-xl font-bold text-purple-600" x-text="(parseFloat(commissionData.average_margin || 0)).toFixed(2) + '%'"></p>
+                            <div
+                                class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded-lg border border-gray-100 dark:border-gray-600">
+                                <span class="text-xs text-gray-500 dark:text-gray-400 uppercase">Rata-rata
+                                    Margin</span>
+                                <p class="text-xl font-bold text-purple-600"
+                                    x-text="(parseFloat(commissionData.average_margin || 0)).toFixed(2) + '%'"></p>
                             </div>
                         </div>
 
                         <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead>
-                                <tr class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    <th class="px-2 py-3">Produk</th>
-                                    <th class="px-2 py-3 text-right">Harga Jual</th>
-                                    <th class="px-2 py-3 text-right">Harga Beli</th>
-                                    <th class="px-2 py-3 text-right">Margin %</th>
-                                    <th class="px-2 py-3 text-right">Rate</th>
-                                    <th class="px-2 py-3 text-right">Komisi</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                                <template x-for="order in commissionData.orders" :key="'details-'+order.id">
-                                    <template x-for="item in order.product_details" :key="item.produk">
-                                        <tr class="text-sm">
-                                            <td class="px-2 py-3 dark:text-gray-300" x-text="item.produk"></td>
-                                            <td class="px-2 py-3 text-right dark:text-gray-300" x-text="formatRupiah(item.harga_jual)"></td>
-                                            <td class="px-2 py-3 text-right dark:text-gray-300" x-text="formatRupiah(item.harga_beli)"></td>
-                                            <td class="px-2 py-3 text-right">
-                                                <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                                                    :class="item.margin_persen > 40 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
-                                                    x-text="(parseFloat(item.margin_persen)).toFixed(2) + '%'"></span>
-                                            </td>
-                                            <td class="px-2 py-3 text-right font-medium text-blue-600" x-text="item.commission_rate + '%'"></td>
-                                            <td class="px-2 py-3 text-right font-semibold text-green-600" x-text="formatRupiah(item.komisi)"></td>
-                                        </tr>
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                                <thead>
+                                    <tr
+                                        class="text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                        <th class="px-2 py-3">Produk</th>
+                                        <th class="px-2 py-3 text-right">Harga Jual</th>
+                                        <th class="px-2 py-3 text-right">Harga Beli</th>
+                                        <th class="px-2 py-3 text-right">Margin %</th>
+                                        <th class="px-2 py-3 text-right">Rate</th>
+                                        <th class="px-2 py-3 text-right">Komisi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                                    <template x-for="order in commissionData.orders" :key="'details-' + order.id">
+                                        <template x-for="item in order.product_details" :key="item.produk">
+                                            <tr class="text-sm">
+                                                <td class="px-2 py-3 dark:text-gray-300" x-text="item.produk"></td>
+                                                <td class="px-2 py-3 text-right dark:text-gray-300"
+                                                    x-text="formatRupiah(item.harga_jual)"></td>
+                                                <td class="px-2 py-3 text-right dark:text-gray-300"
+                                                    x-text="formatRupiah(item.harga_beli)"></td>
+                                                <td class="px-2 py-3 text-right">
+                                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                                                        :class="item.margin_persen > 40 ? 'bg-green-100 text-green-800' :
+                                                            'bg-yellow-100 text-yellow-800'"
+                                                        x-text="(parseFloat(item.margin_persen)).toFixed(2) + '%'"></span>
+                                                </td>
+                                                <td class="px-2 py-3 text-right font-medium text-blue-600"
+                                                    x-text="item.commission_rate + '%'"></td>
+                                                <td class="px-2 py-3 text-right font-semibold text-green-600"
+                                                    x-text="formatRupiah(item.komisi)"></td>
+                                            </tr>
+                                        </template>
                                     </template>
-                                </template>
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- Total Calculation Card --}}
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
+                {{-- Total Calculation Card --}}
                 <div
-                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
-                            </path>
-                        </svg>
-                        Ringkasan Perhitungan
-                    </h3>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Total gaji yang akan diterima karyawan</p>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- Income Summary --}}
-                        <div class="space-y-3">
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">Pendapatan</h4>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Gaji Pokok:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.gaji_pokok)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_keluarga) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Keluarga:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_keluarga)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_jabatan) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Jabatan:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_jabatan)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_transport) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Transport:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_transport)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_makan) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Makan:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_makan)"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_btn) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan BTN:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_btn)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.tunjangan_pulsa) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Tunjangan Pulsa:</span>
-                                    <span class="font-medium"
-                                        x-text="formatRupiah(salaryComponents.tunjangan_pulsa)"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Bonus:</span>
-                                    <span class="font-medium" x-text="formatRupiah(salaryComponents.bonus)"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Lembur:</span>
-                                    <span class="font-medium" x-text="formatRupiah(salaryComponents.lembur)"></span>
-                                </div>
-
-                                {{-- Dynamic Commission from Alpine --}}
-                                <div class="flex justify-between border-t pt-2" x-show="commissionData.total_commission > 0">
-                                    <span class="text-gray-600 dark:text-gray-400 font-medium italic">Komisi Penjualan:</span>
-                                    <span class="font-bold text-green-600 dark:text-green-400" x-text="formatRupiah(commissionData.total_commission)"></span>
-                                </div>
-
-                                {{-- Manual Components --}}
-                                <template x-for="comp in existingComponents.filter(c => c.jenis === 'pendapatan')" :key="comp.id || comp.nama_komponen">
-                                    <div class="flex justify-between border-t pt-2">
-                                        <span class="text-gray-600 dark:text-gray-400" x-text="comp.nama_komponen + ':'"></span>
-                                        <span class="font-medium text-green-600 dark:text-green-400" x-text="formatRupiah(comp.nilai)"></span>
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
+                    <div
+                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-800 dark:to-gray-700">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-amber-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            Ringkasan Perhitungan
+                        </h3>
+                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Total gaji yang akan diterima karyawan
+                        </p>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {{-- Income Summary --}}
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-medium text-gray-900 dark:text-white">Pendapatan</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Gaji Pokok:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.gaji_pokok)"></span>
                                     </div>
-                                </template>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_keluarga) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan Keluarga:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_keluarga)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_jabatan) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan Jabatan:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_jabatan)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_transport) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan Transport:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_transport)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_makan) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan Makan:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_makan)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_btn) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan BTN:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_btn)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.tunjangan_pulsa) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Tunjangan Pulsa:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.tunjangan_pulsa)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Bonus:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.bonus)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Lembur:</span>
+                                        <span class="font-medium"
+                                            x-text="formatRupiah(salaryComponents.lembur)"></span>
+                                    </div>
+
+                                    {{-- Dynamic Commission from Alpine --}}
+                                    <div class="flex justify-between border-t pt-2"
+                                        x-show="commissionData.total_commission > 0">
+                                        <span class="text-gray-600 dark:text-gray-400 font-medium italic">Komisi
+                                            Penjualan:</span>
+                                        <span class="font-bold text-green-600 dark:text-green-400"
+                                            x-text="formatRupiah(commissionData.total_commission)"></span>
+                                    </div>
+
+                                    {{-- Manual Components --}}
+                                    <template x-for="comp in existingComponents.filter(c => c.jenis === 'pendapatan')"
+                                        :key="comp.id || comp.nama_komponen">
+                                        <div class="flex justify-between border-t pt-2">
+                                            <span class="text-gray-600 dark:text-gray-400"
+                                                x-text="comp.nama_komponen + ':'"></span>
+                                            <span class="font-medium text-green-600 dark:text-green-400"
+                                                x-text="formatRupiah(comp.nilai)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            {{-- Deduction Summary --}}
+                            <div class="space-y-3">
+                                <h4 class="text-sm font-medium text-gray-900 dark:text-white">Potongan</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.bpjs_karyawan) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">BPJS:</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400"
+                                            x-text="formatRupiah(salaryComponents.bpjs_karyawan)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.cash_bon) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Cash Bon:</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400"
+                                            x-text="formatRupiah(salaryComponents.cash_bon)"></span>
+                                    </div>
+                                    <div class="flex justify-between"
+                                        x-show="parseFloat(salaryComponents.keterlambatan) > 0">
+                                        <span class="text-gray-600 dark:text-gray-400">Keterlambatan:</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400"
+                                            x-text="formatRupiah(salaryComponents.keterlambatan)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600 dark:text-gray-400">Potongan Lainnya:</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400"
+                                            x-text="formatRupiah(salaryComponents.potongan)"></span>
+                                    </div>
+
+                                    {{-- Manual Deduction Components --}}
+                                    <template x-for="comp in existingComponents.filter(c => c.jenis === 'potongan')"
+                                        :key="comp.id || comp.nama_komponen">
+                                        <div class="flex justify-between border-t pt-2">
+                                            <span class="text-gray-600 dark:text-gray-400"
+                                                x-text="comp.nama_komponen + ':'"></span>
+                                            <span class="font-medium text-red-600 dark:text-red-400"
+                                                x-text="formatRupiah(comp.nilai)"></span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                {{-- Total --}}
+                                <div class="border-t border-gray-200 dark:border-gray-600 pt-4 mt-6">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-semibold text-gray-900 dark:text-white">Total
+                                            Gaji:</span>
+                                        <span class="text-2xl font-bold text-green-600 dark:text-green-400"
+                                            x-text="formatRupiah(totalSalary)"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
+                </div>
 
-                        {{-- Deduction Summary --}}
-                        <div class="space-y-3">
-                            <h4 class="text-sm font-medium text-gray-900 dark:text-white">Potongan</h4>
-                            <div class="space-y-2 text-sm">
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.bpjs_karyawan) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">BPJS:</span>
-                                    <span class="font-medium text-red-600 dark:text-red-400"
-                                        x-text="formatRupiah(salaryComponents.bpjs_karyawan)"></span>
-                                </div>
-                                <div class="flex justify-between" x-show="parseFloat(salaryComponents.cash_bon) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Cash Bon:</span>
-                                    <span class="font-medium text-red-600 dark:text-red-400"
-                                        x-text="formatRupiah(salaryComponents.cash_bon)"></span>
-                                </div>
-                                <div class="flex justify-between"
-                                    x-show="parseFloat(salaryComponents.keterlambatan) > 0">
-                                    <span class="text-gray-600 dark:text-gray-400">Keterlambatan:</span>
-                                    <span class="font-medium text-red-600 dark:text-red-400"
-                                        x-text="formatRupiah(salaryComponents.keterlambatan)"></span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-gray-600 dark:text-gray-400">Potongan Lainnya:</span>
-                                    <span class="font-medium text-red-600 dark:text-red-400"
-                                        x-text="formatRupiah(salaryComponents.potongan)"></span>
-                                </div>
+                {{-- Additional Settings Card --}}
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
+                    <div
+                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                                </path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Pengaturan Tambahan
+                        </h3>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {{-- Status --}}
+                        <div>
+                            <label for="status"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Status <span class="text-red-500">*</span>
+                            </label>
+                            <select name="status" id="status" required
+                                class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('status') border-red-500 @enderror">
+                                <option value="draft"
+                                    {{ old('status', $penggajian->status) == 'draft' ? 'selected' : '' }}>Draft
+                                </option>
+                                <option value="disetujui"
+                                    {{ old('status', $penggajian->status) == 'disetujui' ? 'selected' : '' }}>Disetujui
+                                </option>
+                                <option value="dibayar"
+                                    {{ old('status', $penggajian->status) == 'dibayar' ? 'selected' : '' }}>Dibayar
+                                </option>
+                            </select>
+                            @error('status')
+                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                            @enderror
+                        </div>
 
-                                {{-- Manual Deduction Components --}}
-                                <template x-for="comp in existingComponents.filter(c => c.jenis === 'potongan')" :key="comp.id || comp.nama_komponen">
-                                    <div class="flex justify-between border-t pt-2">
-                                        <span class="text-gray-600 dark:text-gray-400" x-text="comp.nama_komponen + ':'"></span>
-                                        <span class="font-medium text-red-600 dark:text-red-400" x-text="formatRupiah(comp.nilai)"></span>
-                                    </div>
-                                </template>
-                            </div>
-
-                            {{-- Total --}}
-                            <div class="border-t border-gray-200 dark:border-gray-600 pt-4 mt-6">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-lg font-semibold text-gray-900 dark:text-white">Total
-                                        Gaji:</span>
-                                    <span class="text-2xl font-bold text-green-600 dark:text-green-400"
-                                        x-text="formatRupiah(totalSalary)"></span>
-                                </div>
-                            </div>
+                        {{-- Notes --}}
+                        <div>
+                            <label for="catatan"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Catatan
+                            </label>
+                            <textarea name="catatan" id="catatan" rows="3"
+                                class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200"
+                                placeholder="Catatan tambahan (opsional)">{{ old('catatan', $penggajian->catatan) }}</textarea>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {{-- Additional Settings Card --}}
-            <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden">
-                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor"
-                            viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-                            </path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        Pengaturan Tambahan
-                    </h3>
-                </div>
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {{-- Status --}}
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Status <span class="text-red-500">*</span>
-                        </label>
-                        <select name="status" id="status" required
-                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('status') border-red-500 @enderror">
-                            <option value="draft"
-                                {{ old('status', $penggajian->status) == 'draft' ? 'selected' : '' }}>Draft</option>
-                            <option value="disetujui"
-                                {{ old('status', $penggajian->status) == 'disetujui' ? 'selected' : '' }}>Disetujui
-                            </option>
-                            <option value="dibayar"
-                                {{ old('status', $penggajian->status) == 'dibayar' ? 'selected' : '' }}>Dibayar
-                            </option>
-                        </select>
-                        @error('status')
-                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    {{-- Notes --}}
-                    <div>
-                        <label for="catatan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Catatan
-                        </label>
-                        <textarea name="catatan" id="catatan" rows="3"
-                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200"
-                            placeholder="Catatan tambahan (opsional)">{{ old('catatan', $penggajian->catatan) }}</textarea>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Form Actions --}}
-            <div class="flex justify-between items-center pt-6">
-                <a href="{{ route('hr.penggajian.index', request()->query()) }}"
-                    class="px-6 py-3 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200 font-medium">
-                    Batal
-                </a>
-                <div class="flex space-x-3">
-                    <a href="{{ route('hr.penggajian.show', array_merge(request()->query(), ['penggajian' => $penggajian->id])) }}"
-                        class="px-6 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200 font-medium">
-                        Detail
+                {{-- Form Actions --}}
+                <div class="flex justify-between items-center pt-6">
+                    <a href="{{ route('hr.penggajian.index', request()->query()) }}"
+                        class="px-6 py-3 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200 font-medium">
+                        Batal
                     </a>
-                    <button type="submit"
-                        class="px-6 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 text-white font-medium transition-colors duration-200 flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-                            </path>
-                        </svg>
-                        Update Penggajian
-                    </button>
+                    <div class="flex space-x-3">
+                        <a href="{{ route('hr.penggajian.show', array_merge(request()->query(), ['penggajian' => $penggajian->id])) }}"
+                            class="px-6 py-3 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors duration-200 font-medium">
+                            Detail
+                        </a>
+                        <button type="submit"
+                            class="px-6 py-3 rounded-lg bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 text-white font-medium transition-colors duration-200 flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7">
+                                </path>
+                            </svg>
+                            Update Penggajian
+                        </button>
+                    </div>
                 </div>
-            </div>
         </form>
     </div>
 
@@ -907,22 +984,27 @@
                     existingComponents: @json($manualKomponenGaji->values()),
 
                     @php
-                        $ordersData = $penggajian->komponenGaji->whereNotNull('sales_order_id')->map(function($c) {
-                            return [
-                                'id' => $c->sales_order_id,
-                                'nomor' => $c->salesOrder->nomor ?? 'N/A',
-                                'netto_penjualan' => $c->netto_penjualan_adjusted ?? $c->netto_penjualan_original,
-                                'komisi' => $c->nilai,
-                                'product_details' => $c->product_details ?? []
-                            ];
-                        })->values();
+                        $ordersData = $penggajian->komponenGaji
+                            ->whereNotNull('sales_order_id')
+                            ->map(function ($c) {
+                                return [
+                                    'id' => $c->sales_order_id,
+                                    'nomor' => $c->salesOrder->nomor ?? 'N/A',
+                                    'netto_penjualan' => $c->netto_penjualan_adjusted ?? $c->netto_penjualan_original,
+                                    'komisi' => $c->nilai,
+                                    'product_details' => $c->product_details ?? [],
+                                ];
+                            })
+                            ->values();
 
-                        $adjustmentsData = $penggajian->komponenGaji->whereNotNull('sales_order_id')->mapWithKeys(function($c) {
-                            return [$c->sales_order_id => [
-                                'sales_order_id' => $c->sales_order_id,
-                                'cashback_nominal' => $c->cashback_nominal ?? 0,
-                                'overhead_persen' => $c->overhead_persen ?? 0
-                            ]];
+                        $adjustmentsData = $penggajian->komponenGaji->whereNotNull('sales_order_id')->mapWithKeys(function ($c) {
+                            return [
+                                $c->sales_order_id => [
+                                    'sales_order_id' => $c->sales_order_id,
+                                    'cashback_nominal' => $c->cashback_nominal ?? 0,
+                                    'overhead_persen' => $c->overhead_persen ?? 0,
+                                ],
+                            ];
                         });
                     @endphp
 
@@ -969,7 +1051,8 @@
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                        'content')
                                 },
                                 body: JSON.stringify({
                                     karyawan_id: this.selectedEmployee,
