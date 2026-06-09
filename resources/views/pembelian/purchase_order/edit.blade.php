@@ -453,11 +453,14 @@
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                 </div>
-                                                <input type="number" :name="`items[${index}][harga]`"
-                                                    x-model="item.harga" min="0" placeholder="0"
-                                                    @input="updateSubtotal(index)"
+                                                <input type="text" inputmode="numeric"
+                                                    :value="formatRupiahInput(item.harga)"
+                                                    @input="item.harga = parseRupiahInput($event.target.value); updateSubtotal(index)"
+                                                    placeholder="0"
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                     @if ($purchaseOrder->status !== 'draft') readonly @endif>
+                                                <input type="hidden" :name="`items[${index}][harga]`"
+                                                    :value="item.harga">
                                             </div>
                                         </div>
                                     </div>
@@ -472,7 +475,7 @@
                                                 <div class="relative rounded-md shadow-sm flex-1">
                                                     <input type="number" :name="`items[${index}][diskon_persen]`"
                                                         x-model="item.diskon_persen" min="0" max="100"
-                                                        step="0.01" placeholder="0"
+                                                        step="0.0001" placeholder="0"
                                                         @input="updateDiskonNominal(index)"
                                                         class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-8 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                         @if ($purchaseOrder->status !== 'draft') readonly @endif>
@@ -488,11 +491,14 @@
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                 </div>
-                                                <input type="number" :name="`items[${index}][diskon_nominal]`"
-                                                    x-model="item.diskon_nominal" min="0" step="0.01"
-                                                    placeholder="0" @input="updateDiskonPersen(index)"
+                                                <input type="text" inputmode="numeric"
+                                                    :value="formatRupiahInput(item.diskon_nominal)"
+                                                    @input="item.diskon_nominal = parseRupiahInput($event.target.value); updateDiskonPersen(index)"
+                                                    placeholder="0"
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                     @if ($purchaseOrder->status !== 'draft') readonly @endif>
+                                                <input type="hidden" :name="`items[${index}][diskon_nominal]`"
+                                                    :value="item.diskon_nominal">
                                             </div>
                                         </div>
 
@@ -505,16 +511,19 @@
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                 </div>
-                                                <input type="number" :name="`items[${index}][subtotal]`"
-                                                    x-model="item.subtotal" readonly min="0" placeholder="0"
+                                                <input type="text" :value="formatRupiahInput(item.subtotal)"
+                                                    readonly placeholder="0"
                                                     class="bg-gray-50 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md font-medium">
+                                                <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                    :value="item.subtotal">
                                             </div>
                                         </div>
 
                                         {{-- Deskripsi --}}
                                         <div class="md:col-span-5">
                                             <label
-                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan Item</label>
+                                                class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Catatan
+                                                Item</label>
                                             <textarea :name="`items[${index}][deskripsi]`" x-model="item.deskripsi" rows="2" placeholder="Catatan item..."
                                                 class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                 @if ($purchaseOrder->status !== 'draft') readonly @endif></textarea>
@@ -561,30 +570,32 @@
 
                         {{-- Order Summary Section --}}
                         <div class="mt-8 flex justify-end">
-                            <div class="w-full md:w-1/3 lg:w-1/4">
+                            <div class="w-full md:w-1/2 lg:w-2/5">
                                 <div
                                     class="bg-white dark:bg-gray-800 shadow-md rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                                     <div
-                                        class="bg-gray-50 dark:bg-gray-700 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                                        <h3 class="font-medium text-gray-900 dark:text-white">Ringkasan Order</h3>
+                                        class="bg-gray-50 dark:bg-gray-700 px-5 py-3 border-b border-gray-200 dark:border-gray-700">
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Ringkasan Order</h3>
                                     </div>
-                                    <div class="p-5 space-y-3">
+                                    <div class="p-5 space-y-4">
                                         {{-- Subtotal --}}
-                                        <div class="flex justify-between text-sm text-gray-700 dark:text-gray-300">
+                                        <div
+                                            class="flex justify-between items-center text-sm text-gray-700 dark:text-gray-300">
                                             <span>Subtotal:</span>
-                                            <span x-text="formatRupiah(calculateSubtotal())"></span>
+                                            <span class="font-medium"
+                                                x-text="formatRupiah(calculateSubtotal())"></span>
                                             <input type="hidden" name="subtotal" x-model="calculateSubtotal()">
                                         </div>
 
                                         {{-- Diskon Order --}}
-                                        <div class="flex justify-between items-center space-x-4">
-                                            <span class="text-sm text-gray-700 dark:text-gray-300">Diskon:</span>
-                                            <div class="flex items-center gap-2">
+                                        <div class="space-y-2">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 block">Diskon:</span>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 <div class="relative rounded-md shadow-sm">
                                                     <input type="number" name="diskon_persen" x-model="diskonPersen"
-                                                        min="0" max="100" step="0.01" placeholder="0"
+                                                        min="0" max="100" step="0.0001" placeholder="0"
                                                         @input="updateOrderDiskonNominal"
-                                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-8 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full pr-10 py-1.5 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                         @if ($purchaseOrder->status !== 'draft') readonly @endif>
                                                     <div
                                                         class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -592,167 +603,69 @@
                                                             class="text-gray-500 dark:text-gray-400 sm:text-sm">%</span>
                                                     </div>
                                                 </div>
-                                                <div class="relative rounded-md shadow-sm flex-1">
+                                                <div class="relative rounded-md shadow-sm">
                                                     <div
                                                         class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                         <span
                                                             class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                     </div>
-                                                    <input type="number" name="diskon_nominal"
-                                                        x-model="diskonNominal" min="0" step="0.01"
-                                                        placeholder="0" @input="updateOrderDiskonPersen"
-                                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                                                    <input type="text" inputmode="numeric"
+                                                        :value="formatRupiahInput(diskonNominal)"
+                                                        @input="diskonNominal = parseRupiahInput($event.target.value); updateOrderDiskonPersen()"
+                                                        placeholder="0"
+                                                        class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1.5 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                         @if ($purchaseOrder->status !== 'draft') readonly @endif>
-                                                    @push('styles')
-                                                        <!-- Select2 CSS -->
-                                                        <link
-                                                            href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-                                                            rel="stylesheet" />
-                                                        <style>
-                                                            .select2-container {
-                                                                width: 100% !important;
-                                                            }
-
-                                                            .select2-container--default .select2-selection--single {
-                                                                height: 38px;
-                                                                padding: 4px 2px;
-                                                                border-color: #D1D5DB;
-                                                                border-radius: 0.375rem;
-                                                                display: flex;
-                                                                align-items: center;
-                                                            }
-
-                                                            .select2-container--default .select2-selection--single:focus,
-                                                            .select2-container--default.select2-container--focus .select2-selection--single {
-                                                                border-color: #6366f1;
-                                                                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-                                                            }
-
-                                                            .select2-container--default .select2-selection--single .select2-selection__arrow {
-                                                                height: 38px;
-                                                                display: flex;
-                                                                align-items: center;
-                                                            }
-
-                                                            .select2-dropdown {
-                                                                border-color: #D1D5DB;
-                                                                border-radius: 0.375rem;
-                                                                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-                                                                overflow: hidden;
-                                                            }
-
-                                                            .select2-container--default .select2-results__option--highlighted[aria-selected] {
-                                                                background-color: #6366f1;
-                                                            }
-
-                                                            .select2-container--default .select2-search--dropdown .select2-search__field {
-                                                                border-color: #D1D5DB;
-                                                                border-radius: 0.25rem;
-                                                                padding: 0.4rem 0.75rem;
-                                                            }
-
-                                                            .select2-container--default .select2-search--dropdown .select2-search__field:focus {
-                                                                border-color: #6366f1;
-                                                                outline: none;
-                                                                box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-                                                            }
-
-                                                            .dark .select2-container--default .select2-selection--single {
-                                                                background-color: #374151;
-                                                                border-color: #4B5563;
-                                                                color: #F9FAFB;
-                                                            }
-
-                                                            .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
-                                                                color: #F9FAFB;
-                                                            }
-
-                                                            .dark .select2-dropdown {
-                                                                background-color: #1F2937;
-                                                                border-color: #4B5563;
-                                                            }
-
-                                                            .dark .select2-container--default .select2-results__option {
-                                                                color: #F9FAFB;
-                                                            }
-
-                                                            .dark .select2-container--default .select2-search--dropdown .select2-search__field {
-                                                                background-color: #374151;
-                                                                border-color: #4B5563;
-                                                                color: #F9FAFB;
-                                                            }
-
-                                                            .dark .select2-container--default .select2-results__option[aria-selected=true] {
-                                                                background-color: #374151;
-                                                            }
-
-                                                            .dark .select2-container--default .select2-selection--single .select2-selection__placeholder {
-                                                                color: #9CA3AF;
-                                                            }
-                                                        </style>
-                                                    @endpush
-
-                                                    @push('scripts')
-                                                        <!-- jQuery -->
-                                                        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-                                                        <!-- Select2 JS -->
-                                                        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-                                                        <script>
-                                                            $(document).ready(function() {
-                                                                $('#supplier_id').select2({
-                                                                    theme: 'default',
-                                                                    placeholder: 'Pilih Supplier',
-                                                                    allowClear: true
-                                                                });
-                                                                // Optional: focus select2 on open
-                                                                $('#supplier_id').on('select2:open', function() {
-                                                                    $('.select2-search__field').focus();
-                                                                });
-                                                            });
-                                                        </script>
-                                                    @endpush
+                                                    <input type="hidden" name="diskon_nominal"
+                                                        :value="diskonNominal">
                                                 </div>
                                             </div>
                                         </div>
 
                                         {{-- PPN --}}
-                                        <div class="flex justify-between items-center space-x-4">
-                                            <div class="flex items-center">
-                                                <span class="text-sm text-gray-700 dark:text-gray-300 mr-2">PPN
-                                                    ({{ setting('tax_percentage', 11) }}%):</span>
-                                                <label class="inline-flex items-center cursor-pointer">
-                                                    <input type="checkbox" x-model="includePPN"
-                                                        @change="updateTotals()" class="sr-only peer"
-                                                        @if ($purchaseOrder->status !== 'draft') disabled @endif>
-                                                    <!-- Hidden input untuk mengirim nilai include_ppn ke backend -->
-                                                    <input type="hidden" name="include_ppn"
-                                                        :value="includePPN ? 1 : 0">
-                                                    <div
-                                                        class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500 dark:peer-focus:ring-primary-600 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500">
-                                                    </div>
-                                                </label>
+                                        <div class="space-y-2">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-sm text-gray-700 dark:text-gray-300">PPN
+                                                        ({{ setting('tax_percentage', 11) }}%):</span>
+                                                    <label class="inline-flex items-center cursor-pointer">
+                                                        <input type="checkbox" x-model="includePPN"
+                                                            @change="updateTotals()" class="sr-only peer"
+                                                            @if ($purchaseOrder->status !== 'draft') disabled @endif>
+                                                        <input type="hidden" name="include_ppn"
+                                                            :value="includePPN ? 1 : 0">
+                                                        <div
+                                                            class="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-500 dark:peer-focus:ring-primary-600 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary-500">
+                                                        </div>
+                                                    </label>
+                                                </div>
                                             </div>
-                                            <div class="relative">
-                                                <div
-                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
-                                                </div> <input type="number" name="ppn" x-model="ppn" readonly
-                                                    class="bg-gray-50 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md">
-                                            </div>
-                                        </div>
-
-                                        {{-- Ongkos Kirim --}}
-                                        <div class="flex justify-between items-center space-x-4">
-                                            <span class="text-sm text-gray-700 dark:text-gray-300">Ongkos Kirim:</span>
-                                            <div class="relative">
+                                            <div class="relative rounded-md shadow-sm">
                                                 <div
                                                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                                     <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                 </div>
-                                                <input type="number" name="ongkos_kirim" x-model="ongkosKirim"
-                                                    @input="updateTotals()" min="0" placeholder="0"
-                                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
+                                                <input type="text" :value="formatRupiahInput(ppn)" readonly
+                                                    class="bg-gray-50 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1.5 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md">
+                                                <input type="hidden" name="ppn" :value="ppn">
+                                            </div>
+                                        </div>
+
+                                        {{-- Ongkos Kirim --}}
+                                        <div class="space-y-2">
+                                            <span class="text-sm text-gray-700 dark:text-gray-300 block">Ongkos
+                                                Kirim:</span>
+                                            <div class="relative rounded-md shadow-sm">
+                                                <div
+                                                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                    <span class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
+                                                </div>
+                                                <input type="text" inputmode="numeric"
+                                                    :value="formatRupiahInput(ongkosKirim)"
+                                                    @input="ongkosKirim = parseRupiahInput($event.target.value); updateTotals()"
+                                                    placeholder="0"
+                                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 py-1.5 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                     @if ($purchaseOrder->status !== 'draft') readonly @endif>
+                                                <input type="hidden" name="ongkos_kirim" :value="ongkosKirim">
                                             </div>
                                         </div>
 
@@ -1155,7 +1068,7 @@
                     const diskonNominal = parseFloat(item.diskon_nominal) || 0;
                     const totalPrice = quantity * harga;
                     if (totalPrice > 0) {
-                        item.diskon_persen = (diskonNominal / totalPrice) * 100;
+                        item.diskon_persen = Math.round((diskonNominal / totalPrice) * 100 * 10000) / 10000;
                     } else {
                         item.diskon_persen = 0;
                     }
@@ -1182,7 +1095,7 @@
                     if (isNaN(this.diskonNominal)) this.diskonNominal = 0;
 
                     if (subtotal > 0 && this.diskonNominal >= 0) {
-                        this.diskonPersen = (this.diskonNominal / subtotal) * 100;
+                        this.diskonPersen = Math.round((this.diskonNominal / subtotal) * 100 * 10000) / 10000;
                     } else {
                         this.diskonPersen = 0;
                     }
@@ -1225,6 +1138,54 @@
                         currency: 'IDR',
                         minimumFractionDigits: 0
                     }).format(angka);
+                },
+
+                // Format angka jadi string format Indonesia (contoh: 100000 → "100.000", 988.2 → "988,2")
+                formatRupiahInput(angka) {
+                    if (angka === null || angka === undefined || angka === '') return '';
+                    const num = parseFloat(angka);
+                    if (isNaN(num)) return angka;
+                    if (num === 0) return '';
+                    // Pisahkan integer dan desimal (hindari pembulatan)
+                    const parts = num.toString().split('.');
+                    // Format bagian integer dengan titik pemisah ribuan
+                    const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    // Jika ada desimal, gabungkan dengan koma
+                    if (parts.length > 1 && parts[1] !== '0' && parts[1] !== '00' && parts[1] !== '000' && parts[1] !==
+                        '0000') {
+                        return intFormatted + ',' + parts[1];
+                    }
+                    return intFormatted;
+                },
+
+                // Parse string berformat Indonesia (contoh: "100.000" → 100000, "100,50" → 100.5, "988.2" → 988.2)
+                parseRupiahInput(str) {
+                    if (!str && str !== 0) return 0;
+                    let cleaned = str.toString().trim();
+                    if (!cleaned) return 0;
+
+                    const lastCommaIndex = cleaned.lastIndexOf(',');
+                    const lastDotIndex = cleaned.lastIndexOf('.');
+
+                    if (lastCommaIndex !== -1) {
+                        // Ada koma → koma = desimal, semua titik dan koma sebelumnya = pemisah ribuan
+                        cleaned = cleaned.substring(0, lastCommaIndex).replace(/\./g, '').replace(/,/g, '') +
+                            '.' + cleaned.substring(lastCommaIndex + 1).replace(/[^0-9]/g, '');
+                    } else if (lastDotIndex !== -1) {
+                        // Tidak ada koma, tapi ada titik → deteksi apakah titik terakhir adalah desimal
+                        const afterLastDot = cleaned.substring(lastDotIndex + 1).replace(/[^0-9]/g, '');
+                        if (afterLastDot.length > 0 && afterLastDot.length <= 2) {
+                            // 1-2 digit setelah titik terakhir → desimal (contoh: "988.2" → 988.2)
+                            cleaned = cleaned.substring(0, lastDotIndex).replace(/\./g, '') +
+                                '.' + afterLastDot;
+                        } else {
+                            // 3 digit setelah titik terakhir → pemisah ribuan (contoh: "1.250" → 1250)
+                            cleaned = cleaned.replace(/\./g, '');
+                        }
+                    }
+                    // Jika tidak ada koma maupun titik, tidak perlu diubah
+                    const num = parseFloat(cleaned);
+                    return isNaN(num) ? 0 : num;
                 },
 
                 validateForm(e) {

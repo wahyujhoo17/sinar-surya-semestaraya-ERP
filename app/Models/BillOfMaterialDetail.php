@@ -8,9 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 class BillOfMaterialDetail extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'bill_of_material_details';
-    
+
     protected $fillable = [
         'bom_id',
         'komponen_id',
@@ -18,7 +18,11 @@ class BillOfMaterialDetail extends Model
         'satuan_id',
         'catatan'
     ];
-    
+
+    protected $casts = [
+        'quantity' => 'float',
+    ];
+
     /**
      * Relasi ke Bill of Material
      */
@@ -26,7 +30,7 @@ class BillOfMaterialDetail extends Model
     {
         return $this->belongsTo(BillOfMaterial::class, 'bom_id');
     }
-    
+
     /**
      * Relasi ke Produk (Komponen)
      */
@@ -34,7 +38,7 @@ class BillOfMaterialDetail extends Model
     {
         return $this->belongsTo(Produk::class, 'komponen_id');
     }
-    
+
     /**
      * Relasi ke Satuan
      */
