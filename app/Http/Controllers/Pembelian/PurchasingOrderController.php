@@ -845,6 +845,29 @@ class PurchasingOrderController extends Controller
         $purchaseOrder = PurchaseOrder::findOrFail($id);
         $newStatus = $request->status;
 
+        // Prevent changing to the same status
+        if ($purchaseOrder->status === $newStatus) {
+            return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
+                ->with('error', 'Status Purchase Order sudah "' . ucfirst($newStatus) . '". Tidak ada perubahan yang dilakukan.');
+        }
+
+        // Prevent invalid status transitions (backward or skipping steps)
+        $validTransitions = [
+            'draft' => ['diproses', 'dibatalkan'],
+            'diproses' => ['dikirim', 'dibatalkan'],
+            'dikirim' => ['selesai', 'dibatalkan'],
+            'selesai' => [], // Cannot transition from selesai
+            'dibatalkan' => ['draft'], // Can reactivate cancelled PO back to draft
+        ];
+
+        $currentStatus = $purchaseOrder->status;
+        $allowedNextStatuses = $validTransitions[$currentStatus] ?? [];
+
+        if (!in_array($newStatus, $allowedNextStatuses)) {
+            return redirect()->route('pembelian.purchasing-order.show', $purchaseOrder->id)
+                ->with('error', 'Perubahan status dari "' . ucfirst($currentStatus) . '" ke "' . ucfirst($newStatus) . '" tidak diizinkan.');
+        }
+
         // Special validation for changing to "selesai" status
         if ($newStatus === 'selesai') {
             // Check if payment is complete

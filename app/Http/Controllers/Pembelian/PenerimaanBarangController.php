@@ -396,11 +396,26 @@ class PenerimaanBarangController extends Controller
         $poQuery = PurchaseOrder::with(['supplier', 'details.produk'])
             ->where('status', '!=', 'selesai')
             ->where('status', '!=', 'draft')
-            ->where('status', '!=', 'dibatalkan'); // Exclude canceled POs
+            ->where('status', '!=', 'dibatalkan')
+            ->where('status_penerimaan', '!=', 'diterima'); // Exclude POs where all items are already fully received
         if ($request->filled('q')) {
             $poQuery->where('nomor', 'like', '%' . $request->q . '%');
         }
-        $purchaseOrders = $poQuery->orderBy('created_at', 'desc')->limit(10)->get();
+        $purchaseOrders = $poQuery->orderBy('created_at', 'desc')->paginate(10);
+
+        // Return JSON for AJAX requests (search & pagination)
+        if ($request->ajax() || $request->expectsJson()) {
+            return response()->json([
+                'data' => $purchaseOrders->items(),
+                'current_page' => $purchaseOrders->currentPage(),
+                'last_page' => $purchaseOrders->lastPage(),
+                'from' => $purchaseOrders->firstItem(),
+                'to' => $purchaseOrders->lastItem(),
+                'total' => $purchaseOrders->total(),
+                'pagination_html' => $purchaseOrders->links('vendor.pagination.simple-ajax')->toHtml(),
+            ]);
+        }
+
         $gudangs = Gudang::all();
         return view('pembelian.Penerimaan_barang.create', compact('purchaseOrders', 'gudangs'));
     }

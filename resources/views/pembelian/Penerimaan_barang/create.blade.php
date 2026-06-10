@@ -163,7 +163,7 @@
                                     Tidak ditemukan purchase order yang sesuai dengan pencarian.
                                 </template>
                                 <template x-if="!poSearch">
-                                    Mulai pencarian untuk menampilkan purchase order yang tersedia.
+                                    Tidak ada purchase order yang tersedia untuk penerimaan barang.
                                 </template>
                             </p>
                         </div>
@@ -337,6 +337,11 @@
                                     </template>
                                 </tbody>
                             </table>
+                        </div>
+
+                        {{-- Pagination --}}
+                        <div x-show="paginationHtml" id="po-pagination-container"
+                            class="px-4 py-3 border-t border-gray-200 dark:border-gray-700" x-html="paginationHtml">
                         </div>
                     </div>
                 </div>
@@ -866,9 +871,9 @@
         function goodsReceiptForm() {
             return {
                 step: 1,
-                loading: true, // Start with loading state true
+                loading: true,
                 poSearch: '',
-                purchaseOrders: @json($purchaseOrders ?? []),
+                purchaseOrders: [],
                 filteredPurchaseOrders: [],
                 selectedPO: null,
                 poDetails: [],
@@ -877,48 +882,84 @@
                 isSubmitting: false,
                 showConfirmModal: false,
                 selectedGudangName: 'Belum dipilih',
+                currentPage: 1,
+                lastPage: 1,
+                total: 0,
+                paginationHtml: '',
+                searchTimeout: null,
 
                 init() {
-                    // Use setTimeout to simulate loading and prevent initial UI flicker
-                    setTimeout(() => {
-                        this.filteredPurchaseOrders = [...this.purchaseOrders];
-                        this.loading = false;
+                    // Load first page of POs via AJAX on init
+                    this.fetchPurchaseOrders(1);
 
-                        // Set up gudang select listener
-                        this.$nextTick(() => {
-                            const gudangSelect = document.getElementById('gudang_id');
-                            if (gudangSelect) {
-                                gudangSelect.addEventListener('change', () => {
-                                    this.updateGudangName();
-                                });
+                    // Set up gudang select listener
+                    this.$nextTick(() => {
+                        const gudangSelect = document.getElementById('gudang_id');
+                        if (gudangSelect) {
+                            gudangSelect.addEventListener('change', () => {
+                                this.updateGudangName();
+                            });
+                        }
+                    });
+                },
+
+                fetchPurchaseOrders(page) {
+                    this.loading = true;
+                    this.currentPage = page;
+
+                    const params = new URLSearchParams();
+                    params.set('page', page);
+                    if (this.poSearch) {
+                        params.set('q', this.poSearch);
+                    }
+
+                    fetch(`{{ route('pembelian.penerimaan-barang.create') }}?${params.toString()}`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            this.filteredPurchaseOrders = result.data || [];
+                            this.currentPage = result.current_page || 1;
+                            this.lastPage = result.last_page || 1;
+                            this.total = result.total || 0;
+                            this.paginationHtml = result.pagination_html || '';
+                            this.loading = false;
+
+                            // Attach click handlers for pagination links after DOM update
+                            this.$nextTick(() => {
+                                this.attachPaginationHandlers();
+                            });
+                        })
+                        .catch(() => {
+                            this.filteredPurchaseOrders = [];
+                            this.loading = false;
+                        });
+                },
+
+                attachPaginationHandlers() {
+                    const container = this.$el.querySelector('#po-pagination-container');
+                    if (!container) return;
+
+                    const links = container.querySelectorAll('.po-pagination-link');
+                    links.forEach(link => {
+                        link.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            const page = parseInt(link.getAttribute('data-page'));
+                            if (page && page >= 1 && page <= this.lastPage) {
+                                this.fetchPurchaseOrders(page);
                             }
                         });
-                    }, 300);
+                    });
                 },
 
                 searchPurchaseOrders() {
-                    this.loading = true;
-
-                    // Clear previous search results first
-                    this.filteredPurchaseOrders = [];
-
-                    // Delayed search to prevent UI lockup and show loading state
-                    setTimeout(() => {
-                        if (!this.poSearch) {
-                            this.filteredPurchaseOrders = [...this.purchaseOrders].filter(po =>
-                                po.status !== 'dibatalkan' && po.status !== 'draft'
-                            );
-                        } else {
-                            const search = this.poSearch.toLowerCase();
-                            this.filteredPurchaseOrders = this.purchaseOrders
-                                .filter(po => po.status !== 'dibatalkan')
-                                .filter(po => po.status !== 'draft')
-                                .filter(po =>
-                                    po.nomor.toLowerCase().includes(search) ||
-                                    po.supplier.nama.toLowerCase().includes(search)
-                                );
-                        }
-                        this.loading = false;
+                    // Debounce search before fetching
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        this.fetchPurchaseOrders(1);
                     }, 300);
                 },
 
