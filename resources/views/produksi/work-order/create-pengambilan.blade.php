@@ -187,23 +187,23 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">
-                                                {{ number_format($material->quantity, 2, ',', '.') }}
+                                                {{ number_format($material->quantity, 4, ',', '.') }}
                                                 {{ $material->satuan->nama ?? '-' }}
                                                 <input type="hidden"
                                                     name="detail[{{ $index }}][jumlah_diminta]"
-                                                    value="{{ number_format($material->quantity, 2, '.', '') }}">
+                                                    value="{{ number_format($material->quantity, 4, '.', '') }}">
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right 
                                                 {{ $material->stok_tersedia < $material->quantity ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400' }}">
-                                                {{ number_format($material->stok_tersedia, 2, ',', '.') }}
+                                                {{ number_format($material->stok_tersedia, 4, ',', '.') }}
                                                 {{ $material->satuan->nama ?? '-' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                <input type="number" step="0.01" min="0"
+                                                <input type="number" step="0.0001" min="0"
                                                     name="detail[{{ $index }}][jumlah_diambil]"
                                                     id="jumlah-diminta-{{ $index }}"
-                                                    value="{{ old('detail.' . $index . '.jumlah_diambil', min($material->quantity, $material->stok_tersedia)) }}"
+                                                    value="{{ old('detail.' . $index . '.jumlah_diambil', number_format(min($material->quantity, $material->stok_tersedia), 4, '.', '')) }}"
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                     {{ $material->stok_tersedia == 0 ? 'disabled' : '' }}>
                                             </td>
@@ -346,7 +346,8 @@
 
                             // Validasi jumlah diambil tidak boleh melebihi stok
                             const stokElement = row.querySelector('.stok-value');
-                            const stokTersedia = parseFloat(stokElement.textContent.replace(/[.,]/g, '')) || 0;
+                            const cleanText = stokElement.textContent.replace(/\./g, '').replace(/,/g, '.');
+                            const stokTersedia = parseFloat(cleanText) || 0;
                             const jumlahDiambilValue = parseFloat(jumlahDiambil.value) || 0;
 
                             if (jumlahDiambilValue > stokTersedia) {
@@ -414,10 +415,10 @@
                             <input type="hidden" name="detail[${materialIndex}][tipe]" value="manual">
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">
-                            <input type="number" step="0.01" min="0.01" 
+                            <input type="number" step="0.0001" min="0.0001" 
                                    name="detail[${materialIndex}][jumlah_diminta]" 
                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md text-right" 
-                                   placeholder="0.00" 
+                                   placeholder="0.0000" 
                                    required>
                             <div class="satuan-display text-xs text-gray-500 dark:text-gray-400 mt-1"></div>
                         </td>
@@ -426,10 +427,10 @@
                             <div class="satuan-display text-xs text-gray-500 dark:text-gray-400 mt-1"></div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <input type="number" step="0.01" min="0.01" 
+                            <input type="number" step="0.0001" min="0.0001" 
                                    name="detail[${materialIndex}][jumlah_diambil]" 
                                    class="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" 
-                                   placeholder="0.00" 
+                                   placeholder="0.0000" 
                                    required>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
@@ -544,8 +545,8 @@
                         const stokContainer = row.querySelector('.stok-tersedia');
 
                         stokElement.textContent = parseFloat(data.stok_tersedia || 0).toLocaleString('id-ID', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
+                            minimumFractionDigits: 4,
+                            maximumFractionDigits: 4
                         });
 
                         // Update warna berdasarkan stok

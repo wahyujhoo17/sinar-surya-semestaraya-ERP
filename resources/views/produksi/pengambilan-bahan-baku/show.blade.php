@@ -136,12 +136,12 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 text-center text-sm text-gray-900 dark:text-white">
-                                                {{ number_format($detail->jumlah_diminta, 2, ',', '.') }}
+                                                {{ number_format($detail->jumlah_diminta, 4, ',', '.') }}
                                             </td>
                                             <td class="px-6 py-4 text-center">
                                                 <span
                                                     class="text-sm font-medium {{ $detail->jumlah_diambil == $detail->jumlah_diminta ? 'text-green-600 dark:text-green-400' : 'text-orange-600 dark:text-orange-400' }}">
-                                                    {{ number_format($detail->jumlah_diambil, 2, ',', '.') }}
+                                                    {{ number_format($detail->jumlah_diambil, 4, ',', '.') }}
                                                 </span>
                                             </td>
                                             <td class="px-6 py-4 text-center text-sm text-gray-900 dark:text-white">

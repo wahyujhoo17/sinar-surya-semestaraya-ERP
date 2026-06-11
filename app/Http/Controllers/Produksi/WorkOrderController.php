@@ -652,8 +652,8 @@ class WorkOrderController extends Controller
             'catatan' => 'nullable|string',
             'detail' => 'required|array',
             'detail.*.produk_id' => 'required|exists:produk,id',
-            'detail.*.jumlah_diminta' => 'required|numeric|min:0.01',
-            'detail.*.jumlah_diambil' => 'required|numeric|min:0.01',
+            'detail.*.jumlah_diminta' => 'required|numeric|min:0.0001',
+            'detail.*.jumlah_diambil' => 'required|numeric|min:0.0001',
             'detail.*.satuan_id' => 'required|exists:satuan,id',
             'detail.*.tipe' => 'nullable|in:bom,manual',
         ]);
