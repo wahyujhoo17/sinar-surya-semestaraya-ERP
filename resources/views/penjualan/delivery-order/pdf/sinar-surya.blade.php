@@ -335,6 +335,13 @@
                     <td class="info-separator">:</td>
                     <td class="info-value">{{ $deliveryOrder->nomor }}</td>
                 </tr>
+                @if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po)
+                <tr>
+                    <td class="info-label">No PO</td>
+                    <td class="info-separator">:</td>
+                    <td class="info-value">{{ $deliveryOrder->salesOrder->nomor_po }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td class="info-label">Tanggal</td>
                     <td class="info-separator">:</td>

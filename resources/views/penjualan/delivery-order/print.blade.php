@@ -319,11 +319,19 @@
 
         <!-- Document Info -->
         <div class="document-info">
-            <div class="info-item">
-                <span class="info-label">Nomor :</span>
-                <span class="info-value">{{ $deliveryOrder->nomor }}</span>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <div class="info-item">
+                    <span class="info-label">Nomor :</span>
+                    <span class="info-value">{{ $deliveryOrder->nomor }}</span>
+                </div>
+                @if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po)
+                <div class="info-item">
+                    <span class="info-label">No PO :</span>
+                    <span class="info-value">{{ $deliveryOrder->salesOrder->nomor_po }}</span>
+                </div>
+                @endif
             </div>
-            <div class="info-item">
+            <div class="info-item" style="align-self: flex-start;">
                 <span class="info-label">Tanggal :</span>
                 <span class="info-value">{{ date('d F Y', strtotime($deliveryOrder->tanggal)) }}</span>
             </div>

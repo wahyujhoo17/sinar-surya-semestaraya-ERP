@@ -389,6 +389,9 @@
                         <p class="delivery-title">SURAT JALAN</p>
                         <div class="delivery-meta">
                             <div>No: <strong>{{ $deliveryOrder->nomor }}</strong></div>
+                            @if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po)
+                                <div>No PO: <strong>{{ $deliveryOrder->salesOrder->nomor_po }}</strong></div>
+                            @endif
                             <div>Tanggal:
                                 <strong>{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d/m/Y') }}</strong>
                             </div>

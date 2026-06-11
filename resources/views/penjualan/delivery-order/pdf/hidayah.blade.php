@@ -239,6 +239,12 @@
                                 <span
                                     style="color: var(--hcb-blue); font-weight: 600;">{{ $deliveryOrder->nomor }}</span>
                             </div>
+                            @if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po)
+                                <div style="margin-bottom: 2px;"><span style="font-weight: 600; color: #1f2937;">No PO:</span>
+                                    <span
+                                        style="color: var(--hcb-blue); font-weight: 600;">{{ $deliveryOrder->salesOrder->nomor_po }}</span>
+                                </div>
+                            @endif
                             <div style="margin-bottom: 2px;"><span
                                     style="font-weight: 600; color: #1f2937;">Tanggal:</span> <span
                                     style="color: #374151;">{{ \Carbon\Carbon::parse($deliveryOrder->tanggal)->format('d/m/Y') }}</span>

@@ -64,6 +64,21 @@ class PDFTemplateService
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
 
+            // No PO (di bawah nomor jika ada)
+            if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
+                // Label "No PO" sejajar dengan "Nomor"
+                $pdf->SetXY(14, $nomorY + 4.5);
+                $pdf->SetTextColor(30, 64, 175); // Blue color to match pre-printed "Nomor" label
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
+
+                // Titik dua dan Value sejajar dengan nilai nomor
+                $pdf->SetXY($nomorX - 2.5, $nomorY + 4.5);
+                $pdf->SetTextColor(0, 0, 0); // Reset to black
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->Cell(40, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
+            }
+
             // if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
             //     $userX = 130;
             //     $userY = 200;
@@ -255,6 +270,9 @@ class PDFTemplateService
         $pdf->Ln(10);
 
         $pdf->Cell(0, 8, 'Nomor: ' . $deliveryOrder->nomor, 0, 1, 'L');
+        if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
+            $pdf->Cell(0, 8, 'No PO: ' . $deliveryOrder->salesOrder->nomor_po, 0, 1, 'L');
+        }
         $pdf->Cell(0, 8, 'Tanggal: ' . ($deliveryOrder->tanggal_kirim ?
             \Carbon\Carbon::parse($deliveryOrder->tanggal_kirim)->format('d/m/Y') :
             \Carbon\Carbon::parse($deliveryOrder->created_at)->format('d/m/Y')), 0, 1, 'L');
@@ -635,6 +653,21 @@ class PDFTemplateService
             // Nomor surat jalan
             $pdf->SetXY($coords['nomor_x'], $coords['nomor_y']);
             $pdf->Cell(0, 0, $deliveryOrder->nomor, 0, 0, 'L');
+
+            // No PO (di bawah nomor jika ada)
+            if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
+                // Label "No PO"
+                $pdf->SetXY($coords['nomor_x'] - 17, $coords['nomor_y'] + 4.5);
+                $pdf->SetTextColor(30, 64, 175);
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
+
+                // Titik dua dan Value
+                $pdf->SetXY($coords['nomor_x'] - 2.5, $coords['nomor_y'] + 4.5);
+                $pdf->SetTextColor(0, 0, 0);
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->Cell(0, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
+            }
 
             // Tanggal
             $pdf->SetXY($coords['tanggal_x'], $coords['tanggal_y']);

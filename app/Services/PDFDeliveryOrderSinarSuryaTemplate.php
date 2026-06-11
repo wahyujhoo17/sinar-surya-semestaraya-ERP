@@ -56,13 +56,26 @@ class PDFDeliveryOrderSinarSuryaTemplate
             Log::info('Template dimensions: ' . $customWidth . 'x' . $customHeight . ' mm (custom), useTemplate=' . ($useTemplate ? 'yes' : 'no'));
 
 
-            // --- Penempatan absolut sesuai layout PDF asli ---
-            // Silakan sesuaikan nilai X/Y di bawah sesuai hasil preview PDF asli
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
             $nomorX = 31;
             $nomorY = 42.5; // Moved up by 3 units from 44.5
             $pdf->SetXY($nomorX, $nomorY);
             $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
+
+            // No PO (di bawah nomor jika ada)
+            if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
+                // Label "No PO" sejajar dengan "Nomor"
+                $pdf->SetXY(14, $nomorY + 4.5);
+                $pdf->SetTextColor(30, 64, 175); // Blue color to match pre-printed "Nomor" label
+                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
+
+                // Titik dua dan Value sejajar dengan nilai nomor
+                $pdf->SetXY($nomorX - 2.5, $nomorY + 4.5);
+                $pdf->SetTextColor(0, 0, 0); // Reset to black
+                $pdf->SetFont('helvetica', '', 9);
+                $pdf->Cell(40, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
+            }
 
             // if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
             //     $userX = 130;
