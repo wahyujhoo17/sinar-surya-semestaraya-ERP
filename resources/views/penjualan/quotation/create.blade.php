@@ -849,6 +849,7 @@
                                 (Rp):</label>
                             <input type="text" inputmode="numeric" id="diskon_global_nominal"
                                 x-init="$el.value = $data.diskon_global_nominal > 0 ? Number($data.diskon_global_nominal).toLocaleString('id-ID') : ''"
+                                :value="$data.diskon_global_nominal > 0 ? Number($data.diskon_global_nominal).toLocaleString('id-ID') : ''"
                                 @input="$data.diskon_global_nominal = parseInt($event.target.value.replace(/\D/g,''),10)||0; $event.target.value = $data.diskon_global_nominal > 0 ? $data.diskon_global_nominal.toLocaleString('id-ID') : ''; calculateGlobalDiscount('nominal')"
                                 placeholder="0"
                                 class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
@@ -883,6 +884,7 @@
                             <div class="flex items-center space-x-2">
                                 <span class="text-xs text-gray-500">Rp</span>
                                 <input type="text" inputmode="numeric" x-init="$el.value = $data.ongkosKirim > 0 ? Number($data.ongkosKirim).toLocaleString('id-ID') : ''"
+                                    :value="$data.ongkosKirim > 0 ? Number($data.ongkosKirim).toLocaleString('id-ID') : ''"
                                     @input="$data.ongkosKirim = parseInt($event.target.value.replace(/\D/g,''),10)||0; $event.target.value = $data.ongkosKirim > 0 ? $data.ongkosKirim.toLocaleString('id-ID') : ''; calculateTotals()"
                                     class="w-32 text-right rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm"
                                     placeholder="0">
