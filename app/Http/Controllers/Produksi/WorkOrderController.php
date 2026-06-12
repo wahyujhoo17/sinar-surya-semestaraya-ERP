@@ -264,6 +264,7 @@ class WorkOrderController extends Controller
                     'work_order_id' => $workOrder->id,
                     'produk_id' => $component->komponen_id, // Fix: changed from material_id to komponen_id to match the model
                     'quantity' => $kebutuhan, // Fix: changed from jumlah to quantity to match the model
+                    'quantity_terpakai' => 0,
                     'satuan_id' => $component->satuan_id,
                 ]);
             }
@@ -459,6 +460,7 @@ class WorkOrderController extends Controller
                     'work_order_id' => $workOrder->id,
                     'produk_id' => $component->komponen_id, // Fix: changed from material_id to komponen_id to match the model
                     'quantity' => $kebutuhan, // Fix: changed from jumlah to quantity to match the model
+                    'quantity_terpakai' => 0,
                     'satuan_id' => $component->satuan_id,
                 ]);
             }
