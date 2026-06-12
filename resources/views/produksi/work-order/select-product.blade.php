@@ -119,7 +119,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                         @if ($detail)
-                                            {{ number_format($detail->jumlah_produksi, 2, ',', '.') }}
+                                            {{ format_quantity($detail->jumlah_produksi) }}
                                         @else
                                             -
                                         @endif
@@ -133,7 +133,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                                         @if ($detail)
-                                            {{ number_format($detail->stok_tersedia, 2, ',', '.') }}
+                                            {{ format_quantity($detail->stok_tersedia) }}
                                         @else
                                             -
                                         @endif

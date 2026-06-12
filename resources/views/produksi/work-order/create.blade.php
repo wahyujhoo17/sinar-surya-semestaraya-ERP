@@ -89,14 +89,14 @@
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Jumlah Perencanaan</p>
                                 <p class="text-base font-medium text-gray-900 dark:text-white">
-                                    {{ number_format($detailPerencanaan->jumlah_produksi, 2, ',', '.') }}
+                                    {{ format_quantity($detailPerencanaan->jumlah_produksi) }}
                                     {{ $detailPerencanaan->satuan->nama ?? '-' }}
                                 </p>
                             </div>
                             <div>
                                 <p class="text-sm text-gray-500 dark:text-gray-400">Stok Tersedia</p>
                                 <p class="text-base font-medium text-gray-900 dark:text-white">
-                                    {{ number_format($detailPerencanaan->stok_tersedia, 2, ',', '.') }}
+                                    {{ format_quantity($detailPerencanaan->stok_tersedia) }}
                                     {{ $detailPerencanaan->satuan->nama ?? '-' }}
                                 </p>
                             </div>

@@ -494,15 +494,15 @@
                                         {{ $material->produk->kode ?? '-' }}
                                     </span>
                                 </td>
-                                <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600 dark:text-gray-300 font-medium">
-                                    {{ number_format($material->quantity, 4, ',', '.') }}
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                    {{ format_quantity($material->quantity) }}
+                                    {{ $material->satuan->nama ?? '-' }}
                                 </td>
                                 @if (in_array($workOrder->status, ['selesai_produksi', 'qc_passed', 'pengembalian_material', 'selesai']))
                                     <td
                                         class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600 dark:text-gray-300 font-medium">
-                                        <span class="text-orange-600 dark:text-orange-400">
-                                            {{ number_format($material->quantity_terpakai, 4, ',', '.') }}
+                                        <span class="text-xs {{ $material->quantity_terpakai >= $material->quantity ? 'text-green-600 dark:text-green-400 font-medium' : 'text-orange-500' }}">
+                                            {{ format_quantity($material->quantity_terpakai) }}
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-medium">
@@ -511,12 +511,10 @@
                                         @endphp
                                         @if ($sisa > 0)
                                             <span class="text-green-600 dark:text-green-400">
-                                                {{ number_format($sisa, 4, ',', '.') }}
+                                                {{ format_quantity($sisa) }}
                                             </span>
                                         @else
-                                            <span class="text-gray-500 dark:text-gray-400">
-                                                {{ number_format($sisa, 4, ',', '.') }}
-                                            </span>
+                                            <span class="text-gray-400">-</span>
                                         @endif
                                     </td>
                                 @endif
@@ -621,7 +619,10 @@
                                                     </td>
                                                     <td
                                                         class="px-5 py-3 whitespace-nowrap text-sm text-right font-medium text-gray-700 dark:text-gray-300">
-                                                        {{ number_format($detail->jumlah_diambil, 4, ',', '.') }}
+                                                        <span class="font-medium">
+                                                            {{ format_quantity($detail->jumlah_diambil) }}
+                                                            {{ $detail->satuan->nama ?? '-' }}
+                                                        </span>
                                                     </td>
                                                     <td
                                                         class="px-5 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
@@ -746,7 +747,9 @@
                                                         </td>
                                                         <td
                                                             class="px-4 py-3 whitespace-nowrap text-sm text-right text-green-600 dark:text-green-400 font-medium">
-                                                            +{{ number_format($riwayat->jumlah_perubahan, 4, ',', '.') }}
+                                                            <span class="text-green-600 font-medium">
+                                                                +{{ format_quantity($riwayat->jumlah_perubahan) }}
+                                                            </span>
                                                         </td>
                                                         <td
                                                             class="px-4 py-3 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">

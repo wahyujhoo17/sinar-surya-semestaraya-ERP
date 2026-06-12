@@ -187,23 +187,23 @@
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-300">
-                                                {{ number_format($material->quantity, 4, ',', '.') }}
+                                                {{ format_quantity($material->quantity) }}
                                                 {{ $material->satuan->nama ?? '-' }}
                                                 <input type="hidden"
                                                     name="detail[{{ $index }}][jumlah_diminta]"
-                                                    value="{{ number_format($material->quantity, 4, '.', '') }}">
+                                                    value="{{ floatval($material->quantity) }}">
                                             </td>
                                             <td
                                                 class="px-6 py-4 whitespace-nowrap text-sm text-right 
                                                 {{ $material->stok_tersedia < $material->quantity ? 'text-red-500 dark:text-red-400' : 'text-green-500 dark:text-green-400' }}">
-                                                {{ number_format($material->stok_tersedia, 4, ',', '.') }}
+                                                {{ format_quantity($material->stok_tersedia) }}
                                                 {{ $material->satuan->nama ?? '-' }}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 <input type="number" step="0.0001" min="0"
                                                     name="detail[{{ $index }}][jumlah_diambil]"
                                                     id="jumlah-diminta-{{ $index }}"
-                                                    value="{{ old('detail.' . $index . '.jumlah_diambil', number_format(min($material->quantity, $material->stok_tersedia), 4, '.', '')) }}"
+                                                    value="{{ old('detail.' . $index . '.jumlah_diambil', floatval(min($material->quantity, $material->stok_tersedia))) }}"
                                                     class="focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
                                                     {{ $material->stok_tersedia == 0 ? 'disabled' : '' }}>
                                             </td>

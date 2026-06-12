@@ -85,6 +85,31 @@ if (!function_exists('format_rupiah')) {
     }
 }
 
+if (!function_exists('format_quantity')) {
+    /**
+     * Format quantity to avoid trailing zeros after comma if not needed.
+     * e.g. 6.0000 -> 6, 0.8400 -> 0,84, 1000.00 -> 1.000
+     *
+     * @param float $number
+     * @return string
+     */
+    function format_quantity($number)
+    {
+        if (!is_numeric($number)) {
+            return $number;
+        }
+        
+        $formatted = number_format((float)$number, 4, ',', '.');
+        
+        // If it has comma, strip trailing zeros and possibly the comma itself
+        if (strpos($formatted, ',') !== false) {
+            $formatted = rtrim(rtrim($formatted, '0'), ',');
+        }
+        
+        return $formatted;
+    }
+}
+
 if (!function_exists('terbilang')) {
     /**
      * Convert number to Indonesian words
