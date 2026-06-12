@@ -1116,6 +1116,7 @@
                                 @if ($detail->bundle)
                                     bundle_name: @json($detail->bundle->nama ?? ''),
                                     bundle_code: '{{ $detail->bundle->kode }}',
+                                    bundle_harga: {{ $detail->bundle->harga_bundle ?? 0 }},
                                 @endif
                                 // Clean description from bundle prefix if exists
                                 @php
@@ -1129,6 +1130,7 @@
                                     @if ($detail->bundle)
                                         bundle_name: @json($detail->bundle->nama ?? ''),
                                         bundle_code: '{{ $detail->bundle->kode }}',
+                                        bundle_harga: {{ $detail->bundle->harga_bundle ?? 0 }},
                                     @endif
                             @else
                                 is_bundle: false,
@@ -1205,9 +1207,23 @@
                             this.items.push(existingHeader);
                         } else if (bundleGroup.items.length > 0) {
                             // Create virtual bundle header
-                            const totalBundlePrice = bundleGroup.items.reduce((sum, item) =>
-                                sum + (item.harga * item.base_quantity), 0
-                            );
+                            const exactHargaBundle = bundleGroup.items[0]?.bundle_harga || 0;
+                            let totalBundleSubtotal = bundleGroup.items.reduce((sum, item) => sum + item.subtotal, 0);
+                            const pricePerBundle = exactHargaBundle > 0 ? exactHargaBundle : Math.round(totalBundleSubtotal / bundleGroup.bundleQuantity);
+                            
+                            const targetBundleSubtotal = pricePerBundle * bundleGroup.bundleQuantity;
+                            
+                            // Apply rounding diff to the largest item to ensure exact match with bundle price
+                            const roundingDiff = targetBundleSubtotal - totalBundleSubtotal;
+                            if (roundingDiff !== 0) {
+                                let largestItem = bundleGroup.items[0];
+                                bundleGroup.items.forEach(item => {
+                                    if (item.subtotal > largestItem.subtotal) largestItem = item;
+                                });
+                                largestItem.subtotal += roundingDiff;
+                                totalBundleSubtotal = targetBundleSubtotal;
+                            }
+                            
                             const bundleHeader = {
                                 id: 'bundle_' + bundleId,
                                 bundle_id: bundleId,
@@ -1217,9 +1233,8 @@
                                 bundle_code: bundleGroup.bundle_code,
                                 deskripsi: bundleGroup.bundle_name,
                                 kuantitas: bundleGroup.bundleQuantity,
-                                harga: totalBundlePrice,
-                                subtotal: bundleGroup.items.reduce((sum, item) => sum + item
-                                    .subtotal, 0),
+                                harga: pricePerBundle,
+                                subtotal: totalBundleSubtotal,
                                 diskon_persen: 0
                             };
                             this.items.push(bundleHeader);
@@ -1776,7 +1791,12 @@
                         const roundingDiff = targetBundleTotal - currentItemsTotal;
                         if (roundingDiff !== 0 && largestItem) {
                             console.log(`Rounding adjustment (edit update): adding ${roundingDiff} to ${largestItem.nama}`);
-                            largestItem.subtotal += roundingDiff;
+                            const indexInItems = this.items.findIndex(i => i.id === largestItem.id);
+                            if (indexInItems !== -1) {
+                                this.items[indexInItems].subtotal += roundingDiff;
+                            } else {
+                                largestItem.subtotal += roundingDiff;
+                            }
                         }
                     }
 
