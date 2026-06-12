@@ -915,8 +915,10 @@
                                                         <span
                                                             class="text-gray-500 dark:text-gray-400 sm:text-sm">Rp</span>
                                                     </div>
-                                                    <input type="text" :name="`items[${index}][subtotal]`"
-                                                        x-model="formatRupiah(item.subtotal)" readonly
+                                                    <input type="hidden" :name="`items[${index}][subtotal]`"
+                                                        :value="item.subtotal">
+                                                    <input type="text"
+                                                        :value="formatRupiah(item.subtotal)" readonly
                                                         class="bg-gray-100 dark:bg-gray-700 focus:ring-primary-500 focus:border-primary-500 block w-full pl-12 pr-3 sm:text-sm border-gray-300 dark:border-gray-600 dark:text-white rounded-md font-medium">
                                                 </div>
                                             </div>

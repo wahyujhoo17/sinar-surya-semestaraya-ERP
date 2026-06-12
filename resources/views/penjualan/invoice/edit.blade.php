@@ -765,7 +765,7 @@
                             const harga = parseFloat(item.harga) || 0;
                             const qty = parseFloat(item.qty) || 0;
                             const diskon = parseFloat(item.diskon) || 0;
-                            const itemSubtotal = (harga * qty) * (1 - diskon / 100);
+                            const itemSubtotal = Math.round((harga * qty) * (1 - diskon / 100));
                             item.subtotal = itemSubtotal; // Update item's subtotal
                             return sum + itemSubtotal;
                         }, 0);
@@ -774,16 +774,18 @@
                     calculateTotal() {
                         this.calculateSubtotal(); // Recalculate subtotal of items first
 
-                        const subtotalAfterItems = parseFloat(this.subtotal) || 0;
+                        // Calculate diskon nominal
                         const diskonPersen = parseFloat(this.diskonPersen) || 0;
-                        this.diskonNominal = subtotalAfterItems * (diskonPersen / 100);
+                        this.diskonNominal = Math.round(this.subtotal * (diskonPersen / 100));
 
-                        const afterDiscount = subtotalAfterItems - this.diskonNominal;
+                        // Calculate PPN nominal (applied after discount)
+                        const afterDiscount = this.subtotal - this.diskonNominal;
                         const ppnPersen = parseFloat(this.ppnPersen) || 0;
-                        this.ppnNominal = afterDiscount * (ppnPersen / 100);
+                        this.ppnNominal = Math.round(afterDiscount * (ppnPersen / 100));
 
+                        // Calculate total (including ongkos kirim)
                         const ongkosKirim = parseFloat(this.ongkosKirim) || 0;
-                        this.total = afterDiscount + this.ppnNominal + ongkosKirim;
+                        this.total = Math.round(afterDiscount + this.ppnNominal + ongkosKirim);
                     },
 
                     formatRupiah(value, prefix = 'Rp ') {

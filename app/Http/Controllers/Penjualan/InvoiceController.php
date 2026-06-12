@@ -298,13 +298,13 @@ class InvoiceController extends Controller
                 ], 400);
             }
 
-            // Hitung proporsi untuk setiap detail item
-            $proporsiSisa = $sisaInvoice / $salesOrder->total;
+            // Hitung proporsi (untuk info response JSON)
+            $proporsiSisa = $salesOrder->total > 0 ? $sisaInvoice / $salesOrder->total : 0;
 
             $details = SalesOrderDetail::with(['produk', 'satuan'])
                 ->where('sales_order_id', $id)
                 ->get()
-                ->map(function ($detail) use ($proporsiSisa, $id) {
+                ->map(function ($detail) use ($id) {
                     // Hitung qty yang sudah di-invoice untuk produk ini
                     $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
                         ->where('invoice.sales_order_id', $id)
@@ -314,8 +314,12 @@ class InvoiceController extends Controller
                     // Hitung qty yang tersedia untuk di-invoice
                     $qtyAvailable = $detail->quantity - $qtyAlreadyInvoiced;
 
-                    // Hitung subtotal berdasarkan proporsi sisa
-                    $subtotalProporsional = $detail->subtotal * $proporsiSisa;
+                    // Hitung subtotal berdasarkan proporsi kuantitas yang tersisa
+                    $subtotalProporsional = 0;
+                    if ($detail->quantity > 0) {
+                        $proporsiQty = $qtyAvailable / $detail->quantity;
+                        $subtotalProporsional = round($detail->subtotal * $proporsiQty);
+                    }
 
                     return [
                         'produk_id' => $detail->produk_id,

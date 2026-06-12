@@ -946,10 +946,17 @@
                             return;
                         }
 
-                        // Calculate subtotal with discount
-                        const subtotalSebelumDiskon = qty * harga;
-                        const nominalDiskon = subtotalSebelumDiskon * (diskon / 100);
-                        item.subtotal = subtotalSebelumDiskon - nominalDiskon;
+                        // Calculate subtotal with discount, maintaining any bundle rounding proportions
+                        const originalQty = parseFloat(item.original_qty) || 1;
+                        if (originalQty > 0 && typeof item.subtotal_original !== 'undefined') {
+                            const proportion = qty / originalQty;
+                            item.subtotal = Math.round(parseFloat(item.subtotal_original) * proportion);
+                        } else {
+                            // Fallback standard calculation
+                            const subtotalSebelumDiskon = qty * harga;
+                            const nominalDiskon = subtotalSebelumDiskon * (diskon / 100);
+                            item.subtotal = Math.round(subtotalSebelumDiskon - nominalDiskon);
+                        }
 
                         // Recalculate totals
                         this.calculateSubtotal();
@@ -1028,6 +1035,7 @@
                                         harga: item.harga,
                                         diskon: item.diskon || 0,
                                         subtotal: item.subtotal,
+                                        subtotal_original: item.subtotal_original || item.subtotal,
                                     }));
 
                                     // Show invoice information if available
@@ -1146,7 +1154,7 @@
 
                     calculateSubtotal() {
                         this.subtotal = this.items.reduce((sum, item) => {
-                            const subtotal = parseFloat(item.subtotal) || 0;
+                            const subtotal = Math.round(parseFloat(item.subtotal) || 0);
                             return sum + subtotal;
                         }, 0);
                     },
@@ -1154,16 +1162,16 @@
                     calculateTotal() {
                         // Calculate diskon nominal
                         const diskonPersen = parseFloat(this.diskonPersen) || 0;
-                        this.diskonNominal = this.subtotal * (diskonPersen / 100);
+                        this.diskonNominal = Math.round(this.subtotal * (diskonPersen / 100));
 
                         // Calculate PPN nominal (applied after discount)
                         const afterDiscount = this.subtotal - this.diskonNominal;
                         const ppnPersen = parseFloat(this.ppnPersen) || 0;
-                        this.ppnNominal = afterDiscount * (ppnPersen / 100);
+                        this.ppnNominal = Math.round(afterDiscount * (ppnPersen / 100));
 
                         // Calculate total (including ongkos kirim)
                         const ongkosKirim = parseFloat(this.ongkosKirim) || 0;
-                        this.total = afterDiscount + this.ppnNominal + ongkosKirim;
+                        this.total = Math.round(afterDiscount + this.ppnNominal + ongkosKirim);
                     },
 
                     formatRupiah(value) {
