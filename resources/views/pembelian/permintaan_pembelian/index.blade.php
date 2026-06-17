@@ -5,6 +5,8 @@
     function statusColor($status)
     {
         switch ($status) {
+            case 'semuanya':
+                return 'indigo';
             case 'draft':
                 return 'gray';
             case 'diajukan':
@@ -66,7 +68,7 @@
             </div>
 
             {{-- Purchase Request Overview --}}
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 @foreach ($validStatuses as $status)
                     <div
                         class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
@@ -78,7 +80,7 @@
                                 {{ ucfirst($status) }}</p>
                             <div class="mt-2 flex items-baseline">
                                 <p class="text-2xl font-bold text-gray-900 dark:text-white">
-                                    {{ $permintaanPembelian->where('status', $status)->count() }}
+                                    {{ $statusCounts[$status] }}
                                 </p>
                                 <p
                                     class="ml-2 text-sm font-medium text-{{ statusColor($status) }}-500 dark:text-{{ statusColor($status) }}-400">
@@ -224,6 +226,8 @@
         // Keep the JS version of the function for other JS usage
         function statusColor(status) {
             switch (status) {
+                case 'semuanya':
+                    return 'indigo';
                 case 'draft':
                     return 'gray';
                 case 'diajukan':
@@ -241,7 +245,7 @@
 
         function purchaseRequestTableManager() {
             return {
-                tab: @json($currentStatus ?? 'draft'),
+                tab: @json($currentStatus ?? 'semuanya'),
                 search: @json($search ?? ''),
                 dateFilter: @json($dateFilter ?? ''),
                 dateStart: @json($dateStart ?? ''),
@@ -257,6 +261,9 @@
                     this.fetchTable();
                 },
                 applyFilters() {
+                    if (this.search && this.search.trim() !== '') {
+                        this.tab = 'semuanya';
+                    }
                     this.fetchTable();
                 },
                 resetFilters() {

@@ -38,13 +38,13 @@ class PermintaanPembelianController extends Controller
         $dateFilter = $request->query('date_filter'); // today, this_week, this_month, range
         $dateStart = $request->query('date_start');
         $dateEnd = $request->query('date_end');
-        $validStatuses = ['draft', 'diajukan', 'disetujui', 'ditolak', 'selesai'];
+        $validStatuses = ['semuanya', 'draft', 'diajukan', 'disetujui', 'ditolak', 'selesai'];
 
         $query = PurchaseRequest::with(['user', 'department'])
             ->orderBy('created_at', 'desc');
 
-        // Filter by status if a valid status is provided
-        if ($status && in_array($status, $validStatuses)) {
+        // Filter by status if a valid status is provided and not 'semuanya'
+        if ($status && in_array($status, $validStatuses) && $status !== 'semuanya') {
             $query->where('status', $status);
         }
 
@@ -54,8 +54,7 @@ class PermintaanPembelianController extends Controller
                 $q->where('nomor', 'like', "%$search%")
                     ->orWhereHas('user', function ($u) use ($search) {
                         $u->where('name', 'like', "%$search%")
-                            ->orWhere('email', 'like', "%$search%")
-                            ->orWhere('username', 'like', "%$search%");
+                            ->orWhere('email', 'like', "%$search%");
                     });
             });
         }
@@ -72,7 +71,17 @@ class PermintaanPembelianController extends Controller
         }
 
         $permintaanPembelian = $query->paginate(10)->withQueryString();
-        $currentStatus = $status;
+        $currentStatus = $status ?? 'semuanya';
+
+        // Calculate counts for each status
+        $statusCounts = [];
+        foreach ($validStatuses as $validStatus) {
+            if ($validStatus === 'semuanya') {
+                $statusCounts[$validStatus] = PurchaseRequest::count();
+            } else {
+                $statusCounts[$validStatus] = PurchaseRequest::where('status', $validStatus)->count();
+            }
+        }
 
         // Jika AJAX (fetch dari Alpine), return partial table
         if ($request->ajax()) {
@@ -85,7 +94,7 @@ class PermintaanPembelianController extends Controller
             ]);
         }
 
-        return view('pembelian.permintaan_pembelian.index', compact('permintaanPembelian', 'currentStatus', 'validStatuses', 'search', 'dateFilter', 'dateStart', 'dateEnd'));
+        return view('pembelian.permintaan_pembelian.index', compact('permintaanPembelian', 'currentStatus', 'validStatuses', 'statusCounts', 'search', 'dateFilter', 'dateStart', 'dateEnd'));
     }
 
     /**

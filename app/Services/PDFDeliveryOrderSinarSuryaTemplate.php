@@ -49,7 +49,7 @@ class PDFDeliveryOrderSinarSuryaTemplate
             $pdf->SetTitle('Surat Jalan - ' . $deliveryOrder->nomor);
 
             // Set font for text overlay - smaller for better fit
-            $pdf->SetFont('helvetica', '', 9);
+            $pdf->SetFont('helvetica', '', 8);
             $pdf->SetTextColor(0, 0, 0);
 
             // Log template size for debugging
@@ -67,13 +67,13 @@ class PDFDeliveryOrderSinarSuryaTemplate
                 // Label "No PO" sejajar dengan "Nomor"
                 $pdf->SetXY(14, $nomorY + 4.5);
                 $pdf->SetTextColor(30, 64, 175); // Blue color to match pre-printed "Nomor" label
-                $pdf->SetFont('helvetica', 'B', 9);
+                $pdf->SetFont('helvetica', 'B', 8);
                 $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
 
                 // Titik dua dan Value sejajar dengan nilai nomor
                 $pdf->SetXY($nomorX - 2.5, $nomorY + 4.5);
                 $pdf->SetTextColor(0, 0, 0); // Reset to black
-                $pdf->SetFont('helvetica', '', 9);
+                $pdf->SetFont('helvetica', '', 8);
                 $pdf->Cell(40, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
             }
 
@@ -102,19 +102,19 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
             // Nama customer bold
             // Nama customer bold
-            $pdf->SetFont('helvetica', 'B', 9);
+            $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY($customerX, $customerY);
             $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
 
             // Alamat customer (jika ada), font normal, di bawah company/nama
             if (!empty($deliveryOrder->customer)) {
-                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetFont('helvetica', '', 7);
                 $alamatY = $customerY + 5.5; // geser ke bawah 5.5mm dari nama
                 $pdf->SetXY($customerX, $alamatY);
                 $pdf->MultiCell($maxCustomerWidth, 4, $deliveryOrder->customer->alamat_pengiriman, 0, 'L');
             }
 
-            $pdf->SetFont('helvetica', '', 8);
+            $pdf->SetFont('helvetica', '', 7);
 
             // Items table (misal mulai X=15mm, Y=55mm)
             $itemsStartY = 76; // Moved up by 3 units from 79
@@ -153,7 +153,7 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
                 // Bundle name in bold
                 $pdf->SetXY($namaCol, $currentY);
-                $pdf->SetFont('helvetica', 'B', 9); // Bold font for bundle name
+                $pdf->SetFont('helvetica', 'B', 8); // Bold font for bundle name
                 $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $bundleName . ':', 0, 0, 'L');
 
                 // Empty cells for bundle header
@@ -168,14 +168,15 @@ class PDFDeliveryOrderSinarSuryaTemplate
                 foreach ($bundleItems as $detail) {
                     if ($currentY > $maxItemsY) break;
 
-                    $pdf->SetFont('helvetica', '', 9); // Reset to normal font
+                    $pdf->SetFont('helvetica', '', 8); // Reset to normal font
 
                     // No urut (empty for bundle items)
                     $pdf->SetXY($noCol, $currentY);
                     $pdf->Cell(8, $lineHeight, '', 0, 0, 'C');
 
                     // Item name with indent
-                    $itemName = '  • ' . $detail->produk->nama; // Indent with bullet
+                    $baseName = $detail->produk->nama ?? $detail->deskripsi ?? '-';
+                    $itemName = '  • ' . $baseName; // Indent with bullet
                     $itemName = strlen($itemName) > 35 ? substr($itemName, 0, 32) . '...' : $itemName;
 
                     $pdf->SetXY($namaCol, $currentY);
@@ -200,16 +201,17 @@ class PDFDeliveryOrderSinarSuryaTemplate
             foreach ($nonBundleItems as $detail) {
                 if ($currentY > $maxItemsY) break;
 
-                $pdf->SetFont('helvetica', '', 9); // Normal font
+                $pdf->SetFont('helvetica', '', 8); // Normal font
 
                 // No urut
                 $pdf->SetXY($noCol, $currentY);
                 $pdf->Cell(8, $lineHeight, $itemNumber++, 0, 0, 'C');
 
                 // Nama produk
-                $namaProduk = strlen($detail->produk->nama) > 35 ?
-                    substr($detail->produk->nama, 0, 32) . '...' :
-                    $detail->produk->nama;
+                $baseName = $detail->produk->nama ?? $detail->deskripsi ?? '-';
+                $namaProduk = strlen($baseName) > 35 ?
+                    substr($baseName, 0, 32) . '...' :
+                    $baseName;
 
                 $pdf->SetXY($namaCol, $currentY);
                 $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $namaProduk, 0, 0, 'L');

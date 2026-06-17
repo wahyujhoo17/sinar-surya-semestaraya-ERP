@@ -49,13 +49,13 @@ class PDFInvoiceTamplate
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(97, 36.5);
+            $pdf->SetXY(97, 37.5);
             $pdf->Cell(0, 0, $invoice->nomor, 0, 0, 'L');
-            $pdf->SetXY(156, 13.5);
+            $pdf->SetXY(160, 13.5);
             $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
 
             // --- Customer ---
-            $customerX = 12;
+            $customerX = 9;
             $customerY = 37;
             $maxCustomerWidth = 70;
             $pdf->SetFont('helvetica', 'B', 9);
@@ -119,7 +119,7 @@ class PDFInvoiceTamplate
             // Print table header for KODE BARANG
             $pdf->SetFont('helvetica', 'B', 8);
             $pdf->SetXY(22.5, $itemsStartY - 2); // Position for KODE BARANG column, moved up by 2 and right by 1
-            $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+            // $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L'); // Header dihapus sesuai permintaan
 
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
@@ -147,9 +147,9 @@ class PDFInvoiceTamplate
 
                     // Cetak ulang header untuk halaman baru
                     $pdf->SetFont('helvetica', '', 10);
-                    $pdf->SetXY(97, 36.5);
+                    $pdf->SetXY(97, 37.5);
                     $pdf->Cell(0, 0, $invoice->nomor . ' (Hal. ' . $pageNumber . ')', 0, 0, 'L');
-                    $pdf->SetXY(156, 13.5);
+                    $pdf->SetXY(160, 13.5);
                     $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
 
                     // Customer info
@@ -166,7 +166,7 @@ class PDFInvoiceTamplate
                     // Table header
                     $pdf->SetFont('helvetica', 'B', 8);
                     $pdf->SetXY(22.5, $itemsStartY - 2);
-                    $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L');
+                    // $pdf->Cell(35, $lineHeight, 'Kode Barang', 0, 0, 'L'); // Header dihapus sesuai permintaan
                     $pdf->SetFont('helvetica', '', 8);
                 }
 
@@ -175,17 +175,27 @@ class PDFInvoiceTamplate
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
                 $maxNamaWidth = 56.5;
                 $maxNamaLength = 38;
-                $namaProduk = $detail->produk->nama ?? '-';
+                $namaProduk = $detail->produk->nama ?? $detail->deskripsi ?? '-';
+                
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $namaProduk = '  - ' . $namaProduk;
+                }
+                
                 if (mb_strlen($namaProduk) > $maxNamaLength) {
                     $namaProduk = mb_substr($namaProduk, 0, $maxNamaLength - 3) . '...';
                 }
                 $namaHeight = $pdf->getStringHeight($maxNamaWidth, $namaProduk);
 
                 // Gunakan tinggi yang sama untuk semua kolom dalam baris ini
-                // Geser nomor dan kode 3mm ke kanan dari origin sebelumnya (startX 8 -> 11)
-                $pdf->SetXY(11, $currentY);
+                // Geser nomor dan kode 5 unit ke kiri dari posisi sebelumnya (startX 11 -> 6)
+                $pdf->SetXY(6, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
-                $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
+                
+                $kodeProduk = $detail->produk->kode ?? '-';
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $kodeProduk = '';
+                }
+                $pdf->Cell(35, $namaHeight, $kodeProduk, 0, 0, 'L');
 
                 // Nama produk tetap mulai pada X = 54.5 (agar kolom lain tidak terpengaruh)
                 $xNama = 54.5;
@@ -199,22 +209,38 @@ class PDFInvoiceTamplate
 
                 // QTY stays at baseX with width 28
                 $pdf->SetXY($baseX, $yNama);
-                $pdf->Cell(28, $namaHeight, number_format($detail->quantity, 0, ',', '.'), 0, 0, 'C');
+                $qtyText = number_format($detail->quantity, 0, ',', '.') . ' ' . ($detail->satuan->nama ?? '');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $qtyText = number_format($detail->quantity, 0, ',', '.') . ' ' . ($detail->satuan->nama ?? '');
+                }
+                $pdf->Cell(28, $namaHeight, $qtyText, 0, 0, 'C');
 
                 // HARGA should be 1 unit to the left of its original position (original was baseX + 28)
                 $hargaX = $baseX + 27; // move left by 1
                 $pdf->SetXY($hargaX, $yNama);
-                $pdf->Cell(29, $namaHeight, number_format($detail->harga, 0, ',', '.'), 0, 0, 'R');
+                $hargaText = number_format($detail->harga, 0, ',', '.');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $hargaText = '-';
+                }
+                $pdf->Cell(29, $namaHeight, $hargaText, 0, 0, 'R');
 
                 // DISC keep its original starting X = baseX + 28 + 29 = baseX + 57
                 $discX = $baseX + 57;
                 $pdf->SetXY($discX, $yNama);
-                $pdf->Cell(11, $namaHeight, rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '', 0, 0, 'L');
+                $discText = rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '';
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $discText = '-';
+                }
+                $pdf->Cell(11, $namaHeight, $discText, 0, 0, 'C');
 
                 // SUBTOTAL keep original starting X = baseX + 68, moved left by 1 -> baseX + 67
                 $subtotalX = $baseX + 67;
                 $pdf->SetXY($subtotalX, $yNama);
-                $pdf->Cell(26, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
+                $subtotalText = number_format($detail->subtotal, 0, ',', '.');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $subtotalText = '-';
+                }
+                $pdf->Cell(26, $namaHeight, $subtotalText, 0, 1, 'R');
                 $currentY += $namaHeight;
                 $itemCount++;
             }
@@ -425,8 +451,7 @@ class PDFInvoiceTamplate
 
             // TERBILANG
 
-            // moved up by 1mm as requested
-            $pdf->SetXY(14, 121);
+            $pdf->SetXY(10, 123);
             // Konversi total ke terbilang (gunakan totalTagihan jika ada uang muka, jika tidak gunakan grandTotal)
             $nilaiTerbilang = ($uangMuka > 0) ? $totalTagihan : $grandTotal;
             $Terbilang = function_exists('terbilang') ? ucwords(terbilang((int) $nilaiTerbilang) . ' Rupiah ') : '-';

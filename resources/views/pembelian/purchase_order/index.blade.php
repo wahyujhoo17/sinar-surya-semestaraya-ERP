@@ -3,6 +3,8 @@
     function poStatusColor($status)
     {
         switch ($status) {
+            case 'semuanya':
+                return 'indigo';
             case 'draft':
                 return 'gray';
             case 'diproses':
@@ -64,7 +66,7 @@
             </div>
 
             {{-- Purchase Order Overview --}}
-            <div class="mt-6 grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                 @foreach ($validStatuses as $status)
                     <div
                         class="relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
@@ -254,6 +256,8 @@
         // Keep the JS version of the function for other JS usage
         function poStatusColor(status) {
             switch (status) {
+                case 'semuanya':
+                    return 'indigo';
                 case 'draft':
                     return 'gray';
                 case 'diproses':
@@ -271,7 +275,7 @@
 
         function purchaseOrderTableManager() {
             return {
-                tab: @json($currentStatus ?? 'draft'),
+                tab: @json($currentStatus ?? 'semuanya'),
                 search: @json($search ?? ''),
                 dateFilter: @json($dateFilter ?? ''),
                 dateStart: @json($dateStart ?? ''),
@@ -289,6 +293,9 @@
                     this.fetchTable();
                 },
                 applyFilters() {
+                    if (this.search && this.search.trim() !== '') {
+                        this.tab = 'semuanya';
+                    }
                     this.fetchTable();
                 },
                 resetFilters() {

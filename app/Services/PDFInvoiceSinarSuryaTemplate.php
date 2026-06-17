@@ -50,7 +50,7 @@ class PDFInvoiceSinarSuryaTemplate
             $pdf->SetTextColor(0, 0, 0);
 
             $pdf->SetFont('helvetica', '', 10);
-            $pdf->SetXY(97, 36.5);
+            $pdf->SetXY(97, 37.5);
             $pdf->Cell(0, 0, $invoice->nomor, 0, 0, 'L');
             $pdf->SetXY(160, 13.5); // Moved right by 4 units from 156
             $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
@@ -130,7 +130,12 @@ class PDFInvoiceSinarSuryaTemplate
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
                 $maxNamaWidth = 56.5;
                 $maxNamaLength = 38;
-                $namaProduk = $detail->produk->nama ?? '-';
+                $namaProduk = $detail->produk->nama ?? $detail->deskripsi ?? '-';
+                
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $namaProduk = '  - ' . $namaProduk;
+                }
+                
                 if (mb_strlen($namaProduk) > $maxNamaLength) {
                     $namaProduk = mb_substr($namaProduk, 0, $maxNamaLength - 3) . '...';
                 }
@@ -140,7 +145,12 @@ class PDFInvoiceSinarSuryaTemplate
                 // Geser nomor dan kode 5 unit ke kiri dari posisi sebelumnya (startX 11 -> 6)
                 $pdf->SetXY(6, $currentY);
                 $pdf->Cell(11.5, $namaHeight, ($index + 1), 0, 0, 'C');
-                $pdf->Cell(35, $namaHeight, $detail->produk->kode ?? '-', 0, 0, 'L');
+                
+                $kodeProduk = $detail->produk->kode ?? '-';
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $kodeProduk = '';
+                }
+                $pdf->Cell(35, $namaHeight, $kodeProduk, 0, 0, 'L');
 
                 // Nama produk tetap mulai pada X = 54.5 (agar kolom lain tidak terpengaruh)
                 $xNama = 54.5;
@@ -154,22 +164,39 @@ class PDFInvoiceSinarSuryaTemplate
 
                 // QTY stays at baseX with width 28
                 $pdf->SetXY($baseX, $yNama);
-                $pdf->Cell(28, $namaHeight, number_format($detail->quantity, 0, ',', '.'), 0, 0, 'C');
+                
+                $qtyText = number_format($detail->quantity, 0, ',', '.') . ' ' . ($detail->satuan->nama ?? '');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $qtyText = number_format($detail->quantity, 0, ',', '.') . ' ' . ($detail->satuan->nama ?? '');
+                }
+                $pdf->Cell(28, $namaHeight, $qtyText, 0, 0, 'C');
 
                 // HARGA should be 1 unit to the left of its original position (original was baseX + 28)
                 $hargaX = $baseX + 27; // move left by 1
                 $pdf->SetXY($hargaX, $yNama);
-                $pdf->Cell(29, $namaHeight, number_format($detail->harga, 0, ',', '.'), 0, 0, 'R');
+                $hargaText = number_format($detail->harga, 0, ',', '.');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $hargaText = '-';
+                }
+                $pdf->Cell(29, $namaHeight, $hargaText, 0, 0, 'R');
 
                 // DISC keep its original starting X = baseX + 28 + 29 = baseX + 57
                 $discX = $baseX + 57;
                 $pdf->SetXY($discX, $yNama);
-                $pdf->Cell(11, $namaHeight, rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '', 0, 0, 'L');
+                $discText = rtrim(rtrim(number_format($detail->diskon_persen, 2, '.', ''), '0'), '.') . '';
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $discText = '-';
+                }
+                $pdf->Cell(11, $namaHeight, $discText, 0, 0, 'C');
 
                 // SUBTOTAL keep original starting X = baseX + 68, moved left by 1 -> baseX + 67
                 $subtotalX = $baseX + 67;
                 $pdf->SetXY($subtotalX, $yNama);
-                $pdf->Cell(26, $namaHeight, number_format($detail->subtotal, 0, ',', '.'), 0, 1, 'R');
+                $subtotalText = number_format($detail->subtotal, 0, ',', '.');
+                if ($detail->is_bundle_item && $detail->parent_detail_id) {
+                    $subtotalText = '-';
+                }
+                $pdf->Cell(26, $namaHeight, $subtotalText, 0, 1, 'R');
                 $currentY += $namaHeight;
             }
 

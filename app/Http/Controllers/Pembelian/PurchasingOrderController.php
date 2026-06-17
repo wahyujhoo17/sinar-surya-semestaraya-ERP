@@ -182,6 +182,7 @@ class PurchasingOrderController extends Controller
     public function index(Request $request)
     {
         $validStatuses = [
+            'semuanya',
             'draft',
             'diproses',
             'dikirim',
@@ -192,15 +193,19 @@ class PurchasingOrderController extends Controller
         // Calculate counts for each status before applying filters for the main query
         $statusCounts = [];
         foreach ($validStatuses as $validStatus) {
-            $statusCounts[$validStatus] = PurchaseOrder::where('status', $validStatus)->count();
+            if ($validStatus === 'semuanya') {
+                $statusCounts[$validStatus] = PurchaseOrder::count();
+            } else {
+                $statusCounts[$validStatus] = PurchaseOrder::where('status', $validStatus)->count();
+            }
         }
 
-        // Ambil status dari request, default 'draft' agar konsisten dengan frontend
-        $status = $request->input('status', 'draft');
+        // Ambil status dari request, default 'semuanya'
+        $status = $request->input('status', 'semuanya');
 
         $query = PurchaseOrder::with(['supplier', 'user']);
 
-        if ($status && $status !== 'semua') {
+        if ($status && $status !== 'semuanya') {
             $query->where('status', $status);
         }
 

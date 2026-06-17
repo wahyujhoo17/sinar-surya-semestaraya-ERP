@@ -441,10 +441,18 @@
                                     </thead>
                                     <tbody>
                                         <template x-for="(item, index) in items" :key="index">
-                                            <tr
-                                                class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 item-row">
+                                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 item-row"
+                                                :class="{ 'bg-gray-50 dark:bg-gray-800/50': item.item_type === 'bundle' || item.is_bundle_item }">
                                                 <td class="px-4 py-3">
-                                                    <span x-text="item.nama_produk"></span>
+                                                    <div :class="{ 'pl-6': item.is_bundle_item && item.parent_detail_id }">
+                                                        <span x-show="item.item_type === 'bundle'" class="mr-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                            Bundle
+                                                        </span>
+                                                        <span x-show="item.is_bundle_item && item.parent_detail_id" class="mr-1 text-gray-400">
+                                                            ↳
+                                                        </span>
+                                                        <span x-text="item.nama_produk" class="font-medium"></span>
+                                                    </div>
                                                     <input type="hidden" :name="`items[${index}][id]`"
                                                         x-model="item.id">
                                                     <input type="hidden" :name="`items[${index}][produk_id]`"
@@ -463,19 +471,46 @@
                                                         x-model="item.qty">
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
-                                                    <span x-text="formatRupiah(item.harga)"></span>
-                                                    <input type="hidden" :name="`items[${index}][harga]`"
-                                                        x-model="item.harga">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="formatRupiah(item.harga)"></span>
+                                                            <input type="hidden" :name="`items[${index}][harga]`" x-model="item.harga">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="`items[${index}][harga]`" x-model="item.harga">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
-                                                    <span x-text="item.diskon + '%'"></span>
-                                                    <input type="hidden" :name="`items[${index}][diskon]`"
-                                                        x-model="item.diskon">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="item.diskon + '%'"></span>
+                                                            <input type="hidden" :name="`items[${index}][diskon]`" x-model="item.diskon">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="`items[${index}][diskon]`" x-model="item.diskon">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
-                                                    <span x-text="formatRupiah(item.subtotal)"></span>
-                                                    <input type="hidden" :name="`items[${index}][subtotal]`"
-                                                        x-model="item.subtotal">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="formatRupiah(item.subtotal)"></span>
+                                                            <input type="hidden" :name="`items[${index}][subtotal]`" x-model="item.subtotal">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="`items[${index}][subtotal]`" x-model="item.subtotal">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                             </tr>
                                         </template>
@@ -715,6 +750,11 @@
                                     'harga' => $detail->harga,
                                     'diskon' => $detail->diskon_persen,
                                     'subtotal' => $detail->subtotal,
+                                    'item_type' => $detail->item_type,
+                                    'bundle_id' => $detail->bundle_id,
+                                    'is_bundle_item' => $detail->is_bundle_item,
+                                    'parent_detail_id' => $detail->parent_detail_id,
+                                    'bundle_name' => $detail->bundle_name,
                                 ];
                             })->values()->all(),
                         JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE,
@@ -762,6 +802,11 @@
 
                     calculateSubtotal() {
                         this.subtotal = this.items.reduce((sum, item) => {
+                            if (item.is_bundle_item && item.parent_detail_id) {
+                                // Skip calculation for bundle children as their price is already in the parent bundle
+                                item.subtotal = 0;
+                                return sum;
+                            }
                             const harga = parseFloat(item.harga) || 0;
                             const qty = parseFloat(item.qty) || 0;
                             const diskon = parseFloat(item.diskon) || 0;

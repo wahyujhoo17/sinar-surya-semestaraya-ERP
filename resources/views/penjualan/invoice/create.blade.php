@@ -517,18 +517,37 @@
                                     </thead>
                                     <tbody>
                                         <template x-for="(item, index) in items" :key="index">
-                                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                                            <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
+                                                :class="{ 'bg-gray-50 dark:bg-gray-800/50': item.item_type === 'bundle' || item.is_bundle_item }">
                                                 <td class="px-4 py-3">
-                                                    <div>
+                                                    <div :class="{ 'pl-6': item.is_bundle_item && item.parent_detail_id }">
+                                                        <span x-show="item.item_type === 'bundle'" class="mr-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300">
+                                                            Bundle
+                                                        </span>
+                                                        <span x-show="item.is_bundle_item && item.parent_detail_id" class="mr-1 text-gray-400">
+                                                            ↳
+                                                        </span>
                                                         <span x-text="item.nama_produk" class="font-medium"></span>
                                                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                             SO Qty: <span x-text="item.original_qty"></span>
                                                         </div>
                                                     </div>
+                                                    <input type="hidden" :name="'items[' + index + '][sales_order_detail_id]'"
+                                                        x-model="item.sales_order_detail_id">
                                                     <input type="hidden" :name="'items[' + index + '][produk_id]'"
                                                         x-model="item.produk_id">
                                                     <input type="hidden" :name="'items[' + index + '][nama_produk]'"
                                                         x-model="item.nama_produk">
+                                                    <input type="hidden" :name="'items[' + index + '][item_type]'"
+                                                        x-model="item.item_type">
+                                                    <input type="hidden" :name="'items[' + index + '][bundle_id]'"
+                                                        x-model="item.bundle_id">
+                                                    <input type="hidden" :name="'items[' + index + '][is_bundle_item]'"
+                                                        x-model="item.is_bundle_item">
+                                                    <input type="hidden" :name="'items[' + index + '][parent_detail_id]'"
+                                                        x-model="item.parent_detail_id">
+                                                    <input type="hidden" :name="'items[' + index + '][bundle_name]'"
+                                                        x-model="item.bundle_name">
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
                                                     <span x-text="item.satuan"></span>
@@ -536,33 +555,70 @@
                                                         x-model="item.satuan">
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
-                                                    <input type="number" :name="'items[' + index + '][qty]'"
-                                                        x-model="item.qty" :data-original-qty="item.original_qty"
-                                                        :data-max-qty="item.max_available_qty"
-                                                        @input="updateItemSubtotal(index)" min="0"
-                                                        :max="item.max_available_qty" step="0.01"
-                                                        class="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        Max: <span x-text="item.max_available_qty"></span>
-                                                    </div>
-                                                    <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                                                        Isi 0 untuk skip item ini
-                                                    </div>
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <input type="number" :name="'items[' + index + '][qty]'"
+                                                                x-model="item.qty" :data-original-qty="item.original_qty"
+                                                                :data-max-qty="item.max_available_qty"
+                                                                @input="updateItemSubtotal(index)" min="0"
+                                                                :max="item.max_available_qty" step="0.01"
+                                                                class="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                Max: <span x-text="item.max_available_qty"></span>
+                                                            </div>
+                                                            <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                                                Isi 0 untuk skip
+                                                            </div>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="item.qty" class="font-medium text-gray-700 dark:text-gray-300"></span>
+                                                            <input type="hidden" :name="'items[' + index + '][qty]'" x-model="item.qty">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
-                                                    <span x-text="formatRupiah(item.harga)"></span>
-                                                    <input type="hidden" :name="'items[' + index + '][harga]'"
-                                                        x-model="item.harga">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="formatRupiah(item.harga)"></span>
+                                                            <input type="hidden" :name="'items[' + index + '][harga]'" x-model="item.harga">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="'items[' + index + '][harga]'" x-model="item.harga">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
-                                                    <span x-text="item.diskon + '%'"></span>
-                                                    <input type="hidden" :name="'items[' + index + '][diskon]'"
-                                                        x-model="item.diskon">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="item.diskon + '%'"></span>
+                                                            <input type="hidden" :name="'items[' + index + '][diskon]'" x-model="item.diskon">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="'items[' + index + '][diskon]'" x-model="item.diskon">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
-                                                    <span x-text="formatRupiah(item.subtotal)"></span>
-                                                    <input type="hidden" :name="'items[' + index + '][subtotal]'"
-                                                        x-model="item.subtotal">
+                                                    <template x-if="!item.is_bundle_item || !item.parent_detail_id">
+                                                        <div>
+                                                            <span x-text="formatRupiah(item.subtotal)"></span>
+                                                            <input type="hidden" :name="'items[' + index + '][subtotal]'" x-model="item.subtotal">
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="item.is_bundle_item && item.parent_detail_id">
+                                                        <div>
+                                                            <span class="text-gray-400 text-xs">-</span>
+                                                            <input type="hidden" :name="'items[' + index + '][subtotal]'" x-model="item.subtotal">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                             </tr>
                                         </template>
@@ -947,15 +1003,33 @@
                         }
 
                         // Calculate subtotal with discount, maintaining any bundle rounding proportions
-                        const originalQty = parseFloat(item.original_qty) || 1;
-                        if (originalQty > 0 && typeof item.subtotal_original !== 'undefined') {
-                            const proportion = qty / originalQty;
-                            item.subtotal = Math.round(parseFloat(item.subtotal_original) * proportion);
+                        const maxQty = parseFloat(item.max_available_qty) || 1;
+                        if (maxQty > 0 && typeof item.subtotal_max !== 'undefined') {
+                            const proportion = qty / maxQty;
+                            item.subtotal = Math.round(parseFloat(item.subtotal_max) * proportion);
                         } else {
                             // Fallback standard calculation
                             const subtotalSebelumDiskon = qty * harga;
                             const nominalDiskon = subtotalSebelumDiskon * (diskon / 100);
                             item.subtotal = Math.round(subtotalSebelumDiskon - nominalDiskon);
+                        }
+
+                        // Also auto-update child items if this is a bundle parent
+                        if (item.item_type === 'bundle') {
+                            const maxParentQty = parseFloat(item.max_available_qty) || 1;
+                            const newParentQty = qty;
+                            const proportion = newParentQty / maxParentQty;
+                            
+                            this.items.forEach((childItem, childIndex) => {
+                                if (childItem.is_bundle_item && childItem.parent_detail_id == item.sales_order_detail_id) {
+                                    const childMaxQty = parseFloat(childItem.max_available_qty) || 0;
+                                    childItem.qty = childMaxQty * proportion;
+                                    // Update child subtotal
+                                    if (childMaxQty > 0 && typeof childItem.subtotal_max !== 'undefined') {
+                                        childItem.subtotal = Math.round(parseFloat(childItem.subtotal_max) * proportion);
+                                    }
+                                }
+                            });
                         }
 
                         // Recalculate totals
@@ -1024,18 +1098,23 @@
 
                                     // Set items data
                                     this.items = data.details.map(item => ({
+                                        sales_order_detail_id: item.sales_order_detail_id,
                                         produk_id: item.produk_id,
                                         nama_produk: item.nama_produk,
                                         satuan: item.satuan,
                                         qty: item.qty,
-                                        original_qty: item.original_qty || item
-                                            .qty, // Store original qty for reference
-                                        max_available_qty: item.max_available_qty || item
-                                            .qty, // Store max available qty
+                                        original_qty: item.original_qty || item.qty,
+                                        max_available_qty: item.max_available_qty || item.qty,
                                         harga: item.harga,
                                         diskon: item.diskon || 0,
                                         subtotal: item.subtotal,
                                         subtotal_original: item.subtotal_original || item.subtotal,
+                                        subtotal_max: item.subtotal, // Store initial available subtotal for proportional calculations
+                                        item_type: item.item_type || 'produk',
+                                        bundle_id: item.bundle_id || null,
+                                        is_bundle_item: item.is_bundle_item || false,
+                                        parent_detail_id: item.parent_detail_id || null,
+                                        bundle_name: item.bundle_name || null,
                                     }));
 
                                     // Show invoice information if available

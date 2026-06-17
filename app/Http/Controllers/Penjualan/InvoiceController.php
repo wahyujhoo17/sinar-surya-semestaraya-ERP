@@ -301,44 +301,149 @@ class InvoiceController extends Controller
             // Hitung proporsi (untuk info response JSON)
             $proporsiSisa = $salesOrder->total > 0 ? $sisaInvoice / $salesOrder->total : 0;
 
-            $details = SalesOrderDetail::with(['produk', 'satuan'])
+            $rawDetails = SalesOrderDetail::with(['produk', 'satuan', 'bundle', 'childDetails', 'parentDetail'])
                 ->where('sales_order_id', $id)
-                ->get()
-                ->map(function ($detail) use ($id) {
-                    // Hitung qty yang sudah di-invoice untuk produk ini
-                    $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
-                        ->where('invoice.sales_order_id', $id)
-                        ->where('invoice_detail.produk_id', $detail->produk_id)
-                        ->sum('invoice_detail.quantity');
+                ->get();
 
-                    // Hitung qty yang tersedia untuk di-invoice
-                    $qtyAvailable = $detail->quantity - $qtyAlreadyInvoiced;
+            $processedDetails = collect();
+            $bundleGroups = [];
 
-                    // Hitung subtotal berdasarkan proporsi kuantitas yang tersisa
-                    $subtotalProporsional = 0;
-                    if ($detail->quantity > 0) {
-                        $proporsiQty = $qtyAvailable / $detail->quantity;
-                        $subtotalProporsional = round($detail->subtotal * $proporsiQty);
+            // Group missing parents
+            foreach ($rawDetails as $detail) {
+                if ($detail->bundle_id && $detail->is_bundle_item && !$detail->parent_detail_id && $detail->item_type !== 'bundle') {
+                    $bundleGroups[$detail->bundle_id][] = $detail;
+                } else {
+                    $processedDetails->push($detail);
+                }
+            }
+
+            // Create virtual parents
+            foreach ($bundleGroups as $bundleId => $bundleItems) {
+                $bundle = \App\Models\ProductBundle::find($bundleId);
+                $bundleName = $bundle ? $bundle->nama : 'Bundle Package';
+                
+                // Estimate qty from the first item if bundle definition exists
+                // For simplicity we just set the virtual parent qty to 1 (assuming 1 bundle ordered)
+                // The price and subtotal will be the sum of children
+                $virtualParentId = 'virtual_bundle_' . $bundleId;
+                
+                $totalOriginalSubtotal = 0;
+                
+                // First pass to calculate totals
+                foreach ($bundleItems as $bItem) {
+                    $totalOriginalSubtotal += $bItem->subtotal;
+                }
+
+                $virtualParent = [
+                    'sales_order_detail_id' => $virtualParentId,
+                    'produk_id' => null,
+                    'nama_produk' => 'PAKET: ' . $bundleName,
+                    'satuan' => 'Paket',
+                    'qty' => 1,
+                    'original_qty' => 1,
+                    'max_available_qty' => 1,
+                    'harga' => $totalOriginalSubtotal,
+                    'diskon' => 0,
+                    'subtotal' => 0, // Will sum up later
+                    'subtotal_original' => $totalOriginalSubtotal,
+                    'item_type' => 'bundle',
+                    'bundle_id' => $bundleId,
+                    'is_bundle_item' => false,
+                    'parent_detail_id' => null,
+                    'bundle_name' => $bundleName,
+                    'is_virtual_parent' => true,
+                ];
+
+                $processedDetails->push($virtualParent);
+
+                // Add children with parent_detail_id = virtualParentId
+                foreach ($bundleItems as $bItem) {
+                    $bItem->parent_detail_id = $virtualParentId;
+                    $bItem->is_virtual_child = true;
+                    $processedDetails->push($bItem);
+                }
+            }
+
+            $details = $processedDetails->map(function ($detail) use ($id) {
+                // If it's already an array (virtual parent), return it directly after updating its proportional subtotal
+                if (is_array($detail)) {
+                    if (isset($detail['is_virtual_parent']) && $detail['is_virtual_parent']) {
+                        return $detail;
                     }
+                    return $detail;
+                }
 
-                    return [
-                        'produk_id' => $detail->produk_id,
-                        'nama_produk' => $detail->produk ? $detail->produk->nama : $detail->deskripsi,
-                        'satuan' => $detail->satuan ? $detail->satuan->nama : '',
-                        'qty' => $qtyAvailable, // Qty yang tersedia untuk di-invoice
-                        'original_qty' => $detail->quantity, // Qty asli dari SO
-                        'max_available_qty' => $qtyAvailable, // Qty maksimum yang bisa di-invoice
-                        'harga' => $detail->harga,
-                        'diskon' => $detail->diskon_persen,
-                        'subtotal' => $subtotalProporsional,
-                        'subtotal_original' => $detail->subtotal, // Simpan subtotal asli untuk referensi
-                    ];
-                })
-                ->filter(function ($item) {
-                    // Filter hanya item yang masih memiliki qty tersedia
-                    return $item['qty'] > 0;
-                })
-                ->values(); // Re-index array
+                // Hitung qty yang sudah di-invoice untuk produk ini
+                $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+                    ->where('invoice.sales_order_id', $id)
+                    ->where('invoice_detail.produk_id', $detail->produk_id)
+                    ->sum('invoice_detail.quantity');
+
+                // Hitung qty yang tersedia untuk di-invoice
+                $qtyAvailable = $detail->quantity - $qtyAlreadyInvoiced;
+
+                // Hitung subtotal berdasarkan proporsi kuantitas yang tersisa
+                $subtotalProporsional = 0;
+                if ($detail->quantity > 0) {
+                    $proporsiQty = $qtyAvailable / $detail->quantity;
+                    $subtotalProporsional = round($detail->subtotal * $proporsiQty);
+                }
+
+                return [
+                    'sales_order_detail_id' => $detail->id,
+                    'produk_id' => $detail->produk_id,
+                    'nama_produk' => $detail->produk ? $detail->produk->nama : $detail->deskripsi,
+                    'satuan' => $detail->satuan ? $detail->satuan->nama : '',
+                    'qty' => $qtyAvailable, // Qty yang tersedia untuk di-invoice
+                    'original_qty' => $detail->quantity, // Qty asli dari SO
+                    'max_available_qty' => $qtyAvailable, // Qty maksimum yang bisa di-invoice
+                    'harga' => $detail->harga,
+                    'diskon' => $detail->diskon_persen,
+                    'subtotal' => $subtotalProporsional,
+                    'subtotal_original' => $detail->subtotal, // Simpan subtotal asli untuk referensi
+                    'item_type' => $detail->item_type,
+                    'bundle_id' => $detail->bundle_id,
+                    'is_bundle_item' => $detail->is_bundle_item,
+                    'parent_detail_id' => $detail->parent_detail_id,
+                    'bundle_name' => $detail->is_bundle_item && $detail->parentDetail ? ($detail->parentDetail->produk ? $detail->parentDetail->produk->nama : 'Bundle') : ($detail->produk ? $detail->produk->nama : 'Bundle'),
+                    'is_virtual_child' => $detail->is_virtual_child ?? false,
+                ];
+            })
+            ->filter(function ($item) {
+                // Filter hanya item yang masih memiliki qty tersedia
+                return $item['qty'] > 0;
+            })
+            ->values() // Re-index array
+            ->toArray(); // Convert to plain array for modification
+
+            // Calculate virtual parent subtotals based on children
+            foreach ($details as $key => $item) {
+                if (isset($item['is_virtual_parent']) && $item['is_virtual_parent']) {
+                    $childrenSubtotals = 0;
+                    $hasChildren = false;
+                    foreach ($details as $childKey => $childItem) {
+                        if (isset($childItem['parent_detail_id']) && $childItem['parent_detail_id'] === $item['sales_order_detail_id']) {
+                            $childrenSubtotals += $childItem['subtotal'];
+                            $hasChildren = true;
+                            
+                            // Absorb children price into parent
+                            $details[$childKey]['subtotal'] = 0;
+                            $details[$childKey]['harga'] = 0;
+                        }
+                    }
+                    
+                    if (!$hasChildren) {
+                        // Remove virtual parent if it has no children left (all fully invoiced)
+                        unset($details[$key]);
+                    } else {
+                        $details[$key]['subtotal'] = $childrenSubtotals;
+                        $details[$key]['harga'] = $childrenSubtotals; // Match harga with subtotal since qty is 1
+                    }
+                }
+            }
+            
+            // Re-index array again after possible unsets
+            $details = array_values($details);
 
             // Hitung tanggal jatuh tempo berdasarkan terms pembayaran dari sales order
             $jatuhTempo = now()->format('Y-m-d');
@@ -360,6 +465,7 @@ class InvoiceController extends Controller
                 ]
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error in getSalesOrderData: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
                 'message' => 'Data sales order tidak ditemukan',
@@ -384,9 +490,9 @@ class InvoiceController extends Controller
             'ongkos_kirim' => 'nullable|numeric|min:0',
             'total' => 'required|numeric',
             'items' => 'required|array',
-            'items.*.produk_id' => 'required|exists:produk,id',
+            'items.*.produk_id' => 'nullable|exists:produk,id',
             'items.*.nama_produk' => 'required|string',
-            'items.*.satuan' => 'required|string|exists:satuan,nama',
+            'items.*.satuan' => 'nullable|string',
             'items.*.qty' => 'required|numeric|min:0.01',
             'items.*.harga' => 'required|numeric|min:0',
             'items.*.diskon' => 'nullable|numeric|min:0|max:100',
@@ -427,18 +533,45 @@ class InvoiceController extends Controller
             ]);
 
             // Create invoice details
+            $parentMap = []; // Maps sales_order_detail_id to new invoice_detail.id
+
             foreach ($request->items as $item) {
-                InvoiceDetail::create([
+                // Determine the correct parent_detail_id
+                $formParentId = $item['parent_detail_id'] ?? null;
+                $dbParentId = null;
+                
+                if ($formParentId && isset($parentMap[$formParentId])) {
+                    $dbParentId = $parentMap[$formParentId];
+                }
+
+                $invoiceDetail = InvoiceDetail::create([
                     'invoice_id' => $invoice->id,
-                    'produk_id' => $item['produk_id'],
-                    'deskripsi' => $item['nama_produk'], // Store the product name in the deskripsi field
-                    'quantity' => $item['qty'], // Map qty to quantity
-                    'satuan_id' => \App\Models\Satuan::where('nama', $item['satuan'])->first()->id, // Get the satuan_id from the name
-                    'harga' => $item['harga'],
+                    'produk_id' => $item['produk_id'] ?? null,
+                    'deskripsi' => $item['nama_produk'] ?? null,
+                    'quantity' => $item['qty'] ?? 0,
+                    'satuan_id' => isset($item['satuan']) && $item['satuan'] ? (\App\Models\Satuan::where('nama', $item['satuan'])->first()->id ?? null) : null,
+                    'harga' => $item['harga'] ?? 0,
                     'diskon_persen' => $item['diskon'] ?? 0,
-                    'diskon_nominal' => ($item['harga'] * $item['qty'] * ($item['diskon'] ?? 0)) / 100,
-                    'subtotal' => $item['subtotal'],
+                    'diskon_nominal' => (($item['harga'] ?? 0) * ($item['qty'] ?? 0) * ($item['diskon'] ?? 0)) / 100,
+                    'subtotal' => $item['subtotal'] ?? 0,
+                    'item_type' => $item['item_type'] ?? 'produk',
+                    'bundle_id' => $item['bundle_id'] ?? null,
+                    'is_bundle_item' => filter_var($item['is_bundle_item'] ?? false, FILTER_VALIDATE_BOOLEAN),
+                    'parent_detail_id' => $dbParentId,
                 ]);
+
+                // If this item is a bundle parent, store its new ID in the map
+                $itemType = $item['item_type'] ?? 'produk';
+                if ($itemType === 'bundle') {
+                    // For real bundle parent, use its sales_order_detail_id.
+                    // For virtual parent, the 'sales_order_detail_id' might not be in the request directly if it wasn't hidden input?
+                    // Wait, we need the sales_order_detail_id from the form! Let's check if we added it in create.blade.php.
+                    // If not, we can use a temporary identifier or just rely on the form data.
+                    $soDetailId = $item['sales_order_detail_id'] ?? null;
+                    if ($soDetailId) {
+                        $parentMap[$soDetailId] = $invoiceDetail->id;
+                    }
+                }
             }
 
             // Aplikasikan uang muka jika user memilih untuk menggunakan uang muka
@@ -884,6 +1017,12 @@ class InvoiceController extends Controller
                 'details.satuan',
             ])->findOrFail($id);
 
+            // Filter out bundle children so they don't appear in the PDF
+            $filteredDetails = $invoice->details->filter(function ($detail) {
+                return !($detail->is_bundle_item && $detail->parent_detail_id);
+            });
+            $invoice->setRelation('details', $filteredDetails);
+
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
@@ -926,6 +1065,12 @@ class InvoiceController extends Controller
                 'details.produk.satuan',
                 'details.satuan',
             ])->findOrFail($id);
+
+            // Filter out bundle children so they don't appear in the PDF
+            $filteredDetails = $invoice->details->filter(function ($detail) {
+                return !($detail->is_bundle_item && $detail->parent_detail_id);
+            });
+            $invoice->setRelation('details', $filteredDetails);
 
             // Get direktur utama using service
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
@@ -975,6 +1120,12 @@ class InvoiceController extends Controller
                 'details.satuan',
                 'pembayaranPiutang'
             ])->findOrFail($id);
+
+            // Filter out bundle children so they don't appear in the PDF
+            $filteredDetails = $invoice->details->filter(function ($detail) {
+                return !($detail->is_bundle_item && $detail->parent_detail_id);
+            });
+            $invoice->setRelation('details', $filteredDetails);
 
             $direkturUtama = $this->getDirekturUtama();
 
@@ -1339,6 +1490,11 @@ class InvoiceController extends Controller
         $errors = [];
 
         foreach ($request->items as $index => $item) {
+            // Skip virtual parent items (they don't have produk_id and are just containers)
+            if (($item['item_type'] ?? 'produk') === 'bundle' && empty($item['produk_id'])) {
+                continue;
+            }
+
             $produkId = $item['produk_id'];
             $qtyRequested = $item['qty'];
 
@@ -1374,12 +1530,20 @@ class InvoiceController extends Controller
         }
 
         if (!empty($errors)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors' => $errors
-            ], 422);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validasi gagal',
+                    'errors' => $errors
+                ], 422);
+            }
+            
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Validasi gagal: ' . implode(', ', $errors));
         }
+
+        return null;
     }
 
     /**
