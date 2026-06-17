@@ -18,14 +18,8 @@ return new class extends Migration
             if (!Schema::hasColumn('invoice_detail', 'bundle_id')) {
                 $table->unsignedBigInteger('bundle_id')->nullable()->after('item_type');
             }
-            if (!Schema::hasColumn('invoice_detail', 'is_bundle_item')) {
-                $table->boolean('is_bundle_item')->default(false)->after('bundle_id');
-            }
             if (!Schema::hasColumn('invoice_detail', 'parent_detail_id')) {
                 $table->unsignedBigInteger('parent_detail_id')->nullable()->after('is_bundle_item');
-            }
-            if (!Schema::hasColumn('invoice_detail', 'bundle_name')) {
-                $table->string('bundle_name')->nullable()->after('parent_detail_id');
             }
         });
     }
@@ -36,7 +30,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('invoice_detail', function (Blueprint $table) {
-            $table->dropColumn(['item_type', 'bundle_id', 'is_bundle_item', 'parent_detail_id', 'bundle_name']);
+            $table->dropColumn(['item_type', 'bundle_id', 'parent_detail_id']);
         });
     }
 };
