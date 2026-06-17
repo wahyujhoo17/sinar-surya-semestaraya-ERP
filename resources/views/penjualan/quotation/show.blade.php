@@ -1018,7 +1018,7 @@
                                                 </div>
                                                 <div class="flex-1">
                                                     <h2 class="text-white font-bold text-base md:text-lg m-0">
-                                                        PAKET: {{ $bundleName }}</h2>
+                                                        PAKET: {{ $bundleName }} <span class="text-white/80 text-sm font-normal ml-2">({{ number_format($bundleQtyDisplay, 0, ',', '.') }} Paket)</span></h2>
                                                     <div class="text-white/80 text-sm mt-1">Kode:
                                                         {{ $bundleCode }} | Berisi {{ $itemCount }} produk
                                                     </div>

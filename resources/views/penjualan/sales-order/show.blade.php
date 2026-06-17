@@ -859,12 +859,21 @@
                                             $bundleCode = 'N/A';
                                             $bundleImage = null;
                                             $itemCount = count($bundleGroup['items']);
+                                            $bundleQty = 1;
                                             try {
                                                 $bundle = \App\Models\ProductBundle::find($bundleId);
                                                 if ($bundle) {
                                                     $bundleName = $bundle->nama;
                                                     $bundleCode = $bundle->kode ?? 'N/A';
                                                     $bundleImage = $bundle->gambar ?? null;
+                                                    
+                                                    if ($itemCount > 0) {
+                                                        $firstItem = $bundleGroup['items'][0];
+                                                        $masterItem = $bundle->items()->where('produk_id', $firstItem->produk_id)->first();
+                                                        if ($masterItem && $masterItem->quantity > 0) {
+                                                            $bundleQty = $firstItem->quantity / $masterItem->quantity;
+                                                        }
+                                                    }
                                                 }
                                             } catch (Exception $e) {
                                                 $bundleName = 'Bundle Package #' . $bundleId;
@@ -900,7 +909,7 @@
                                                     </div>
                                                     <div class="flex-1">
                                                         <h2 class="text-white font-bold text-base md:text-lg m-0">
-                                                            PAKET: {{ $bundleName }}</h2>
+                                                            PAKET: {{ $bundleName }} <span class="text-white/80 text-sm font-normal ml-2">({{ number_format($bundleQty, 0, ',', '.') }} Paket)</span></h2>
                                                         <div class="text-white/80 text-sm mt-1">Kode:
                                                             {{ $bundleCode }} | Berisi {{ $itemCount }} produk
                                                         </div>
