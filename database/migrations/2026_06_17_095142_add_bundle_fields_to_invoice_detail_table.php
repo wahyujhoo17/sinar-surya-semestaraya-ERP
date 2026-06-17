@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('invoice_detail', function (Blueprint $table) {
-            $table->boolean('is_bundle_item')->default(false);
-            $table->string('bundle_name')->nullable();
+            if (!Schema::hasColumn('invoice_detail', 'is_bundle_item')) {
+                $table->boolean('is_bundle_item')->default(false);
+            }
+            if (!Schema::hasColumn('invoice_detail', 'bundle_name')) {
+                $table->string('bundle_name')->nullable();
+            }
         });
     }
 
