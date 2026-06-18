@@ -282,6 +282,9 @@
                                             <th
                                                 class="px-4 lg:px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                                 Dicatat Oleh</th>
+                                            <th
+                                                class="px-4 lg:px-6 py-4 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                                Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
@@ -314,18 +317,62 @@
                                                 <td class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
                                                     {{ $payment->user->name ?? 'N/A' }}
                                                 </td>
+                                                <td class="px-4 lg:px-6 py-4 whitespace-nowrap text-sm">
+                                                    <div class="flex items-center gap-3">
+                                                        <a href="{{ route('keuangan.pembayaran-piutang.show', $payment->id) }}"
+                                                            class="text-violet-600 dark:text-violet-400 hover:text-violet-900 dark:hover:text-violet-300 font-medium hover:underline">
+                                                            Detail
+                                                        </a>
+                                                        @if (auth()->user()->hasRole('superadmin') ||
+                                                                auth()->user()->hasRole('direktur_utama') ||
+                                                                auth()->user()->hasRole('administrator') ||
+                                                                auth()->user()->hasRole('admin'))
+                                                            <a href="{{ route('keuangan.pembayaran-piutang.edit', $payment->id) }}"
+                                                                class="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 font-medium hover:underline flex items-center gap-1">
+                                                                <svg xmlns="http://www.w3.org/2000/svg"
+                                                                    class="h-3.5 w-3.5" fill="none"
+                                                                    viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                                </svg>
+                                                                Edit
+                                                            </a>
+                                                            <form
+                                                                action="{{ route('keuangan.pembayaran-piutang.destroy', $payment->id) }}"
+                                                                method="POST"
+                                                                onsubmit="return confirm('Apakah Anda yakin ingin menghapus pembayaran ini? Jurnal dan saldo kas/bank akan disesuaikan otomatis.');"
+                                                                class="inline">
+                                                                @csrf
+                                                                @method('DELETE')
+                                                                <button type="submit"
+                                                                    class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-medium hover:underline flex items-center gap-1">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg"
+                                                                        class="h-3.5 w-3.5" fill="none"
+                                                                        viewBox="0 0 24 24" stroke="currentColor">
+                                                                        <path stroke-linecap="round"
+                                                                            stroke-linejoin="round" stroke-width="2"
+                                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                                    </svg>
+                                                                    Hapus
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                    </div>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                     <tfoot class="bg-gray-50 dark:bg-gray-700/50">
                                         <tr>
-                                            <td colspan="3"
+                                            <td colspan="4"
                                                 class="px-4 lg:px-6 py-4 text-right text-base font-semibold text-gray-700 dark:text-gray-200">
                                                 Total Pembayaran</td>
                                             <td
                                                 class="px-4 lg:px-6 py-4 text-right text-lg font-bold text-green-600 dark:text-green-400 font-mono">
                                                 Rp {{ number_format($totalPaymentsForInvoice, 0, ',', '.') }}
                                             </td>
+                                            <td></td>
                                             <td></td>
                                         </tr>
                                     </tfoot>
@@ -831,4 +878,144 @@
             </div>
         </div>
     </div>
+
+    {{-- Riwayat Aktivitas / Log --}}
+    @if (isset($logs) && $logs->isNotEmpty())
+        <div class="mt-8">
+            <div
+                class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
+                <div
+                    class="px-6 py-4 bg-gradient-to-br from-slate-50 to-gray-100/80 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg class="h-5 w-5 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Riwayat Aktivitas Pembayaran
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        @foreach ($logs as $log)
+                            <div
+                                class="flex items-start gap-4 pb-4 border-b border-gray-100 dark:border-gray-700 last:border-0 last:pb-0">
+                                <div class="flex-shrink-0">
+                                    @if ($log->aktivitas === 'ubah')
+                                        <div
+                                            class="h-9 w-9 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </div>
+                                    @elseif ($log->aktivitas === 'hapus')
+                                        <div
+                                            class="h-9 w-9 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-rose-600 dark:text-rose-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </div>
+                                    @else
+                                        <div
+                                            class="h-9 w-9 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                            <svg class="h-4 w-4 text-blue-600 dark:text-blue-400" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                            {{ $log->user->name ?? 'System' }}
+                                        </span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ $log->created_at->translatedFormat('d M Y H:i') }}
+                                        </span>
+                                    </div>
+                                    <div class="mt-1">
+                                        @if ($log->aktivitas === 'ubah')
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">
+                                                Mengedit pembayaran #{{ $log->data_id }}
+                                            </span>
+                                            @if ($log->detail)
+                                                @php $detail = is_string($log->detail) ? json_decode($log->detail, true) : $log->detail; @endphp
+                                                @if (isset($detail['perubahan']) && count($detail['perubahan']) > 0)
+                                                    <div
+                                                        class="mt-2 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                                                        @foreach ($detail['perubahan'] as $field => $change)
+                                                            <div class="flex items-center gap-1">
+                                                                <span class="font-medium">{{ $field }}:</span>
+                                                                <span
+                                                                    class="text-rose-500 line-through">{{ is_scalar($change['lama'] ?? '') ? $change['lama'] : '-' }}</span>
+                                                                <svg class="h-3 w-3 text-gray-400" fill="none"
+                                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round"
+                                                                        stroke-linejoin="round" stroke-width="2"
+                                                                        d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                                <span
+                                                                    class="text-emerald-600 font-medium">{{ is_scalar($change['baru'] ?? '') ? $change['baru'] : '-' }}</span>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+                                            @endif
+                                        @elseif ($log->aktivitas === 'hapus')
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300">
+                                                Menghapus pembayaran #{{ $log->data_id }}
+                                            </span>
+                                            @if ($log->detail)
+                                                @php $detail = is_string($log->detail) ? json_decode($log->detail, true) : $log->detail; @endphp
+                                                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                                                    @if (isset($detail['nomor']))
+                                                        <div>Nomor: <span
+                                                                class="font-medium">{{ $detail['nomor'] }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if (isset($detail['jumlah']))
+                                                        <div>Jumlah: <span class="font-medium">Rp
+                                                                {{ number_format($detail['jumlah'], 0, ',', '.') }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if (isset($detail['metode_pembayaran']))
+                                                        <div>Metode: <span
+                                                                class="font-medium">{{ $detail['metode_pembayaran'] }}</span>
+                                                        </div>
+                                                    @endif
+                                                    @if (isset($detail['tanggal']))
+                                                        <div>Tanggal: <span
+                                                                class="font-medium">{{ $detail['tanggal'] }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                        @else
+                                            <span
+                                                class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                                                {{ ucfirst($log->aktivitas) }}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    @if ($log->ip_address)
+                                        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                            IP: {{ $log->ip_address }}
+                                        </p>
+                                    @endif
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </x-app-layout>

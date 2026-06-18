@@ -23,6 +23,21 @@ use App\Models\LogAktivitas;
 class PembayaranPiutangController extends Controller
 {
     /**
+     * Helper untuk mencatat log aktivitas user
+     */
+    private function logUserAktivitas($aktivitas, $modul, $data_id = null, $detail = null)
+    {
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => $aktivitas,
+            'modul' => $modul,
+            'data_id' => $data_id,
+            'ip_address' => request()->ip(),
+            'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
+        ]);
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index()
@@ -250,7 +265,14 @@ class PembayaranPiutangController extends Controller
     public function show(string $id)
     {
         $pembayaran = PembayaranPiutang::with(['invoice.customer', 'invoice.pembayaranPiutang', 'customer', 'user', 'kas', 'rekeningBank'])->findOrFail($id);
-        return view('keuangan.pembayaran_piutang.show', compact('pembayaran'));
+
+        $logs = LogAktivitas::where('modul', 'piutang_usaha')
+            ->where('data_id', $id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return view('keuangan.pembayaran_piutang.show', compact('pembayaran', 'logs'));
     }
 
     /**
@@ -258,6 +280,12 @@ class PembayaranPiutangController extends Controller
      */
     public function edit(string $id)
     {
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh edit pembayaran piutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit pembayaran piutang.');
+        }
+
         $pembayaran = PembayaranPiutang::with('customer')->findOrFail($id);
         $invoice = null;
         $sisaPiutangSaatIni = 0;
@@ -292,7 +320,16 @@ class PembayaranPiutangController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh update pembayaran piutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengupdate pembayaran piutang.');
+        }
+
         $pembayaran = PembayaranPiutang::findOrFail($id);
+
+        // Simpan data lama untuk log aktivitas
+        $oldData = $pembayaran->getOriginal();
 
         $validatedData = $request->validate([
             'invoice_id' => 'nullable|exists:invoice,id', // Changed invoices to invoice
@@ -374,8 +411,12 @@ class PembayaranPiutangController extends Controller
                 $pembayaran->invoice_id = $request->invoice_id;
 
                 $currentSisaPiutangNewInvoice = $newInvoice->sisa_piutang;
-                // If the invoice being paid is the same as the original, its sisa_piutang was already increased.
-                // If it's a different invoice, currentSisaPiutangNewInvoice is its actual current balance.
+                // sisa_piutang adalah accessor yang query langsung dari DB.
+                // Jika invoice sama, pembayaran lama masih ada di DB dengan jumlah lama,
+                // jadi tambahkan kembali agar validasi menggunakan sisa piutang yang sebenarnya.
+                if ($originalInvoiceId && $originalInvoiceId == $newInvoice->id) {
+                    $currentSisaPiutangNewInvoice += $originalJumlahPembayaran;
+                }
 
                 if (round($pembayaran->jumlah, 2) > round($currentSisaPiutangNewInvoice, 2) + 0.001) {
                     DB::rollBack();
@@ -418,15 +459,40 @@ class PembayaranPiutangController extends Controller
             // Tidak perlu manual update saldo atau buat TransaksiKas/TransaksiBank
 
             DB::commit();
-            return redirect()->route('keuangan.pembayaran-piutang.show', $pembayaran->id)
-                ->with('success', 'Pembayaran piutang berhasil diperbarui. Nomor: ' . $pembayaran->nomor); // Use $pembayaran->nomor
 
+            // Catat log aktivitas edit
+            $changes = [];
+            foreach ($validatedData as $key => $newValue) {
+                $oldValue = $oldData[$key] ?? null;
+                if ($oldValue != $newValue) {
+                    $changes[$key] = ['lama' => $oldValue, 'baru' => $newValue];
+                }
+            }
+            $invoiceNomor = $newInvoice ? ($newInvoice->nomor_invoice ?? $newInvoice->nomor) : '-';
+            $this->logUserAktivitas('ubah', 'piutang_usaha', $pembayaran->id, [
+                'nomor' => $pembayaran->nomor,
+                'invoice_nomor' => $invoiceNomor,
+                'customer' => $customerName,
+                'perubahan' => $changes,
+                'sebelum' => [
+                    'jumlah' => $oldData['jumlah'] ?? null,
+                    'metode_pembayaran' => $oldData['metode_pembayaran'] ?? null,
+                    'tanggal' => $oldData['tanggal'] ?? null,
+                ],
+                'sesudah' => [
+                    'jumlah' => $pembayaran->jumlah,
+                    'metode_pembayaran' => $pembayaran->metode_pembayaran,
+                    'tanggal' => $pembayaran->tanggal,
+                ],
+            ]);
+
+            return redirect()->route('keuangan.pembayaran-piutang.show', $pembayaran->id)
+                ->with('success', 'Pembayaran piutang berhasil diperbarui. Nomor: ' . $pembayaran->nomor);
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
             return back()->withInput()->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log::error('Error updating payment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
             return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat memperbarui pembayaran: ' . $e->getMessage()]);
         }
     }
@@ -436,7 +502,23 @@ class PembayaranPiutangController extends Controller
      */
     public function destroy(string $id)
     {
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh hapus pembayaran piutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menghapus pembayaran piutang.');
+        }
+
         $pembayaran = PembayaranPiutang::findOrFail($id);
+
+        // Simpan data untuk log aktivitas sebelum dihapus
+        $paymentLogDetail = [
+            'nomor' => $pembayaran->nomor,
+            'jumlah' => $pembayaran->jumlah,
+            'metode_pembayaran' => $pembayaran->metode_pembayaran,
+            'tanggal' => $pembayaran->tanggal,
+            'invoice_nomor' => $pembayaran->invoice ? ($pembayaran->invoice->nomor_invoice ?? $pembayaran->invoice->nomor) : '-',
+            'customer' => $pembayaran->customer->nama ?? '-',
+        ];
 
         DB::beginTransaction();
         try {
@@ -481,13 +563,15 @@ class PembayaranPiutangController extends Controller
 
             DB::commit();
 
+            // Catat log aktivitas hapus
+            $this->logUserAktivitas('hapus', 'piutang_usaha', $id, $paymentLogDetail);
+
             if ($invoiceIdToRedirect) {
                 return redirect()->route('keuangan.piutang-usaha.show', $invoiceIdToRedirect)->with('success', 'Pembayaran piutang berhasil dihapus.');
             }
             return redirect()->route('keuangan.pembayaran-piutang.index')->with('success', 'Pembayaran piutang berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log::error('Error deleting payment: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus pembayaran: ' . $e->getMessage()]);
         }
     }

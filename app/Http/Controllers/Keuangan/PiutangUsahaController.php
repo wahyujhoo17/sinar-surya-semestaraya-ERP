@@ -8,6 +8,7 @@ use App\Models\SalesOrder; // Still needed for context via Invoice
 use App\Models\PembayaranPiutang; // For relationships and potentially direct queries
 use App\Models\ReturPenjualan; // For context in show view
 use App\Models\Customer;
+use App\Models\LogAktivitas;
 use App\Exports\PiutangUsahaExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB; // Keep for now, might be unused
@@ -305,6 +306,14 @@ class PiutangUsahaController extends Controller
 
         // $invoice->sisa_piutang and $invoice->status_display are available from accessors on the Invoice model.
 
+        // Ambil log aktivitas untuk semua pembayaran pada invoice ini
+        $paymentIds = $invoice->pembayaranPiutang->pluck('id')->toArray();
+        $logs = LogAktivitas::where('modul', 'piutang_usaha')
+            ->whereIn('data_id', $paymentIds)
+            ->with('user')
+            ->latest()
+            ->get();
+
         return view('keuangan.piutang_usaha.show', [
             'invoice' => $invoice,
             'payments' => $invoice->pembayaranPiutang, // Payments specific to this invoice
@@ -312,6 +321,7 @@ class PiutangUsahaController extends Controller
             'totalUangMukaApplied' => $totalUangMukaApplied, // Total uang muka applied
             'returnsRelatedToSO' => $returnsRelatedToSO, // For display
             'totalReturValueSO' => $totalReturValueSO,   // For display
+            'logs' => $logs,
         ]);
     }
 

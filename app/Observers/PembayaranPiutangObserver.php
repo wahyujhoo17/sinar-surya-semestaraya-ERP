@@ -33,8 +33,8 @@ class PembayaranPiutangObserver
      */
     public function updated(PembayaranPiutang $pembayaranPiutang)
     {
-        // If the amount or payment method has changed, recreate the journal
-        if ($pembayaranPiutang->isDirty(['jumlah', 'metode_pembayaran'])) {
+        // If the amount, payment method, date, or kas/bank account has changed, recreate the journal
+        if ($pembayaranPiutang->isDirty(['jumlah', 'metode_pembayaran', 'tanggal', 'kas_id', 'rekening_bank_id'])) {
             try {
                 // Delete existing journal entries
                 $pembayaranPiutang->deleteJournalEntries();

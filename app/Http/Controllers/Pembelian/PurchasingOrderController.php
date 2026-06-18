@@ -545,7 +545,8 @@ class PurchasingOrderController extends Controller
             'details.produk',
             'details.satuan',
             'retur.details.produk',
-            'retur.details.satuan'
+            'retur.details.satuan',
+            'penerimaan',
         ])
             ->findOrFail($id);
 
@@ -835,6 +836,118 @@ class PurchasingOrderController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Terjadi kesalahan: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Batalkan PO yang sudah diproses dan buat draft baru untuk koreksi.
+     * Hanya bisa diakses oleh role admin dan direktur_utama.
+     */
+    public function duplikatDanBatalkan(string $id)
+    {
+        // Cek role: hanya admin atau direktur_utama
+        $user = Auth::user();
+        if (!$user->hasRole('admin') && !$user->hasRole('direktur_utama')) {
+            abort(403, 'Akses ditolak. Fitur ini hanya tersedia untuk Administrator dan Direktur Utama.');
+        }
+
+        $po = PurchaseOrder::with('details')->findOrFail($id);
+
+        // Tidak boleh pada PO yang sudah selesai
+        if ($po->status === 'selesai') {
+            return back()->with('error', 'PO dengan status "Selesai" tidak dapat dibatalkan & dibuat ulang.');
+        }
+
+        // Tidak boleh duplikat PO yang sudah dibatalkan
+        if ($po->status === 'dibatalkan') {
+            return back()->with('error', 'PO ini sudah berstatus "Dibatalkan".');
+        }
+
+        // Tidak perlu duplikat PO yang masih draft (bisa diedit langsung)
+        if ($po->status === 'draft') {
+            return redirect()
+                ->route('pembelian.purchasing-order.edit', $po->id)
+                ->with('info', 'PO masih berstatus Draft dan bisa langsung diedit.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 1. Batalkan PO lama
+            $oldStatus = $po->status;
+            $po->status = 'dibatalkan';
+            $po->save();
+
+            // Revert status PR jika PO ini berasal dari PR
+            if ($po->pr_id) {
+                $this->revertPurchaseRequestStatus($po->pr_id);
+            }
+
+            $this->logUserAktivitas(
+                'ubah_status',
+                'purchase_order',
+                $po->id,
+                "Status PO {$po->nomor} diubah dari {$oldStatus} ke dibatalkan (proses duplikat & buat ulang)"
+            );
+
+            // 2. Generate nomor PO baru
+            $nomorBaru = $this->generatePONumber();
+
+            // 3. Buat PO baru (draft) dengan data yang sama
+            $poBaru = PurchaseOrder::create([
+                'nomor'              => $nomorBaru,
+                'tanggal'            => $po->tanggal,
+                'supplier_id'        => $po->supplier_id,
+                'pr_id'              => $po->pr_id,
+                'user_id'            => Auth::id(),
+                'tanggal_pengiriman' => $po->tanggal_pengiriman,
+                'alamat_pengiriman'  => $po->alamat_pengiriman,
+                'catatan'            => trim(($po->catatan ?? '') . "\n[KOREKSI DARI: {$po->nomor}]"),
+                'syarat_ketentuan'   => $po->syarat_ketentuan,
+                'subtotal'           => $po->subtotal,
+                'diskon_persen'      => $po->diskon_persen,
+                'diskon_nominal'     => $po->diskon_nominal,
+                'ppn'                => $po->ppn,
+                'ongkos_kirim'       => $po->ongkos_kirim,
+                'total'              => $po->total,
+                'status'             => 'draft',
+                'status_pembayaran'  => 'belum_bayar',
+                'status_penerimaan'  => 'belum_diterima',
+            ]);
+
+            // 4. Salin semua detail item dari PO lama
+            foreach ($po->details as $detail) {
+                PurchaseOrderDetail::create([
+                    'po_id'             => $poBaru->id,
+                    'produk_id'         => $detail->produk_id,
+                    'nama_item'         => $detail->nama_item,
+                    'deskripsi'         => $detail->deskripsi,
+                    'quantity'          => $detail->quantity,
+                    'quantity_diterima' => 0,
+                    'satuan_id'         => $detail->satuan_id,
+                    'harga'             => $detail->harga,
+                    'diskon_persen'     => $detail->diskon_persen,
+                    'diskon_nominal'    => $detail->diskon_nominal,
+                    'subtotal'          => $detail->subtotal,
+                ]);
+            }
+
+            $this->logUserAktivitas(
+                'duplikat_dan_batalkan',
+                'purchase_order',
+                $poBaru->id,
+                "PO {$po->nomor} dibatalkan dan dibuat ulang sebagai {$poBaru->nomor} oleh {$user->name}"
+            );
+
+            DB::commit();
+
+            return redirect()
+                ->route('pembelian.purchasing-order.edit', $poBaru->id)
+                ->with('success', "PO {$po->nomor} berhasil dibatalkan. Draft baru {$poBaru->nomor} telah dibuat — silakan periksa dan edit data yang perlu dikoreksi, lalu simpan.");
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

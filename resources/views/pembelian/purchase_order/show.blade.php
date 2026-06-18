@@ -189,6 +189,131 @@
                     </a>
                 @endif
 
+                {{-- Tombol Batalkan & Buat Ulang: hanya untuk Administrator dan Direktur Utama --}}
+                @if (
+                    (auth()->user()->hasRole('admin') || auth()->user()->hasRole('direktur_utama')) &&
+                    !in_array($purchaseOrder->status, ['draft', 'selesai', 'dibatalkan'])
+                )
+                    <div x-data="{ konfirmasiBatalModal: false }">
+                        <button @click="konfirmasiBatalModal = true" type="button"
+                            class="inline-flex items-center px-4 py-2 bg-orange-500 border border-transparent rounded-md text-sm font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Batalkan &amp; Buat Ulang
+                        </button>
+
+                        {{-- Modal Konfirmasi --}}
+                        <div x-show="konfirmasiBatalModal" class="fixed inset-0 overflow-y-auto z-50" x-cloak>
+                            <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                                <div @click="konfirmasiBatalModal = false"
+                                    x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+                                    x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+                                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                                    class="fixed inset-0 transition-opacity">
+                                    <div class="absolute inset-0 bg-gray-500 dark:bg-gray-900 opacity-75"></div>
+                                </div>
+
+                                <div x-show="konfirmasiBatalModal"
+                                    x-transition:enter="ease-out duration-300"
+                                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                                    x-transition:leave="ease-in duration-200"
+                                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                    class="inline-block align-middle bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all my-8 sm:max-w-lg w-full">
+
+                                    <div class="bg-white dark:bg-gray-800 px-6 pt-6 pb-4">
+                                        <div class="flex items-start gap-4">
+                                            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900/30">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                                                    Konfirmasi Batalkan &amp; Buat Ulang
+                                                </h3>
+                                                <div class="mt-2 space-y-2">
+                                                    <p class="text-sm text-gray-600 dark:text-gray-400">
+                                                        Anda akan membatalkan PO <span class="font-semibold text-gray-900 dark:text-white">{{ $purchaseOrder->nomor }}</span>
+                                                        (status: <span class="font-medium capitalize text-orange-600 dark:text-orange-400">{{ $purchaseOrder->status }}</span>)
+                                                        dan membuat <strong>draft baru</strong> dengan data yang sama untuk dikoreksi.
+                                                    </p>
+                                                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30 rounded-md text-sm text-amber-800 dark:text-amber-300">
+                                                        <ul class="list-disc pl-4 space-y-1">
+                                                            <li>PO <strong>{{ $purchaseOrder->nomor }}</strong> akan berstatus <strong>Dibatalkan</strong></li>
+                                                            <li>Draft PO baru akan dibuat dengan nomor yang berbeda</li>
+                                                            <li>Anda akan diarahkan ke halaman <strong>edit draft baru</strong> tersebut</li>
+                                                            <li>Aksi ini <strong>tidak dapat dibatalkan</strong></li>
+                                                        </ul>
+                                                    </div>
+
+                                                    {{-- Peringatan khusus jika sudah ada Penerimaan Barang (berarti ada jurnal hutang) --}}
+                                                    @php
+                                                        $penerimaanTerkait = $purchaseOrder->penerimaan ?? collect();
+                                                    @endphp
+                                                    @if ($penerimaanTerkait->count() > 0)
+                                                        <div class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-300 dark:border-red-700/50 rounded-md text-sm">
+                                                            <div class="flex items-start gap-2">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                                </svg>
+                                                                <div>
+                                                                    <p class="font-semibold text-red-700 dark:text-red-400">
+                                                                        ⚠️ Perhatian: PO ini sudah memiliki {{ $penerimaanTerkait->count() }} Penerimaan Barang
+                                                                    </p>
+                                                                    <ul class="mt-1 list-disc pl-4 space-y-0.5 text-red-600 dark:text-red-400">
+                                                                        @foreach ($penerimaanTerkait as $penerimaan)
+                                                                            <li>
+                                                                                <span class="font-medium">{{ $penerimaan->nomor }}</span>
+                                                                                ({{ \Carbon\Carbon::parse($penerimaan->tanggal)->format('d M Y') }})
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ul>
+                                                                    <p class="mt-2 text-red-700 dark:text-red-300">
+                                                                        Penerimaan barang di atas telah membuat <strong>jurnal otomatis</strong>:
+                                                                        <span class="italic">Debit Persediaan / Kredit Hutang Usaha</span>.
+                                                                    </p>
+                                                                    <p class="mt-1 text-red-700 dark:text-red-300">
+                                                                        Membatalkan PO ini <strong>tidak otomatis membalik jurnal tersebut</strong>.
+                                                                        Setelah membatalkan, buat <strong>Jurnal Koreksi/Reversal manual</strong>
+                                                                        di menu <em>Keuangan → Jurnal Umum</em> untuk membalik entri tersebut.
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @endif
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex flex-row-reverse gap-2">
+                                        <form action="{{ route('pembelian.purchasing-order.duplikat-batalkan', $purchaseOrder->id) }}" method="POST">
+                                            @csrf
+                                            <button type="submit"
+                                                class="inline-flex justify-center items-center px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-all">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                                </svg>
+                                                Ya, Batalkan &amp; Buat Ulang
+                                            </button>
+                                        </form>
+                                        <button @click="konfirmasiBatalModal = false" type="button"
+                                            class="inline-flex justify-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none transition-all">
+                                            Batal
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Professional Status dropdown -->
                 @if (auth()->user()->hasPermission('purchase_order.change_status') &&
                         !in_array($purchaseOrder->status, ['selesai', 'dibatalkan']))

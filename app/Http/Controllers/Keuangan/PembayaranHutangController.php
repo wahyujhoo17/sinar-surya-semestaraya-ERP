@@ -14,10 +14,26 @@ use App\Models\TransaksiBank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Models\LogAktivitas;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PembayaranHutangController extends Controller
 {
+    /**
+     * Helper untuk mencatat log aktivitas user
+     */
+    private function logUserAktivitas($aktivitas, $modul, $data_id = null, $detail = null)
+    {
+        LogAktivitas::create([
+            'user_id' => Auth::id(),
+            'aktivitas' => $aktivitas,
+            'modul' => $modul,
+            'data_id' => $data_id,
+            'ip_address' => request()->ip(),
+            'detail' => $detail ? (is_array($detail) ? json_encode($detail) : $detail) : null,
+        ]);
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -229,7 +245,13 @@ class PembayaranHutangController extends Controller
         $payment = PembayaranHutang::with(['supplier', 'purchaseOrder', 'user'])
             ->findOrFail($id);
 
-        return view('keuangan.pembayaran_hutang.show', compact('payment'));
+        $logs = LogAktivitas::where('modul', 'hutang_usaha')
+            ->where('data_id', $id)
+            ->with('user')
+            ->latest()
+            ->get();
+
+        return view('keuangan.pembayaran_hutang.show', compact('payment', 'logs'));
     }
 
     /**
@@ -237,10 +259,18 @@ class PembayaranHutangController extends Controller
      */
     public function edit(string $id)
     {
-        $payment = PembayaranHutang::with(['supplier', 'purchaseOrder'])
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh edit pembayaran hutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengedit pembayaran hutang.');
+        }
+
+        $payment = PembayaranHutang::with(['supplier', 'purchaseOrder', 'kas', 'rekeningBank'])
             ->findOrFail($id);
 
         $suppliers = Supplier::orderBy('nama')->get();
+        $kasAccounts = Kas::all();
+        $bankAccounts = RekeningBank::all();
 
         $po = $payment->purchaseOrder;
 
@@ -271,9 +301,11 @@ class PembayaranHutangController extends Controller
 
         $sisaHutang = $po->total - $totalPayments - $totalReturValue;
 
-        return view('keuangan.pembayaran_hutang.edit', [
+        return view('keuangan.hutang_usaha.edit_pembayaran', [
             'payment' => $payment,
             'suppliers' => $suppliers,
+            'kasAccounts' => $kasAccounts,
+            'bankAccounts' => $bankAccounts,
             'po' => $po,
             'sisaHutang' => $sisaHutang
         ]);
@@ -284,7 +316,16 @@ class PembayaranHutangController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh update pembayaran hutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk mengupdate pembayaran hutang.');
+        }
+
         $payment = PembayaranHutang::findOrFail($id);
+
+        // Simpan data lama untuk log aktivitas
+        $oldData = $payment->getOriginal();
 
         $validated = $request->validate([
             'nomor' => 'required|unique:pembayaran_hutang,nomor,' . $id,
@@ -361,6 +402,31 @@ class PembayaranHutangController extends Controller
 
             DB::commit();
 
+            // Catat log aktivitas edit
+            $changes = [];
+            foreach ($validated as $key => $newValue) {
+                $oldValue = $oldData[$key] ?? null;
+                if ($oldValue != $newValue) {
+                    $changes[$key] = ['lama' => $oldValue, 'baru' => $newValue];
+                }
+            }
+            $this->logUserAktivitas('ubah', 'hutang_usaha', $payment->id, [
+                'nomor' => $payment->nomor,
+                'po_nomor' => $po->nomor ?? '-',
+                'supplier' => $payment->supplier->nama ?? '-',
+                'perubahan' => $changes,
+                'sebelum' => [
+                    'jumlah' => $oldData['jumlah'] ?? null,
+                    'metode_pembayaran' => $oldData['metode_pembayaran'] ?? null,
+                    'tanggal' => $oldData['tanggal'] ?? null,
+                ],
+                'sesudah' => [
+                    'jumlah' => $payment->jumlah,
+                    'metode_pembayaran' => $payment->metode_pembayaran,
+                    'tanggal' => $payment->tanggal,
+                ],
+            ]);
+
             return redirect()
                 ->route('keuangan.pembayaran-hutang.show', $payment->id)
                 ->with('success', 'Pembayaran hutang berhasil diperbarui.');
@@ -378,8 +444,24 @@ class PembayaranHutangController extends Controller
      */
     public function destroy(string $id)
     {
+        // Hanya superadmin, direktur_utama, administrator, dan admin yang boleh hapus pembayaran hutang
+        $user = Auth::user();
+        if (!$user->hasRole('superadmin') && !$user->hasRole('direktur_utama') && !$user->hasRole('administrator') && !$user->hasRole('admin')) {
+            abort(403, 'Akses ditolak. Anda tidak memiliki izin untuk menghapus pembayaran hutang.');
+        }
+
         $payment = PembayaranHutang::findOrFail($id);
         $po_id = $payment->purchase_order_id;
+
+        // Simpan data untuk log aktivitas sebelum dihapus
+        $paymentLogDetail = [
+            'nomor' => $payment->nomor,
+            'jumlah' => $payment->jumlah,
+            'metode_pembayaran' => $payment->metode_pembayaran,
+            'tanggal' => $payment->tanggal,
+            'po_nomor' => $payment->purchaseOrder->nomor ?? '-',
+            'supplier' => $payment->supplier->nama ?? '-',
+        ];
 
         DB::beginTransaction();
 
@@ -434,6 +516,9 @@ class PembayaranHutangController extends Controller
             $po->save();
 
             DB::commit();
+
+            // Catat log aktivitas hapus
+            $this->logUserAktivitas('hapus', 'hutang_usaha', $id, $paymentLogDetail);
 
             return redirect()
                 ->route('keuangan.pembayaran-hutang.index')

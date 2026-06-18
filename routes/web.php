@@ -453,6 +453,7 @@ Route::middleware(['auth'])->group(function () {
 
         // PURCHASING ORDER
         Route::put('purchasing-order/{purchasing_order}/change-status', [PurchasingOrderController::class, 'changeStatus'])->name('purchasing-order.change-status');
+        Route::post('purchasing-order/{id}/duplikat-dan-batalkan', [PurchasingOrderController::class, 'duplikatDanBatalkan'])->name('purchasing-order.duplikat-batalkan');
         Route::get('purchasing-order/{id}/pdf', [PurchasingOrderController::class, 'exportPdf'])->name('purchasing-order.pdf');
         Route::get('purchasing-order/{id}/print', [PurchasingOrderController::class, 'printPdf'])->name('purchasing-order.print');
         Route::resource('purchasing-order', PurchasingOrderController::class);

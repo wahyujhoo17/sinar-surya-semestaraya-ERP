@@ -7,6 +7,7 @@ use App\Models\PembayaranHutang;
 use App\Models\PurchaseOrder;
 use App\Models\ReturPembelian;
 use App\Models\Supplier;
+use App\Models\LogAktivitas;
 use App\Exports\HutangUsahaExport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -125,13 +126,22 @@ class HutangUsahaController extends Controller
 
         $sisaHutang = $po->total - $totalPayments - $totalReturValue;
 
+        // Ambil log aktivitas untuk semua pembayaran pada PO ini
+        $paymentIds = $payments->pluck('id')->toArray();
+        $logs = LogAktivitas::where('modul', 'hutang_usaha')
+            ->whereIn('data_id', $paymentIds)
+            ->with('user')
+            ->latest()
+            ->get();
+
         return view('keuangan.hutang_usaha.show', [
             'po' => $po,
             'payments' => $payments,
             'returns' => $returns,
             'totalPayments' => $totalPayments,
             'totalReturValue' => $totalReturValue,
-            'sisaHutang' => $sisaHutang
+            'sisaHutang' => $sisaHutang,
+            'logs' => $logs,
         ]);
     }
 
