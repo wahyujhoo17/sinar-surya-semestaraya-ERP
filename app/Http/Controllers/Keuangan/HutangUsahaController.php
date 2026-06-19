@@ -10,7 +10,6 @@ use App\Models\Supplier;
 use App\Models\LogAktivitas;
 use App\Exports\HutangUsahaExport;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -23,28 +22,28 @@ class HutangUsahaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PurchaseOrder::with(['supplier', 'details'])
+        $baseQuery = PurchaseOrder::with(['supplier', 'details'])
             ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian', 'lunas'])
-            ->where('status', '!=', 'dibatalkan')
-            ->orderBy('tanggal', 'desc');
+            ->where('status', '!=', 'dibatalkan');
 
         // Filter by supplier if provided
         if ($request->has('supplier_id') && !empty($request->supplier_id)) {
-            $query->where('supplier_id', $request->supplier_id);
+            $baseQuery->where('supplier_id', $request->supplier_id);
         }
 
         // Filter by date range
         if ($request->has('start_date') && !empty($request->start_date)) {
-            $query->whereDate('tanggal', '>=', $request->start_date);
+            $baseQuery->whereDate('tanggal', '>=', $request->start_date);
         }
 
         if ($request->has('end_date') && !empty($request->end_date)) {
-            $query->whereDate('tanggal', '<=', $request->end_date);
+            $baseQuery->whereDate('tanggal', '<=', $request->end_date);
         }
 
-        $purchaseOrders = $query->get();
+        // Paginate results (15 per page)
+        $purchaseOrders = (clone $baseQuery)->orderBy('tanggal', 'desc')->paginate(15)->withQueryString();
 
-        // Calculate remaining debt for each PO considering payments and returns
+        // Calculate remaining debt for each PO in the current page
         foreach ($purchaseOrders as $po) {
             // Get total payments for this PO
             $totalPayments = PembayaranHutang::where('purchase_order_id', $po->id)->sum('jumlah');
@@ -60,9 +59,7 @@ class HutangUsahaController extends Controller
                 $poDetails = $retur->purchaseOrder->details;
 
                 foreach ($retur->details as $returDetail) {
-                    // Find matching PO detail for this product
                     $matchingPoDetail = $poDetails->where('produk_id', $returDetail->produk_id)->first();
-
                     if ($matchingPoDetail) {
                         $totalReturValue += $matchingPoDetail->harga * $returDetail->quantity;
                     }
@@ -75,12 +72,32 @@ class HutangUsahaController extends Controller
             $po->total_retur = $totalReturValue;
         }
 
+        // ── Summary stats (computed across ALL filtered rows, not just current page) ──
+        $allPoIds = (clone $baseQuery)->pluck('id');
+
+        // Total hutang (sum of all PO totals) minus total payments — use Eloquent so
+        // the correct table name is always resolved from the model, avoiding raw-SQL issues.
+        $totalPo    = PurchaseOrder::whereIn('id', $allPoIds)->sum('total');
+        $totalBayar = PembayaranHutang::whereIn('purchase_order_id', $allPoIds)->sum('jumlah');
+        $totalSisaHutang = max(0, $totalPo - $totalBayar);
+
+        $jumlahBelumLunas = (clone $baseQuery)
+            ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
+            ->count();
+
+        $jumlahLunas = (clone $baseQuery)
+            ->where('status_pembayaran', 'lunas')
+            ->count();
+
         $suppliers = Supplier::orderBy('nama')->get();
 
         return view('keuangan.hutang_usaha.index', [
-            'purchaseOrders' => $purchaseOrders,
-            'suppliers' => $suppliers,
-            'request' => $request
+            'purchaseOrders'   => $purchaseOrders,
+            'suppliers'        => $suppliers,
+            'request'          => $request,
+            'totalSisaHutang'  => $totalSisaHutang,
+            'jumlahBelumLunas' => $jumlahBelumLunas,
+            'jumlahLunas'      => $jumlahLunas,
         ]);
     }
 

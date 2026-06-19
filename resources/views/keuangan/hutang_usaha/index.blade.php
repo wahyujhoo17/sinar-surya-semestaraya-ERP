@@ -40,8 +40,8 @@
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Total Hutang Usaha</p>
                                 <div class="mt-1 flex items-baseline">
-                                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">Rp
-                                        {{ number_format($purchaseOrders->sum('sisa_hutang'), 0, ',', '.') }}</p>
+                                     <p class="text-2xl font-semibold text-gray-900 dark:text-white">Rp
+                                         {{ number_format($totalSisaHutang, 0, ',', '.') }}</p>
                                 </div>
                             </div>
                         </div>
@@ -67,8 +67,8 @@
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Jumlah PO Belum Lunas</p>
                                 <div class="mt-1 flex items-baseline">
-                                    <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                        {{ $purchaseOrders->where('status_pembayaran', '!=', 'lunas')->count() }}</p>
+                                     <p class="text-2xl font-semibold text-gray-900 dark:text-white">
+                                         {{ $jumlahBelumLunas }}</p>
                                     <p class="ml-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">PO</p>
                                 </div>
                             </div>
@@ -76,7 +76,7 @@
                     </div>
                 </div>
 
-                {{-- Jatuh Tempo Card --}}
+                {{-- PO Lunas Card --}}
                 <div
                     class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg hover:shadow-xl rounded-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-300 hover:-translate-y-1">
                     <div class="p-5">
@@ -86,17 +86,17 @@
                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z">
                                     </path>
                                 </svg>
                             </div>
                             <div class="ml-4">
                                 <p
                                     class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Jatuh Tempo 7 Hari</p>
+                                    PO Sudah Lunas</p>
                                 <div class="mt-1 flex items-baseline">
                                     <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                                        {{ $purchaseOrders->where('jatuh_tempo', '<=', date('Y-m-d', strtotime('+7 days')))->where('status_pembayaran', '!=', 'lunas')->count() }}
+                                        {{ $jumlahLunas }}
                                     </p>
                                     <p class="ml-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">PO</p>
                                 </div>
@@ -301,11 +301,11 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                            @forelse ($purchaseOrders as $index => $po)
+                            @forelse ($purchaseOrders as $po)
                                 <tr
-                                    class="{{ $index % 2 == 0 ? '' : 'bg-gray-50 dark:bg-gray-800/50' }} hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200">
+                                    class="{{ $loop->iteration % 2 == 0 ? 'bg-gray-50 dark:bg-gray-800/50' : '' }} hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                                        {{ $index + 1 }}</td>
+                                        {{ ($purchaseOrders->currentPage() - 1) * $purchaseOrders->perPage() + $loop->iteration }}</td>
                                     <td
                                         class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300">
                                         <a href="{{ route('keuangan.hutang-usaha.show', $po->id) }}"
@@ -329,9 +329,9 @@
                                         {{ number_format($po->sisa_hutang, 0, ',', '.') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-center">
-                                        @if (isset($po->jatuh_tempo))
+                                        @if (isset($po->tanggal_jatuh_tempo) && $po->tanggal_jatuh_tempo)
                                             @php
-                                                $jatuhtempo = \Carbon\Carbon::parse($po->jatuh_tempo);
+                                                $jatuhtempo = \Carbon\Carbon::parse($po->tanggal_jatuh_tempo);
                                                 $today = \Carbon\Carbon::now();
                                                 $isOverdue =
                                                     $jatuhtempo->lt($today) && $po->status_pembayaran != 'lunas';
@@ -435,23 +435,31 @@
                             <tr>
                                 <th colspan="7"
                                     class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ __('Total Sisa Hutang:') }}</th>
+                                    {{ __('Total Sisa Hutang (semua):') }}</th>
                                 <th
                                     class="px-6 py-3 text-right text-sm font-bold text-gray-800 dark:text-white uppercase tracking-wider">
-                                    {{ number_format($purchaseOrders->sum('sisa_hutang'), 0, ',', '.') }}</th>
+                                    {{ number_format($totalSisaHutang, 0, ',', '.') }}</th>
                                 <th colspan="3"></th>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
 
-                <!-- Pagination if applicable -->
-                @if (isset($purchaseOrders) && method_exists($purchaseOrders, 'links'))
-                    <div
-                        class="px-6 py-3 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700">
-                        {{ $purchaseOrders->withQueryString()->links() }}
+                {{-- Pagination --}}
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                        Menampilkan
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ $purchaseOrders->firstItem() ?? 0 }}</span>
+                        –
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ $purchaseOrders->lastItem() ?? 0 }}</span>
+                        dari
+                        <span class="font-semibold text-gray-900 dark:text-white">{{ $purchaseOrders->total() }}</span>
+                        data
                     </div>
-                @endif
+                    <div>
+                        {{ $purchaseOrders->links() }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
