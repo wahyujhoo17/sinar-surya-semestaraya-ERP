@@ -27,7 +27,7 @@ class HutangUsahaExport implements FromCollection, WithHeadings, WithMapping, Sh
     public function collection()
     {
         $query = PurchaseOrder::with(['supplier', 'details'])
-            ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
+            ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian', 'lunas'])
             ->where('status', '!=', 'dibatalkan')
             ->orderBy('tanggal', 'desc');
 
@@ -43,6 +43,12 @@ class HutangUsahaExport implements FromCollection, WithHeadings, WithMapping, Sh
 
         if (isset($this->request['end_date']) && !empty($this->request['end_date'])) {
             $query->whereDate('tanggal', '<=', $this->request['end_date']);
+        }
+
+        if (isset($this->request['status']) && !empty($this->request['status'])) {
+            $query->where('status_pembayaran', $this->request['status']);
+        } else {
+            $query->whereIn('status_pembayaran', ['belum_bayar', 'sebagian']);
         }
 
         $purchaseOrders = $query->get();

@@ -40,6 +40,11 @@ class HutangUsahaController extends Controller
             $baseQuery->whereDate('tanggal', '<=', $request->end_date);
         }
 
+        // Filter by status if provided
+        if ($request->has('status') && !empty($request->status)) {
+            $baseQuery->where('status_pembayaran', $request->status);
+        }
+
         // Paginate results (15 per page)
         $purchaseOrders = (clone $baseQuery)->orderBy('tanggal', 'desc')->paginate(15)->withQueryString();
 
@@ -182,7 +187,7 @@ class HutangUsahaController extends Controller
     public function generatePdf(Request $request)
     {
         $query = PurchaseOrder::with(['supplier', 'details', 'pembayaran'])
-            ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
+            ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian', 'lunas'])
             ->where('status', '!=', 'dibatalkan')
             ->orderBy('tanggal', 'desc');
 
@@ -198,6 +203,13 @@ class HutangUsahaController extends Controller
 
         if ($request->has('end_date') && !empty($request->end_date)) {
             $query->whereDate('tanggal', '<=', $request->end_date);
+        }
+
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('status_pembayaran', $request->status);
+        } else {
+            // Default to only unpaid if no status filter is provided
+            $query->whereIn('status_pembayaran', ['belum_bayar', 'sebagian']);
         }
 
         $purchaseOrders = $query->get();
