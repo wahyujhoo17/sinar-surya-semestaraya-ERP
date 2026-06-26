@@ -154,7 +154,8 @@ class PDFDeliveryOrderSinarSuryaTemplate
                 // Bundle name in bold
                 $pdf->SetXY($namaCol, $currentY);
                 $pdf->SetFont('helvetica', 'B', 8); // Bold font for bundle name
-                $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $bundleName . ':', 0, 0, 'L');
+                $cleanBundleName = str_replace(['×', '″', '“', '”', '‘', '’'], ['x', '"', '"', '"', "'", "'"], $bundleName);
+                $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $cleanBundleName . ':', 0, 0, 'L');
 
                 // Empty cells for bundle header
                 $pdf->SetXY($kodeCol, $currentY);
@@ -176,8 +177,9 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
                     // Item name with indent
                     $baseName = $detail->produk->nama ?? $detail->deskripsi ?? '-';
-                    $itemName = '  • ' . $baseName; // Indent with bullet
-                    $itemName = strlen($itemName) > 35 ? substr($itemName, 0, 32) . '...' : $itemName;
+                    $baseName = str_replace(['×', '″', '“', '”', '‘', '’'], ['x', '"', '"', '"', "'", "'"], $baseName);
+                    $itemName = '  - ' . $baseName; // Indent with dash for compatibility
+                    $itemName = mb_strlen($itemName, 'UTF-8') > 35 ? mb_substr($itemName, 0, 32, 'UTF-8') . '...' : $itemName;
 
                     $pdf->SetXY($namaCol, $currentY);
                     $pdf->Cell($kodeCol - $namaCol - 2, $lineHeight, $itemName, 0, 0, 'L');
@@ -209,8 +211,9 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
                 // Nama produk
                 $baseName = $detail->produk->nama ?? $detail->deskripsi ?? '-';
-                $namaProduk = strlen($baseName) > 35 ?
-                    substr($baseName, 0, 32) . '...' :
+                $baseName = str_replace(['×', '″', '“', '”', '‘', '’'], ['x', '"', '"', '"', "'", "'"], $baseName);
+                $namaProduk = mb_strlen($baseName, 'UTF-8') > 35 ?
+                    mb_substr($baseName, 0, 32, 'UTF-8') . '...' :
                     $baseName;
 
                 $pdf->SetXY($namaCol, $currentY);
