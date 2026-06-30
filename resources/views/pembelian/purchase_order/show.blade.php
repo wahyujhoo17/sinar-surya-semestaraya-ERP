@@ -290,6 +290,7 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
 
                                     <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex flex-row-reverse gap-2">
                                         <form action="{{ route('pembelian.purchasing-order.duplikat-batalkan', $purchaseOrder->id) }}" method="POST">

@@ -311,7 +311,7 @@
                         <div>
                             <textarea id="alamat_pengiriman" name="alamat_pengiriman" rows="2"
                                 class="shadow-sm block w-full focus:ring-primary-500 focus:border-primary-500 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md"
-                                placeholder="Alamat pengiriman barang..."></textarea>
+                                placeholder="Alamat pengiriman barang...">{{ old('alamat_pengiriman', 'PT. SINAR SURYA SEMESTARAYA. Jl. Raya Condet No 6 RT/RW 02/01 Kel. Balekambang, Kec. Kramatjati,Kota Jakarta Timur 13530') }}</textarea>
                         </div>
                     </div>
 
