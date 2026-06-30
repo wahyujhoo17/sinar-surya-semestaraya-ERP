@@ -4,6 +4,7 @@ namespace App\Http\Controllers\MasterData;
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\LogAktivitas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -171,6 +172,8 @@ class CustomerController extends Controller
 
         $customer = Customer::create($validated);
 
+        $this->logActivity('create', $customer, $request->ip());
+
         return response()->json([
             'success' => true,
             'message' => 'Pelanggan <strong>' . $customer->nama . '</strong> berhasil ditambahkan.',
@@ -192,11 +195,21 @@ class CustomerController extends Controller
         ];
         $currentPage = 'Detail Pelanggan';
         $salesUsers = \App\Models\User::where('is_active', true)->orderBy('name')->get();
+
+        // Riwayat aktivitas/perubahan pelanggan
+        $logs = LogAktivitas::with('user')
+            ->where('modul', 'customer')
+            ->where('data_id', $pelanggan->id)
+            ->orderBy('created_at', 'desc')
+            ->limit(50)
+            ->get();
+
         return view('master-data.pelanggan.show', [
             'customer' => $pelanggan,
             'breadcrumbs' => $breadcrumbs,
             'currentPage' => $currentPage,
-            'salesUsers' => $salesUsers
+            'salesUsers' => $salesUsers,
+            'logs' => $logs,
         ]);
     }
 
@@ -235,7 +248,16 @@ class CustomerController extends Controller
         }
 
         $validated = $request->validate($this->validationRules($pelanggan->id));
-        $validated['is_active'] = $request->boolean('is_active');
+
+        // Konversi is_active ke boolean — HANYA set jika memang berubah nilainya
+        // agar tidak selalu masuk ke getChanges() dan mencemari log
+        $newIsActive = $request->boolean('is_active');
+        if ((bool) $pelanggan->is_active !== $newIsActive) {
+            $validated['is_active'] = $newIsActive;
+        } else {
+            // Jaga nilai lama supaya field tidak dianggap dirty oleh Eloquent
+            $validated['is_active'] = (bool) $pelanggan->is_active;
+        }
 
         // Untuk sales, pastikan sales_id tidak berubah
         if (!$this->canAccessAllCustomers()) {
@@ -243,7 +265,12 @@ class CustomerController extends Controller
             $validated['sales_name'] = Auth::user()->name;
         }
 
+        // Simpan nilai lama sebelum update untuk keperluan log
+        $original = $pelanggan->getOriginal();
+
         $pelanggan->update($validated);
+
+        $this->logActivity('update', $pelanggan, $request->ip(), $original);
 
         return response()->json([
             'success' => true,
@@ -264,6 +291,8 @@ class CustomerController extends Controller
 
         $nama = $pelanggan->nama;
         try {
+            $this->logActivity('delete', $pelanggan, request()->ip());
+
             $pelanggan->delete();
             return redirect()->route('master.pelanggan.index')
                 ->with('success', 'Pelanggan <strong>' . $nama . '</strong> berhasil dihapus.');
@@ -379,6 +408,123 @@ class CustomerController extends Controller
             ], 422);
         }
     }
+    /**
+     * Mapping label field untuk ditampilkan pada log aktivitas.
+     */
+    protected function fieldLabels()
+    {
+        return [
+            'kode' => 'Kode',
+            'nama' => 'Nama',
+            'tipe' => 'Tipe',
+            'jalan' => 'Jalan',
+            'kota' => 'Kota',
+            'provinsi' => 'Provinsi',
+            'kode_pos' => 'Kode Pos',
+            'negara' => 'Negara',
+            'company' => 'Perusahaan',
+            'group' => 'Grup',
+            'industri' => 'Industri',
+            'sales_name' => 'Nama Sales',
+            'sales_id' => 'Sales',
+            'alamat' => 'Alamat',
+            'alamat_pengiriman' => 'Alamat Pengiriman',
+            'telepon' => 'Telepon',
+            'email' => 'Email',
+            'npwp' => 'NPWP',
+            'kontak_person' => 'Kontak Person',
+            'jabatan_kontak' => 'Jabatan Kontak',
+            'no_hp_kontak' => 'No HP Kontak',
+            'catatan' => 'Catatan',
+            'is_active' => 'Status',
+        ];
+    }
+
+    /**
+     * Catat aktivitas perubahan data pelanggan ke log_aktivitas.
+     *
+     * @param string     $aktivitas  create|update|delete
+     * @param Customer   $customer
+     * @param string|null $ipAddress
+     * @param array|null $original   Nilai field sebelum update
+     */
+    protected function logActivity($aktivitas, Customer $customer, $ipAddress = null, array $original = null)
+    {
+        $labels = $this->fieldLabels();
+        $detail = [
+            'nama' => $customer->nama,
+            'kode' => $customer->kode,
+        ];
+
+        if ($aktivitas === 'update' && $original !== null) {
+            $changes = [];
+            // Ambil field yang berubah setelah update
+            foreach ($customer->getChanges() as $field => $newValue) {
+                if (in_array($field, ['updated_at'])) {
+                    continue;
+                }
+                $oldValue = $original[$field] ?? null;
+
+                // Normalisasi status aktif menjadi teks yang mudah dibaca
+                if ($field === 'is_active') {
+                    $oldBool = filter_var($oldValue, FILTER_VALIDATE_BOOLEAN);
+                    $newBool = filter_var($newValue, FILTER_VALIDATE_BOOLEAN);
+                    // Skip jika efektif tidak berubah
+                    if ($oldBool === $newBool) {
+                        continue;
+                    }
+                    $oldValue = $oldBool ? 'Aktif' : 'Nonaktif';
+                    $newValue = $newBool ? 'Aktif' : 'Nonaktif';
+                }
+
+                // Ganti sales_id mentah dengan nama sales agar log lebih readable
+                if ($field === 'sales_id') {
+                    $oldUser = $oldValue ? \App\Models\User::find($oldValue) : null;
+                    $newUser = $newValue ? \App\Models\User::find($newValue) : null;
+                    $oldValue = $oldUser ? $oldUser->name : ($oldValue ? "#$oldValue" : null);
+                    $newValue = $newUser ? $newUser->name : ($newValue ? "#$newValue" : null);
+                    // Gunakan label "Sales" bukan id numerik
+                    $changes[$field] = [
+                        'label' => 'Sales',
+                        'old'   => $oldValue,
+                        'new'   => $newValue,
+                    ];
+                    continue;
+                }
+
+                // Lewati sales_name jika sales_id sudah tercatat (redundant)
+                if ($field === 'sales_name' && isset($changes['sales_id'])) {
+                    continue;
+                }
+
+                $changes[$field] = [
+                    'label' => $labels[$field] ?? ucfirst(str_replace('_', ' ', $field)),
+                    'old'   => $oldValue,
+                    'new'   => $newValue,
+                ];
+            }
+            $detail['changes'] = $changes;
+
+            // Jangan catat log bila tidak ada perubahan nyata
+            if (empty($changes)) {
+                return;
+            }
+        }
+
+        try {
+            LogAktivitas::create([
+                'user_id' => Auth::id(),
+                'aktivitas' => $aktivitas,
+                'modul' => 'customer',
+                'data_id' => $customer->id,
+                'ip_address' => $ipAddress,
+                'detail' => json_encode($detail, JSON_UNESCAPED_UNICODE),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Gagal mencatat log aktivitas pelanggan: ' . $e->getMessage());
+        }
+    }
+
     protected function validationRules($id = null)
     {
         return [

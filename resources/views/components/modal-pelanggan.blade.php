@@ -551,6 +551,19 @@
                 // Ubah cara mengirim is_active
                 formData.set('is_active', this.formData.is_active === '1' || this.formData.is_active === 1 ? '1' : '0');
 
+                // Fix: Ambil sales_id dari hidden input DOM (selalu up-to-date setelah pilih dropdown)
+                // dan pastikan ini yang dikirim, bukan dari formData Alpine yang bisa stale.
+                const salesIdInput = document.getElementById('sales_id_input');
+                const domSalesId = salesIdInput ? salesIdInput.value : null;
+
+                // Prioritas: DOM hidden input (diperbaharui langsung oleh dropdown JS)
+                // Fallback: formData Alpine jika DOM input belum dirender
+                const finalSalesId = (domSalesId !== null && domSalesId !== undefined)
+                    ? domSalesId
+                    : (this.formData.sales_id ?? '');
+
+                formData.set('sales_id', finalSalesId);
+
                 fetch(url, {
                         method: method,
                         body: formData,
