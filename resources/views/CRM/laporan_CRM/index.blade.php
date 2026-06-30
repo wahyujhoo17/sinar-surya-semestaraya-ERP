@@ -7,6 +7,61 @@
             </div>
         </div>
 
+        <!-- Filter Bar -->
+        <div class="mb-6 bg-white dark:bg-gray-800 rounded-lg shadow p-4 border border-gray-200 dark:border-gray-700"
+             x-data="{ filterType: '{{ $filter_type ?? 'year' }}' }">
+            <form action="{{ route('crm.laporan.index') }}" method="GET" class="flex flex-col md:flex-row items-end gap-4">
+                
+                <!-- Filter Type -->
+                <div class="w-full md:w-1/4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipe Filter</label>
+                    <select name="filter_type" x-model="filterType"
+                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                        <option value="year">Tahunan</option>
+                        <option value="month">Bulanan</option>
+                        <option value="custom">Rentang Tanggal</option>
+                    </select>
+                </div>
+
+                <!-- Year Input (Visible for year and month) -->
+                <div class="w-full md:w-1/4" x-show="filterType === 'year' || filterType === 'month'">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tahun</label>
+                    <input type="number" name="year" value="{{ $year ?? date('Y') }}" min="2000" max="2100"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                </div>
+
+                <!-- Month Input (Visible only for month) -->
+                <div class="w-full md:w-1/4" x-show="filterType === 'month'" x-cloak>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bulan</label>
+                    <select name="month" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                        @for($i = 1; $i <= 12; $i++)
+                            <option value="{{ str_pad($i, 2, '0', STR_PAD_LEFT) }}" {{ ($month ?? date('m')) == str_pad($i, 2, '0', STR_PAD_LEFT) ? 'selected' : '' }}>
+                                {{ date('F', mktime(0, 0, 0, $i, 1)) }}
+                            </option>
+                        @endfor
+                    </select>
+                </div>
+
+                <!-- Date Range Inputs (Visible only for custom) -->
+                <div class="w-full md:w-1/4" x-show="filterType === 'custom'" x-cloak>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dari Tanggal</label>
+                    <input type="date" name="start_date" value="{{ $start_date ?? '' }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                </div>
+                <div class="w-full md:w-1/4" x-show="filterType === 'custom'" x-cloak>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Sampai Tanggal</label>
+                    <input type="date" name="end_date" value="{{ $end_date ?? '' }}"
+                           class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                </div>
+
+                <div class="w-full md:w-auto">
+                    <button type="submit" class="px-4 py-2 bg-gray-800 dark:bg-gray-600 text-white rounded-md hover:bg-gray-700 w-full md:w-auto shadow-sm transition-colors">
+                        Terapkan Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Metrics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-5 border border-gray-200 dark:border-gray-700">

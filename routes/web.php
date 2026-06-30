@@ -135,6 +135,8 @@ Route::middleware(['auth'])->group(function () {
     // Pengaturan Hak Akses
     Route::get('/pengaturan/hak-akses', [HakAksesController::class, 'index'])->name('pengaturan.hak-akses.index');
     Route::post('/pengaturan/hak-akses', [HakAksesController::class, 'update'])->name('pengaturan.hak-akses.update');
+    Route::post('/pengaturan/hak-akses/toggle', [HakAksesController::class, 'togglePermission'])->name('pengaturan.hak-akses.toggle');
+    Route::post('/pengaturan/hak-akses/permission', [HakAksesController::class, 'storePermission'])->name('pengaturan.hak-akses.permission.store');
 
     // Pengaturan Umum
     Route::get('/pengaturan/umum', [PengaturanUmumController::class, 'index'])->name('pengaturan.umum');

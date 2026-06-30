@@ -89,6 +89,10 @@ class User extends Authenticatable
     public function hasPermission($permission)
     {
         foreach ($this->roles as $role) {
+            // Admin automatically has all permissions
+            if ($role->kode === 'admin') {
+                return true;
+            }
             if ($role->permissions->contains('kode', $permission)) {
                 return true;
             }

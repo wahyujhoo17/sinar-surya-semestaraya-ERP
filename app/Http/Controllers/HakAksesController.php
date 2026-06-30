@@ -52,4 +52,52 @@ class HakAksesController extends Controller
             return redirect()->back()->with('error', 'Gagal memperbarui hak akses: ' . $e->getMessage());
         }
     }
+
+    // Toggle a single permission via AJAX for auto-save
+    public function togglePermission(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'permission_id' => 'required|exists:permissions,id',
+            'state' => 'required|boolean',
+        ]);
+
+        $role = Role::findOrFail($request->role_id);
+        
+        if ($request->state) {
+            $role->permissions()->syncWithoutDetaching([$request->permission_id]);
+        } else {
+            $role->permissions()->detach($request->permission_id);
+        }
+
+        return response()->json(['status' => 'success', 'message' => 'Hak akses berhasil diperbarui otomatis.']);
+    }
+
+    // Menambahkan permission baru via AJAX
+    public function storePermission(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'kode' => 'required|string|max:255|unique:permissions,kode',
+            'modul' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string|max:500',
+        ]);
+
+        $modul = strtolower(str_replace(' ', '_', $request->modul));
+        $kode = strtolower(str_replace(' ', '_', $request->kode)); // Safe formatting
+
+        $permission = Permission::create([
+            'nama' => $request->nama,
+            'kode' => $request->kode, // Use provided kode
+            'modul' => $modul,
+            'deskripsi' => $request->deskripsi
+        ]);
+
+        // Return the new permission so UI can update
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Permission baru berhasil ditambahkan.',
+            'permission' => $permission
+        ]);
+    }
 }

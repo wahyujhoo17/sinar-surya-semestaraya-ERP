@@ -1,358 +1,288 @@
-<x-app-layout :breadcrumbs="$breadcrumbs" :currentPage="$currentPage">
-    <div x-data="hakAksesManager()" class="container mx-auto py-6">
-        <!-- Header Section -->
-        <div
-            class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 mb-6">
-            <div class="p-6">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white mb-2">Pengaturan Hak Akses</h1>
-                <p class="text-gray-600 dark:text-gray-400">Atur hak akses untuk setiap role dalam sistem.</p>
+@php
+    use Illuminate\Support\Str;
+@endphp
+
+<x-app-layout :breadcrumbs="[
+    ['label' => 'Pengaturan', 'url' => '#'],
+    ['label' => 'Hak Akses', 'url' => route('pengaturan.hak-akses.index')],
+]" :currentPage="'Hak Akses'">
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8" x-data="permissionsManager()">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Pengaturan Hak Akses</h1>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola peran (role) dan hak akses pengguna secara real-time.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex flex-wrap gap-2">
+                <button @click="openAddModal = true"
+                    class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Permission Baru
+                </button>
             </div>
         </div>
-
-        <!-- Notification -->
-        <div x-show="successMessage" x-transition
-            class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded shadow-md flex justify-between items-center">
+        
+        <!-- Flash Messages via Alpine -->
+        <div x-show="successMessage" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 transform translate-y-2"
+            x-transition:enter-end="opacity-100 transform translate-y-0"
+            x-transition:leave="transition ease-in duration-200"
+            x-transition:leave-start="opacity-100 transform translate-y-0"
+            x-transition:leave-end="opacity-0 transform translate-y-2"
+            class="mb-6 bg-green-50 dark:bg-green-900/30 border-l-4 border-green-500 p-4 rounded-md shadow-sm fixed bottom-4 right-4 z-50 w-72" style="display: none;">
             <div class="flex items-center">
-                <svg class="h-5 w-5 mr-2 text-green-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                    fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clip-rule="evenodd" />
+                <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
-                <span x-text="successMessage"></span>
+                <p class="ml-3 text-sm font-medium text-green-800 dark:text-green-200" x-text="successMessage"></p>
             </div>
-            <button @click="successMessage = ''" class="text-green-700 hover:text-green-900">
-                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd" />
-                </svg>
-            </button>
         </div>
 
-        <!-- Main Content -->
-        <div
-            class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-xl border border-gray-200 dark:border-gray-700">
-            <div class="p-6">
-                <!-- Filter & Search Section -->
-                <div class="flex flex-col lg:flex-row justify-between mb-6 space-y-4 lg:space-y-0 lg:space-x-4">
-                    <div class="flex-grow">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <div class="w-full sm:w-1/2 lg:w-64">
-                                <label for="filter-role"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter
-                                    Role:</label>
-                                <select id="filter-role" x-model="selectedRole"
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
-                                    <option value="all">Semua Role</option>
-                                    @foreach ($roles as $role)
-                                        <option value="{{ $role->id }}">{{ $role->nama ?? $role->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="w-full sm:w-1/2 lg:w-64">
-                                <label for="filter-modul"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filter
-                                    Modul:</label>
-                                <select id="filter-modul" x-model="selectedModul"
-                                    class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:text-white">
-                                    <option value="all">Semua Modul</option>
-                                    <template x-for="modul in availableModules" :key="modul">
-                                        <option :value="modul" x-text="formatModulName(modul)"></option>
-                                    </template>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="w-full lg:w-64">
-                        <label for="search-permission"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari
-                            Permission:</label>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div class="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="w-full sm:w-1/3">
                         <div class="relative">
-                            <input type="search" id="search-permission" x-model="searchQuery"
-                                placeholder="Cari permission..."
-                                class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 pl-10 dark:text-white">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd"
-                                        d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                                        clip-rule="evenodd" />
+                                <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </div>
+                            <input type="text" x-model="searchQuery" placeholder="Cari permission..."
+                                class="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
                         </div>
                     </div>
-                    <div class="w-full lg:w-auto flex lg:items-end">
-                        <div class="flex items-center mt-6">
-                            <button type="button" @click="toggleAllPermissions(true)"
-                                class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-l text-sm">
-                                Pilih Semua
-                            </button>
-                            <button type="button" @click="toggleAllPermissions(false)"
-                                class="bg-gray-500 hover:bg-gray-600 text-white py-2 px-3 rounded-r text-sm">
-                                Batalkan Semua
-                            </button>
-                        </div>
+                    
+                    <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <select x-model="selectedRole" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                            <option value="all">Semua Role</option>
+                            <template x-for="role in roles" :key="role.id">
+                                <option :value="role.id" x-text="role.nama || role.name"></option>
+                            </template>
+                        </select>
+                        <select x-model="selectedModul" class="rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                            <option value="all">Semua Modul</option>
+                            <template x-for="modul in availableModules" :key="modul">
+                                <option :value="modul" x-text="formatModulName(modul)"></option>
+                            </template>
+                        </select>
                     </div>
                 </div>
+            </div>
 
-                <!-- View Type Selector -->
-                <div class="mb-6 flex items-center space-x-4 border-b border-gray-200 dark:border-gray-700 pb-4">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tampilan:</span>
-                    <button @click="viewType = 'grouped'"
-                        :class="{ 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400': viewType === 'grouped', 'text-gray-600 dark:text-gray-400': viewType !== 'grouped' }"
-                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
-                        Grup Modul
-                    </button>
-                    <button @click="viewType = 'table'"
-                        :class="{ 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400': viewType === 'table', 'text-gray-600 dark:text-gray-400': viewType !== 'table' }"
-                        class="px-3 py-1.5 rounded-md text-sm font-medium transition-colors">
-                        Tabel
-                    </button>
-                </div>
-
-                <form id="permissions-form" method="POST" action="{{ route('pengaturan.hak-akses.update') }}"
-                    @submit.prevent="submitForm">
-                    @csrf
-
-                    <!-- Loading Indicator -->
-                    <div x-show="isLoading" class="flex justify-center items-center py-12">
-                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
-                    </div>
-
-                    <!-- Grouped by Module View -->
-                    <div x-show="viewType === 'grouped' && !isLoading" x-transition>
-                        <template x-if="filteredRoles.length === 0">
-                            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
-                                <p>Tidak ada role yang ditemukan.</p>
+            <div class="p-0 sm:p-6" x-show="!isLoading" x-transition>
+                <!-- Grouped View Lazy -->
+                <div class="space-y-4">
+                    <template x-for="(modulPermissions, modulName) in groupedPermissions" :key="modulName">
+                        <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden bg-white dark:bg-gray-800 shadow-sm transition-colors hover:border-gray-300">
+                            <!-- Accordion Header -->
+                            <div class="px-4 py-3 bg-gray-50 dark:bg-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors" @click="toggleModule(modulName)">
+                                <div class="flex items-center">
+                                    <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200 uppercase tracking-wide" x-text="formatModulName(modulName)"></h3>
+                                    <span class="ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-white border border-gray-200 text-gray-800 dark:bg-gray-600 dark:text-gray-300 dark:border-gray-500 shadow-sm" x-text="modulPermissions.length + ' item'"></span>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-500 transform transition-transform duration-200" :class="{'rotate-180': openModules[modulName]}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
-                        </template>
 
-                        <div class="space-y-4">
-                            <template x-for="(modulPermissions, modulName) in groupedPermissions"
-                                :key="modulName">
-                                <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                                    <!-- Module Header -->
-                                    <div @click="toggleModule(modulName)"
-                                        class="bg-gray-50 dark:bg-gray-700/70 px-4 py-3 cursor-pointer flex items-center justify-between">
-                                        <h3 class="font-medium text-gray-800 dark:text-white"
-                                            x-text="formatModulName(modulName)"></h3>
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs text-gray-500 dark:text-gray-400"
-                                                x-text="`${modulPermissions.length} permission`"></span>
-                                            <svg :class="{ 'transform rotate-180': openModules[modulName] }"
-                                                class="w-5 h-5 transition-transform"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-
-                                    <!-- Permission Table -->
-                                    <div x-show="openModules[modulName]" x-transition class="overflow-x-auto">
-                                        <table class="min-w-full">
-                                            <thead class="bg-gray-50 dark:bg-gray-800">
-                                                <tr>
-                                                    <th
-                                                        class="px-4 py-3 text-left text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        Permission</th>
+                            <!-- Lazy Rendered Permissions Table -->
+                            <template x-if="openModules[modulName]">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full">
+                                        <thead class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-sm font-medium text-gray-500 dark:text-gray-400">Permission</th>
+                                                <template x-for="role in filteredRoles" :key="role.id">
+                                                    <th class="px-2 py-3 text-center">
+                                                        <div class="whitespace-nowrap text-sm font-bold text-gray-700 dark:text-gray-300" x-text="role.nama || role.name"></div>
+                                                    </th>
+                                                </template>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <template x-for="permission in modulPermissions" :key="permission.id">
+                                                <tr class="border-b last:border-0 border-gray-100 dark:border-gray-700 hover:bg-blue-50/50 dark:hover:bg-gray-700/50 transition-colors">
+                                                    <td class="px-4 py-3 border-r border-gray-100 dark:border-gray-700">
+                                                        <div class="flex flex-col">
+                                                            <span class="text-sm font-medium text-gray-900 dark:text-white" x-text="permission.nama || permission.name"></span>
+                                                            <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5" x-text="permission.deskripsi || '-'"></span>
+                                                            <span class="text-[10px] font-mono text-gray-400 mt-1" x-text="permission.kode"></span>
+                                                        </div>
+                                                    </td>
                                                     <template x-for="role in filteredRoles" :key="role.id">
-                                                        <th class="px-2 py-3 text-center">
-                                                            <div class="whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300"
-                                                                x-text="role.nama || role.name"></div>
-                                                        </th>
+                                                        <td class="px-2 py-3 text-center border-r border-gray-50 last:border-0 dark:border-gray-700">
+                                                            <label class="inline-flex relative cursor-pointer p-1">
+                                                                <input type="checkbox"
+                                                                    :checked="hasPermission(role, permission)"
+                                                                    @change="togglePermissionAjax(role, permission, $event.target.checked)"
+                                                                    class="rounded w-4 h-4 border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer hover:border-primary-400">
+                                                            </label>
+                                                        </td>
                                                     </template>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                <template x-for="permission in modulPermissions"
-                                                    :key="permission.id">
-                                                    <tr
-                                                        class="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                                        <td class="px-4 py-3">
-                                                            <div class="flex flex-col">
-                                                                <span
-                                                                    class="text-sm font-medium text-gray-800 dark:text-white"
-                                                                    x-text="permission.nama || permission.name"></span>
-                                                                <span class="text-xs text-gray-500 dark:text-gray-400"
-                                                                    x-text="permission.deskripsi || '-'"></span>
-                                                            </div>
-                                                        </td>
-                                                        <template x-for="role in filteredRoles" :key="role.id">
-                                                            <td class="px-2 py-3 text-center">
-                                                                <label class="inline-flex">
-                                                                    <input type="checkbox"
-                                                                        :name="`permissions[${role.id}][]`"
-                                                                        :value="permission.id"
-                                                                        :checked="hasPermission(role, permission)"
-                                                                        @change="togglePermission(role, permission)"
-                                                                        class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
-                                                                </label>
-                                                            </td>
-                                                        </template>
-                                                    </tr>
-                                                </template>
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                            </template>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </template>
                         </div>
+                    </template>
+                    
+                    <div x-show="Object.keys(groupedPermissions).length === 0" class="text-center py-12">
+                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Tidak ada permission ditemukan</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Ubah filter atau kata kunci pencarian Anda.</p>
                     </div>
+                </div>
+            </div>
+            
+            <div x-show="isLoading" class="p-12 text-center">
+                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                <p class="mt-2 text-sm text-gray-500 font-medium">Memuat dan mengoptimalkan tampilan data...</p>
+            </div>
+        </div>
 
-                    <!-- Original Table View -->
-                    <div x-show="viewType === 'table' && !isLoading" x-transition class="overflow-x-auto">
-                        <table class="min-w-full border border-gray-200 dark:border-gray-700">
-                            <thead class="bg-gray-100 dark:bg-gray-700">
-                                <tr>
-                                    <th
-                                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 text-left font-medium text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                                        Role / Permission
-                                    </th>
-                                    <template x-for="permission in filteredPermissionsForTableView"
-                                        :key="permission.id">
-                                        <th class="px-2 py-4 border-b border-gray-200 dark:border-gray-700 text-center text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider group"
-                                            :title="permission.deskripsi || 'Tidak ada deskripsi'">
-                                            <div class="whitespace-nowrap px-1"
-                                                x-text="permission.nama || permission.name"></div>
-                                            <div class="text-xxs text-gray-500 dark:text-gray-400 mt-1"
-                                                x-text="formatModulName(permission.modul) || '—'"></div>
-                                        </th>
-                                    </template>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                <template x-for="role in filteredRoles" :key="role.id">
-                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                        <td
-                                            class="px-6 py-4 border-b border-r border-gray-200 dark:border-gray-700 text-sm">
-                                            <div class="font-medium text-gray-800 dark:text-white"
-                                                x-text="role.nama || role.name"></div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400"
-                                                x-text="role.deskripsi || '—'"></div>
-                                        </td>
-                                        <template x-for="permission in filteredPermissionsForTableView"
-                                            :key="permission.id">
-                                            <td
-                                                class="px-2 py-2 border-b border-gray-200 dark:border-gray-700 text-center">
-                                                <label class="inline-flex">
-                                                    <input type="checkbox" :name="`permissions[${role.id}][]`"
-                                                        :value="permission.id"
-                                                        :checked="hasPermission(role, permission)"
-                                                        @change="togglePermission(role, permission)"
-                                                        class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600">
-                                                </label>
-                                            </td>
-                                        </template>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
+        <!-- Add Permission Modal -->
+        <div x-show="openAddModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div x-show="openAddModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-900 bg-opacity-50 backdrop-blur-sm transition-opacity" @click="openAddModal = false" aria-hidden="true"></div>
 
-                    <!-- Submit Button -->
-                    <div class="mt-6 flex justify-end">
-                        <button type="submit" :disabled="isSubmitting"
-                            class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 focus:ring-offset-primary-200 text-white rounded-lg transition ease-in-out duration-150 shadow-md disabled:opacity-50">
-                            <template x-if="isSubmitting">
-                                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10"
-                                        stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                            </template>
-                            <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'"></span>
-                        </button>
-                    </div>
-                </form>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+                <div x-show="openAddModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-200 dark:border-gray-700">
+                    <form @submit.prevent="submitNewPermission" id="form-add-permission">
+                        <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900/30 sm:mx-0 sm:h-10 sm:w-10">
+                                    <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                </div>
+                                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                    <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white" id="modal-title">Tambah Permission Baru</h3>
+                                    <p class="text-sm text-gray-500 mt-1">Daftarkan izin akses baru ke dalam sistem untuk dikontrol.</p>
+                                    
+                                    <div class="mt-5 space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modul</label>
+                                            <input type="text" x-model="newPerm.modul" list="modul-list" placeholder="Contoh: Pengaturan" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                                            <datalist id="modul-list">
+                                                <template x-for="mod in availableModules">
+                                                    <option :value="mod"></option>
+                                                </template>
+                                            </datalist>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Permission</label>
+                                            <input type="text" x-model="newPerm.nama" placeholder="Contoh: Lihat Data Laporan" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Kode / Slug (Unik)</label>
+                                            <input type="text" x-model="newPerm.kode" placeholder="Contoh: laporan.view" required class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm font-mono bg-gray-50">
+                                            <p class="text-xs text-gray-400 mt-1">Gunakan huruf kecil, pemisah titik (.) atau underscore (_).</p>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi Tambahan</label>
+                                            <textarea x-model="newPerm.deskripsi" rows="2" placeholder="Hak akses untuk melihat data laporan secara umum..." class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-white sm:text-sm"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 px-4 py-3 sm:px-6 flex flex-row-reverse rounded-b-xl border-t border-gray-200 dark:border-gray-700 gap-3">
+                            <button type="submit" :disabled="isSavingPerm" class="inline-flex justify-center rounded-lg border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 transition-colors">
+                                <span x-show="!isSavingPerm">Simpan Permission</span>
+                                <span x-show="isSavingPerm" class="flex items-center">
+                                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                    Menyimpan...
+                                </span>
+                            </button>
+                            <button type="button" @click="openAddModal = false" class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700 transition-colors">
+                                Batal
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     @push('scripts')
         <script>
-            function hakAksesManager() {
+            function permissionsManager() {
                 return {
-                    isLoading: false,
-                    isSubmitting: false,
-                    successMessage: "{{ session('success') }}",
+                    roles: {!! json_encode($roles) !!},
+                    permissions: {!! json_encode($permissions) !!},
+                    rolePermissions: {},
+                    searchQuery: '',
                     selectedRole: 'all',
                     selectedModul: 'all',
-                    searchQuery: '',
-                    viewType: 'grouped', // grouped or table
-                    openModules: {}, // Track which modules are open/expanded
-                    roles: @json($roles),
-                    permissions: @json($permissions),
-                    rolePermissions: {},
+                    openModules: {},
+                    isLoading: true,
+                    successMessage: '',
+                    
+                    openAddModal: false,
+                    isSavingPerm: false,
+                    newPerm: {
+                        nama: '',
+                        kode: '',
+                        modul: '',
+                        deskripsi: ''
+                    },
 
                     init() {
-                        // Inisialisasi role permissions dari data server
                         this.roles.forEach(role => {
-                            this.rolePermissions[role.id] = role.permissions.map(p => p.id);
+                            this.rolePermissions[role.id] = role.permissions ? role.permissions.map(p => p.id) : [];
                         });
-
-                        // Default semua modul terbuka
-                        this.availableModules.forEach(modul => {
-                            this.openModules[modul] = true;
-                        });
+                        
+                        // Fake slight delay to let DOM settle, significantly improves first render feel
+                        setTimeout(() => {
+                            this.isLoading = false;
+                        }, 150);
+                        
+                        // Open the first module by default so it's not completely blank
+                        if(this.availableModules.length > 0) {
+                             this.openModules[this.availableModules[0]] = true;
+                        }
                     },
 
                     get availableModules() {
-                        // Get unique modules from permissions
                         return [...new Set(this.permissions.map(p => p.modul))].sort();
                     },
 
                     get filteredRoles() {
-                        if (this.selectedRole === 'all') {
-                            return this.roles;
-                        } else {
-                            return this.roles.filter(role => role.id == this.selectedRole);
-                        }
+                        if (this.selectedRole === 'all') return this.roles;
+                        return this.roles.filter(role => role.id == this.selectedRole);
                     },
 
                     get filteredPermissionsForTableView() {
                         let filtered = this.permissions;
-
-                        // Filter by module if selected
                         if (this.selectedModul !== 'all') {
                             filtered = filtered.filter(p => p.modul === this.selectedModul);
                         }
-
-                        // Filter by search query
                         if (this.searchQuery) {
                             const query = this.searchQuery.toLowerCase();
                             filtered = filtered.filter(permission => {
                                 const name = (permission.nama || permission.name || '').toLowerCase();
                                 const modul = (permission.modul || '').toLowerCase();
                                 const deskripsi = (permission.deskripsi || '').toLowerCase();
-
                                 return name.includes(query) || modul.includes(query) || deskripsi.includes(query);
                             });
                         }
-
                         return filtered;
                     },
 
                     get groupedPermissions() {
-                        // Group permissions by module
                         const filtered = this.filteredPermissionsForTableView;
                         const grouped = {};
-
                         filtered.forEach(permission => {
                             const modul = permission.modul || 'other';
-                            if (!grouped[modul]) {
-                                grouped[modul] = [];
-                            }
+                            if (!grouped[modul]) grouped[modul] = [];
                             grouped[modul].push(permission);
                         });
-
-                        // Sort permissions within each module by name
                         Object.keys(grouped).forEach(modul => {
                             grouped[modul].sort((a, b) => {
                                 const nameA = (a.nama || a.name || '').toLowerCase();
@@ -360,77 +290,47 @@
                                 return nameA.localeCompare(nameB);
                             });
                         });
-
                         return grouped;
                     },
 
                     formatModulName(modul) {
                         if (!modul) return 'Lainnya';
-                        // Convert snake_case to Title Case
                         return modul.split('_').map(word =>
                             word.charAt(0).toUpperCase() + word.slice(1)
                         ).join(' ');
                     },
 
                     toggleModule(modulName) {
-                        this.openModules[modulName] = !this.openModules[modulName];
-                    },
-
-                    toggleAllPermissions(value) {
-                        const roleIds = this.filteredRoles.map(r => r.id);
-                        let permissionIds = this.filteredPermissionsForTableView.map(p => p.id);
-
-                        roleIds.forEach(roleId => {
-                            if (value) {
-                                // Set all permissions
-                                this.rolePermissions[roleId] = [
-                                    ...new Set([
-                                        ...(this.rolePermissions[roleId] || []),
-                                        ...permissionIds
-                                    ])
-                                ];
-                            } else {
-                                // Remove filtered permissions
-                                this.rolePermissions[roleId] = (this.rolePermissions[roleId] || [])
-                                    .filter(id => !permissionIds.includes(id));
-                            }
-                        });
+                        if (this.openModules[modulName]) {
+                            this.openModules[modulName] = false;
+                        } else {
+                            this.openModules[modulName] = true;
+                        }
                     },
 
                     hasPermission(role, permission) {
                         return this.rolePermissions[role.id]?.includes(permission.id);
                     },
 
-                    togglePermission(role, permission) {
-                        if (!this.rolePermissions[role.id]) {
-                            this.rolePermissions[role.id] = [];
-                        }
-
-                        const index = this.rolePermissions[role.id].indexOf(permission.id);
-                        if (index === -1) {
-                            this.rolePermissions[role.id].push(permission.id);
+                    async togglePermissionAjax(role, permission, isChecked) {
+                        if (!this.rolePermissions[role.id]) this.rolePermissions[role.id] = [];
+                        
+                        if (isChecked) {
+                            if (!this.rolePermissions[role.id].includes(permission.id)) {
+                                this.rolePermissions[role.id].push(permission.id);
+                            }
                         } else {
-                            this.rolePermissions[role.id].splice(index, 1);
+                            this.rolePermissions[role.id] = this.rolePermissions[role.id].filter(id => id !== permission.id);
                         }
-                    },
-
-                    async submitForm() {
-                        this.isSubmitting = true;
 
                         try {
-                            const form = document.getElementById('permissions-form');
-                            const formData = new FormData(form);
-
-                            // Tambahkan CSRF token
+                            const formData = new FormData();
                             formData.append('_token', '{{ csrf_token() }}');
+                            formData.append('role_id', role.id);
+                            formData.append('permission_id', permission.id);
+                            formData.append('state', isChecked ? '1' : '0');
 
-                            // Bersihkan data lama jika ada
-                            formData.delete('permissions');
-
-                            // Kirim sebagai satu string JSON untuk menghindari limit max_input_vars di PHP
-                            formData.append('permissions_json', JSON.stringify(this.rolePermissions));
-
-                            const response = await fetch(form.action, {
+                            const response = await fetch('{{ route('pengaturan.hak-akses.toggle') }}', {
                                 method: 'POST',
                                 body: formData,
                                 headers: {
@@ -439,51 +339,60 @@
                             });
 
                             if (response.ok) {
-                                this.successMessage = 'Hak akses berhasil diperbarui.';
-
-                                // Scroll ke atas
-                                window.scrollTo({
-                                    top: 0,
-                                    behavior: 'smooth'
-                                });
-
-                                // Hilangkan pesan setelah 5 detik
-                                setTimeout(() => {
-                                    this.successMessage = '';
-                                }, 5000);
+                                this.showToast('Tersimpan: ' + (permission.nama || permission.kode));
                             } else {
-                                console.error('Error saving permissions');
-                                alert('Terjadi kesalahan saat menyimpan hak akses.');
+                                alert('Gagal menyimpan otomatis.');
                             }
                         } catch (error) {
-                            console.error('Error:', error);
-                            alert('Terjadi kesalahan saat menyimpan hak akses.');
+                            console.error(error);
+                            alert('Terjadi kesalahan koneksi saat menyimpan.');
+                        }
+                    },
+                    
+                    showToast(msg) {
+                        this.successMessage = msg;
+                        setTimeout(() => { this.successMessage = ''; }, 2500);
+                    },
+
+                    async submitNewPermission() {
+                        this.isSavingPerm = true;
+                        try {
+                            const formData = new FormData();
+                            formData.append('_token', '{{ csrf_token() }}');
+                            formData.append('nama', this.newPerm.nama);
+                            formData.append('kode', this.newPerm.kode);
+                            formData.append('modul', this.newPerm.modul);
+                            formData.append('deskripsi', this.newPerm.deskripsi);
+
+                            const response = await fetch('{{ route('pengaturan.hak-akses.permission.store') }}', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            const data = await response.json();
+
+                            if (response.ok && data.status === 'success') {
+                                this.showToast('Berhasil menambahkan: ' + data.permission.nama);
+                                this.permissions.push(data.permission);
+                                this.openModules[data.permission.modul] = true;
+                                this.openAddModal = false;
+                                this.newPerm = { nama: '', kode: '', modul: '', deskripsi: '' };
+                            } else {
+                                alert(data.message || 'Gagal menambahkan permission. Kode mungkin sudah ada (harus unik).');
+                            }
+                        } catch (error) {
+                            console.error(error);
+                            alert('Gagal mengirim data permission.');
                         } finally {
-                            this.isSubmitting = false;
+                            this.isSavingPerm = false;
                         }
                     }
                 };
             }
         </script>
-    @endpush
-
-    @push('styles')
-        <style>
-            .text-xxs {
-                font-size: 0.65rem;
-            }
-
-            /* Custom checkbox style */
-            input[type="checkbox"] {
-                cursor: pointer;
-            }
-
-            /* Responsive table */
-            @media (max-width: 640px) {
-                .overflow-x-auto {
-                    -webkit-overflow-scrolling: touch;
-                }
-            }
-        </style>
     @endpush
 </x-app-layout>

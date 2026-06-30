@@ -478,8 +478,10 @@
                                 class="{{ request()->is('crm/pipeline') || request()->is('crm/pipeline/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Pipeline
                                     Penjualan</span></a>
                         @endif
-                        <a href="{{ route('crm.laporan.index') }}"
-                            class="{{ request()->is('crm/laporan') || request()->is('crm/laporan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan CRM</span></a>
+                        @if (auth()->user()->hasPermission('laporan_crm_view'))
+                            <a href="{{ route('crm.laporan.index') }}"
+                                class="{{ request()->is('crm/laporan') || request()->is('crm/laporan/*') ? 'text-blue-700 dark:text-blue-400 font-semibold' : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white' }} group flex items-center px-3 py-2 text-sm rounded-md transition-colors"><span>Laporan CRM</span></a>
+                        @endif
                     </div>
                 </div>
             @endif
