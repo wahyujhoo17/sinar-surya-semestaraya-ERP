@@ -26,7 +26,13 @@ class HakAksesController extends Controller
     // Simpan perubahan hak akses
     public function update(Request $request)
     {
-        $data = $request->input('permissions', []); // [role_id => [permission_id, ...], ...]
+        $data = [];
+        if ($request->has('permissions_json')) {
+            $data = json_decode($request->input('permissions_json'), true) ?? [];
+        } else {
+            $data = $request->input('permissions', []); // fallback
+        }
+        
         $roleIds = Role::pluck('id')->toArray();
         $permissionIds = Permission::pluck('id')->toArray();
 

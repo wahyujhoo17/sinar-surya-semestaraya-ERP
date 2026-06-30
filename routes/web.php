@@ -55,6 +55,7 @@ use App\Http\Controllers\Penjualan\ReturPenjualanController;
 use App\Http\Controllers\Penjualan\NotaKreditController;
 use App\Http\Controllers\Penjualan\RiwayatTransaksiPenjualanController;
 use App\Http\Controllers\CRM\ProspekLeadController;
+use App\Http\Controllers\CRM\LaporanCRMController;
 use App\Http\Controllers\CRM\ProspekAktivitasController;
 use App\Http\Controllers\Pengaturan\LogAktivitasController;
 use App\Http\Controllers\Pengaturan\PengaturanUmumController;
@@ -848,6 +849,8 @@ Route::middleware(['auth'])->group(function () {
     // -- CRM --
     Route::prefix('crm')->name('crm.')->group(function () {
         // Prospek & Lead Routes
+        Route::get('laporan', [LaporanCRMController::class, 'index'])->name('laporan.index');
+        
         Route::get('prospek/data', [ProspekLeadController::class, 'data'])->name('prospek.data');
         Route::get('prospek/customer-groups', [ProspekLeadController::class, 'getCustomerGroups'])->name('prospek.customer-groups');
         Route::get('prospek/{id}/attachment/{index}/download', [ProspekLeadController::class, 'downloadAttachment'])->name('prospek.attachment.download');

@@ -182,4 +182,12 @@ class User extends Authenticatable
     {
         $this->notify(new \App\Notifications\ResetPasswordNotification($token));
     }
+
+    /**
+     * Get the prospeks assigned to the user.
+     */
+    public function prospeks()
+    {
+        return $this->hasMany(\App\Models\Prospek::class, 'user_id');
+    }
 }

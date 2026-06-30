@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\LogAktivitas;
 use App\Models\Prospek;
 use App\Models\Customer;
+use App\Models\ProspekAktivitas;
+use Carbon\Carbon;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use App\Services\ProspekService;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
 
@@ -47,7 +50,23 @@ class PipelinePenjualanController extends Controller
 
     public function index()
     {
-        return view('CRM.pipeline_penjualan.index');
+        // Get all prospects needing follow-up today or overdue
+        $query = ProspekAktivitas::where('perlu_followup', true)
+            ->where('status_followup', ProspekAktivitas::STATUS_MENUNGGU)
+            ->whereDate('tanggal_followup', '<=', Carbon::today());
+
+        if (!$this->canAccessAllProspects()) {
+            $query->whereHas('prospek', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
+
+        $followUpReminders = $query->with('prospek:id,nama_prospek,status')
+            ->orderBy('tanggal_followup', 'asc')
+            ->get()
+            ->groupBy('prospek_id');
+
+        return view('CRM.pipeline_penjualan.index', compact('followUpReminders'));
     }
 
     public function data(Request $request)
@@ -199,25 +218,7 @@ class PipelinePenjualanController extends Controller
             $saved = $prospek->save();
 
             // Automatic customer creation when status becomes "tertarik"
-            $customerCreated = false;
-            $customerId = null;
-            if ($request->status === 'tertarik' && $oldStatus !== 'tertarik') {
-                $customerData = $this->createCustomerFromProspek($prospek);
-                if ($customerData) {
-                    $customerCreated = true;
-                    $customerId = $customerData['id'];
-
-                    // Update prospek with customer_id
-                    $prospek->customer_id = $customerId;
-                    $prospek->save();
-
-                    Log::info('Customer created automatically from prospek:', [
-                        'prospek_id' => $prospek->id,
-                        'customer_id' => $customerId,
-                        'customer_kode' => $customerData['kode']
-                    ]);
-                }
-            }
+            [$customerCreated, $customerId] = ProspekService::handleStatusChangeCustomerCreation($prospek, $request->status, $oldStatus);
 
             // Log the result for debugging
             Log::info('Status update result:', [
@@ -527,104 +528,5 @@ class PipelinePenjualanController extends Controller
         return $labels[$status] ?? $status;
     }
 
-    /**
-     * Create customer automatically from prospek data
-     * 
-     * @param Prospek $prospek
-     * @return array|null
-     */
-    private function createCustomerFromProspek(Prospek $prospek)
-    {
-        try {
-            // Check if customer already exists for this prospek
-            if ($prospek->customer_id) {
-                Log::info('Customer already exists for prospek', [
-                    'prospek_id' => $prospek->id,
-                    'customer_id' => $prospek->customer_id
-                ]);
-                return Customer::find($prospek->customer_id)->toArray();
-            }
 
-            // Check if customer with the same email already exists
-            if ($prospek->email) {
-                $existingCustomer = Customer::where('email', $prospek->email)->first();
-                if ($existingCustomer) {
-                    Log::info('Customer with same email already exists', [
-                        'prospek_id' => $prospek->id,
-                        'existing_customer_id' => $existingCustomer->id,
-                        'email' => $prospek->email
-                    ]);
-                    return $existingCustomer->toArray();
-                }
-            }
-
-            // Generate customer code
-            $customerCode = $this->generateCustomerCode();
-
-            // Determine customer type based on whether it's individual or company
-            $customerType = $prospek->perusahaan ? 'company' : 'individual';
-
-            // Create customer data mapping from prospek
-            $customerData = [
-                'kode' => $customerCode,
-                'nama' => $prospek->nama_prospek,
-                'tipe' => $customerType,
-                'company' => $prospek->perusahaan ?: $prospek->nama_prospek,
-                'alamat' => $prospek->alamat,
-                'alamat_pengiriman' => $prospek->alamat,
-                'telepon' => $prospek->telepon,
-                'email' => $prospek->email,
-                'sales_id' => $prospek->user_id,
-                'sales_name' => $prospek->user ? $prospek->user->name : null,
-                'is_active' => true,
-                'catatan' => 'Customer dibuat otomatis dari prospek: ' . $prospek->nama_prospek
-            ];
-
-            // Create the customer
-            $customer = Customer::create($customerData);
-
-            Log::info('Customer created successfully from prospek', [
-                'prospek_id' => $prospek->id,
-                'customer_id' => $customer->id,
-                'customer_kode' => $customer->kode,
-                'customer_data' => $customerData
-            ]);
-
-            return $customer->toArray();
-        } catch (\Exception $e) {
-            Log::error('Failed to create customer from prospek', [
-                'prospek_id' => $prospek->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            return null;
-        }
-    }
-
-    /**
-     * Generate customer code following the same pattern as CustomerController
-     * 
-     * @return string
-     */
-    private function generateCustomerCode()
-    {
-        $prefix = 'CUST';
-        $last = Customer::orderByDesc('id')->first();
-        $lastNumber = 0;
-
-        if ($last && preg_match('/^CUST(\d+)$/', $last->kode, $matches)) {
-            $lastNumber = (int)$matches[1];
-        }
-
-        $newNumber = $lastNumber + 1;
-        $code = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-
-        // Ensure the code is unique
-        while (Customer::where('kode', $code)->exists()) {
-            $newNumber++;
-            $code = $prefix . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
-        }
-
-        return $code;
-    }
 }

@@ -10,7 +10,22 @@ class ProspekAktivitas extends Model
     use HasFactory;
 
     protected $table = 'prospek_aktivitas';
-    protected $guarded = [];
+
+    protected $fillable = [
+        'prospek_id',
+        'customer_id',
+        'user_id',
+        'tipe',
+        'judul',
+        'deskripsi',
+        'tanggal',
+        'hasil',
+        'perlu_followup',
+        'tanggal_followup',
+        'status_followup',
+        'catatan_followup',
+        'attachments',
+    ];
 
     protected $casts = [
         'tanggal' => 'datetime',

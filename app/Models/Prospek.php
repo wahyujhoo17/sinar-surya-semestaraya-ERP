@@ -4,13 +4,31 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Prospek extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'prospek';
-    protected $guarded = [];
+
+    protected $fillable = [
+        'nama_prospek',
+        'perusahaan',
+        'email',
+        'telepon',
+        'alamat',
+        'deskripsi',
+        'status',
+        'sumber',
+        'nilai_potensi',
+        'tanggal_kontak',
+        'tanggal_followup',
+        'customer_id',
+        'user_id',
+        'catatan',
+        'attachments',
+    ];
 
     protected $casts = [
         'tanggal_kontak' => 'datetime',

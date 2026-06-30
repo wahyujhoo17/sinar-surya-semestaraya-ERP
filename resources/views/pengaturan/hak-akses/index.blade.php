@@ -424,12 +424,11 @@
                             // Tambahkan CSRF token
                             formData.append('_token', '{{ csrf_token() }}');
 
-                            // Bersihkan dan tambahkan data permissions
-                            for (const [roleId, permissions] of Object.entries(this.rolePermissions)) {
-                                permissions.forEach(permissionId => {
-                                    formData.append(`permissions[${roleId}][]`, permissionId);
-                                });
-                            }
+                            // Bersihkan data lama jika ada
+                            formData.delete('permissions');
+
+                            // Kirim sebagai satu string JSON untuk menghindari limit max_input_vars di PHP
+                            formData.append('permissions_json', JSON.stringify(this.rolePermissions));
 
                             const response = await fetch(form.action, {
                                 method: 'POST',

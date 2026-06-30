@@ -749,6 +749,10 @@ class ProspekAktivitasController extends Controller
             abort(404, 'File tidak ditemukan di storage.');
         }
 
+        if (request()->has('inline')) {
+            return response()->file($filePath);
+        }
+
         return response()->download($filePath, $attachment['original_name']);
     }
 

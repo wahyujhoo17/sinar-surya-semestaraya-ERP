@@ -155,6 +155,27 @@
                 </div>
             </div>
 
+            <!-- Follow-up Reminders Alert -->
+            @if(isset($followUpReminders) && $followUpReminders->count() > 0)
+            <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-yellow-800">
+                            Peringatan Follow-up Hari Ini / Overdue
+                        </h3>
+                        <div class="mt-2 text-sm text-yellow-700">
+                            <p>Ada {{ $followUpReminders->count() }} prospek yang membutuhkan follow-up segera.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
+
             <!-- Filter Panel -->
             <div x-data="{ filterPanelOpen: true }" class="mb-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
@@ -480,9 +501,13 @@
                                     <span class="inline-block w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
                                     Baru
                                 </h3>
-                                <span
-                                    class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
-                                    x-text="pipelineData.baru.length">0</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400"
+                                        x-text="calculateTotalValue(pipelineData.baru)">Rp 0</span>
+                                    <span
+                                        class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+                                        x-text="pipelineData.baru.length">0</span>
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -494,8 +519,14 @@
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm"
-                                                x-text="prospek.nama_prospek"></h4>
+                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                                                <span x-text="prospek.nama_prospek"></span>
+                                                <template x-if="followUpReminders && followUpReminders.includes(prospek.id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Follow-up Hari Ini/Overdue">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </template>
+                                            </h4>
                                             <span class="text-xs px-1.5 py-0.5"
                                                 :class="`bg-${getStatusColor(prospek.status)}-100 text-${getStatusColor(prospek.status)}-800 dark:bg-${getStatusColor(prospek.status)}-900/30 dark:text-${getStatusColor(prospek.status)}-300 rounded-full`"
                                                 x-text="getStatusLabel(prospek.status)"></span>
@@ -512,13 +543,19 @@
                                             </svg>
                                             <span x-text="prospek.user ? prospek.user.name : 'Tidak Ada'"></span>
                                         </div>
-                                        <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                        <div class="mt-2 flex items-center justify-between text-xs">
+                                            <div class="flex items-center text-gray-500 dark:text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                            </div>
+                                            <div class="font-medium text-green-600 dark:text-green-400"
+                                                x-show="prospek.nilai_potensi"
+                                                x-text="formatRupiah(prospek.nilai_potensi)">
+                                            </div>
                                         </div>
                                         <div class="mt-3 flex justify-end">
                                             <a :href="'{{ route('crm.prospek.show', ':prospek') }}'.replace(':prospek', prospek
@@ -548,9 +585,13 @@
                                     <span class="inline-block w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
                                     Tertarik
                                 </h3>
-                                <span
-                                    class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
-                                    x-text="pipelineData.tertarik.length">0</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400"
+                                        x-text="calculateTotalValue(pipelineData.tertarik)">Rp 0</span>
+                                    <span
+                                        class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+                                        x-text="pipelineData.tertarik.length">0</span>
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -562,8 +603,14 @@
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm"
-                                                x-text="prospek.nama_prospek"></h4>
+                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                                                <span x-text="prospek.nama_prospek"></span>
+                                                <template x-if="followUpReminders && followUpReminders.includes(prospek.id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Follow-up Hari Ini/Overdue">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </template>
+                                            </h4>
                                             <span class="text-xs px-1.5 py-0.5"
                                                 :class="`bg-${getStatusColor(prospek.status)}-100 text-${getStatusColor(prospek.status)}-800 dark:bg-${getStatusColor(prospek.status)}-900/30 dark:text-${getStatusColor(prospek.status)}-300 rounded-full`"
                                                 x-text="getStatusLabel(prospek.status)"></span>
@@ -580,13 +627,19 @@
                                             </svg>
                                             <span x-text="prospek.user ? prospek.user.name : 'Tidak Ada'"></span>
                                         </div>
-                                        <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                        <div class="mt-2 flex items-center justify-between text-xs">
+                                            <div class="flex items-center text-gray-500 dark:text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                            </div>
+                                            <div class="font-medium text-green-600 dark:text-green-400"
+                                                x-show="prospek.nilai_potensi"
+                                                x-text="formatRupiah(prospek.nilai_potensi)">
+                                            </div>
                                         </div>
                                         <div class="mt-3 flex justify-end">
                                             <a :href="'{{ route('crm.prospek.show', ':prospek') }}'.replace(':prospek', prospek
@@ -617,9 +670,13 @@
                                     <span class="inline-block w-2 h-2 bg-indigo-400 rounded-full mr-2"></span>
                                     Negosiasi
                                 </h3>
-                                <span
-                                    class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
-                                    x-text="pipelineData.negosiasi.length">0</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400"
+                                        x-text="calculateTotalValue(pipelineData.negosiasi)">Rp 0</span>
+                                    <span
+                                        class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+                                        x-text="pipelineData.negosiasi.length">0</span>
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -631,8 +688,14 @@
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm"
-                                                x-text="prospek.nama_prospek"></h4>
+                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                                                <span x-text="prospek.nama_prospek"></span>
+                                                <template x-if="followUpReminders && followUpReminders.includes(prospek.id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Follow-up Hari Ini/Overdue">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </template>
+                                            </h4>
                                             <span class="text-xs px-1.5 py-0.5"
                                                 :class="`bg-${getStatusColor(prospek.status)}-100 text-${getStatusColor(prospek.status)}-800 dark:bg-${getStatusColor(prospek.status)}-900/30 dark:text-${getStatusColor(prospek.status)}-300 rounded-full`"
                                                 x-text="getStatusLabel(prospek.status)"></span>
@@ -649,13 +712,19 @@
                                             </svg>
                                             <span x-text="prospek.user ? prospek.user.name : 'Tidak Ada'"></span>
                                         </div>
-                                        <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                        <div class="mt-2 flex items-center justify-between text-xs">
+                                            <div class="flex items-center text-gray-500 dark:text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                            </div>
+                                            <div class="font-medium text-green-600 dark:text-green-400"
+                                                x-show="prospek.nilai_potensi"
+                                                x-text="formatRupiah(prospek.nilai_potensi)">
+                                            </div>
                                         </div>
                                         <div class="mt-3 flex justify-end">
                                             <a :href="'{{ route('crm.prospek.show', ':prospek') }}'.replace(':prospek', prospek
@@ -685,9 +754,13 @@
                                     <span class="inline-block w-2 h-2 bg-red-400 rounded-full mr-2"></span>
                                     Menolak
                                 </h3>
-                                <span
-                                    class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
-                                    x-text="pipelineData.menolak.length">0</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400"
+                                        x-text="calculateTotalValue(pipelineData.menolak)">Rp 0</span>
+                                    <span
+                                        class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+                                        x-text="pipelineData.menolak.length">0</span>
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -699,8 +772,14 @@
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm"
-                                                x-text="prospek.nama_prospek"></h4>
+                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                                                <span x-text="prospek.nama_prospek"></span>
+                                                <template x-if="followUpReminders && followUpReminders.includes(prospek.id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Follow-up Hari Ini/Overdue">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </template>
+                                            </h4>
                                             <span class="text-xs px-1.5 py-0.5"
                                                 :class="`bg-${getStatusColor(prospek.status)}-100 text-${getStatusColor(prospek.status)}-800 dark:bg-${getStatusColor(prospek.status)}-900/30 dark:text-${getStatusColor(prospek.status)}-300 rounded-full`"
                                                 x-text="getStatusLabel(prospek.status)"></span>
@@ -717,13 +796,19 @@
                                             </svg>
                                             <span x-text="prospek.user ? prospek.user.name : 'Tidak Ada'"></span>
                                         </div>
-                                        <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                        <div class="mt-2 flex items-center justify-between text-xs">
+                                            <div class="flex items-center text-gray-500 dark:text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                            </div>
+                                            <div class="font-medium text-green-600 dark:text-green-400"
+                                                x-show="prospek.nilai_potensi"
+                                                x-text="formatRupiah(prospek.nilai_potensi)">
+                                            </div>
                                         </div>
                                         <div class="mt-3 flex justify-end">
                                             <a :href="'{{ route('crm.prospek.show', ':prospek') }}'.replace(':prospek', prospek
@@ -754,9 +839,13 @@
                                     <span class="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
                                     Menjadi Customer
                                 </h3>
-                                <span
-                                    class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
-                                    x-text="pipelineData.menjadi_customer.length">0</span>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-semibold text-green-600 dark:text-green-400"
+                                        x-text="calculateTotalValue(pipelineData.menjadi_customer)">Rp 0</span>
+                                    <span
+                                        class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+                                        x-text="pipelineData.menjadi_customer.length">0</span>
+                                </div>
                             </div>
 
                             <div class="space-y-3">
@@ -769,8 +858,14 @@
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
                                         <div class="flex justify-between items-start">
-                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm"
-                                                x-text="prospek.nama_prospek"></h4>
+                                            <h4 class="font-medium text-gray-900 dark:text-white text-sm flex items-center">
+                                                <span x-text="prospek.nama_prospek"></span>
+                                                <template x-if="followUpReminders && followUpReminders.includes(prospek.id)">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1 text-red-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" title="Follow-up Hari Ini/Overdue">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                                    </svg>
+                                                </template>
+                                            </h4>
                                             <span class="text-xs px-1.5 py-0.5"
                                                 :class="`bg-${getStatusColor(prospek.status)}-100 text-${getStatusColor(prospek.status)}-800 dark:bg-${getStatusColor(prospek.status)}-900/30 dark:text-${getStatusColor(prospek.status)}-300 rounded-full`"
                                                 x-text="getStatusLabel(prospek.status)"></span>
@@ -787,13 +882,19 @@
                                             </svg>
                                             <span x-text="prospek.user ? prospek.user.name : 'Tidak Ada'"></span>
                                         </div>
-                                        <div class="mt-2 flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
-                                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                        <div class="mt-2 flex items-center justify-between text-xs">
+                                            <div class="flex items-center text-gray-500 dark:text-gray-400">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 mr-1"
+                                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span x-text="formatDate(prospek.tanggal_kontak)"></span>
+                                            </div>
+                                            <div class="font-medium text-green-600 dark:text-green-400"
+                                                x-show="prospek.nilai_potensi"
+                                                x-text="formatRupiah(prospek.nilai_potensi)">
+                                            </div>
                                         </div>
                                         <div class="mt-3 flex justify-end">
                                             <a :href="'{{ route('crm.prospek.show', ':prospek') }}'.replace(':prospek', prospek
@@ -1025,6 +1126,7 @@
                     showExportDropdown: false,
                     currentUserId: {{ auth()->id() }},
                     userRoles: @json(auth()->user()->roles->pluck('kode')),
+                    followUpReminders: @json(isset($followUpReminders) ? $followUpReminders->keys() : []),
                     stats: {
                         total: 0,
                         baru: 0,
@@ -2021,6 +2123,26 @@
                             'menjadi_customer': 'green'
                         };
                         return colors[status] || 'gray';
+                    },
+
+                    formatRupiah(value) {
+                        if (!value) return 'Rp 0';
+                        return new Intl.NumberFormat('id-ID', {
+                            style: 'currency',
+                            currency: 'IDR',
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0
+                        }).format(value);
+                    },
+
+                    calculateTotalValue(prospeks) {
+                        if (!prospeks || !prospeks.length) return 0;
+                        const total = prospeks.reduce((sum, prospek) => {
+                            // Convert string to number, defaulting to 0 if invalid or empty
+                            const value = parseFloat(prospek.nilai_potensi) || 0;
+                            return sum + value;
+                        }, 0);
+                        return this.formatRupiah(total);
                     },
 
                     // Drag and Drop Functions
