@@ -493,7 +493,6 @@
                                         @dragend="$event.currentTarget.classList.remove('dragging')"
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
-                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -562,7 +561,6 @@
                                         @dragend="$event.currentTarget.classList.remove('dragging')"
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
-                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -632,7 +630,6 @@
                                         @dragend="$event.currentTarget.classList.remove('dragging')"
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
-                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -701,7 +698,6 @@
                                         @dragend="$event.currentTarget.classList.remove('dragging')"
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
-                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -772,7 +768,6 @@
                                         @dragend="$event.currentTarget.classList.remove('dragging')"
                                         :class="{ 'cursor-move': canEditProspect(prospek), 'cursor-default': !canEditProspect(
                                                 prospek) }">
-                                        >
                                         <div class="flex justify-between items-start">
                                             <h4 class="font-medium text-gray-900 dark:text-white text-sm"
                                                 x-text="prospek.nama_prospek"></h4>
@@ -1023,13 +1018,13 @@
             function pipelineManager() {
                 return {
                     search: '',
-                    timeFrame: '',
+                    timeFrame: 'month',
                     chartType: 'bar',
                     isSearching: false,
                     searchTimeout: null,
                     showExportDropdown: false,
                     currentUserId: {{ auth()->id() }},
-                    userRoles: @json(auth()->user()->roles->pluck('name')),
+                    userRoles: @json(auth()->user()->roles->pluck('kode')),
                     stats: {
                         total: 0,
                         baru: 0,
@@ -1864,7 +1859,7 @@
 
                     resetFilters() {
                         this.search = '';
-                        this.timeFrame = '';
+                        this.timeFrame = 'month';
                         this.fetchData();
                     },
 

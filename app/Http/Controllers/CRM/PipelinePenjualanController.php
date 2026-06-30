@@ -88,8 +88,8 @@ class PipelinePenjualanController extends Controller
             }
 
             // Apply time_frame filter
-            if ($request->filled('time_frame')) {
-                $timeFrame = $request->time_frame;
+            $timeFrame = $request->has('time_frame') ? $request->time_frame : 'month';
+            if (!empty($timeFrame)) {
                 $today = now()->format('Y-m-d');
 
                 switch ($timeFrame) {
@@ -312,8 +312,8 @@ class PipelinePenjualanController extends Controller
         }
 
         // Apply time_frame filter
-        if ($request->filled('time_frame')) {
-            $timeFrame = $request->time_frame;
+        $timeFrame = $request->has('time_frame') ? $request->time_frame : 'month';
+        if (!empty($timeFrame)) {
             $today = now()->format('Y-m-d');
 
             switch ($timeFrame) {
@@ -431,8 +431,8 @@ class PipelinePenjualanController extends Controller
         }
 
         // Apply time_frame filter
-        if ($request->filled('time_frame')) {
-            $timeFrame = $request->time_frame;
+        $timeFrame = $request->has('time_frame') ? $request->time_frame : 'month';
+        if (!empty($timeFrame)) {
             $today = now()->format('Y-m-d');
 
             switch ($timeFrame) {

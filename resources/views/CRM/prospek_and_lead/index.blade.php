@@ -548,7 +548,7 @@
                 prospekToDelete: null,
                 isLoading: false,
                 currentUserId: {{ auth()->id() }},
-                userRoles: @json(auth()->user()->roles->pluck('name')),
+                userRoles: @json(auth()->user()->roles->pluck('kode')),
 
                 init() {
                     // Only use the toast notification system for all messages
