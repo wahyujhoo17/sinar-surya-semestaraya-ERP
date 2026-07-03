@@ -374,10 +374,18 @@ class InvoiceController extends Controller
                 }
 
                 // Hitung qty yang sudah di-invoice untuk produk ini
-                $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+                $qtyAlreadyInvoicedQuery = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
                     ->where('invoice.sales_order_id', $id)
                     ->where('invoice_detail.produk_id', $detail->produk_id)
-                    ->sum('invoice_detail.quantity');
+                    ->where('invoice_detail.is_bundle_item', $detail->is_bundle_item ? 1 : 0);
+                    
+                if ($detail->bundle_id) {
+                    $qtyAlreadyInvoicedQuery->where('invoice_detail.bundle_id', $detail->bundle_id);
+                } else {
+                    $qtyAlreadyInvoicedQuery->whereNull('invoice_detail.bundle_id');
+                }
+                
+                $qtyAlreadyInvoiced = $qtyAlreadyInvoicedQuery->sum('invoice_detail.quantity');
 
                 // Hitung qty yang tersedia untuk di-invoice
                 $qtyAvailable = $detail->quantity - $qtyAlreadyInvoiced;
@@ -1497,11 +1505,21 @@ class InvoiceController extends Controller
 
             $produkId = $item['produk_id'];
             $qtyRequested = $item['qty'];
+            $isBundleItem = filter_var($item['is_bundle_item'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $bundleId = $item['bundle_id'] ?? null;
 
             // Get original qty from sales order
-            $soDetail = SalesOrderDetail::where('sales_order_id', $salesOrderId)
+            $soDetailQuery = SalesOrderDetail::where('sales_order_id', $salesOrderId)
                 ->where('produk_id', $produkId)
-                ->first();
+                ->where('is_bundle_item', $isBundleItem ? 1 : 0);
+                
+            if ($bundleId) {
+                $soDetailQuery->where('bundle_id', $bundleId);
+            } else {
+                $soDetailQuery->whereNull('bundle_id');
+            }
+            
+            $soDetail = $soDetailQuery->first();
 
             if (!$soDetail) {
                 $errors[] = "Produk {$item['nama_produk']} tidak ditemukan dalam Sales Order";
@@ -1509,10 +1527,18 @@ class InvoiceController extends Controller
             }
 
             // Get qty already invoiced for this product
-            $qtyAlreadyInvoiced = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+            $invoicedQuery = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
                 ->where('invoice.sales_order_id', $salesOrderId)
                 ->where('invoice_detail.produk_id', $produkId)
-                ->sum('invoice_detail.quantity');
+                ->where('invoice_detail.is_bundle_item', $isBundleItem ? 1 : 0);
+                
+            if ($bundleId) {
+                $invoicedQuery->where('invoice_detail.bundle_id', $bundleId);
+            } else {
+                $invoicedQuery->whereNull('invoice_detail.bundle_id');
+            }
+                
+            $qtyAlreadyInvoiced = $invoicedQuery->sum('invoice_detail.quantity');
 
             // Calculate available qty
             $qtyAvailable = $soDetail->quantity - $qtyAlreadyInvoiced;
