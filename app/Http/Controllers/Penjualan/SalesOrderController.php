@@ -764,7 +764,7 @@ class SalesOrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route('penjualan.sales-order.index')
+            return redirect()->route('penjualan.sales-order.show', $salesOrder->id)
                 ->with('success', 'Sales Order berhasil dibuat');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1188,7 +1188,7 @@ class SalesOrderController extends Controller
 
             DB::commit();
 
-            return redirect()->route('penjualan.sales-order.index')
+            return redirect()->route('penjualan.sales-order.show', $salesOrder->id)
                 ->with('success', 'Sales Order berhasil diupdate');
         } catch (\Exception $e) {
             DB::rollBack();

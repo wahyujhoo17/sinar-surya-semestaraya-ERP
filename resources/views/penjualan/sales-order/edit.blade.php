@@ -423,7 +423,7 @@
 
                         <div x-show="items.length > 0" class="overflow-x-auto">
                             <div class="space-y-3 mt-2" id="items-container">
-                                <template x-for="(item, index) in items" :key="index">
+                                <template x-for="(item, index) in items" :key="item.id">
                                     <div>
                                         <!-- BUNDLE HEADER - Simple & Clean -->
                                         <template x-if="item.is_bundle">
