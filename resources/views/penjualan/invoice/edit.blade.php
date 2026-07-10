@@ -762,7 +762,7 @@
                     subtotal: {{ $invoice->subtotal ?? 0 }},
                     diskonPersen: {{ $invoice->diskon_persen ?? 0 }},
                     diskonNominal: {{ $invoice->diskon_nominal ?? 0 }},
-                    ppnPersen: {{ $invoice->ppn_persen ?? 0 }},
+                    ppnPersen: {{ (($invoice->subtotal ?? 0) - ($invoice->diskon_nominal ?? 0)) > 0 && ($invoice->ppn ?? 0) > 0 ? round((($invoice->ppn ?? 0) / (($invoice->subtotal ?? 0) - ($invoice->diskon_nominal ?? 0))) * 100) : 0 }},
                     ppnNominal: {{ $invoice->ppn ?? 0 }},
                     ongkosKirim: {{ $invoice->ongkos_kirim ?? 0 }},
                     total: {{ $invoice->total ?? 0 }},
