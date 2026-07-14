@@ -263,10 +263,10 @@
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white text-right"
                     x-text="formatCurrency(totalDibayar)"></td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white text-right"
-                    x-text="formatCurrency(penjualanData.reduce((sum, item) => sum + (item.total_retur || 0), 0))">
+                    x-text="formatCurrency(penjualanData.reduce((sum, item) => sum + (parseFloat(item.total_retur) || 0), 0))">
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white text-right"
-                    x-text="formatCurrency(sisaPembayaran - penjualanData.reduce((sum, item) => sum + (item.total_retur || 0), 0))">
+                    x-text="formatCurrency((sisaPembayaran || 0) - penjualanData.reduce((sum, item) => sum + (parseFloat(item.total_retur) || 0), 0))">
                 </td>
                 <td colspan="2"></td>
             </tr>
