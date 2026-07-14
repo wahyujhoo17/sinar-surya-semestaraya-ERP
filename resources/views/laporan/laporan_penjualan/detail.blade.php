@@ -158,9 +158,7 @@
 
                     @php
                         $totalBayar = 0;
-                        foreach ($penjualan->invoices as $invoice) {
-                            $totalBayar += $invoice->pembayaranPiutang->sum('jumlah');
-                        }
+                        $totalBayar = $penjualan->pembayaranPiutang->sum('jumlah');
                         $sisaPembayaran = $penjualan->total - $totalBayar;
                     @endphp
 
@@ -320,7 +318,7 @@
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                             @php
-                                $allPayments = $penjualan->getAllPayments();
+                                $allPayments = $penjualan->pembayaranPiutang;
                             @endphp
                             @if (count($allPayments) > 0)
                                 @foreach ($allPayments as $index => $pembayaran)
@@ -378,7 +376,7 @@
         </div>
 
         <!-- Retur Penjualan -->
-        @if (count($penjualan->returPenjualan) > 0)
+        @if (count(($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect())) > 0)
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 mb-6">
                 <div class="p-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/60">
@@ -428,7 +426,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @foreach ($penjualan->returPenjualan as $index => $retur)
+                                @foreach (($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect()) as $index => $retur)
                                     <tr class="{{ $index % 2 == 0 ? 'bg-gray-50 dark:bg-gray-700/50' : '' }}">
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -523,7 +521,7 @@
                                     </td>
                                     <td
                                         class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
-                                        {{ number_format($penjualan->returPenjualan->sum('total'), 0, ',', '.') }}
+                                        {{ number_format(($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect())->sum('total'), 0, ',', '.') }}
                                     </td>
                                     <td></td>
                                 </tr>
@@ -534,7 +532,7 @@
             </div>
 
             <!-- Detail Item Retur -->
-            @foreach ($penjualan->returPenjualan as $indexRetur => $retur)
+            @foreach (($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect()) as $indexRetur => $retur)
                 @if (count($retur->details) > 0)
                     <div
                         class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700 mb-6">

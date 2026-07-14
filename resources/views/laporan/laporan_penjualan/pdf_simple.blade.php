@@ -379,8 +379,8 @@
             <tr>
                 <th style="width: 4%;">No</th>
                 <th style="width: 8%;">Tanggal</th>
-                <th style="width: 10%;">No SO</th>
-                <th style="width: 12%;">No Inv</th>
+                <th style="width: 10%;">No Faktur</th>
+                <th style="width: 12%;">No Faktur</th>
                 <th style="width: 10%;">No PO</th>
                 <th style="width: 20%;">Customer</th>
                 <th style="width: 12%;" class="text-right">Total Penjualan</th>
@@ -396,7 +396,7 @@
                     <td class="text-center">{{ $no++ }}</td>
                     <td class="text-center">{{ \Carbon\Carbon::parse($data->tanggal)->format('d/m/Y') }}</td>
                     <td class="text-center">{{ $data->nomor }}</td>
-                    <td class="text-center">{{ $data->nomor_invoice ?: '-' }}</td>
+                    <td class="text-center">{{ $data->nomor_so ?: '-' }}</td>
                     <td class="text-center">{{ $data->nomor_po ?: '-' }}</td>
                     <td>
                         <strong>{{ $data->customer->company ?? ($data->customer->nama ?? 'Unknown') }}</strong><br>

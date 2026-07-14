@@ -597,16 +597,10 @@
             </div>
 
             <!-- Payment History -->
-            @if ($so->invoices && $so->invoices->count() > 0)
-                @php
-                    $allPayments = collect();
-                    foreach ($so->invoices as $invoice) {
-                        if ($invoice->pembayaranPiutang && $invoice->pembayaranPiutang->count() > 0) {
-                            $allPayments = $allPayments->merge($invoice->pembayaranPiutang);
-                        }
-                    }
-                @endphp
-                @if ($allPayments->count() > 0)
+            @php
+                $allPayments = $so->pembayaranPiutang ?? collect();
+            @endphp
+            @if ($allPayments->count() > 0)
                     <div
                         style="margin-top: 10px; background: #f0f9ff; border-left: 4px solid #0284c7; border: 1px solid #bae6fd;">
                         <div style="background: #f9fafb; padding: 5px 8px; border-bottom: 2px solid #d1d5db;">
@@ -709,7 +703,6 @@
                         </div>
                     </div>
                 @endif
-            @endif
 
             <!-- SO Footer with Notes -->
             @if ($so->catatan)

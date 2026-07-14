@@ -37,6 +37,12 @@
     </tr>
 @else
     @php $no = ($invoices->currentPage() - 1) * $invoices->perPage(); @endphp
+    @if(request()->filled('nota_kredit_id'))
+        @php
+            $cachedNotaKredit = App\Models\NotaKredit::with('invoices')->find(request()->nota_kredit_id);
+            $cachedSisaKredit = $cachedNotaKredit ? $cachedNotaKredit->total - $cachedNotaKredit->invoices()->sum('nota_kredit_invoice.applied_amount') : 0;
+        @endphp
+    @endif
     @foreach ($invoices as $invoice)
         @php $no++; @endphp
         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
@@ -185,14 +191,14 @@
                                                         <p class="text-gray-500 dark:text-gray-400">Total Kredit:</p>
                                                         <p class="font-medium text-gray-900 dark:text-white">
                                                             Rp
-                                                            {{ number_format(App\Models\NotaKredit::find(request()->nota_kredit_id)->total, 0, ',', '.') }}
+                                                            {{ number_format($cachedNotaKredit->total, 0, ',', '.') }}
                                                         </p>
                                                     </div>
                                                     <div>
                                                         <p class="text-gray-500 dark:text-gray-400">Sisa Kredit:</p>
                                                         <p class="font-medium text-emerald-600 dark:text-emerald-400">
                                                             Rp
-                                                            {{ number_format(App\Models\NotaKredit::find(request()->nota_kredit_id)->total - App\Models\NotaKredit::find(request()->nota_kredit_id)->invoices()->sum('nota_kredit_invoice.applied_amount'), 0, ',', '.') }}
+                                                            {{ number_format($cachedSisaKredit, 0, ',', '.') }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -236,7 +242,7 @@
                                                         name="amount" readonly
                                                         class="bg-gray-100 border border-gray-300 text-gray-900 text-sm rounded-lg block w-full ps-10 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white cursor-not-allowed"
                                                         placeholder="Masukkan jumlah"
-                                                        value="{{ min($invoice->sisa_piutang, App\Models\NotaKredit::find(request()->nota_kredit_id)->total - App\Models\NotaKredit::find(request()->nota_kredit_id)->invoices()->sum('nota_kredit_invoice.applied_amount')) }}">
+                                                        value="{{ min($invoice->sisa_piutang, $cachedSisaKredit) }}">
                                                 </div>
 
                                                 <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">

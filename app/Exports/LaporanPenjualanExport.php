@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\SalesOrder;
+use App\Models\Invoice;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -35,59 +36,50 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
         $search = $this->filters['search'] ?? null;
 
         // Query sales_order dengan detail produk dan invoice info
-        $query = SalesOrder::query()
-            ->with(['details.produk.satuan', 'customer', 'user', 'invoices'])
+        $query = Invoice::query()
+            ->with(['details.produk.satuan', 'customer', 'user', 'salesOrder'])
             ->select(
-                'sales_order.*',
+                'invoice.*',
+                'sales_order.nomor as nomor_so',
+                'sales_order.nomor_po as nomor_po',
                 DB::raw('COALESCE(
                     (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
-                     JOIN invoice i ON pp.invoice_id = i.id 
-                     WHERE i.sales_order_id = sales_order.id), 
+                     WHERE pp.invoice_id = invoice.id), 
                     0
                 ) as total_bayar'),
-                DB::raw('COALESCE(
-                    (SELECT SUM(rp.total) FROM retur_penjualan rp 
-                     WHERE rp.sales_order_id = sales_order.id), 
-                    0
-                ) as total_retur'),
-                DB::raw('COALESCE(
-                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
-                     WHERE i.sales_order_id = sales_order.id), 
-                    0
-                ) as total_uang_muka'),
-                DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ")
-                         FROM invoice i
-                         WHERE i.sales_order_id = sales_order.id) as nomor_invoice'),
-                'sales_order.catatan as keterangan',
-                'sales_order.created_at',
-                'sales_order.updated_at',
+                DB::raw('COALESCE(invoice.kredit_terapkan, 0) as total_retur'),
+                DB::raw('COALESCE(invoice.uang_muka_terapkan, 0) as total_uang_muka'),
+                'invoice.catatan as keterangan',
+                'invoice.created_at',
+                'invoice.updated_at',
                 DB::raw('COALESCE(NULLIF(TRIM(customer.company), ""), NULLIF(TRIM(customer.nama), ""), customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
                 'customer.kode as customer_kode',
                 'users.name as nama_petugas'
             )
-            ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-            ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
-            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+            ->join('customer', 'invoice.customer_id', '=', 'customer.id')
+            ->leftJoin('users', 'invoice.user_id', '=', 'users.id')
+            ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
+            ->whereBetween('invoice.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
-            $query->where('sales_order.customer_id', $customerId);
+            $query->where('invoice.customer_id', $customerId);
         }
 
         // Filter berdasarkan status pembayaran
         if ($statusPembayaran) {
-            $query->where('sales_order.status_pembayaran', $statusPembayaran);
+            $query->where('invoice.status', $statusPembayaran);
         }
 
         // Filter pencarian
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('sales_order.nomor', 'like', "%{$search}%")
+                $q->where('invoice.nomor', 'like', "%{$search}%")->orWhere('sales_order.nomor', 'like', "%{$search}%")
                     ->orWhere('customer.nama', 'like', "%{$search}%");
             });
         }
 
-        $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')->get();
+        $dataPenjualan = $query->orderBy('invoice.tanggal', 'desc')->get();
 
         // Hitung total penjualan, total dibayar, dan sisa pembayaran
         $totalPenjualan = $dataPenjualan->sum('total');

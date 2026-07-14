@@ -43,10 +43,12 @@ class QuotationController extends Controller
     {
         $query = null;
 
+        $withRelations = ['customer.sales.karyawan', 'details.bundle.items'];
+
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = Quotation::query();
+            $query = Quotation::with($withRelations);
         } else {
-            $query = Quotation::where('user_id', Auth::id());
+            $query = Quotation::with($withRelations)->where('user_id', Auth::id());
         }
 
         $sort = $request->get('sort', 'tanggal');

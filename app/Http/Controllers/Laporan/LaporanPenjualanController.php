@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Laporan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SalesOrder;
+use App\Models\Invoice;
 use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -85,44 +86,38 @@ class LaporanPenjualanController extends Controller
             ]);
 
             // Query sales_order dengan join tabel terkait
-            $query = SalesOrder::query()
+            $query = Invoice::query()
                 ->select(
-                    'sales_order.id',
-                    'sales_order.nomor as nomor_faktur',
-                    'sales_order.tanggal',
-                    'sales_order.customer_id',
-                    'sales_order.status_pembayaran as status',
-                    'sales_order.total',
+                    'invoice.id',
+                    'invoice.nomor as nomor_faktur',
+                    'sales_order.nomor as nomor_so',
+                    'sales_order.nomor_po as nomor_po',
+                    'invoice.tanggal',
+                    'invoice.customer_id',
+                    'invoice.status as status',
+                    'invoice.total',
                     DB::raw('COALESCE(
                     (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp 
-                     JOIN invoice i ON pp.invoice_id = i.id 
-                     WHERE i.sales_order_id = sales_order.id), 
+                     WHERE pp.invoice_id = invoice.id), 
                     0
                 ) as total_bayar'),
-                    DB::raw('COALESCE(
-                    (SELECT SUM(rp.total) FROM retur_penjualan rp 
-                     WHERE rp.sales_order_id = sales_order.id), 
-                    0
-                ) as total_retur'),
-                    DB::raw('COALESCE(
-                    (SELECT SUM(i.uang_muka_terapkan) FROM invoice i 
-                     WHERE i.sales_order_id = sales_order.id), 
-                    0
-                ) as total_uang_muka'),
-                    'sales_order.catatan as keterangan',
-                    'sales_order.created_at',
-                    'sales_order.updated_at',
+                    DB::raw('COALESCE(invoice.kredit_terapkan, 0) as total_retur'),
+                    DB::raw('COALESCE(invoice.uang_muka_terapkan, 0) as total_uang_muka'),
+                    'invoice.catatan as keterangan',
+                    'invoice.created_at',
+                    'invoice.updated_at',
                     DB::raw('COALESCE(NULLIF(TRIM(customer.company), ""), NULLIF(TRIM(customer.nama), ""), customer.kode, CONCAT("Customer #", customer.id)) as customer_nama'),
                     'customer.kode as customer_kode',
                     'users.name as nama_petugas'
                 )
-                ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-                ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
-                ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+                ->join('customer', 'invoice.customer_id', '=', 'customer.id')
+                ->leftJoin('users', 'invoice.user_id', '=', 'users.id')
+                ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
+                ->whereBetween('invoice.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
             // Filter berdasarkan customer
             if ($customerId) {
-                $query->where('sales_order.customer_id', $customerId);
+                $query->where('invoice.customer_id', $customerId);
             }
 
             // Filter berdasarkan customer group
@@ -132,18 +127,18 @@ class LaporanPenjualanController extends Controller
 
             // Filter berdasarkan user/sales
             if ($userId) {
-                $query->where('sales_order.user_id', $userId);
+                $query->where('invoice.user_id', $userId);
             }
 
             // Filter berdasarkan status pembayaran
             if ($statusPembayaran) {
-                $query->where('sales_order.status_pembayaran', $statusPembayaran);
+                $query->where('invoice.status', $statusPembayaran);
             }
 
             // Filter pencarian
             if ($search) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('sales_order.nomor', 'like', "%{$search}%")
+                    $q->where('invoice.nomor', 'like', "%{$search}%")->orWhere('sales_order.nomor', 'like', "%{$search}%")
                         ->orWhere('customer.nama', 'like', "%{$search}%")
                         ->orWhere('customer.company', 'like', "%{$search}%")
                         ->orWhere('customer.kode', 'like', "%{$search}%");
@@ -155,7 +150,7 @@ class LaporanPenjualanController extends Controller
 
             // Skip dan ambil data untuk pagination
             $skip = ($page - 1) * $perPage;
-            $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')
+            $dataPenjualan = $query->orderBy('invoice.tanggal', 'desc')
                 ->skip($skip)
                 ->take($perPage)
                 ->get();
@@ -271,28 +266,28 @@ class LaporanPenjualanController extends Controller
         $detailLevel = $request->input('detail_level', 'detail'); // simple, detail, sangat_detail
 
         // Base query
-        $query = SalesOrder::query()
-            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+        $query = Invoice::query()
+            ->whereBetween('invoice.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
-            $query->where('sales_order.customer_id', $customerId);
+            $query->where('invoice.customer_id', $customerId);
         }
 
         // Filter berdasarkan user/sales
         if ($userId) {
-            $query->where('sales_order.user_id', $userId);
+            $query->where('invoice.user_id', $userId);
         }
 
         // Filter berdasarkan status pembayaran
         if ($statusPembayaran) {
-            $query->where('sales_order.status_pembayaran', $statusPembayaran);
+            $query->where('invoice.status', $statusPembayaran);
         }
 
         // Filter pencarian
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('sales_order.nomor', 'like', "%{$search}%")
+                $q->where('invoice.nomor', 'like', "%{$search}%")->orWhere('sales_order.nomor', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($q) use ($search) {
                         $q->where('nama', 'like', "%{$search}%")
                             ->orWhere('company', 'like', "%{$search}%")
@@ -307,25 +302,20 @@ class LaporanPenjualanController extends Controller
         // Tentukan view dan data berdasarkan detail level
         if ($detailLevel === 'simple') {
             // Level Simple: Ringkasan per transaksi dengan detail tambahan
-            $dataPenjualan = $query->with(['customer', 'user', 'invoices'])
+            $dataPenjualan = $query->with(['customer', 'user', 'salesOrder'])
+                ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
                 ->select(
-                    'sales_order.*',
+                    'invoice.*',
+                    'sales_order.nomor as nomor_so',
+                    'sales_order.nomor_po as nomor_po',
                     DB::raw('COALESCE(
                         (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp
-                         JOIN invoice i ON pp.invoice_id = i.id
-                         WHERE i.sales_order_id = sales_order.id),
+                         WHERE pp.invoice_id = invoice.id),
                         0
                     ) as total_bayar'),
-                    DB::raw('COALESCE(
-                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i
-                         WHERE i.sales_order_id = sales_order.id),
-                        0
-                    ) as total_uang_muka'),
-                    DB::raw('(SELECT GROUP_CONCAT(DISTINCT i.nomor SEPARATOR ", ")
-                             FROM invoice i
-                             WHERE i.sales_order_id = sales_order.id) as nomor_invoice')
+                    DB::raw('COALESCE(invoice.uang_muka_terapkan, 0) as total_uang_muka')
                 )
-                ->orderBy('sales_order.tanggal', 'desc')
+                ->orderBy('invoice.tanggal', 'desc')
                 ->get();
 
             $totalPenjualan = $dataPenjualan->sum('total');
@@ -359,25 +349,25 @@ class LaporanPenjualanController extends Controller
                 'details.produk.satuan',
                 'customer',
                 'user',
-                'invoices.pembayaranPiutang' => function ($query) {
+                'salesOrder.deliveryOrders.details',
+                'pembayaranPiutang.invoice' => function ($query) {
                     $query->orderBy('tanggal', 'asc');
                 }
             ])
+                ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
                 ->select(
-                    'sales_order.*',
+                    'invoice.*',
+                    'sales_order.nomor as nomor_so',
+                    'sales_order.nomor_po as nomor_po',
                     DB::raw('COALESCE(
                         (SELECT SUM(pp.jumlah) FROM pembayaran_piutang pp
-                         JOIN invoice i ON pp.invoice_id = i.id
-                         WHERE i.sales_order_id = sales_order.id),
+                         WHERE pp.invoice_id = invoice.id),
                         0
                     ) as total_bayar'),
-                    DB::raw('COALESCE(
-                        (SELECT SUM(i.uang_muka_terapkan) FROM invoice i
-                         WHERE i.sales_order_id = sales_order.id),
-                        0
-                    ) as total_uang_muka')
+                    DB::raw('COALESCE(invoice.uang_muka_terapkan, 0) as total_uang_muka'),
+                    DB::raw('COALESCE(invoice.kredit_terapkan, 0) as total_retur')
                 )
-                ->orderBy('sales_order.tanggal', 'desc')
+                ->orderBy('invoice.tanggal', 'desc')
                 ->get();
 
             $totalPenjualan = $dataPenjualan->sum('total');
@@ -407,8 +397,9 @@ class LaporanPenjualanController extends Controller
             $orientation = 'landscape';
         } else {
             // Level Detail (default): Daftar transaksi dengan detail produk dan invoice info
-            $dataPenjualan = $query->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-                ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
+            $dataPenjualan = $query->join('customer', 'invoice.customer_id', '=', 'customer.id')
+                ->leftJoin('users', 'invoice.user_id', '=', 'users.id')
+                ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
                 ->with(['details.produk.satuan', 'customer', 'user', 'invoices'])
                 ->select(
                     'sales_order.*',
@@ -438,7 +429,7 @@ class LaporanPenjualanController extends Controller
                     'customer.kode as customer_kode',
                     'users.name as nama_petugas'
                 )
-                ->orderBy('sales_order.tanggal', 'desc')
+                ->orderBy('invoice.tanggal', 'desc')
                 ->get();
 
             $viewData = [
@@ -499,8 +490,16 @@ class LaporanPenjualanController extends Controller
      */
     public function detail($id)
     {
-        $penjualan = SalesOrder::with(['customer', 'details.produk.satuan', 'user', 'invoices.pembayaranPiutang', 'returPenjualan.details.produk.satuan', 'returPenjualan.user'])
-            ->findOrFail($id);
+        $penjualan = Invoice::with([
+            'customer',
+            'details.produk.satuan',
+            'user',
+            'salesOrder.returPenjualan.details.produk.satuan',
+            'salesOrder.returPenjualan.details.satuan',
+            'salesOrder.returPenjualan.user',
+            'pembayaranPiutang.user',
+            'notaKredits'
+        ])->findOrFail($id);
 
         // Breadcrumbs
         $breadcrumbs = [
@@ -527,8 +526,16 @@ class LaporanPenjualanController extends Controller
      */
     public function detailPdf($id)
     {
-        $penjualan = SalesOrder::with(['customer', 'details.produk.satuan', 'user', 'invoices.pembayaranPiutang', 'returPenjualan.details.produk.satuan', 'returPenjualan.user'])
-            ->findOrFail($id);
+        $penjualan = Invoice::with([
+            'customer',
+            'details.produk.satuan',
+            'user',
+            'salesOrder.returPenjualan.details.produk.satuan',
+            'salesOrder.returPenjualan.details.satuan',
+            'salesOrder.returPenjualan.user',
+            'pembayaranPiutang.user',
+            'notaKredits'
+        ])->findOrFail($id);
 
         // Get company data
         $company = \App\Models\Company::first();
@@ -562,22 +569,23 @@ class LaporanPenjualanController extends Controller
             $chartType = $request->input('chart_type', 'monthly'); // monthly, daily, customer, status, product
 
             // Base query
-            $query = SalesOrder::query()
-                ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-                ->leftJoin('users', 'sales_order.user_id', '=', 'users.id')
-                ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+            $query = Invoice::query()
+                ->join('customer', 'invoice.customer_id', '=', 'customer.id')
+                ->leftJoin('users', 'invoice.user_id', '=', 'users.id')
+                ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
+                ->whereBetween('invoice.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
             // Apply filters
             if ($customerId) {
-                $query->where('sales_order.customer_id', $customerId);
+                $query->where('invoice.customer_id', $customerId);
             }
 
             if ($userId) {
-                $query->where('sales_order.user_id', $userId);
+                $query->where('invoice.user_id', $userId);
             }
 
             if ($statusPembayaran) {
-                $query->where('sales_order.status_pembayaran', $statusPembayaran);
+                $query->where('invoice.status', $statusPembayaran);
             }
 
             $chartData = [];
@@ -636,12 +644,12 @@ class LaporanPenjualanController extends Controller
     private function getDailyChart($query, $tanggalAwal, $tanggalAkhir)
     {
         $dailyData = $query->select(
-            DB::raw('DATE(sales_order.tanggal) as date'),
-            DB::raw('SUM(sales_order.total) as total_sales'),
+            DB::raw('DATE(invoice.tanggal) as date'),
+            DB::raw('SUM(invoice.total) as total_sales'),
             DB::raw('COUNT(*) as count_orders'),
-            DB::raw('AVG(sales_order.total) as avg_order_value')
+            DB::raw('AVG(invoice.total) as avg_order_value')
         )
-            ->groupBy(DB::raw('DATE(sales_order.tanggal)'))
+            ->groupBy(DB::raw('DATE(invoice.tanggal)'))
             ->orderBy('date')
             ->get();
 
@@ -724,13 +732,13 @@ class LaporanPenjualanController extends Controller
 
         // Get monthly data for the target year
         $monthlyData = $query->select(
-            DB::raw('MONTH(sales_order.tanggal) as month'),
-            DB::raw('SUM(sales_order.total) as total_sales'),
+            DB::raw('MONTH(invoice.tanggal) as month'),
+            DB::raw('SUM(invoice.total) as total_sales'),
             DB::raw('COUNT(*) as count_orders'),
-            DB::raw('AVG(sales_order.total) as avg_order_value')
+            DB::raw('AVG(invoice.total) as avg_order_value')
         )
-            ->whereYear('sales_order.tanggal', $targetYear)
-            ->groupBy(DB::raw('MONTH(sales_order.tanggal)'))
+            ->whereYear('invoice.tanggal', $targetYear)
+            ->groupBy(DB::raw('MONTH(invoice.tanggal)'))
             ->orderBy('month')
             ->get()
             ->keyBy('month');
@@ -828,9 +836,9 @@ class LaporanPenjualanController extends Controller
             'customer.nama as customer_name',
             'customer.company as customer_company',
             'customer.kode as customer_code',
-            DB::raw('SUM(sales_order.total) as total_sales'),
-            DB::raw('COUNT(sales_order.id) as count_orders'),
-            DB::raw('AVG(sales_order.total) as avg_order_value')
+            DB::raw('SUM(invoice.total) as total_sales'),
+            DB::raw('COUNT(invoice.id) as count_orders'),
+            DB::raw('AVG(invoice.total) as avg_order_value')
         )
             ->groupBy('customer.id', 'customer.nama', 'customer.company', 'customer.kode')
             ->orderBy('total_sales', 'desc')
@@ -962,11 +970,11 @@ class LaporanPenjualanController extends Controller
     private function getStatusChart($query)
     {
         $statusData = $query->select(
-            'sales_order.status_pembayaran',
-            DB::raw('SUM(sales_order.total) as total_sales'),
+            'invoice.status',
+            DB::raw('SUM(invoice.total) as total_sales'),
             DB::raw('COUNT(*) as count_orders')
         )
-            ->groupBy('sales_order.status_pembayaran')
+            ->groupBy('invoice.status')
             ->get();
 
         $labels = [];
@@ -979,12 +987,12 @@ class LaporanPenjualanController extends Controller
         ];
 
         foreach ($statusData as $item) {
-            $statusLabel = match ($item->status_pembayaran) {
+            $statusLabel = match ($item->status) {
                 'lunas' => 'Lunas',
                 'sebagian' => 'Dibayar Sebagian',
                 'belum_bayar' => 'Belum Dibayar',
                 'kelebihan_bayar' => 'Kelebihan Bayar',
-                default => ucfirst($item->status_pembayaran)
+                default => ucfirst($item->status)
             };
 
             $labels[] = $statusLabel;
@@ -1012,15 +1020,15 @@ class LaporanPenjualanController extends Controller
         $productData = DB::table('sales_order')
             ->join('sales_order_detail', 'sales_order.id', '=', 'sales_order_detail.sales_order_id')
             ->join('produk', 'sales_order_detail.produk_id', '=', 'produk.id')
-            ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
+            ->join('customer', 'invoice.customer_id', '=', 'customer.id')
             ->whereBetween('sales_order.tanggal', [
                 Carbon::parse(request()->input('tanggal_awal', now()->startOfMonth()->format('Y-m-d')))->startOfDay(),
                 Carbon::parse(request()->input('tanggal_akhir', now()->format('Y-m-d')))->endOfDay()
             ])
             ->select(
                 'produk.nama as product_name',
-                DB::raw('SUM(sales_order_detail.quantity) as total_quantity'),
-                DB::raw('SUM(sales_order_detail.subtotal) as total_sales')
+                DB::raw('SUM(invoice_detail.quantity) as total_quantity'),
+                DB::raw('SUM(invoice_detail.subtotal) as total_sales')
             )
             ->groupBy('produk.id', 'produk.nama')
             ->orderBy('total_sales', 'desc')
@@ -1062,20 +1070,20 @@ class LaporanPenjualanController extends Controller
 
         // Current period data
         $currentData = $query->select(
-            DB::raw('SUM(sales_order.total) as total_sales'),
+            DB::raw('SUM(invoice.total) as total_sales'),
             DB::raw('COUNT(*) as count_orders'),
-            DB::raw('AVG(sales_order.total) as avg_order_value')
+            DB::raw('AVG(invoice.total) as avg_order_value')
         )->first();
 
         // Previous period data
-        $previousQuery = SalesOrder::query()
-            ->join('customer', 'sales_order.customer_id', '=', 'customer.id')
-            ->whereBetween('sales_order.tanggal', [$previousStart, $previousEnd]);
+        $previousQuery = Invoice::query()
+            ->join('customer', 'invoice.customer_id', '=', 'customer.id')
+            ->whereBetween('invoice.tanggal', [$previousStart, $previousEnd]);
 
         $previousData = $previousQuery->select(
-            DB::raw('SUM(sales_order.total) as total_sales'),
+            DB::raw('SUM(invoice.total) as total_sales'),
             DB::raw('COUNT(*) as count_orders'),
-            DB::raw('AVG(sales_order.total) as avg_order_value')
+            DB::raw('AVG(invoice.total) as avg_order_value')
         )->first();
 
         return [

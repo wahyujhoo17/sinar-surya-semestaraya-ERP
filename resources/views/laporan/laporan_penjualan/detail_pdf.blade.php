@@ -272,7 +272,7 @@
         <p>{{ $penjualan->keterangan ?? 'Tidak ada keterangan' }}</p>
     </div>
 
-    @if (count($penjualan->returPenjualan) > 0)
+    @if (count(($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect())) > 0)
         <div class="info-box">
             <h3>Data Retur Penjualan</h3>
             <table class="data-table">
@@ -287,7 +287,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($penjualan->returPenjualan as $index => $retur)
+                    @foreach (($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect()) as $index => $retur)
                         <tr>
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $retur->nomor }}</td>
@@ -327,14 +327,14 @@
                     <tr>
                         <td colspan="5" style="text-align: right;"><strong>Total Retur:</strong></td>
                         <td><strong>Rp
-                                {{ number_format($penjualan->returPenjualan->sum('total'), 0, ',', '.') }}</strong>
+                                {{ number_format(($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect())->sum('total'), 0, ',', '.') }}</strong>
                         </td>
                     </tr>
                 </tfoot>
             </table>
         </div>
 
-        @foreach ($penjualan->returPenjualan as $indexRetur => $retur)
+        @foreach (($penjualan->salesOrder ? $penjualan->salesOrder->returPenjualan : collect()) as $indexRetur => $retur)
             @if (count($retur->details) > 0)
                 <div class="info-box">
                     <h3>Detail Item Retur #{{ $retur->nomor }}</h3>

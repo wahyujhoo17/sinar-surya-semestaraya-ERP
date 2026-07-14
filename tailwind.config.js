@@ -6,6 +6,11 @@ export default {
         "./resources/**/*.js",
         "./resources/**/*.vue",
     ],
+    safelist: [
+        // Kategori badge palettes (dipilih dinamis di blade, perlu safelist agar tidak ter-purge)
+        { pattern: /(bg|text|ring)-(indigo|emerald|sky|amber|rose|violet|teal|slate)-(50|300|700)/, variants: ['dark'] },
+        { pattern: /(bg|ring)-(indigo|emerald|sky|amber|rose|violet|teal|slate)-(500)\/(10|15)/, variants: ['dark'] },
+    ],
     theme: {
         extend: {
             colors: {

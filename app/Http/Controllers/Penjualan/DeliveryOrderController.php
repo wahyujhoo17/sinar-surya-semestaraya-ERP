@@ -161,6 +161,23 @@ class DeliveryOrderController extends Controller
         $prefix = get_document_prefix('delivery_order') . '-' . Carbon::now()->format('Ymd') . '-';
         $nomor = $prefix . $newNumber;
 
+        $tanpaSo = $request->has('tanpa_so');
+        $produks = \App\Models\Produk::with('satuan')->where('is_active', true)->get();
+        $satuans = \App\Models\Satuan::all();
+        
+        $bundles = \App\Models\ProductBundle::where('is_active', true)->orderBy('nama')->get();
+        if ($tanpaSo) {
+            return view('penjualan.delivery-order.create_tanpa_so', compact(
+                'salesOrders',
+                'customers',
+                'gudangs',
+                'nomor',
+                'produks',
+                'satuans',
+                'bundles'
+            ));
+        }
+
         return view('penjualan.delivery-order.create', compact(
             'salesOrders',
             'customers',
@@ -184,13 +201,13 @@ class DeliveryOrderController extends Controller
         $request->validate([
             'nomor' => 'required|unique:delivery_order,nomor',
             'tanggal' => 'required|date',
-            'sales_order_id' => 'required|exists:sales_order,id',
+            'sales_order_id' => 'nullable|exists:sales_order,id',
             'customer_id' => 'required|exists:customer,id',
             'gudang_id' => 'required|exists:gudang,id',
             'alamat_pengiriman' => 'required|string',
             'catatan' => 'nullable|string',
-            'sales_order_detail_id' => 'required|array',
-            'sales_order_detail_id.*' => 'required|exists:sales_order_detail,id',
+            'sales_order_detail_id' => 'nullable|array',
+            'sales_order_detail_id.*' => 'nullable|exists:sales_order_detail,id',
             'produk_id' => 'required|array',
             'produk_id.*' => 'required|exists:produk,id',
             'quantity' => 'required|array',
@@ -199,6 +216,8 @@ class DeliveryOrderController extends Controller
             'satuan_id.*' => 'required|exists:satuan,id',
             'keterangan' => 'nullable|array',
             'keterangan.*' => 'nullable|string',
+            'is_bundle_item' => 'nullable|array',
+            'bundle_name' => 'nullable|array',
         ]);
 
         // Custom validation to ensure at least one product has a quantity greater than 0
@@ -224,11 +243,13 @@ class DeliveryOrderController extends Controller
             // Auto-link to active permintaan barang if exists and not already linked
             $permintaanBarangId = $request->permintaan_barang_id;
             if (!$permintaanBarangId) {
-                $activePermintaanBarang = \App\Models\PermintaanBarang::where('sales_order_id', $request->sales_order_id)
+                if ($request->sales_order_id) {
+                    $activePermintaanBarang = \App\Models\PermintaanBarang::where('sales_order_id', $request->sales_order_id)
                     ->whereIn('status', ['menunggu', 'diproses'])
                     ->first();
+                }
 
-                if ($activePermintaanBarang) {
+                if (isset($activePermintaanBarang) && $activePermintaanBarang) {
                     $permintaanBarangId = $activePermintaanBarang->id;
                 }
             }
@@ -248,7 +269,7 @@ class DeliveryOrderController extends Controller
             ]);
 
             // Get the sales order
-            $salesOrder = SalesOrder::findOrFail($request->sales_order_id);
+            $salesOrder = $request->sales_order_id ? SalesOrder::find($request->sales_order_id) : null;
 
             // Create delivery order details
             $detailCount = count($request->produk_id);
@@ -263,20 +284,23 @@ class DeliveryOrderController extends Controller
 
                 $addedDetails++;
 
-                // Get the sales order detail by ID (more reliable than searching by product)
-                $salesOrderDetail = SalesOrderDetail::with(['bundle', 'childDetails'])
-                    ->find($request->sales_order_detail_id[$i]);
+                // Only validate SO detail if it's linked to an SO
+                $salesOrderDetail = null;
+                if ($request->sales_order_id) {
+                    $salesOrderDetail = SalesOrderDetail::with(['bundle', 'childDetails'])
+                        ->find($request->sales_order_detail_id[$i] ?? null);
 
-                if (!$salesOrderDetail || $salesOrderDetail->sales_order_id != $request->sales_order_id) {
-                    throw new \Exception("Sales Order Detail tidak ditemukan atau tidak cocok dengan Sales Order yang dipilih");
-                }
+                    if (!$salesOrderDetail || $salesOrderDetail->sales_order_id != $request->sales_order_id) {
+                        throw new \Exception("Sales Order Detail tidak ditemukan atau tidak cocok dengan Sales Order yang dipilih");
+                    }
 
-                // Calculate remaining quantity that can be delivered
-                $remainingQty = $salesOrderDetail->quantity - $salesOrderDetail->quantity_terkirim;
+                    // Calculate remaining quantity that can be delivered
+                    $remainingQty = $salesOrderDetail->quantity - $salesOrderDetail->quantity_terkirim;
 
-                if ($request->quantity[$i] > $remainingQty) {
-                    throw new \Exception("Jumlah pengiriman melebihi sisa quantity untuk produk " .
-                        Produk::find($request->produk_id[$i])->nama);
+                    if ($request->quantity[$i] > $remainingQty) {
+                        throw new \Exception("Jumlah pengiriman melebihi sisa quantity untuk produk " .
+                            Produk::find($request->produk_id[$i])->nama);
+                    }
                 }
 
                 // Check stock availability
@@ -290,22 +314,22 @@ class DeliveryOrderController extends Controller
                     throw new \Exception("Stok tidak mencukupi untuk produk {$produk->nama} di gudang {$gudang->nama}. Stok tersedia: {$currentStock}, Permintaan: {$request->quantity[$i]}");
                 }
 
-                // Get bundle information from sales order detail
+                // Get bundle information
                 $bundleInfo = [
-                    'is_bundle_item' => false,
-                    'bundle_name' => null
+                    'is_bundle_item' => isset($request->is_bundle_item[$i]) ? (bool)$request->is_bundle_item[$i] : false,
+                    'bundle_name' => $request->bundle_name[$i] ?? null
                 ];
 
-                if ($salesOrderDetail->parent_detail_id) {
+                if ($salesOrderDetail && $salesOrderDetail->parent_detail_id) {
                     // This is a bundle child
                     $bundleParent = SalesOrderDetail::find($salesOrderDetail->parent_detail_id);
                     $bundleInfo['is_bundle_item'] = true;
                     $bundleInfo['bundle_name'] = $bundleParent ? $bundleParent->produk->nama : 'Bundle';
-                } elseif ($salesOrderDetail->childDetails && $salesOrderDetail->childDetails->count() > 0) {
+                } elseif ($salesOrderDetail && $salesOrderDetail->childDetails && $salesOrderDetail->childDetails->count() > 0) {
                     // This is a bundle parent
                     $bundleInfo['is_bundle_item'] = true;
                     $bundleInfo['bundle_name'] = $salesOrderDetail->produk->nama;
-                } elseif ($salesOrderDetail->is_bundle_item) {
+                } elseif ($salesOrderDetail && $salesOrderDetail->is_bundle_item) {
                     // This is a bundle item (legacy or standalone bundle)
                     $bundleInfo['is_bundle_item'] = true;
                     if ($salesOrderDetail->bundle && $salesOrderDetail->bundle->nama) {
@@ -315,16 +339,18 @@ class DeliveryOrderController extends Controller
                     }
                 }
 
-                Log::info("Saving Delivery Order Detail with Bundle Info", [
-                    'produk' => $salesOrderDetail->produk->nama,
-                    'is_bundle_item' => $bundleInfo['is_bundle_item'],
-                    'bundle_name' => $bundleInfo['bundle_name']
-                ]);
+                if ($salesOrderDetail) {
+                    Log::info("Saving Delivery Order Detail with Bundle Info", [
+                        'produk' => $salesOrderDetail->produk->nama,
+                        'is_bundle_item' => $bundleInfo['is_bundle_item'],
+                        'bundle_name' => $bundleInfo['bundle_name']
+                    ]);
+                }
 
                 // Create delivery order detail
                 DeliveryOrderDetail::create([
                     'delivery_id' => $deliveryOrder->id,
-                    'sales_order_detail_id' => $salesOrderDetail->id,
+                    'sales_order_detail_id' => $salesOrderDetail ? $salesOrderDetail->id : null,
                     'produk_id' => $request->produk_id[$i],
                     'quantity' => $request->quantity[$i],
                     'satuan_id' => $request->satuan_id[$i],
@@ -340,11 +366,15 @@ class DeliveryOrderController extends Controller
             }
 
             // Log aktivitas
+            $logMessage = "Membuat Delivery Order dengan nomor {$deliveryOrder->nomor}";
+            if ($salesOrder) {
+                $logMessage .= " untuk Sales Order {$salesOrder->nomor}";
+            }
             $this->logUserAktivitas(
                 'Membuat Delivery Order baru',
                 'delivery_order',
                 $deliveryOrder->id,
-                "Membuat Delivery Order dengan nomor {$deliveryOrder->nomor} untuk Sales Order {$salesOrder->nomor}"
+                $logMessage
             );
 
             // Update permintaan barang status if linked to permintaan barang
@@ -379,11 +409,11 @@ class DeliveryOrderController extends Controller
     public function show($id)
     {
         $deliveryOrder = DeliveryOrder::with([
-            'salesOrder',
+            'salesOrder.customer',
             'customer',
             'gudang',
             'user',
-            'details.produk',
+            'details.produk.satuan',
             'details.satuan'
         ])->findOrFail($id);
 
@@ -425,6 +455,22 @@ class DeliveryOrderController extends Controller
         $customers = Customer::orderBy('nama')->get();
         $gudangs = Gudang::where('is_active', true)->orderBy('nama')->get();
 
+        if (!$deliveryOrder->sales_order_id) {
+            $produks = \App\Models\Produk::with('satuan')->where('is_active', true)->get();
+            $satuans = \App\Models\Satuan::all();
+            $bundles = \App\Models\ProductBundle::where('is_active', true)->orderBy('nama')->get();
+            
+            return view('penjualan.delivery-order.edit_tanpa_so', compact(
+                'deliveryOrder',
+                'salesOrders',
+                'customers',
+                'gudangs',
+                'produks',
+                'satuans',
+                'bundles'
+            ));
+        }
+
         return view('penjualan.delivery-order.edit', compact(
             'deliveryOrder',
             'salesOrders',
@@ -446,22 +492,51 @@ class DeliveryOrderController extends Controller
                 ->with('error', 'Tidak dapat mengubah Delivery Order yang sudah diproses atau selesai!');
         }
 
+        // Convert flat array format (produk_id[], quantity[], etc.) to items[] format for non-SO forms
+        if (!$request->has('items') && $request->has('produk_id')) {
+            $items = [];
+            $produkIds = $request->produk_id;
+            $quantities = $request->quantity;
+            $satuanIds = $request->satuan_id;
+            $keterangans = $request->keterangan ?? [];
+            $isBundleItems = $request->is_bundle_item ?? [];
+            $bundleNames = $request->bundle_name ?? [];
+            $deliveryOrderDetailIds = $request->delivery_order_detail_id ?? [];
+
+            for ($i = 0; $i < count($produkIds); $i++) {
+                if (!empty($produkIds[$i])) {
+                    $items[] = [
+                        'produk_id' => $produkIds[$i],
+                        'quantity' => $quantities[$i] ?? 0,
+                        'satuan_id' => $satuanIds[$i] ?? null,
+                        'keterangan' => $keterangans[$i] ?? null,
+                        'is_bundle_item' => isset($isBundleItems[$i]) ? (bool)$isBundleItems[$i] : false,
+                        'bundle_name' => $bundleNames[$i] ?? null,
+                        'delivery_order_detail_id' => $deliveryOrderDetailIds[$i] ?? null,
+                    ];
+                }
+            }
+            $request->merge(['items' => $items]);
+        }
+
         // Validate input
         $validatedData = $request->validate([
             'nomor' => 'required|unique:delivery_order,nomor,' . $id,
             'tanggal' => 'required|date',
-            'sales_order_id' => 'required|exists:sales_order,id',
+            'sales_order_id' => 'nullable|exists:sales_order,id',
             'customer_id' => 'required|exists:customer,id',
             'gudang_id' => 'required|exists:gudang,id',
             'alamat_pengiriman' => 'required|string',
-            'keterangan' => 'nullable|string', // This is for the main DO keterangan/catatan
+            'catatan' => 'nullable|string',
 
             'items' => 'required|array|min:1',
             'items.*.produk_id' => 'required|exists:produk,id',
             'items.*.quantity' => 'required|numeric|min:0', // Allow 0 for initial submission, will be filtered later
             'items.*.satuan_id' => 'required|exists:satuan,id',
             'items.*.keterangan' => 'nullable|string',
-            'items.*.sales_order_detail_id' => 'required|exists:sales_order_detail,id',
+            'items.*.is_bundle_item' => 'nullable|boolean',
+            'items.*.bundle_name' => 'nullable|string',
+            'items.*.sales_order_detail_id' => 'nullable|exists:sales_order_detail,id',
             'items.*.delivery_order_detail_id' => 'nullable|sometimes|exists:delivery_order_detail,id',
         ]);
 
@@ -483,14 +558,14 @@ class DeliveryOrderController extends Controller
             $deliveryOrder->update([
                 'nomor' => $validatedData['nomor'],
                 'tanggal' => $validatedData['tanggal'],
-                'sales_order_id' => $validatedData['sales_order_id'],
+                'sales_order_id' => $validatedData['sales_order_id'] ?? null,
                 'customer_id' => $validatedData['customer_id'],
                 'gudang_id' => $validatedData['gudang_id'],
                 'alamat_pengiriman' => $validatedData['alamat_pengiriman'],
-                'catatan' => $validatedData['keterangan'],
+                'catatan' => $validatedData['catatan'] ?? null,
             ]);
 
-            $salesOrder = SalesOrder::findOrFail($validatedData['sales_order_id']);
+            $salesOrder = !empty($validatedData['sales_order_id']) ? SalesOrder::find($validatedData['sales_order_id']) : null;
             $existingDetailIds = $deliveryOrder->details()->pluck('id')->toArray();
             $processedDetailIds = [];
             $addedDetailsCount = 0;
@@ -502,22 +577,25 @@ class DeliveryOrderController extends Controller
                 }
                 $addedDetailsCount++;
 
-                $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id']);
+                $salesOrderDetail = null;
+                if ($deliveryOrder->sales_order_id) {
+                    $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id'] ?? null);
 
-                if (!$salesOrderDetail || $salesOrderDetail->sales_order_id != $deliveryOrder->sales_order_id) {
-                    $produk = Produk::find($itemData['produk_id']);
-                    throw new \Exception("Detail Sales Order tidak valid atau tidak cocok untuk produk " . ($produk ? $produk->nama : 'Unknown'));
-                }
+                    if (!$salesOrderDetail || $salesOrderDetail->sales_order_id != $deliveryOrder->sales_order_id) {
+                        $produk = Produk::find($itemData['produk_id']);
+                        throw new \Exception("Detail Sales Order tidak valid atau tidak cocok untuk produk " . ($produk ? $produk->nama : 'Unknown'));
+                    }
 
-                // Calculate max allowed quantity for this item based on SO and other DOs
-                $shippedOnOtherDOs = DeliveryOrderDetail::where('sales_order_detail_id', $salesOrderDetail->id)
-                    ->where('delivery_id', '!=', $deliveryOrder->id)
-                    ->sum('quantity');
-                $maxAllowedForThisItem = $salesOrderDetail->quantity - $shippedOnOtherDOs;
+                    // Calculate max allowed quantity for this item based on SO and other DOs
+                    $shippedOnOtherDOs = DeliveryOrderDetail::where('sales_order_detail_id', $salesOrderDetail->id)
+                        ->where('delivery_id', '!=', $deliveryOrder->id)
+                        ->sum('quantity');
+                    $maxAllowedForThisItem = $salesOrderDetail->quantity - $shippedOnOtherDOs;
 
-                if (floatval($itemData['quantity']) > $maxAllowedForThisItem) {
-                    $produk = Produk::find($itemData['produk_id']);
-                    throw new \Exception("Jumlah pengiriman untuk " . ($produk ? $produk->nama : 'Unknown') . " ({$itemData['quantity']}) melebihi sisa yang belum dikirim dari Sales Order ({$maxAllowedForThisItem}).");
+                    if (floatval($itemData['quantity']) > $maxAllowedForThisItem) {
+                        $produk = Produk::find($itemData['produk_id']);
+                        throw new \Exception("Jumlah pengiriman untuk " . ($produk ? $produk->nama : 'Unknown') . " ({$itemData['quantity']}) melebihi sisa yang belum dikirim dari Sales Order ({$maxAllowedForThisItem}).");
+                    }
                 }
 
                 $currentStock = StokProduk::where('gudang_id', $validatedData['gudang_id'])
@@ -539,11 +617,11 @@ class DeliveryOrderController extends Controller
                 }
 
                 if ($deliveryOrderDetail) {
-                    // Get bundle info from sales order detail
-                    $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id']);
+                    // Get bundle info
+                    $salesOrderDetail = $deliveryOrder->sales_order_id ? SalesOrderDetail::find($itemData['sales_order_detail_id'] ?? null) : null;
                     $bundleInfo = [
-                        'is_bundle_item' => false,
-                        'bundle_name' => null
+                        'is_bundle_item' => isset($itemData['is_bundle_item']) ? (bool)$itemData['is_bundle_item'] : false,
+                        'bundle_name' => $itemData['bundle_name'] ?? null
                     ];
 
                     if ($salesOrderDetail) {
@@ -568,7 +646,7 @@ class DeliveryOrderController extends Controller
                     }
 
                     $deliveryOrderDetail->update([
-                        'sales_order_detail_id' => $itemData['sales_order_detail_id'],
+                        'sales_order_detail_id' => $salesOrderDetail ? $salesOrderDetail->id : null,
                         'produk_id' => $itemData['produk_id'],
                         'quantity' => $itemData['quantity'],
                         'satuan_id' => $itemData['satuan_id'],
@@ -578,11 +656,11 @@ class DeliveryOrderController extends Controller
                     ]);
                     $processedDetailIds[] = $deliveryOrderDetail->id;
                 } else {
-                    // Get bundle info from sales order detail for new items
-                    $salesOrderDetail = SalesOrderDetail::find($itemData['sales_order_detail_id']);
+                    // Get bundle info for new items
+                    $salesOrderDetail = $deliveryOrder->sales_order_id ? SalesOrderDetail::find($itemData['sales_order_detail_id'] ?? null) : null;
                     $bundleInfo = [
-                        'is_bundle_item' => false,
-                        'bundle_name' => null
+                        'is_bundle_item' => isset($itemData['is_bundle_item']) ? (bool)$itemData['is_bundle_item'] : false,
+                        'bundle_name' => $itemData['bundle_name'] ?? null
                     ];
 
                     if ($salesOrderDetail) {
@@ -608,7 +686,7 @@ class DeliveryOrderController extends Controller
 
                     $newDetail = DeliveryOrderDetail::create([
                         'delivery_id' => $deliveryOrder->id,
-                        'sales_order_detail_id' => $itemData['sales_order_detail_id'],
+                        'sales_order_detail_id' => $salesOrderDetail ? $salesOrderDetail->id : null,
                         'produk_id' => $itemData['produk_id'],
                         'quantity' => $itemData['quantity'],
                         'satuan_id' => $itemData['satuan_id'],
@@ -630,11 +708,15 @@ class DeliveryOrderController extends Controller
                 throw new \Exception("Tidak ada produk dengan kuantitas valid yang dapat disimpan. Pastikan minimal satu item memiliki kuantitas lebih dari 0.");
             }
 
+            $logMessage = "Mengupdate Delivery Order dengan nomor {$deliveryOrder->nomor}";
+            if ($salesOrder) {
+                $logMessage .= " untuk Sales Order {$salesOrder->nomor}";
+            }
             $this->logUserAktivitas(
                 'Mengupdate Delivery Order',
                 'delivery_order',
                 $deliveryOrder->id,
-                "Mengupdate Delivery Order dengan nomor {$deliveryOrder->nomor} untuk Sales Order {$salesOrder->nomor}"
+                $logMessage
             );
 
             DB::commit();
@@ -730,13 +812,15 @@ class DeliveryOrderController extends Controller
                 );
 
                 // Update sales order detail quantity_terkirim
-                $salesOrderDetail = SalesOrderDetail::where('sales_order_id', $deliveryOrder->sales_order_id)
-                    ->where('produk_id', $detail->produk_id)
-                    ->first();
+                if ($deliveryOrder->sales_order_id) {
+                    $salesOrderDetail = SalesOrderDetail::where('sales_order_id', $deliveryOrder->sales_order_id)
+                        ->where('produk_id', $detail->produk_id)
+                        ->first();
 
-                if ($salesOrderDetail) {
-                    $salesOrderDetail->quantity_terkirim += $detail->quantity;
-                    $salesOrderDetail->save();
+                    if ($salesOrderDetail) {
+                        $salesOrderDetail->quantity_terkirim += $detail->quantity;
+                        $salesOrderDetail->save();
+                    }
                 }
             }
 
@@ -942,11 +1026,11 @@ class DeliveryOrderController extends Controller
     {
         // Load delivery order with its relationships
         $deliveryOrder = DeliveryOrder::with([
-            'salesOrder',
+            'salesOrder.customer',
             'customer',
             'gudang',
             'user',
-            'details.produk'
+            'details.produk.satuan'
         ])->findOrFail($id);
 
         // Load the PDF view
@@ -966,7 +1050,7 @@ class DeliveryOrderController extends Controller
         try {
             // Load delivery order with its relationships
             $deliveryOrder = DeliveryOrder::with([
-                'salesOrder',
+                'salesOrder.customer',
                 'customer',
                 'gudang',
                 'user',
@@ -997,7 +1081,7 @@ class DeliveryOrderController extends Controller
         try {
             // Load delivery order with its relationships
             $deliveryOrder = DeliveryOrder::with([
-                'salesOrder',
+                'salesOrder.customer',
                 'customer',
                 'gudang',
                 'user',
@@ -1036,7 +1120,7 @@ class DeliveryOrderController extends Controller
         try {
             // Load delivery order dengan relasi yang diperlukan
             $deliveryOrder = DeliveryOrder::with([
-                'salesOrder',
+                'salesOrder.customer',
                 'customer',
                 'gudang',
                 'user',
@@ -1203,7 +1287,7 @@ class DeliveryOrderController extends Controller
         try {
             // Load delivery order with its relationships
             $deliveryOrder = DeliveryOrder::with([
-                'salesOrder',
+                'salesOrder.customer',
                 'customer',
                 'gudang',
                 'user',
@@ -1534,9 +1618,9 @@ class DeliveryOrderController extends Controller
     public function table(Request $request)
     {
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user']);
+            $query = DeliveryOrder::with(['salesOrder.customer.sales', 'customer', 'gudang', 'user']);
         } else {
-            $query = DeliveryOrder::with(['salesOrder', 'customer', 'gudang', 'user'])->whereHas('salesOrder.customer', function ($q) {
+            $query = DeliveryOrder::with(['salesOrder.customer.sales', 'customer', 'gudang', 'user'])->whereHas('salesOrder.customer', function ($q) {
                 $q->where('sales_id', Auth::id());
             });
         }

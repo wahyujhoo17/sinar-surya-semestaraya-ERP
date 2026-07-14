@@ -74,9 +74,9 @@ class InvoiceController extends Controller
         $query = null;
 
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan')) {
-            $query = Invoice::with('customer.sales');
+            $query = Invoice::with(['customer.sales', 'salesOrder']);
         } else {
-            $query = Invoice::with('customer.sales')->where('user_id', Auth::id());
+            $query = Invoice::with(['customer.sales', 'salesOrder'])->where('user_id', Auth::id());
         }
 
         // Check if this is for credit application
@@ -639,7 +639,7 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
-        $invoice->load(['customer', 'salesOrder', 'details']);
+        $invoice->load(['customer', 'salesOrder', 'details.produk']);
         return view('penjualan.invoice.edit', compact('invoice'));
     }
 

@@ -186,16 +186,10 @@
             </tr>
 
             {{-- Payment History Section --}}
-            @if ($so->invoices && $so->invoices->count() > 0)
-                @php
-                    $allPayments = collect();
-                    foreach ($so->invoices as $invoice) {
-                        if ($invoice->pembayaranPiutang && $invoice->pembayaranPiutang->count() > 0) {
-                            $allPayments = $allPayments->merge($invoice->pembayaranPiutang);
-                        }
-                    }
-                @endphp
-                @if ($allPayments->count() > 0)
+            @php
+                $allPayments = $so->pembayaranPiutang ?? collect();
+            @endphp
+            @if ($allPayments->count() > 0)
                     <tr style="background-color: #F0F9FF;">
                         <td colspan="17"
                             style="font-weight: bold; color: #0369A1; text-align: center; border-top: 2px solid #0284C7;">
@@ -236,14 +230,16 @@
                         <td colspan="9" style="border-top: 2px solid #0891B2;"></td>
                     </tr>
                 @endif
-            @endif
 
             {{-- Delivery Orders Section --}}
-            @if ($so->deliveryOrders && $so->deliveryOrders->count() > 0)
+            @php
+                $deliveryOrders = $so->salesOrder ? $so->salesOrder->deliveryOrders : collect();
+            @endphp
+            @if ($deliveryOrders->count() > 0)
                 <tr style="background-color: #FEF3C7;">
                     <td colspan="17"
                         style="font-weight: bold; color: #92400E; text-align: center; border-top: 2px solid #F59E0B;">
-                        RIWAYAT PENGIRIMAN ({{ $so->deliveryOrders->count() }} pengiriman)
+                        RIWAYAT PENGIRIMAN ({{ $deliveryOrders->count() }} pengiriman)
                     </td>
                 </tr>
                 <tr style="background-color: #FEF3C7; font-weight: bold;">
@@ -254,7 +250,7 @@
                     <td colspan="2" style="text-align: center; border-bottom: 1px solid #FCD34D;">Qty Dikirim</td>
                     <td colspan="9" style="text-align: center; border-bottom: 1px solid #FCD34D;">Catatan</td>
                 </tr>
-                @foreach ($so->deliveryOrders as $index => $do)
+                @foreach ($deliveryOrders as $index => $do)
                     @php
                         $statusLabel = match ($do->status) {
                             'draft' => 'Draft',

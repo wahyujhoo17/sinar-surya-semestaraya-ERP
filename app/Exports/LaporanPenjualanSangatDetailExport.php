@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\SalesOrder;
+use App\Models\Invoice;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -34,51 +35,48 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
         $search = $this->filters['search'] ?? null;
 
         // Query sales_order dengan detail produk, payment history, dan delivery orders
-        $query = SalesOrder::query()
+        $query = Invoice::query()
             ->with([
                 'details.produk.satuan',
                 'customer',
                 'user',
-                'invoices.pembayaranPiutang' => function ($query) {
-                    $query->orderBy('tanggal', 'asc');
-                },
-                'deliveryOrders' => function ($query) {
+                'salesOrder.deliveryOrders.details',
+                'pembayaranPiutang.invoice' => function ($query) {
                     $query->orderBy('tanggal', 'asc');
                 }
             ])
             ->select(
-                'sales_order.*',
+                'invoice.*',
                 DB::raw('COALESCE(
-                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2))) 
-                     FROM pembayaran_piutang 
-                     INNER JOIN invoice ON invoice.id = pembayaran_piutang.invoice_id 
-                     WHERE invoice.sales_order_id = sales_order.id), 
+                    (SELECT SUM(CAST(jumlah AS DECIMAL(15,2)))
+                     FROM pembayaran_piutang
+                     WHERE pembayaran_piutang.invoice_id = invoice.id),
                     0
                 ) as total_bayar')
             )
-            ->whereBetween('sales_order.tanggal', [$tanggalAwal, $tanggalAkhir]);
+            ->whereBetween('invoice.tanggal', [$tanggalAwal, $tanggalAkhir]);
 
         // Filter berdasarkan customer
         if ($customerId) {
-            $query->where('sales_order.customer_id', $customerId);
+            $query->where('invoice.customer_id', $customerId);
         }
 
         // Filter berdasarkan status pembayaran
         if ($statusPembayaran) {
-            $query->where('sales_order.status_pembayaran', $statusPembayaran);
+            $query->where('invoice.status', $statusPembayaran);
         }
 
         // Filter pencarian
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('sales_order.nomor', 'like', "%{$search}%")
+                $q->where('invoice.nomor', 'like', "%{$search}%")->orWhere('sales_order.nomor', 'like', "%{$search}%")
                     ->orWhereHas('customer', function ($q) use ($search) {
                         $q->where('nama', 'like', "%{$search}%");
                     });
             });
         }
 
-        $dataPenjualan = $query->orderBy('sales_order.tanggal', 'desc')->get();
+        $dataPenjualan = $query->orderBy('invoice.tanggal', 'desc')->get();
 
         // Hitung total penjualan, total dibayar, uang muka, dan sisa pembayaran
         $totalPenjualan = $dataPenjualan->sum('total');

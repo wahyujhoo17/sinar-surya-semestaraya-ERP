@@ -17,8 +17,8 @@
     <tr>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">No</td>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">Tanggal</td>
+        <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">No Faktur</td>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">No SO</td>
-        <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">No Inv</td>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">No PO</td>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">Customer</td>
         <td style="font-weight: bold; background-color: #4F46E5; color: white; text-align: center;">Total Penjualan</td>
@@ -32,7 +32,7 @@
             <td style="text-align: center;">{{ $no++ }}</td>
             <td style="text-align: center;">{{ \Carbon\Carbon::parse($data->tanggal)->format('d/m/Y') }}</td>
             <td style="text-align: center;">{{ $data->nomor }}</td>
-            <td style="text-align: center;">{{ $data->nomor_invoice ?: '-' }}</td>
+            <td style="text-align: center;">{{ $data->nomor_so ?: '-' }}</td>
             <td style="text-align: center;">{{ $data->nomor_po ?: '-' }}</td>
             <td>{{ $data->customer->company ?? ($data->customer->nama ?? 'Unknown') }}<br>{{ $data->customer->kode ?? '-' }}
             </td>

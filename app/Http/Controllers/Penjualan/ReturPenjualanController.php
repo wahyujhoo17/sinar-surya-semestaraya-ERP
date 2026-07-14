@@ -38,7 +38,7 @@ class ReturPenjualanController extends Controller
             $status = 'semua';
         }
 
-        $query = ReturPenjualan::with(['salesOrder', 'customer', 'user']);
+        $query = ReturPenjualan::with(['salesOrder.customer', 'customer', 'user']);
 
         // Get sorting parameters
         $sortBy = $request->input('sort_by', 'tanggal');

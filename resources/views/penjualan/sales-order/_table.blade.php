@@ -284,9 +284,9 @@
                 @endif
 
                 @if (auth()->user()->hasPermission('sales_order.edit') &&
-                        !$salesOrder->deliveryOrders()->exists() &&
-                        !$salesOrder->invoices()->exists() &&
-                        !$salesOrder->workOrders()->exists())
+                        $salesOrder->deliveryOrders->isEmpty() &&
+                        $salesOrder->invoices->isEmpty() &&
+                        $salesOrder->workOrders->isEmpty())
                     <a href="{{ route('penjualan.sales-order.edit', $salesOrder->id) }}"
                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-yellow-100 text-gray-700 dark:text-white dark:bg-yellow-900/20 dark:hover:bg-yellow-900/30 transition-colors border border-dashed border-yellow-300"
                         title="Edit">
@@ -299,9 +299,9 @@
                     </a>
                 @elseif (
                     !auth()->user()->hasPermission('sales_order.edit') ||
-                        $salesOrder->deliveryOrders()->exists() ||
-                        $salesOrder->invoices()->exists() ||
-                        $salesOrder->workOrders()->exists())
+                        $salesOrder->deliveryOrders->isNotEmpty() ||
+                        $salesOrder->invoices->isNotEmpty() ||
+                        $salesOrder->workOrders->isNotEmpty())
                     <button type="button" disabled
                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed border border-dashed border-gray-300"
                         title="Tidak dapat diedit karena sudah memiliki Delivery Order, Work Order, atau Invoice terkait atau Anda tidak memiliki akses">
@@ -315,9 +315,9 @@
                 @endif
 
                 @if (auth()->user()->hasPermission('sales_order.delete') &&
-                        !$salesOrder->deliveryOrders()->exists() &&
-                        !$salesOrder->invoices()->exists() &&
-                        !$salesOrder->workOrders()->exists())
+                        $salesOrder->deliveryOrders->isEmpty() &&
+                        $salesOrder->invoices->isEmpty() &&
+                        $salesOrder->workOrders->isEmpty())
                     <div x-data="{ salesOrderId: {{ $salesOrder->id }}, salesOrderNo: '{{ $salesOrder->nomor }}' }">
                         <button type="button"
                             @click="confirmDelete(`Apakah Anda yakin ingin menghapus Sales Order <strong>${salesOrderNo}</strong>?<br><br>Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait dengan Sales Order ini.`, () => {
@@ -341,9 +341,9 @@
                     </div>
                 @elseif (
                     !auth()->user()->hasPermission('sales_order.delete') ||
-                        $salesOrder->deliveryOrders()->exists() ||
-                        $salesOrder->invoices()->exists() ||
-                        $salesOrder->workOrders()->exists())
+                        $salesOrder->deliveryOrders->isNotEmpty() ||
+                        $salesOrder->invoices->isNotEmpty() ||
+                        $salesOrder->workOrders->isNotEmpty())
                     <button type="button" disabled
                         class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed border border-dashed border-gray-300"
                         title="Tidak dapat dihapus karena sudah memiliki Delivery Order, Work Order, atau Invoice terkait atau Anda tidak memiliki akses">

@@ -93,10 +93,10 @@ class SalesOrderController extends Controller
         $query = null;
 
         if (Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan') || Auth::user()->hasRole('admin_penjualan') || Auth::user()->hasRole('purchasing')) {
-            $query = SalesOrder::with(['customer.sales', 'deliveryOrders']);
+            $query = SalesOrder::with(['customer.sales', 'deliveryOrders', 'invoices', 'workOrders']);
         } else {
             // For sales users, only show sales orders for their assigned customers
-            $query = SalesOrder::with(['customer.sales', 'deliveryOrders'])->whereHas('customer', function ($q) {
+            $query = SalesOrder::with(['customer.sales', 'deliveryOrders', 'invoices', 'workOrders'])->whereHas('customer', function ($q) {
                 $q->where('sales_id', Auth::id());
             });
         }

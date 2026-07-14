@@ -173,6 +173,16 @@
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="item.nomor_faktur">
                         </div>
+                        <template x-if="item.nomor_so">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                SO: <span x-text="item.nomor_so"></span>
+                            </div>
+                        </template>
+                        <template x-if="item.nomor_po">
+                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                PO: <span x-text="item.nomor_po"></span>
+                            </div>
+                        </template>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
                         <div class="text-sm text-gray-500 dark:text-gray-400" x-text="formatDate(item.tanggal)"></div>

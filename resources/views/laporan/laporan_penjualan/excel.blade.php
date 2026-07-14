@@ -24,7 +24,7 @@
             Tanggal</th>
         <th
             style="background-color: #4F46E5; color: #FFFFFF; border: 2px solid #000000; text-align: center; font-weight: bold; padding: 8px;">
-            No Inv</th>
+            No SO</th>
         <th
             style="background-color: #4F46E5; color: #FFFFFF; border: 2px solid #000000; text-align: center; font-weight: bold; padding: 8px;">
             No PO</th>
@@ -113,7 +113,7 @@
                             {{ \Carbon\Carbon::parse($so->tanggal)->format('d/m/Y') }}</td>
                         <td rowspan="{{ $so->details->count() }}"
                             style="border: 1px solid #666666; vertical-align: top; text-align: center;">
-                            {{ $so->nomor_invoice ?: '-' }}</td>
+                            {{ $so->nomor_so ?: '-' }}</td>
                         <td rowspan="{{ $so->details->count() }}"
                             style="border: 1px solid #666666; vertical-align: top; text-align: center;">
                             {{ $so->nomor_po ?: '-' }}</td>
@@ -201,7 +201,7 @@
                 <td style="border: 1px solid #D1D5DB; text-align: center;">
                     {{ \Carbon\Carbon::parse($so->tanggal)->format('d/m/Y') }}</td>
                 <td style="border: 1px solid #D1D5DB; text-align: center;">
-                    {{ $so->nomor_invoice ?: '-' }}</td>
+                    {{ $so->nomor_so ?: '-' }}</td>
                 <td style="border: 1px solid #D1D5DB; text-align: center;">
                     {{ $so->nomor_po ?: '-' }}</td>
                 <td style="border: 1px solid #D1D5DB;">

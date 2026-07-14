@@ -263,11 +263,40 @@ class ProdukController extends Controller
             ->limit(10) // Batasi 10 transaksi terbaru
             ->get();
 
+        // Get riwayat penjualan dari invoice yang mengandung produk ini
+        $riwayatPenjualan = DB::table('invoice_detail as id')
+            ->join('invoice as i', 'id.invoice_id', '=', 'i.id')
+            ->join('customer as c', 'i.customer_id', '=', 'c.id')
+            ->leftJoin('users as u', 'i.user_id', '=', 'u.id')
+            ->leftJoin('sales_order as so', 'i.sales_order_id', '=', 'so.id')
+            ->where('id.produk_id', $produk->id)
+            ->where('i.status', '!=', 'dibatalkan')
+            ->select(
+                'i.id as invoice_id',
+                'i.nomor as nomor_invoice',
+                'i.tanggal',
+                'i.status as status_pembayaran',
+                'i.total as total_invoice',
+                'so.nomor as nomor_so',
+                'id.quantity',
+                'id.harga',
+                'id.diskon_persen',
+                'id.diskon_nominal',
+                'id.subtotal',
+                'c.nama as customer_nama',
+                'c.company as customer_company',
+                'c.kode as customer_kode',
+                'u.name as sales_person'
+            )
+            ->orderBy('i.tanggal', 'desc')
+            ->limit(10)
+            ->get();
+
         $breadcrumbs = [
             'Produk' => route('master.produk.index')
         ];
         $currentPage = 'Detail Produk';
-        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'kategoris', 'satuans', 'jenisProduks', 'riwayatPembelian'));
+        return view('master-data.produk.show', compact('produk', 'breadcrumbs', 'currentPage', 'kategoris', 'satuans', 'jenisProduks', 'riwayatPembelian', 'riwayatPenjualan'));
     }
 
     /**
