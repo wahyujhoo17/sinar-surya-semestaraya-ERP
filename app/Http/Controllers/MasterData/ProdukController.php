@@ -240,10 +240,13 @@ class ProdukController extends Controller
         // Hanya tampilkan PO dengan status selesai
         $riwayatPembelian = DB::table('purchase_order_detail as pod')
             ->join('purchase_order as po', 'pod.po_id', '=', 'po.id')
-            ->join('supplier as s', 'po.supplier_id', '=', 's.id')
+            ->leftJoin('supplier as s', 'po.supplier_id', '=', 's.id') // Gunakan leftJoin agar jika supplier dihapus/hilang, data PO tetap muncul
             ->leftJoin('users as u', 'po.user_id', '=', 'u.id')
             ->where('pod.produk_id', $produk->id)
-            ->where('po.status', 'selesai') // Hanya PO yang sudah selesai
+            ->where(function($q) {
+                $q->where('po.status', 'selesai')
+                  ->orWhere('po.status', 'Selesai'); // Case-insensitive atau antisipasi penulisan huruf besar
+            })
             ->select(
                 'po.id as purchase_order_id',
                 'po.nomor as nomor_po',
@@ -256,17 +259,17 @@ class ProdukController extends Controller
                 'pod.harga',
                 'pod.subtotal',
                 's.nama as supplier_nama',
-                's.kode as supplier_kode', // Gunakan kode supplier sebagai pengganti company
+                's.kode as supplier_kode',
                 'u.name as purchasing_person'
             )
             ->orderBy('po.tanggal', 'desc')
-            ->limit(10) // Batasi 10 transaksi terbaru
+            ->limit(10)
             ->get();
 
         // Get riwayat penjualan dari invoice yang mengandung produk ini
         $riwayatPenjualan = DB::table('invoice_detail as id')
             ->join('invoice as i', 'id.invoice_id', '=', 'i.id')
-            ->join('customer as c', 'i.customer_id', '=', 'c.id')
+            ->leftJoin('customer as c', 'i.customer_id', '=', 'c.id') // leftJoin agar jika customer hilang, data tetap muncul
             ->leftJoin('users as u', 'i.user_id', '=', 'u.id')
             ->leftJoin('sales_order as so', 'i.sales_order_id', '=', 'so.id')
             ->where('id.produk_id', $produk->id)
