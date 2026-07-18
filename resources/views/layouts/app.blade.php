@@ -378,10 +378,7 @@ if (darkMode) {
         <!-- Confirmation Modal Component (Global) -->
         <x-confirmation-modal />
 
-        <!-- Existing Scripts -->
-        @stack('scripts')
     </div>
-    @stack('scripts')
 
     <script>
         // Fungsi helper global

@@ -34,6 +34,10 @@
             input[type=number]::-webkit-inner-spin-button,
             input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
             input[type=number] { -moz-appearance: textfield; }
+            .stock-empty-row { background-color: rgb(254 242 242) !important; border-left: 4px solid rgb(248 113 113); }
+            .stock-warning-row { background-color: rgb(254 252 232) !important; border-left: 4px solid rgb(250 204 21); }
+            .dark .stock-empty-row { background-color: rgb(127 29 29 / 0.2) !important; }
+            .dark .stock-warning-row { background-color: rgb(113 63 18 / 0.2) !important; }
         </style>
     @endpush
 
@@ -217,6 +221,29 @@
 
             var produkOptions = `<option value="">Pilih Produk...</option>@foreach($produks as $produk)<option value="{{ $produk->id }}">{{ $produk->kode }} - {{ $produk->nama }}</option>@endforeach`;
             var satuanOptions = `@foreach($satuans as $satuan)<option value="{{ $satuan->id }}">{{ $satuan->nama }}</option>@endforeach`;
+            @php
+                $oldProdukIds = old('produk_id', []);
+                $oldQuantities = old('quantity', []);
+                $oldSatuanIds = old('satuan_id', []);
+                $oldKeterangans = old('keterangan', []);
+                $oldIsBundleItems = old('is_bundle_item', []);
+                $oldBundleNames = old('bundle_name', []);
+                $oldItems = collect($oldProdukIds)->map(function ($produkId, $index) use ($oldQuantities, $oldSatuanIds, $oldKeterangans, $oldIsBundleItems, $oldBundleNames, $produks) {
+                    $produk = $produks->firstWhere('id', (int) $produkId);
+
+                    return [
+                        'produk_id' => $produkId,
+                        'produk_nama' => $produk ? $produk->kode . ' - ' . $produk->nama : '',
+                        'quantity' => $oldQuantities[$index] ?? 0,
+                        'satuan_id' => $oldSatuanIds[$index] ?? null,
+                        'keterangan' => $oldKeterangans[$index] ?? '',
+                        'is_bundle_item' => isset($oldIsBundleItems[$index]) && (bool) $oldIsBundleItems[$index],
+                        'bundle_name' => $oldBundleNames[$index] ?? '',
+                    ];
+                })->values();
+            @endphp
+            var oldItems = {!! json_encode($oldItems) !!};
+            var stockRequest = null;
 
             function addRow(data = {}) {
                 rowCounter++;
@@ -284,7 +311,7 @@
                         if (produkId && produkMap[produkId]) {
                             $(`#satuan_${id}`).val(produkMap[produkId].satuan_id);
                         }
-                        fetchStockInfo();
+                        setTimeout(fetchStockInfo, 100);
                     });
                 } else {
                     if (data.satuan_id) {
@@ -313,7 +340,7 @@
                     let pid = $(this).find('select[name="produk_id[]"]').val() || $(this).find('input[name="produk_id[]"]').val();
                     if(pid) productIds.push(pid);
                 });
-                
+
                 if (productIds.length === 0) return;
 
                 // Set loading state
@@ -324,7 +351,11 @@
                     }
                 });
 
-                $.ajax({
+                if (stockRequest) {
+                    stockRequest.abort();
+                }
+
+                stockRequest = $.ajax({
                     url: "{{ route('penjualan.delivery-order.get-stock-info') }}",
                     type: 'GET',
                     data: { gudang_id: gudangId, product_ids: productIds },
@@ -336,19 +367,33 @@
                                     let stock = response.stocks[pid];
                                     let cell = $(this).find('.stock-cell');
                                     let qtyInput = $(this).find('.qty-input');
-                                    
+
                                     $(this).data('stock', stock !== undefined ? stock : 0);
-                                    
+
                                     if(stock > 0) {
                                         cell.html(`<span class="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">${stock}</span>`);
                                         qtyInput.attr('max', stock);
                                     } else {
+                                        qtyInput.removeAttr('max');
                                         cell.html(`<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Stok kosong</span>`);
                                     }
                                     updateRowColor($(this));
                                 }
                             });
                         }
+                    },
+                    error: function(xhr, status) {
+                        if (status === 'abort') return;
+
+                        $('.product-row').each(function() {
+                            let pid = $(this).find('select[name="produk_id[]"]').val() || $(this).find('input[name="produk_id[]"]').val();
+                            if (pid) {
+                                $(this).find('.stock-cell').html('<span class="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded dark:bg-red-900 dark:text-red-300">Gagal cek stok</span>');
+                            }
+                        });
+                    },
+                    complete: function() {
+                        stockRequest = null;
                     }
                 });
             }
@@ -359,14 +404,14 @@
                 let pid = row.find('select[name="produk_id[]"]').val() || row.find('input[name="produk_id[]"]').val();
                 let qtyInput = row.find('.qty-input');
                 
-                row.removeClass('bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 bg-yellow-50 dark:bg-yellow-900/20 border-yellow-400');
+                row.removeClass('stock-empty-row stock-warning-row');
                 qtyInput.removeClass('border-red-500 ring-1 ring-red-500');
 
                 if (pid && stock !== undefined && stock !== null) {
                     if (stock <= 0) {
-                        row.addClass('bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400');
+                        row.addClass('stock-empty-row');
                     } else if (qty > stock) {
-                        row.addClass('bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400');
+                        row.addClass('stock-warning-row');
                         qtyInput.addClass('border-red-500 ring-1 ring-red-500');
                     }
                 }
@@ -517,8 +562,14 @@
                     $('#submitBtn').html('<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...');
                 });
 
-                // Init with one empty row
-                if ($('.product-row').length === 0) {
+                // Init with old rows after validation errors
+                if (oldItems.length > 0) {
+                    $('#productTableBody').empty();
+                    oldItems.forEach(item => {
+                        addRow(item);
+                    });
+                    setTimeout(fetchStockInfo, 500);
+                } else if ($('.product-row').length === 0) {
                     $('#productTableBody').empty();
                     addRow();
                 }
