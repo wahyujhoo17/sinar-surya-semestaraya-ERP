@@ -842,6 +842,16 @@
                     Pilih Jenis Cetak Invoice
                 </h3>
 
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Rekening Bank (Opsional)</label>
+                    <select id="bank_id_ppn" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white">
+                        <option value="">-- Default / Sesuai Pengaturan --</option>
+                        @foreach($rekeningBanks as $bank)
+                            <option value="{{ $bank->id }}">{{ $bank->nama_bank }} - {{ $bank->nomor_rekening }} (a.n. {{ $bank->atas_nama }})</option>
+                        @endforeach
+                    </select>
+                </div>
+
                 <div class="space-y-4">
                     <!-- Opsi 1: Invoice Normal -->
                     <button type="button" onclick="printNormal()"
@@ -964,6 +974,16 @@
                 <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
                     Pilih Jenis Cetak Invoice Non-PPN
                 </h3>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pilih Rekening Bank (Opsional)</label>
+                    <select id="bank_id_non_ppn" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-white">
+                        <option value="">-- Default / Sesuai Pengaturan --</option>
+                        @foreach($rekeningBanks as $bank)
+                            <option value="{{ $bank->id }}">{{ $bank->nama_bank }} - {{ $bank->nomor_rekening }} (a.n. {{ $bank->atas_nama }})</option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <div class="space-y-4">
                     <!-- Opsi 1: Invoice Normal Non-PPN -->
@@ -1224,7 +1244,12 @@
             }
 
             function printNormal() {
-                window.open('{{ route('penjualan.invoice.print-template', $invoice->id) }}', '_blank');
+                const bankId = document.getElementById('bank_id_ppn').value;
+                let url = '{{ route('penjualan.invoice.print-template', $invoice->id) }}';
+                if (bankId) {
+                    url += '?bank_id=' + bankId;
+                }
+                window.open(url, '_blank');
                 closePrintModal();
             }
 
@@ -1295,8 +1320,11 @@
                 }
 
                 // Buka URL dengan parameter DP
-                const url = '{{ route('penjualan.invoice.print-template', $invoice->id) }}' + '?dp_amount=' + Math.round(
-                    dpAmount);
+                let url = '{{ route('penjualan.invoice.print-template', $invoice->id) }}' + '?dp_amount=' + Math.round(dpAmount);
+                const bankId = document.getElementById('bank_id_ppn').value;
+                if (bankId) {
+                    url += '&bank_id=' + bankId;
+                }
                 window.open(url, '_blank');
                 closePrintModal();
             }
@@ -1326,7 +1354,12 @@
             }
 
             function printNormalNonPpn() {
-                window.open('{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}', '_blank');
+                const bankId = document.getElementById('bank_id_non_ppn').value;
+                let url = '{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}';
+                if (bankId) {
+                    url += '?bank_id=' + bankId;
+                }
+                window.open(url, '_blank');
                 closePrintModalNonPpn();
             }
 
@@ -1399,9 +1432,11 @@
                 }
 
                 // Buka URL dengan parameter DP
-                const url = '{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}' + '?dp_amount=' + Math
-                    .round(
-                        dpAmount);
+                let url = '{{ route('penjualan.invoice.print-template-non-ppn', $invoice->id) }}' + '?dp_amount=' + Math.round(dpAmount);
+                const bankId = document.getElementById('bank_id_non_ppn').value;
+                if (bankId) {
+                    url += '&bank_id=' + bankId;
+                }
                 window.open(url, '_blank');
                 closePrintModalNonPpn();
             }

@@ -13,8 +13,10 @@ class PDFInvoiceTamplate
      * @param object $invoice Invoice model
      * @param string $namaDirektur Nama direktur untuk tanda tangan
      * @param float $dpAmount Jumlah DP yang akan ditampilkan (optional, tidak disimpan ke database)
+     * @param mixed $bankAccounts Daftar bank untuk pembayaran
+     * @param mixed $primaryBank Bank utama untuk pembayaran
      */
-    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $dpAmount = 0)
+    public function fillInvoiceTemplate($invoice, $namaDirektur = '', $dpAmount = 0, $bankAccounts = null, $primaryBank = null)
     {
         $useTemplate = config(
             'app.print_with_template',
@@ -490,12 +492,30 @@ class PDFInvoiceTamplate
             if (preg_match("/INV-(\\d{8}-\\d+)/", $invoice->nomor, $matches)) {
                 $nomorINV = $matches[1];
             }
-            // Ganti <br> dengan new line agar MultiCell TCPDF bisa menampilkan baris baru
-            $CatatanText = "PERHATIAN:\nMohon Dicantumkan NO. $nomorINV\nPada Berita Transfer.";
+            
+            $CatatanText = "PERHATIAN:\nMohon Dicantumkan NO. $nomorINV\nPada Berita Transfer.\n";
+            $CatatanText .= "--------------------------------------------------------\n";
+            
+            $displayBank = null;
+            if ($primaryBank) {
+                $displayBank = $primaryBank;
+            } elseif ($bankAccounts && $bankAccounts->isNotEmpty()) {
+                $displayBank = $bankAccounts->first();
+            }
+            
+            if ($displayBank) {
+                $CatatanText .= "Bank: " . ($displayBank->nama_bank ?? 'Mandiri') . "\n";
+                $CatatanText .= "No. Rekening: " . ($displayBank->nomor_rekening ?? '006.000.301.9563') . "\n";
+                $CatatanText .= "Atas Nama: " . ($displayBank->atas_nama ?? setting('company_name', 'PT. Sinar Surya Semestaraya'));
+            } else {
+                $CatatanText .= "Bank: " . setting('company_bank_name', 'Mandiri') . "\n";
+                $CatatanText .= "No. Rekening: " . setting('company_bank_account', '006.000.301.9563') . "\n";
+                $CatatanText .= "Atas Nama: " . setting('company_name', 'PT. Sinar Surya Semestaraya');
+            }
 
-            $pdf->SetFont('helvetica', '', 8);
-            $pdf->SetXY(90, 137);
-            $pdf->MultiCell(120, 4,  $CatatanText, 0, 'L');
+            $pdf->SetFont('helvetica', '', 7.5);
+            $pdf->SetXY(90, 134);
+            $pdf->MultiCell(120, 3,  $CatatanText, 0, 'L');
 
 
             // Garis bawah untuk tanda tangan

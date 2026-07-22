@@ -633,8 +633,10 @@ class InvoiceController extends Controller
         $appliedAdvances = UangMukaAplikasi::where('invoice_id', $invoice->id)
             ->with('uangMukaPenjualan')
             ->get();
+            
+        $rekeningBanks = \App\Models\RekeningBank::where('is_aktif', true)->get();
 
-        return view('penjualan.invoice.show', compact('invoice', 'appliedAdvances'));
+        return view('penjualan.invoice.show', compact('invoice', 'appliedAdvances', 'rekeningBanks'));
     }
 
     public function edit(Invoice $invoice)
@@ -1036,10 +1038,19 @@ class InvoiceController extends Controller
 
             // Get DP amount from request (optional, for temporary DP display only)
             $dpAmount = request('dp_amount', 0);
+            
+            // Get bank accounts for payment information
+            $bankId = request('bank_id');
+            $selectedBank = null;
+            if ($bankId) {
+                $selectedBank = \App\Models\RekeningBank::find($bankId);
+            }
+            $bankAccounts = get_bank_accounts_for_invoice();
+            $primaryBank = get_primary_bank_account();
 
             // Use PDF template service - Menggunakan template asli
             $pdfService = new \App\Services\PDFInvoiceTamplate();
-            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount, $selectedBank ? collect([$selectedBank]) : $bankAccounts, $selectedBank ?: $primaryBank);
 
 
 
@@ -1084,6 +1095,11 @@ class InvoiceController extends Controller
             $namaDirektur = DirekturUtamaService::getDirekturUtama();
 
             // Get bank accounts for payment information
+            $bankId = request('bank_id');
+            $selectedBank = null;
+            if ($bankId) {
+                $selectedBank = \App\Models\RekeningBank::find($bankId);
+            }
             $bankAccounts = get_bank_accounts_for_invoice();
             $primaryBank = get_primary_bank_account();
 
@@ -1092,7 +1108,7 @@ class InvoiceController extends Controller
 
             // Use PDF template service untuk Non PPN
             $pdfService = new \App\Services\PDFInvoiceNonPpnTemplate();
-            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount, $bankAccounts, $primaryBank);
+            $pdf = $pdfService->fillInvoiceTemplate($invoice, $namaDirektur, $dpAmount, $selectedBank ? collect([$selectedBank]) : $bankAccounts, $selectedBank ?: $primaryBank);
 
             // Output PDF
             $filename = 'Invoice-Non-PPN-' . $invoice->nomor . '.pdf';
