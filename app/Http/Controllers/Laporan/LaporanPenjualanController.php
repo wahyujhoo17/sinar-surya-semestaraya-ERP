@@ -10,9 +10,17 @@ use App\Models\Customer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\SalesMarginService;
 
 class LaporanPenjualanController extends Controller
 {
+    protected $salesMarginService;
+
+    public function __construct(SalesMarginService $salesMarginService)
+    {
+        $this->salesMarginService = $salesMarginService;
+    }
+
     /**
      * Menampilkan halaman laporan penjualan
      * 
@@ -155,6 +163,16 @@ class LaporanPenjualanController extends Controller
                 ->take($perPage)
                 ->get();
 
+            // Load details for margin calculations
+            $dataPenjualan->load(['details.produk', 'details.bundle.items.produk']);
+
+            foreach ($dataPenjualan as $invoice) {
+                $marginData = $this->salesMarginService->calculateInvoiceMargin($invoice);
+                $invoice->total_hpp = $marginData['total_hpp'];
+                $invoice->laba_kotor = $marginData['laba_kotor'];
+                $invoice->margin_persen = $marginData['margin_persen'];
+            }
+
             // Debug results
             Log::info('Sales data results', [
                 'count' => $dataPenjualan->count(),
@@ -163,11 +181,14 @@ class LaporanPenjualanController extends Controller
                 'bindings' => $query->getBindings()
             ]);
 
-            // Hitung total penjualan, total dibayar, total uang muka, dan sisa pembayaran
+            // Hitung total penjualan, total dibayar, total uang muka, sisa pembayaran, HPP, laba kotor, dan margin %
             $totalPenjualan = $dataPenjualan->sum('total');
             $totalDibayar = $dataPenjualan->sum('total_bayar');
             $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
             $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
+            $totalHpp = $dataPenjualan->sum('total_hpp');
+            $totalLabaKotor = $dataPenjualan->sum('laba_kotor');
+            $rataMarginPersen = $totalPenjualan > 0 ? round(($totalLabaKotor / $totalPenjualan) * 100, 2) : 0;
 
             // Calculate last page
             $lastPage = ceil($totalItems / $perPage);
@@ -182,7 +203,10 @@ class LaporanPenjualanController extends Controller
                     'total_penjualan' => $totalPenjualan,
                     'total_dibayar' => $totalDibayar,
                     'total_uang_muka' => $totalUangMuka,
-                    'sisa_pembayaran' => $sisaPembayaran
+                    'sisa_pembayaran' => $sisaPembayaran,
+                    'total_hpp' => $totalHpp,
+                    'total_laba_kotor' => $totalLabaKotor,
+                    'rata_margin_persen' => $rataMarginPersen
                 ],
                 'filter' => [
                     'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
@@ -493,6 +517,7 @@ class LaporanPenjualanController extends Controller
         $penjualan = Invoice::with([
             'customer',
             'details.produk.satuan',
+            'details.bundle.items.produk',
             'user',
             'salesOrder.returPenjualan.details.produk.satuan',
             'salesOrder.returPenjualan.details.satuan',
@@ -500,6 +525,8 @@ class LaporanPenjualanController extends Controller
             'pembayaranPiutang.user',
             'notaKredits'
         ])->findOrFail($id);
+
+        $marginInfo = $this->salesMarginService->calculateInvoiceMargin($penjualan);
 
         // Breadcrumbs
         $breadcrumbs = [
@@ -513,6 +540,7 @@ class LaporanPenjualanController extends Controller
 
         return view('laporan.laporan_penjualan.detail', compact(
             'penjualan',
+            'marginInfo',
             'breadcrumbs',
             'currentPage'
         ));
@@ -529,6 +557,7 @@ class LaporanPenjualanController extends Controller
         $penjualan = Invoice::with([
             'customer',
             'details.produk.satuan',
+            'details.bundle.items.produk',
             'user',
             'salesOrder.returPenjualan.details.produk.satuan',
             'salesOrder.returPenjualan.details.satuan',
@@ -537,12 +566,15 @@ class LaporanPenjualanController extends Controller
             'notaKredits'
         ])->findOrFail($id);
 
+        $marginInfo = $this->salesMarginService->calculateInvoiceMargin($penjualan);
+
         // Get company data
         $company = \App\Models\Company::first();
 
         // Generate PDF
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('laporan.laporan_penjualan.detail_pdf', [
             'penjualan' => $penjualan,
+            'marginInfo' => $marginInfo,
             'company' => $company
         ]);
 

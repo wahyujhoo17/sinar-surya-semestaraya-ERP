@@ -80,18 +80,29 @@ class LaporanPenjualanExport implements FromView, WithTitle, WithStyles, WithCol
         }
 
         $dataPenjualan = $query->orderBy('invoice.tanggal', 'desc')->get();
+        $marginService = app(\App\Services\SalesMarginService::class);
+        foreach ($dataPenjualan as $so) {
+            $marginData = $marginService->calculateInvoiceMargin($so);
+            $so->total_hpp = $marginData['total_hpp'];
+            $so->laba_kotor = $marginData['laba_kotor'];
+            $so->margin_persen = $marginData['margin_persen'];
+        }
 
         // Hitung total penjualan, total dibayar, dan sisa pembayaran
         $totalPenjualan = $dataPenjualan->sum('total');
         $totalDibayar = $dataPenjualan->sum('total_bayar');
         $sisaPembayaran = $totalPenjualan - $totalDibayar;
+        $totalHpp = $dataPenjualan->sum('total_hpp');
+        $totalLabaKotor = $dataPenjualan->sum('laba_kotor');
 
         return view('laporan.laporan_penjualan.excel', [
             'dataPenjualan' => $dataPenjualan,
             'filters' => $this->filters,
             'totalPenjualan' => $totalPenjualan,
             'totalDibayar' => $totalDibayar,
-            'sisaPembayaran' => $sisaPembayaran
+            'sisaPembayaran' => $sisaPembayaran,
+            'totalHpp' => $totalHpp,
+            'totalLabaKotor' => $totalLabaKotor
         ]);
     }
 

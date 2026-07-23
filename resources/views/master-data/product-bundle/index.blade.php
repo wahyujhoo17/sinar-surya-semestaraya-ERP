@@ -294,8 +294,8 @@
                                 <td class="px-5 py-4 whitespace-nowrap text-center">
                                     @if ($bundle->items && $bundle->items->count() > 0)
                                         <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                                            title="Total {{ $bundle->items->sum('quantity') }} item dari {{ $bundle->items->count() }} produk berbeda">
-                                            {{ $bundle->items->sum('quantity') }} item
+                                            title="Total {{ format_quantity($bundle->items->sum('quantity')) }} item dari {{ $bundle->items->count() }} produk berbeda">
+                                            {{ format_quantity($bundle->items->sum('quantity')) }} item
                                         </div>
                                         <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                             {{ $bundle->items->count() }} produk

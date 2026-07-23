@@ -209,7 +209,7 @@
         </div>
         <div class="col">
             <div class="info-box">
-                <h3>Informasi Pembayaran</h3>
+                <h3>Informasi Pembayaran & Margin</h3>
                 <p><strong>Status:</strong>
                     @if ($penjualan->status == 'lunas')
                         <span class="status status-lunas">Lunas</span>
@@ -220,6 +220,11 @@
                     @endif
                 </p>
                 <p><strong>Total Penjualan:</strong> Rp {{ number_format($penjualan->total, 0, ',', '.') }}</p>
+                @if(isset($marginInfo))
+                <p><strong>Total HPP (Modal):</strong> Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}</p>
+                <p><strong>Total Laba Kotor:</strong> Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}</p>
+                <p><strong>Rata-Rata Margin:</strong> {{ $marginInfo['margin_persen'] ?? 0 }}%</p>
+                @endif
                 <p><strong>Total Dibayar:</strong> Rp {{ number_format($penjualan->total_bayar, 0, ',', '.') }}</p>
                 <p><strong>Sisa Pembayaran:</strong> Rp
                     {{ number_format($penjualan->total - $penjualan->total_bayar, 0, ',', '.') }}</p>
@@ -227,42 +232,56 @@
         </div>
     </div>
 
-    <h3>Detail Item Penjualan</h3>
+    <h3>Detail Item Penjualan & Analisis Margin</h3>
     <table class="data-table">
         <thead>
             <tr>
-                <th width="5%">No</th>
+                <th width="4%">No</th>
                 <th width="10%">Kode</th>
-                <th width="30%">Nama Produk</th>
-                <th width="10%">Jumlah</th>
-                <th width="10%">Satuan</th>
-                <th width="15%">Harga</th>
-                <th width="5%">Diskon</th>
-                <th width="15%">Subtotal</th>
+                <th width="24%">Nama Produk</th>
+                <th width="8%">Jumlah</th>
+                <th width="12%">Harga Jual</th>
+                <th width="14%">Subtotal</th>
+                <th width="12%">Total HPP</th>
+                <th width="10%">Laba Kotor</th>
+                <th width="6%">Margin</th>
             </tr>
         </thead>
         <tbody>
+            @php
+                $detailMarginMap = collect($marginInfo['details'] ?? [])->keyBy('detail_id');
+            @endphp
             @forelse($penjualan->details as $index => $item)
+                @php
+                    $itemMargin = $detailMarginMap->get($item->id) ?? [];
+                    $totalHpp = $itemMargin['total_hpp'] ?? 0;
+                    $labaKotor = $itemMargin['laba_kotor'] ?? 0;
+                    $marginPersen = $itemMargin['margin_persen'] ?? 0;
+                @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $item->produk->kode }}</td>
-                    <td>{{ $item->produk->nama }}</td>
-                    <td>{{ $item->quantity }}</td>
-                    <td>{{ $item->produk->satuan->nama }}</td>
-                    <td>Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
-                    <td>{{ $item->diskon_persen ?? 0 }}%</td>
-                    <td>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                    <td>{{ $item->produk->kode ?? '-' }}</td>
+                    <td>{{ $item->nama_produk ?? $item->produk->nama ?? 'Produk tidak tersedia' }}</td>
+                    <td style="text-align: center;">{{ format_quantity($item->quantity ?? $item->qty ?? 0) }} {{ $item->produk->satuan->nama ?? '' }}</td>
+                    <td style="text-align: right;">Rp {{ number_format($item->harga, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">Rp {{ number_format($totalHpp, 0, ',', '.') }}</td>
+                    <td style="text-align: right;">Rp {{ number_format($labaKotor, 0, ',', '.') }}</td>
+                    <td style="text-align: center;">{{ $marginPersen }}%</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="8" style="text-align: center;">Tidak ada data item penjualan</td>
+                    <td colspan="9" style="text-align: center;">Tidak ada data item penjualan</td>
                 </tr>
             @endforelse
         </tbody>
         <tfoot>
             <tr>
-                <td colspan="7" style="text-align: right;"><strong>Total:</strong></td>
-                <td><strong>Rp {{ number_format($penjualan->total, 0, ',', '.') }}</strong></td>
+                <td colspan="5" style="text-align: right;"><strong>Total:</strong></td>
+                <td style="text-align: right;"><strong>Rp {{ number_format($penjualan->subtotal, 0, ',', '.') }}</strong></td>
+                <td style="text-align: right;"><strong>Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}</strong></td>
+                <td style="text-align: right;"><strong>Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}</strong></td>
+                <td style="text-align: center;"><strong>{{ $marginInfo['margin_persen'] ?? 0 }}%</strong></td>
             </tr>
         </tfoot>
     </table>

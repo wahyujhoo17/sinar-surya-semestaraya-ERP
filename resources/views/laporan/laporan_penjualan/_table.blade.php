@@ -75,6 +75,18 @@
                     </div>
                 </th>
                 <th scope="col"
+                    class="px-4 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Total HPP
+                </th>
+                <th scope="col"
+                    class="px-4 py-3.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Laba Kotor
+                </th>
+                <th scope="col"
+                    class="px-4 py-3.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Margin
+                </th>
+                <th scope="col"
                     class="px-4 py-3.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     <div class="flex items-center gap-2 sortable" data-sort-key="total_bayar">
                         Total Bayar
@@ -133,7 +145,7 @@
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             <template x-if="loading">
                 <tr>
-                    <td colspan="11" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colspan="14" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                         <div class="flex justify-center items-center space-x-2">
                             <svg class="animate-spin h-5 w-5 text-primary-500" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24">
@@ -150,7 +162,7 @@
             </template>
             <template x-if="!loading && penjualanData.length === 0">
                 <tr>
-                    <td colspan="11" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td colspan="14" class="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                         <div class="flex flex-col items-center justify-center py-8">
                             <svg xmlns="http://www.w3.org/2000/svg"
                                 class="h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" fill="none"
@@ -219,6 +231,21 @@
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"
                         x-text="formatCurrency(item.total)"></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right"
+                        x-text="formatCurrency(item.total_hpp || 0)"></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-right"
+                        :class="(item.laba_kotor || 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                        x-text="formatCurrency(item.laba_kotor || 0)"></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-center">
+                        <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-bold rounded-md"
+                            :class="{
+                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400': (item.margin_persen || 0) >= 20,
+                                'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400': (item.margin_persen || 0) >= 5 && (item.margin_persen || 0) < 20,
+                                'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400': (item.margin_persen || 0) < 5
+                            }"
+                            x-text="(item.margin_persen || 0) + '%'">
+                        </span>
+                    </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"
                         x-text="formatCurrency(item.total_bayar)"></td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 dark:text-white text-right"

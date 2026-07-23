@@ -169,7 +169,7 @@
                                         </td>
                                         <td class="px-6 py-5 text-center">
                                             <span class="px-2.5 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-md">
-                                                {{ $item->quantity }}
+                                                {{ format_quantity($item->quantity) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-5 text-right text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -185,7 +185,7 @@
                                             @endphp
                                             <div class="flex flex-col items-end">
                                                 <span class="text-sm font-bold {{ $isLow ? 'text-red-600' : 'text-green-600' }}">
-                                                    {{ $stokTersedia }} Unit
+                                                    {{ format_quantity($stokTersedia) }} {{ $item->produk->satuan->nama ?? 'Unit' }}
                                                 </span>
                                                 @if($isLow)
                                                     <span class="text-[10px] font-bold text-red-500 uppercase">Stok Kurang</span>

@@ -153,8 +153,25 @@
                     <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
                         <span class="text-gray-600 dark:text-gray-400">Total</span>
                         <span
-                            class="text-gray-900 dark:text-white font-bold text-lg">{{ number_format($penjualan->total, 0, ',', '.') }}</span>
+                            class="text-gray-900 dark:text-white font-bold text-lg">Rp {{ number_format($penjualan->total, 0, ',', '.') }}</span>
                     </div>
+
+                    @if(isset($marginInfo))
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-amber-50/50 dark:bg-amber-900/10 p-2.5 rounded-lg">
+                        <span class="text-amber-700 dark:text-amber-400 font-medium text-sm">Total HPP (Modal)</span>
+                        <span class="text-amber-900 dark:text-amber-300 font-bold">Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/50 dark:bg-emerald-900/10 p-2.5 rounded-lg">
+                        <span class="text-emerald-700 dark:text-emerald-400 font-medium text-sm">Total Laba Kotor</span>
+                        <span class="text-emerald-900 dark:text-emerald-300 font-bold">Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10 p-2.5 rounded-lg">
+                        <span class="text-indigo-700 dark:text-indigo-400 font-medium text-sm">Margin Keuntungan</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
+                            {{ $marginInfo['margin_persen'] ?? 0 }}%
+                        </span>
+                    </div>
+                    @endif
 
                     @php
                         $totalBayar = 0;
@@ -165,12 +182,12 @@
                     <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
                         <span class="text-gray-600 dark:text-gray-400">Total Dibayar</span>
                         <span
-                            class="text-green-600 dark:text-green-400 font-bold">{{ number_format($totalBayar, 0, ',', '.') }}</span>
+                            class="text-green-600 dark:text-green-400 font-bold">Rp {{ number_format($totalBayar, 0, ',', '.') }}</span>
                     </div>
                     <div class="flex justify-between items-center">
                         <span class="text-gray-600 dark:text-gray-400">Sisa Pembayaran</span>
                         <span
-                            class="text-red-600 dark:text-red-400 font-bold">{{ number_format($sisaPembayaran, 0, ',', '.') }}</span>
+                            class="text-red-600 dark:text-red-400 font-bold">Rp {{ number_format($sisaPembayaran, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </div>
@@ -188,7 +205,7 @@
                             d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"
                             clip-rule="evenodd" />
                     </svg>
-                    Daftar Item Produk
+                    Daftar Item Produk & Analisis Margin
                 </h2>
             </div>
             <div class="p-0">
@@ -205,32 +222,54 @@
                                     Produk
                                 </th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Harga
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Harga Jual
                                 </th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                                     Jumlah
                                 </th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Diskon
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Subtotal
                                 </th>
                                 <th scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                                    Subtotal
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    HPP Satuan
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Total HPP
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Laba Kotor
+                                </th>
+                                <th scope="col"
+                                    class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                    Margin (%)
                                 </th>
                             </tr>
                         </thead>
                         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            @php
+                                $detailMarginMap = collect($marginInfo['details'] ?? [])->keyBy('detail_id');
+                            @endphp
                             @foreach ($penjualan->details as $index => $detail)
+                                @php
+                                    $itemMargin = $detailMarginMap->get($detail->id) ?? [];
+                                    $hppSatuan = $itemMargin['hpp_satuan'] ?? 0;
+                                    $totalHpp = $itemMargin['total_hpp'] ?? 0;
+                                    $labaKotor = $itemMargin['laba_kotor'] ?? 0;
+                                    $marginPersen = $itemMargin['margin_persen'] ?? 0;
+                                @endphp
                                 <tr class="{{ $index % 2 == 0 ? 'bg-gray-50 dark:bg-gray-700/50' : '' }}">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                         {{ $index + 1 }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ $detail->produk->nama ?? 'Produk tidak tersedia' }}</div>
+                                            {{ $detail->nama_produk ?? $detail->produk->nama ?? 'Produk tidak tersedia' }}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">
                                             {{ $detail->produk->kode ?? '-' }}
                                             @if ($detail->produk && $detail->produk->satuan)
@@ -238,31 +277,56 @@
                                             @endif
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ number_format($detail->harga, 0, ',', '.') }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                                        Rp {{ number_format($detail->harga, 0, ',', '.') }}
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $detail->jumlah }}
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                        {{ number_format($detail->diskon, 0, ',', '.') }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-center">
+                                        {{ format_quantity($detail->quantity ?? $detail->qty ?? $detail->jumlah ?? 0) }}
                                     </td>
                                     <td
-                                        class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                        {{ number_format($detail->subtotal, 0, ',', '.') }}
+                                        class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white text-right">
+                                        Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                                        Rp {{ number_format($hppSatuan, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
+                                        Rp {{ number_format($totalHpp, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right {{ $labaKotor >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                        Rp {{ number_format($labaKotor, 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-center">
+                                        <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-bold rounded-md {{ $marginPersen >= 20 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400' : ($marginPersen >= 5 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400') }}">
+                                            {{ $marginPersen }}%
+                                        </span>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                         <tfoot class="bg-gray-50 dark:bg-gray-700 border-t-2 border-gray-200 dark:border-gray-600">
                             <tr>
-                                <td colspan="5"
+                                <td colspan="4"
                                     class="px-6 py-4 text-right text-sm font-bold text-gray-700 dark:text-gray-300">
-                                    Total:
+                                    Total Penjualan:
                                 </td>
                                 <td
-                                    class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white">
-                                    {{ number_format($penjualan->subtotal, 0, ',', '.') }}
+                                    class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white text-right">
+                                    Rp {{ number_format($penjualan->subtotal, 0, ',', '.') }}
+                                </td>
+                                <td class="px-6 py-4 text-right text-sm font-bold text-gray-700 dark:text-gray-300">
+                                    Total HPP:
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-white text-right">
+                                    Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-right {{ ($marginInfo['laba_kotor'] ?? 0) >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                    Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-bold rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-400">
+                                        {{ $marginInfo['margin_persen'] ?? 0 }}%
+                                    </span>
                                 </td>
                             </tr>
                         </tfoot>
