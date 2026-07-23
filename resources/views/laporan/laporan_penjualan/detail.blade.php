@@ -39,155 +39,194 @@
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <!-- Informasi Transaksi -->
-            <div
-                class="md:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500" viewBox="0 0 20 20"
-                        fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Informasi Transaksi
-                </h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor Faktur</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">{{ $penjualan->nomor }}</p>
+        @php
+            $totalBayar = $penjualan->pembayaranPiutang->sum('jumlah');
+            $sisaPembayaran = $penjualan->total - $totalBayar;
+        @endphp
+
+        <!-- Top 4 KPI Summary Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Card 1: Total Penjualan -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Penjualan</span>
+                    <div class="p-2.5 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">
-                            {{ \Carbon\Carbon::parse($penjualan->tanggal)->format('d/m/Y') }}</p>
+                </div>
+                <div class="mt-2 text-xl font-bold text-gray-900 dark:text-white">
+                    Rp {{ number_format($penjualan->total, 0, ',', '.') }}
+                </div>
+                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Faktur: {{ $penjualan->nomor }}
+                </div>
+            </div>
+
+            <!-- Card 2: Status & Dibayar -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status Pembayaran</span>
+                    <div class="p-2.5 rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">
-                            {{ $penjualan->customer->nama ?? ($penjualan->customer->company ?? '-') }}
-                            <span
-                                class="text-sm font-normal text-gray-500 dark:text-gray-400">({{ $penjualan->customer->kode ?? '-' }})</span>
-                        </p>
+                </div>
+                <div class="mt-2 flex items-center gap-2">
+                    @if ($penjualan->status_pembayaran == 'lunas')
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-400">LUNAS</span>
+                    @elseif($penjualan->status_pembayaran == 'sebagian')
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-400">DIBAYAR SEBAGIAN</span>
+                    @else
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-400">BELUM DIBAYAR</span>
+                    @endif
+                </div>
+                <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                    Dibayar: <span class="font-medium text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalBayar, 0, ',', '.') }}</span>
+                </div>
+            </div>
+
+            <!-- Card 3: Total HPP (Modal) -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total HPP (Modal)</span>
+                    <div class="p-2.5 rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Status Pembayaran</p>
-                        <p class="mt-1">
-                            @if ($penjualan->status_pembayaran == 'lunas')
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-500">
-                                    LUNAS
-                                </span>
-                            @elseif($penjualan->status_pembayaran == 'sebagian')
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500">
-                                    DIBAYAR SEBAGIAN
-                                </span>
-                            @elseif($penjualan->status_pembayaran == 'belum_bayar')
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500">
-                                    BELUM DIBAYAR
-                                </span>
-                            @elseif($penjualan->status_pembayaran == 'kelebihan_bayar')
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-500">
-                                    KELEBIHAN BAYAR
-                                </span>
-                            @endif
-                        </p>
+                </div>
+                <div class="mt-2 text-xl font-bold text-gray-900 dark:text-white">
+                    Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}
+                </div>
+                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Biaya Pembelian / Produksi
+                </div>
+            </div>
+
+            <!-- Card 4: Laba Kotor & Margin -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl p-5 border border-gray-200 dark:border-gray-700 shadow-sm">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Laba Kotor & Margin</span>
+                    <div class="p-2.5 rounded-lg bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                     </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Petugas</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">
-                            {{ $penjualan->user->name ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal Dibuat</p>
-                        <p class="text-base font-semibold text-gray-900 dark:text-white">
-                            {{ \Carbon\Carbon::parse($penjualan->created_at)->format('d/m/Y H:i') }}</p>
+                </div>
+                <div class="mt-2 flex items-baseline justify-between">
+                    <span class="text-xl font-bold text-emerald-600 dark:text-emerald-400">
+                        Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}
+                    </span>
+                    <span class="px-2 py-0.5 rounded text-xs font-bold {{ ($marginInfo['margin_persen'] ?? 0) >= 20 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' }}">
+                        {{ $marginInfo['margin_persen'] ?? 0 }}%
+                    </span>
+                </div>
+                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Persentase keuntungan bersih
+                </div>
+            </div>
+        </div>
+
+        <!-- Mid Grid: Equal Height (items-stretch + h-full) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 items-stretch">
+            <!-- Informasi Transaksi & Customer -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd" />
+                        </svg>
+                        Informasi Transaksi & Customer
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Nomor Faktur</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $penjualan->nomor }}</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Tanggal Penjualan</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ \Carbon\Carbon::parse($penjualan->tanggal)->format('d/m/Y') }}</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Nama Customer</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white block truncate" title="{{ $penjualan->customer->nama ?? ($penjualan->customer->company ?? '-') }}">
+                                {{ $penjualan->customer->nama ?? ($penjualan->customer->company ?? '-') }}
+                            </span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Kode Customer</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $penjualan->customer->kode ?? '-' }}</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Petugas Sales</span>
+                            <span class="text-sm font-bold text-gray-900 dark:text-white">{{ $penjualan->user->name ?? '-' }}</span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Nomor SO / PO</span>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                {{ $penjualan->salesOrder->nomor ?? '-' }}
+                                @if(!empty($penjualan->salesOrder->nomor_po))
+                                    | PO: {{ $penjualan->salesOrder->nomor_po }}
+                                @endif
+                            </span>
+                        </div>
+                        <div class="p-2.5 bg-gray-50 dark:bg-gray-700/40 rounded-lg border border-gray-100 dark:border-gray-700/60 sm:col-span-2">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400 block mb-0.5">Alamat / Kontak Customer</span>
+                            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                {{ $penjualan->customer->alamat ?? 'Alamat tidak tersedia' }}
+                                @if(!empty($penjualan->customer->telepon))
+                                    | Telp: {{ $penjualan->customer->telepon }}
+                                @endif
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 @if (!empty($penjualan->catatan))
-                    <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-                        <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Catatan</p>
-                        <p class="text-base text-gray-900 dark:text-white mt-1">{{ $penjualan->catatan }}</p>
+                    <div class="mt-3 p-2.5 bg-amber-50/60 dark:bg-amber-900/20 rounded-lg border border-amber-200/60 dark:border-amber-700/50">
+                        <span class="text-xs font-bold text-amber-800 dark:text-amber-400 block uppercase tracking-wider">Catatan Transaksi</span>
+                        <p class="text-sm text-amber-900 dark:text-amber-200 mt-0.5 italic">{{ $penjualan->catatan }}</p>
                     </div>
                 @endif
             </div>
 
-            <!-- Ringkasan Keuangan -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-primary-500" viewBox="0 0 20 20"
-                        fill="currentColor">
-                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                        <path fill-rule="evenodd"
-                            d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    Ringkasan Keuangan
-                </h2>
-                <div class="space-y-4 mt-6">
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Subtotal</span>
-                        <span
-                            class="text-gray-900 dark:text-white font-semibold">{{ number_format($penjualan->subtotal, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Diskon</span>
-                        <span
-                            class="text-gray-900 dark:text-white font-semibold">{{ number_format($penjualan->diskon, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Pajak</span>
-                        <span
-                            class="text-gray-900 dark:text-white font-semibold">{{ number_format($penjualan->pajak, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Ongkir</span>
-                        <span
-                            class="text-gray-900 dark:text-white font-semibold">{{ number_format($penjualan->ongkir, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Total</span>
-                        <span
-                            class="text-gray-900 dark:text-white font-bold text-lg">Rp {{ number_format($penjualan->total, 0, ',', '.') }}</span>
-                    </div>
-
-                    @if(isset($marginInfo))
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-amber-50/50 dark:bg-amber-900/10 p-2.5 rounded-lg">
-                        <span class="text-amber-700 dark:text-amber-400 font-medium text-sm">Total HPP (Modal)</span>
-                        <span class="text-amber-900 dark:text-amber-300 font-bold">Rp {{ number_format($marginInfo['total_hpp'] ?? 0, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-emerald-50/50 dark:bg-emerald-900/10 p-2.5 rounded-lg">
-                        <span class="text-emerald-700 dark:text-emerald-400 font-medium text-sm">Total Laba Kotor</span>
-                        <span class="text-emerald-900 dark:text-emerald-300 font-bold">Rp {{ number_format($marginInfo['laba_kotor'] ?? 0, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700 bg-indigo-50/50 dark:bg-indigo-900/10 p-2.5 rounded-lg">
-                        <span class="text-indigo-700 dark:text-indigo-400 font-medium text-sm">Margin Keuntungan</span>
-                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                            {{ $marginInfo['margin_persen'] ?? 0 }}%
-                        </span>
-                    </div>
-                    @endif
-
-                    @php
-                        $totalBayar = 0;
-                        $totalBayar = $penjualan->pembayaranPiutang->sum('jumlah');
-                        $sisaPembayaran = $penjualan->total - $totalBayar;
-                    @endphp
-
-                    <div class="flex justify-between items-center pb-3 border-b border-gray-200 dark:border-gray-700">
-                        <span class="text-gray-600 dark:text-gray-400">Total Dibayar</span>
-                        <span
-                            class="text-green-600 dark:text-green-400 font-bold">Rp {{ number_format($totalBayar, 0, ',', '.') }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-gray-600 dark:text-gray-400">Sisa Pembayaran</span>
-                        <span
-                            class="text-red-600 dark:text-red-400 font-bold">Rp {{ number_format($sisaPembayaran, 0, ',', '.') }}</span>
+            <!-- Ringkasan Keuangan & Billing -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700 h-full flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                            <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
+                        </svg>
+                        Rincian Pembayaran & Piutang
+                    </h2>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30">
+                            <span class="text-gray-600 dark:text-gray-400 font-medium">Subtotal Item</span>
+                            <span class="font-bold text-gray-900 dark:text-white">Rp {{ number_format($penjualan->subtotal, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30">
+                            <span class="text-gray-600 dark:text-gray-400 font-medium">Diskon</span>
+                            <span class="font-bold text-gray-900 dark:text-white">Rp {{ number_format($penjualan->diskon, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30">
+                            <span class="text-gray-600 dark:text-gray-400 font-medium">Pajak (PPN)</span>
+                            <span class="font-bold text-gray-900 dark:text-white">Rp {{ number_format($penjualan->pajak, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-gray-50/80 dark:bg-gray-700/30">
+                            <span class="text-gray-600 dark:text-gray-400 font-medium">Ongkos Kirim</span>
+                            <span class="font-bold text-gray-900 dark:text-white">Rp {{ number_format($penjualan->ongkir, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-blue-50/80 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800/50 font-bold">
+                            <span class="text-blue-900 dark:text-blue-200">Total Faktur Penjualan</span>
+                            <span class="text-base text-blue-900 dark:text-blue-200">Rp {{ number_format($penjualan->total, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg bg-emerald-50/60 dark:bg-emerald-900/20">
+                            <span class="text-emerald-800 dark:text-emerald-300 font-medium">Total Pembayaran Masuk</span>
+                            <span class="font-bold text-emerald-600 dark:text-emerald-400">Rp {{ number_format($totalBayar, 0, ',', '.') }}</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2 px-3 rounded-lg {{ $sisaPembayaran > 0 ? 'bg-red-50/80 dark:bg-red-900/30 border border-red-100 dark:border-red-800/50' : 'bg-emerald-50/80 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800/50' }} font-bold">
+                            <span class="{{ $sisaPembayaran > 0 ? 'text-red-900 dark:text-red-200' : 'text-emerald-900 dark:text-emerald-200' }}">Sisa Tagihan (Piutang)</span>
+                            <span class="text-base {{ $sisaPembayaran > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                                Rp {{ number_format($sisaPembayaran, 0, ',', '.') }}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
