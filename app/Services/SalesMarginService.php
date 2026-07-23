@@ -57,10 +57,15 @@ class SalesMarginService
             }
         }
 
-        // Fallback to produk.harga_beli
-        $hpp = (float) ($produk->harga_beli ?? 0);
-        $this->productHppCache[$produkId] = $hpp;
+        // Prioritas Fallback: harga_beli_rata_rata (> 0) -> harga_beli (> 0) -> 0.0
+        $hpp = 0.0;
+        if (!empty($produk->harga_beli_rata_rata) && (float) $produk->harga_beli_rata_rata > 0) {
+            $hpp = (float) $produk->harga_beli_rata_rata;
+        } elseif (!empty($produk->harga_beli) && (float) $produk->harga_beli > 0) {
+            $hpp = (float) $produk->harga_beli;
+        }
 
+        $this->productHppCache[$produkId] = $hpp;
         return $hpp;
     }
 
@@ -128,8 +133,16 @@ class SalesMarginService
         }
 
         $totalHpp = $qty * $hppSatuan;
-        $labaKotor = $omzet - $totalHpp;
-        $marginPersen = $omzet > 0 ? ($labaKotor / $omzet) * 100 : 0.0;
+        $hasHpp = ($hppSatuan > 0);
+
+        if ($hasHpp) {
+            $labaKotor = $omzet - $totalHpp;
+            $marginPersen = $omzet > 0 ? ($labaKotor / $omzet) * 100 : 0.0;
+        } else {
+            // Jika HPP belum di-set di master produk (harga_beli = 0), laba kotor & margin diset 0 / N/A
+            $labaKotor = 0.0;
+            $marginPersen = 0.0;
+        }
 
         return [
             'qty' => $qty,
@@ -137,7 +150,8 @@ class SalesMarginService
             'hpp_satuan' => $hppSatuan,
             'total_hpp' => $totalHpp,
             'laba_kotor' => $labaKotor,
-            'margin_persen' => round($marginPersen, 2)
+            'margin_persen' => round($marginPersen, 2),
+            'has_hpp' => $hasHpp
         ];
     }
 
@@ -153,6 +167,7 @@ class SalesMarginService
 
         $totalOmzetItems = 0.0;
         $totalHppInvoice = 0.0;
+        $itemsWithoutHppCount = 0;
         $detailBreakdowns = [];
 
         foreach ($details as $detail) {
@@ -164,6 +179,10 @@ class SalesMarginService
             $calc = $this->calculateDetailMargin($detail);
             $totalOmzetItems += $calc['omzet'];
             $totalHppInvoice += $calc['total_hpp'];
+
+            if (!$calc['has_hpp']) {
+                $itemsWithoutHppCount++;
+            }
 
             $detailBreakdowns[] = array_merge([
                 'detail_id' => $detail->id,
@@ -199,6 +218,7 @@ class SalesMarginService
             'total_hpp' => $totalHppInvoice,
             'laba_kotor' => $labaKotor,
             'margin_persen' => round($marginPersen, 2),
+            'items_without_hpp_count' => $itemsWithoutHppCount,
             'details' => $detailBreakdowns
         ];
     }

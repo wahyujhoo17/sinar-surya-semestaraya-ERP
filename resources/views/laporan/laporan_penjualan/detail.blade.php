@@ -301,6 +301,7 @@
                                     $totalHpp = $itemMargin['total_hpp'] ?? 0;
                                     $labaKotor = $itemMargin['laba_kotor'] ?? 0;
                                     $marginPersen = $itemMargin['margin_persen'] ?? 0;
+                                    $hasHpp = $itemMargin['has_hpp'] ?? ($hppSatuan > 0);
                                 @endphp
                                 <tr class="{{ $index % 2 == 0 ? 'bg-gray-50 dark:bg-gray-700/50' : '' }}">
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -327,18 +328,38 @@
                                         Rp {{ number_format($detail->subtotal, 0, ',', '.') }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
-                                        Rp {{ number_format($hppSatuan, 0, ',', '.') }}
+                                        @if($hasHpp)
+                                            Rp {{ number_format($hppSatuan, 0, ',', '.') }}
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500 italic">Rp 0</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 text-right">
-                                        Rp {{ number_format($totalHpp, 0, ',', '.') }}
+                                        @if($hasHpp)
+                                            Rp {{ number_format($totalHpp, 0, ',', '.') }}
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500 italic">Rp 0</span>
+                                        @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right {{ $labaKotor >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
-                                        Rp {{ number_format($labaKotor, 0, ',', '.') }}
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-right">
+                                        @if($hasHpp)
+                                            <span class="{{ $labaKotor >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400' }}">
+                                                Rp {{ number_format($labaKotor, 0, ',', '.') }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500 italic">Rp 0</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-center">
-                                        <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-bold rounded-md {{ $marginPersen >= 20 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400' : ($marginPersen >= 5 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400') }}">
-                                            {{ $marginPersen }}%
-                                        </span>
+                                        @if($hasHpp)
+                                            <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-bold rounded-md {{ $marginPersen >= 20 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400' : ($marginPersen >= 5 ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400' : 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400') }}">
+                                                {{ $marginPersen }}%
+                                            </span>
+                                        @else
+                                            <span class="px-2.5 py-1 inline-flex text-xs leading-4 font-medium rounded-md bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-400 border border-gray-200 dark:border-gray-600">
+                                                Belum set HPP
+                                            </span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -372,6 +393,12 @@
                     </table>
                 </div>
             </div>
+            @if(($marginInfo['items_without_hpp_count'] ?? 0) > 0)
+                <div class="p-3.5 bg-amber-50 dark:bg-amber-900/20 border-t border-amber-200 dark:border-amber-700/50 flex items-center gap-2.5 text-xs text-amber-800 dark:text-amber-300">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span><strong>Catatan:</strong> Terdapat {{ $marginInfo['items_without_hpp_count'] }} produk yang <strong>harga belinya belum di-set (Rp 0)</strong> di Master Produk. Silakan atur harga beli produk di Master Data agar analisis margin 100% akurat.</span>
+                </div>
+            @endif
         </div>
 
         <!-- Riwayat Pembayaran -->
