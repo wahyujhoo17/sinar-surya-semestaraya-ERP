@@ -260,7 +260,7 @@
                             class="select2-dropdown block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md @error('customer_id') border-red-500 dark:border-red-500 @enderror">
                             <option value="">Pilih Customer</option>
                             @foreach ($customers ?? [] as $customer)
-                                <option value="{{ $customer->id }}" @if (old('customer_id', $quotation->customer_id) == $customer->id) selected @endif>
+                                <option value="{{ $customer->id }}" data-is-sales="{{ $customer->sales_id == auth()->id() ? '1' : '0' }}" @if (old('customer_id', $quotation->customer_id) == $customer->id) selected @endif>
                                     {{ $customer->company ?? $customer->nama }}
                                 </option>
                             @endforeach
@@ -1273,7 +1273,27 @@
                             placeholder: 'Pilih Customer',
                             allowClear: true,
                             width: '100%',
-                            dropdownCssClass: 'select2-dropdown-modern'
+                            dropdownCssClass: 'select2-dropdown-modern',
+                            templateResult: function(data) {
+                                if (!data.element) {
+                                    return data.text;
+                                }
+                                var $element = $(data.element);
+                                if ($element.attr('data-is-sales') === '1') {
+                                    return $('<span class="font-bold" style="font-weight: bold;"></span>').text(data.text);
+                                }
+                                return data.text;
+                            },
+                            templateSelection: function(data) {
+                                if (!data.element) {
+                                    return data.text;
+                                }
+                                var $element = $(data.element);
+                                if ($element.attr('data-is-sales') === '1') {
+                                    return $('<span class="font-bold" style="font-weight: bold;"></span>').text(data.text);
+                                }
+                                return data.text;
+                            }
                         });
                         $('#status').select2({
                             minimumResultsForSearch: -1,
@@ -1907,7 +1927,27 @@
                         placeholder: 'Pilih Customer',
                         allowClear: true,
                         width: '100%',
-                        dropdownCssClass: 'select2-dropdown-modern'
+                        dropdownCssClass: 'select2-dropdown-modern',
+                        templateResult: function(data) {
+                            if (!data.element) {
+                                return data.text;
+                            }
+                            var $element = $(data.element);
+                            if ($element.attr('data-is-sales') === '1') {
+                                return $('<span class="font-bold" style="font-weight: bold;"></span>').text(data.text);
+                            }
+                            return data.text;
+                        },
+                        templateSelection: function(data) {
+                            if (!data.element) {
+                                return data.text;
+                            }
+                            var $element = $(data.element);
+                            if ($element.attr('data-is-sales') === '1') {
+                                return $('<span class="font-bold" style="font-weight: bold;"></span>').text(data.text);
+                            }
+                            return data.text;
+                        }
                     });
                     $('#status').select2({
                         minimumResultsForSearch: -1,
