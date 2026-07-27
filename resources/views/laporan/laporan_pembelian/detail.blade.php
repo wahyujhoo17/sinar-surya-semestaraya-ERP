@@ -246,15 +246,23 @@
 
         <!-- Additional Information -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <!-- Keterangan -->
+            <!-- Catatan -->
             <div
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    Keterangan
+                    Catatan PO
                 </h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ $pembelian->keterangan ?? 'Tidak ada keterangan' }}
+                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                    {{ $pembelian->catatan ?? $pembelian->keterangan ?? 'Tidak ada catatan' }}
                 </p>
+                @if (!empty($pembelian->syarat_ketentuan))
+                    <h4 class="text-md font-medium text-gray-900 dark:text-white mt-4 mb-2">
+                        Syarat & Ketentuan
+                    </h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">
+                        {{ $pembelian->syarat_ketentuan }}
+                    </p>
+                @endif
             </div>
 
             <!-- Informasi Tambahan -->

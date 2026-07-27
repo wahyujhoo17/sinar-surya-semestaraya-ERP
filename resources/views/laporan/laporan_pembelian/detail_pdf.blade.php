@@ -259,8 +259,12 @@
     </table>
 
     <div class="info-box">
-        <h3>Keterangan</h3>
-        <p>{{ $pembelian->keterangan ?? 'Tidak ada keterangan' }}</p>
+        <h3>Catatan PO</h3>
+        <p>{{ $pembelian->catatan ?? $pembelian->keterangan ?? 'Tidak ada catatan' }}</p>
+        @if (!empty($pembelian->syarat_ketentuan))
+            <h3 style="margin-top: 10px;">Syarat & Ketentuan</h3>
+            <p>{{ $pembelian->syarat_ketentuan }}</p>
+        @endif
     </div>
 
     <div class="info-box">

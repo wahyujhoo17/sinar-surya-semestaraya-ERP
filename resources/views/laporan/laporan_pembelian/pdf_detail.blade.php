@@ -522,7 +522,12 @@
             <div class="po-summary">
                 <table>
                     <tr>
-                        <td class="summary-left"></td>
+                        <td class="summary-left">
+                            @if (!empty($po->catatan))
+                                <div style="font-size: 7.5px; font-weight: 700; color: #475569; margin-bottom: 2px;">Catatan PO:</div>
+                                <div style="font-size: 7px; color: #64748b;">{{ $po->catatan }}</div>
+                            @endif
+                        </td>
                         <td class="summary-right">
                             <table class="summary-table">
                                 <tr>

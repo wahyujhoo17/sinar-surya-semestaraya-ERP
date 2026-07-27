@@ -77,4 +77,9 @@
             {{ number_format($pembelian->total, 0, ',', '.') }}</td>
         <td style="border: 1px solid #000000;"></td>
     </tr>
+    <tr>
+        <td colspan="9" style="border: 1px solid #000000;">
+            <b>Catatan PO:</b> {{ $pembelian->catatan ?? $pembelian->keterangan ?? 'Tidak ada catatan' }}
+        </td>
+    </tr>
 </table>
