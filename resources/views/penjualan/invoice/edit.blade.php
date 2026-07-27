@@ -675,7 +675,7 @@
                                                             class="text-gray-500 dark:text-gray-400 text-xs">Rp</span>
                                                     </div>
                                                     <input type="number" name="ongkos_kirim" min="0"
-                                                        step="1000" x-model="ongkosKirim" @input="calculateTotal"
+                                                        step="any" x-model="ongkosKirim" @input="calculateTotal"
                                                         class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm 
                                                         focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-right pl-10">
                                                 </div>
