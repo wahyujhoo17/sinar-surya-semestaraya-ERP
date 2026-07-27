@@ -89,6 +89,10 @@ class PiutangUsahaController extends Controller
                     })
                     ->orWhereHas('salesOrder', function ($q2) use ($searchTerm) {
                         $q2->where('nomor', 'like', "%{$searchTerm}%");
+                    })
+                    ->orWhereHas('pembayaranPiutang', function ($q2) use ($searchTerm) {
+                        $q2->where('nomor', 'like', "%{$searchTerm}%")
+                            ->orWhere('no_referensi', 'like', "%{$searchTerm}%");
                     });
             });
         }
@@ -107,8 +111,8 @@ class PiutangUsahaController extends Controller
                     $query->where('status', $statusMap[$statusFilterUI]);
                 }
             }
-        } else {
-            // By default, show only unpaid and partially paid invoices
+        } elseif (!$request->filled('search')) {
+            // By default, show only unpaid and partially paid invoices (unless searching)
             $query->whereIn('status', ['belum_bayar', 'sebagian']);
         }
 

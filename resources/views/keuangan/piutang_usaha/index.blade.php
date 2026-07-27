@@ -202,6 +202,7 @@
             {{-- Enhanced Filter Section --}}
             <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
                 <form id="piutangFilterForm" action="{{ route('keuangan.piutang-usaha.index') }}" method="GET">
+                    <input type="hidden" name="search" id="hiddenSearchInput" value="{{ request('search') }}">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
                         <div class="flex items-center mb-2 sm:mb-0">
                             <div class="bg-primary-100 dark:bg-primary-900/30 p-2 rounded-lg mr-3">
@@ -615,7 +616,7 @@
                                     </svg>
                                 </div>
                                 <input type="text" id="tableSearch"
-                                    placeholder="Cari nomor invoice, customer, sales, status..."
+                                    placeholder="Cari nomor invoice, BPP, customer, sales..."
                                     class="pl-10 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full sm:w-72 transition-all duration-200"
                                     aria-label="Pencarian invoice">
                                 <div id="clearSearchBtn"
@@ -966,7 +967,12 @@
                                     Rp {{ number_format($invoice->total ?? 0, 0, ',', '.') }}</td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200 text-right">
-                                    Rp {{ number_format($totalPaymentsIncludingUangMuka, 0, ',', '.') }}
+                                    <div>Rp {{ number_format($totalPaymentsIncludingUangMuka, 0, ',', '.') }}</div>
+                                    @if ($invoice->pembayaranPiutang && $invoice->pembayaranPiutang->count() > 0)
+                                        <div class="text-[11px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                            {{ $invoice->pembayaranPiutang->pluck('nomor')->filter()->implode(', ') }}
+                                        </div>
+                                    @endif
                                 </td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium text-right {{ $sisaPiutang > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400' }}">
@@ -1105,7 +1111,7 @@
     </div>
     </div>
 
-    <x-slot name="scripts">
+    @push('scripts')
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -1147,21 +1153,20 @@
                         })
                         .then(response => response.text())
                         .then(html => {
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = html;
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
 
                             // Update table content from the partial
-                            const newTableContentWrapper = tempDiv.querySelector('.overflow-x-auto');
+                            const newTableContentWrapper = doc.querySelector('.overflow-x-auto');
                             if (newTableContentWrapper && tableContainer) {
                                 tableContainer.innerHTML = newTableContentWrapper.innerHTML;
                             }
 
                             // Update pagination content from the partial
-                            const newPaginationContentWrapper = tempDiv.querySelector('.pagination-container');
+                            const newPaginationContentWrapper = doc.querySelector('.pagination-container');
                             if (newPaginationContentWrapper && paginationContainer) {
                                 paginationContainer.innerHTML = newPaginationContentWrapper.innerHTML;
-                            } else if (paginationContainer && !newPaginationContentWrapper) {
-                                // If response has no pagination (e.g. no results), clear existing pagination
+                            } else if (paginationContainer) {
                                 paginationContainer.innerHTML = '';
                             }
 
@@ -1198,19 +1203,18 @@
                             })
                             .then(response => response.text())
                             .then(html => {
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = html;
+                                const parser = new DOMParser();
+                                const doc = parser.parseFromString(html, 'text/html');
 
-                                const newTableContentWrapper = tempDiv.querySelector('.overflow-x-auto');
+                                const newTableContentWrapper = doc.querySelector('.overflow-x-auto');
                                 if (newTableContentWrapper && tableContainer) {
                                     tableContainer.innerHTML = newTableContentWrapper.innerHTML;
                                 }
 
-                                const newPaginationContentWrapper = tempDiv.querySelector(
-                                    '.pagination-container');
+                                const newPaginationContentWrapper = doc.querySelector('.pagination-container');
                                 if (newPaginationContentWrapper && paginationContainer) {
                                     paginationContainer.innerHTML = newPaginationContentWrapper.innerHTML;
-                                } else if (paginationContainer && !newPaginationContentWrapper) {
+                                } else if (paginationContainer) {
                                     paginationContainer.innerHTML = '';
                                 }
 
@@ -1233,192 +1237,132 @@
                     });
                 }
 
+                let searchTimeout = null;
+
                 function initializeTableSearch() {
-                    const currentTable = document.getElementById('piutangTable'); // Get the potentially new table
                     const currentSearchInput = document.getElementById('tableSearch');
                     const currentClearSearchBtn = document.getElementById('clearSearchBtn');
 
-                    if (!currentTable || !currentSearchInput || !currentClearSearchBtn) return;
+                    if (!currentSearchInput || !currentClearSearchBtn) return;
 
-                    const tbody = currentTable.getElementsByTagName('tbody')[0];
-                    if (!tbody) return;
-                    let rows = Array.from(tbody.children).filter(child => child.tagName === 'TR' && !child.classList
-                        .contains('empty-row') && !child.classList.contains('empty-search-results'));
-
-                    // Debounce function to improve performance
-                    function debounce(func, wait) {
-                        let timeout;
-                        return function() {
-                            const context = this;
-                            const args = arguments;
-                            clearTimeout(timeout);
-                            timeout = setTimeout(() => {
-                                func.apply(context, args);
-                            }, wait);
-                        };
-                    }
-
-                    // Show/hide clear button based on search input
                     function toggleClearButton() {
-                        if (searchInput.value.length > 0) {
-                            clearSearchBtn.classList.remove('hidden');
+                        if (currentSearchInput.value.trim().length > 0) {
+                            currentClearSearchBtn.classList.remove('hidden');
                         } else {
-                            clearSearchBtn.classList.add('hidden');
+                            currentClearSearchBtn.classList.add('hidden');
                         }
                     }
 
-                    // Perform search on table
-                    function performSearch() {
-                        const searchTerm = searchInput.value.toLowerCase().trim();
-                        let visibleCount = 0;
+                    function performServerSearch(immediate = false) {
+                        const searchTerm = currentSearchInput.value.trim();
 
-                        // Add loading state if search isn't empty
-                        if (searchTerm.length > 0) {
-                            searchInput.classList.add('bg-primary-50', 'dark:bg-primary-900/10');
-                        } else {
-                            searchInput.classList.remove('bg-primary-50', 'dark:bg-primary-900/10');
-                        }
+                        if (searchTimeout) clearTimeout(searchTimeout);
 
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            // Skip the 'empty' row if it exists
-                            if (row.classList.contains('empty-row')) continue;
+                        const executeSearch = () => {
+                            const hiddenSearch = document.getElementById('hiddenSearchInput');
+                            if (hiddenSearch) hiddenSearch.value = searchTerm;
 
-                            const cells = row.getElementsByTagName('td');
-                            let found = false;
+                            const filterForm = document.getElementById('piutangFilterForm');
+                            if (!filterForm) return;
 
-                            // Reset any previous highlighting
-                            for (let j = 0; j < cells.length; j++) {
-                                const originalContent = cells[j].getAttribute('data-original-content');
-                                if (originalContent) {
-                                    cells[j].innerHTML = originalContent;
-                                }
-                            }
-
+                            const formData = new FormData(filterForm);
                             if (searchTerm) {
-                                for (let j = 0; j < cells.length; j++) {
-                                    // Skip action cells (usually the last column)
-                                    if (cells[j].classList.contains('action-cell')) continue;
-
-                                    const cellContent = cells[j].innerHTML;
-                                    const cellText = cells[j].textContent.toLowerCase();
-
-                                    if (cellText.includes(searchTerm)) {
-                                        // Store original content if not already stored
-                                        if (!cells[j].getAttribute('data-original-content')) {
-                                            cells[j].setAttribute('data-original-content', cellContent);
-                                        }
-
-                                        // Only highlight text content, not HTML tags
-                                        const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
-                                            'gi');
-                                        cells[j].innerHTML = cellContent.replace(
-                                            regex,
-                                            '<span class="bg-yellow-200 dark:bg-yellow-900 px-1 rounded">$&</span>'
-                                        );
-
-                                        found = true;
-                                    }
-                                }
+                                formData.set('search', searchTerm);
                             } else {
-                                // If search is empty, always show the row
-                                found = true;
+                                formData.delete('search');
                             }
 
-                            row.style.display = found ? '' : 'none';
-                            if (found) visibleCount++;
+                            const params = new URLSearchParams(formData);
+                            params.append('ajax', '1');
+
+                            const url = `${filterForm.action}?${params.toString()}`;
+
+                            const tableContainer = document.getElementById('piutangTable')?.closest('.overflow-x-auto');
+                            const paginationContainer = document.querySelector('.pagination-container');
+
+                            if (tableContainer) tableContainer.style.opacity = '0.5';
+                            if (paginationContainer) paginationContainer.style.opacity = '0.5';
+
+                            fetch(url, {
+                                    method: 'GET',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(response => response.text())
+                                .then(html => {
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+
+                                    const newTableWrapper = doc.querySelector('.overflow-x-auto');
+                                    if (newTableWrapper && tableContainer) {
+                                        tableContainer.innerHTML = newTableWrapper.innerHTML;
+                                    }
+
+                                    const newPaginationWrapper = doc.querySelector('.pagination-container');
+                                    if (newPaginationWrapper && paginationContainer) {
+                                        paginationContainer.innerHTML = newPaginationWrapper.innerHTML;
+                                    } else if (paginationContainer) {
+                                        paginationContainer.innerHTML = '';
+                                    }
+
+                                    const displayUrl =
+                                        `${filterForm.action}?${params.toString().replace(/&?ajax=1&?/, '').replace(/ajax=1$/, '')}`;
+                                    history.pushState({}, '', displayUrl);
+
+                                    initializeTableSearch();
+                                    initializePaginationLinks();
+                                    initializeSortableHeaderLinks();
+                                })
+                                .catch(error => console.error('Error performing search:', error))
+                                .finally(() => {
+                                    if (tableContainer) tableContainer.style.opacity = '1';
+                                    if (paginationContainer) paginationContainer.style.opacity = '1';
+                                });
+                        };
+
+                        if (immediate) {
+                            executeSearch();
+                        } else {
+                            searchTimeout = setTimeout(executeSearch, 400);
                         }
-
-                        // Show empty state message if no results found
-                        const emptyRow = document.querySelector('.empty-search-results');
-                        if (visibleCount === 0 && searchTerm !== '') {
-                            if (!emptyRow) {
-                                const newRow = document.createElement('tr');
-                                newRow.className = 'empty-search-results';
-                                newRow.innerHTML = `<td colspan="11" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
-                                    <div class="flex flex-col items-center">
-                                        <svg class="w-12 h-12 text-gray-400 dark:text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                        </svg>
-                                        <p class="text-lg font-medium">Tidak ada data ditemukan</p>
-                                        <p class="text-sm mt-1">Tidak ada invoice yang cocok dengan pencarian "<span class="font-medium text-primary-600 dark:text-primary-400">${searchTerm}</span>"</p>
-                                        <button id="resetSearchBtn" class="mt-3 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm font-medium flex items-center">
-                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                            Hapus Pencarian
-                                        </button>
-                                    </div>
-                                </td>`;
-                                tbody.appendChild(newRow);
-
-                                // Add event listener to the reset search button
-                                document.getElementById('resetSearchBtn').addEventListener('click', clearSearch);
-                            }
-                        } else if (emptyRow) {
-                            emptyRow.remove();
-                        }
-
-                        toggleClearButton();
                     }
 
-                    // Clear search function
                     function clearSearch() {
-                        searchInput.value = '';
-                        searchInput.classList.remove('bg-primary-50', 'dark:bg-primary-900/10');
-
-                        // Reset any highlighting
-                        for (let i = 0; i < rows.length; i++) {
-                            const row = rows[i];
-                            const cells = row.getElementsByTagName('td');
-
-                            for (let j = 0; j < cells.length; j++) {
-                                const originalContent = cells[j].getAttribute('data-original-content');
-                                if (originalContent) {
-                                    cells[j].innerHTML = originalContent;
-                                    cells[j].removeAttribute('data-original-content');
-                                }
-                            }
-
-                            // Show all rows
-                            row.style.display = '';
-                        }
-
-                        // Remove empty results message if exists
-                        const emptyRow = document.querySelector('.empty-search-results');
-                        if (emptyRow) {
-                            emptyRow.remove();
-                        }
-
+                        const input = document.getElementById('tableSearch');
+                        if (input) input.value = '';
                         toggleClearButton();
-                        searchInput.focus();
+                        performServerSearch(true);
                     }
 
-                    // Add event listeners
-                    searchInput.addEventListener('input', function() {
-                        // Show/hide clear button immediately
+                    if (currentSearchInput.dataset.searchInitialized) {
                         toggleClearButton();
-                        // Debounce the actual search to improve performance
-                        debounce(performSearch, 300)();
+                        return;
+                    }
+                    currentSearchInput.dataset.searchInitialized = 'true';
+
+                    currentSearchInput.addEventListener('input', function() {
+                        toggleClearButton();
+                        performServerSearch(false);
                     });
 
-                    searchInput.addEventListener('keyup', function(e) {
-                        if (e.key === 'Escape') {
+                    currentSearchInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            performServerSearch(true);
+                        } else if (e.key === 'Escape') {
                             clearSearch();
                         }
                     });
 
-                    clearSearchBtn.addEventListener('click', clearSearch);
-
-                    // Support keyboard access for the clear button
-                    clearSearchBtn.addEventListener('keydown', function(e) {
+                    currentClearSearchBtn.addEventListener('click', clearSearch);
+                    currentClearSearchBtn.addEventListener('keydown', function(e) {
                         if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
                             clearSearch();
                         }
                     });
 
-                    // Initialize the clear button state on page load
                     toggleClearButton();
                 }
 
@@ -1452,8 +1396,6 @@
                 initializeSortableHeaderLinks(); // Add this initial call
             });
         </script>
-    </x-slot>
-    @push('scripts')
         <!-- Select2 JS -->
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script>
