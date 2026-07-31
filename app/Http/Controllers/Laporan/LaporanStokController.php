@@ -157,40 +157,10 @@ class LaporanStokController extends Controller
         $kategoriId = $request->input('kategori_id');
         $gudangId = $request->input('gudang_id');
         $search = $request->input('search');
-        $perPage = $request->input('per_page', 25);
-        $page = $request->input('page', 1);
+        $perPage = (int) $request->input('per_page', 25);
+        $page = (int) $request->input('page', 1);
 
-        // First, get products that have actual movements in the date range
-        $productsWithMovements = RiwayatStok::whereBetween('created_at', [$tanggalAwal, $tanggalAkhir])
-            ->where(function ($query) {
-                $query->where('jenis', 'masuk')
-                    ->orWhere('jenis', 'keluar')
-                    ->orWhere('jenis', 'transfer');
-            })
-            ->where(function ($query) {
-                $query->where('jumlah_perubahan', '>', 0)
-                    ->orWhere('jumlah_perubahan', '<', 0);
-            })
-            ->select('produk_id', 'gudang_id')
-            ->distinct()
-            ->get();
-
-        // If no movements in the date range, return empty result
-        if ($productsWithMovements->isEmpty()) {
-            return response()->json([
-                'data' => [],
-                'total' => 0,
-                'current_page' => (int) $page,
-                'per_page' => (int) $perPage,
-                'last_page' => 1,
-                'filter' => [
-                    'tanggal_awal' => $tanggalAwal->format('Y-m-d'),
-                    'tanggal_akhir' => $tanggalAkhir->format('Y-m-d')
-                ]
-            ]);
-        }
-
-        // Query stok barang with join tabel terkait
+        // Core Query: StokProduk join Produk, Kategori, Satuan, Gudang
         $query = StokProduk::query()
             ->select(
                 'stok_produk.id',
@@ -209,15 +179,22 @@ class LaporanStokController extends Controller
             ->join('produk', 'stok_produk.produk_id', '=', 'produk.id')
             ->leftJoin('kategori_produk', 'produk.kategori_id', '=', 'kategori_produk.id')
             ->leftJoin('satuan', 'produk.satuan_id', '=', 'satuan.id')
-            ->join('gudang', 'stok_produk.gudang_id', '=', 'gudang.id')
-            ->where(function ($query) use ($productsWithMovements) {
-                foreach ($productsWithMovements as $movement) {
-                    $query->orWhere(function ($q) use ($movement) {
-                        $q->where('stok_produk.produk_id', $movement->produk_id)
-                            ->where('stok_produk.gudang_id', $movement->gudang_id);
-                    });
-                }
-            });
+            ->join('gudang', 'stok_produk.gudang_id', '=', 'gudang.id');
+
+        // Only include products with movements in the date range on that specific warehouse
+        // This is identical to checking that there exists a riwayat_stok entry
+        $query->whereExists(function ($q) use ($tanggalAwal, $tanggalAkhir) {
+            $q->select(DB::raw(1))
+                ->from('riwayat_stok')
+                ->whereColumn('riwayat_stok.produk_id', 'stok_produk.produk_id')
+                ->whereColumn('riwayat_stok.gudang_id', 'stok_produk.gudang_id')
+                ->whereBetween('riwayat_stok.created_at', [$tanggalAwal, $tanggalAkhir])
+                ->whereIn('riwayat_stok.jenis', ['masuk', 'keluar', 'transfer'])
+                ->where(function ($sub) {
+                    $sub->where('riwayat_stok.jumlah_perubahan', '>', 0)
+                        ->orWhere('riwayat_stok.jumlah_perubahan', '<', 0);
+                });
+        });
 
         // Filter berdasarkan kategori produk
         if ($kategoriId) {
@@ -237,12 +214,21 @@ class LaporanStokController extends Controller
             });
         }
 
-        // Skip items untuk pagination
-        $skip = ($page - 1) * $perPage;
-        $dataStok = $query->skip($skip)->take($perPage)->get();
+        // PAGINATE ON THE DATABASE SIDE FIRST
+        $totalItems = $query->count();
+        $lastPage = (int) ceil($totalItems / $perPage);
+        if ($lastPage < 1) $lastPage = 1;
 
-        // Loop setiap item untuk menghitung stok awal, barang masuk, dan barang keluar
-        $result = $dataStok->map(function ($item) use ($tanggalAwal, $tanggalAkhir) {
+        // Adjust page if it exceeds last page
+        if ($page > $lastPage) {
+            $page = $lastPage;
+        }
+
+        $offset = ($page - 1) * $perPage;
+        $dataStok = $query->skip($offset)->take($perPage)->get();
+
+        // Loop only the items for current page
+        $paginatedResult = $dataStok->map(function ($item) use ($tanggalAwal, $tanggalAkhir) {
             // Get stok awal (last stock before start date)
             $stokAwalQuery = RiwayatStok::where('produk_id', $item->produk_id)
                 ->where('gudang_id', $item->gudang_id)
@@ -278,11 +264,6 @@ class LaporanStokController extends Controller
                 }
             }
 
-            // Only include items that have actual movements
-            if ($riwayatMasuk == 0 && $riwayatKeluar == 0) {
-                return null;
-            }
-
             // Calculate nilai barang using the actual ending stock
             $nilaiBarang = $stokAkhir * $item->harga_jual;
 
@@ -303,25 +284,13 @@ class LaporanStokController extends Controller
                 'tanggal_update' => $item->tanggal_update,
                 'is_below_minimum' => $stokAkhir < $item->stok_minimum
             ];
-        })
-            ->filter() // Remove null values
-            ->values(); // Reset array keys
-
-        // Get total after filtering
-        $totalItems = count($result);
-
-        // Calculate last page
-        $lastPage = ceil($totalItems / $perPage);
-
-        // Slice the result for pagination
-        $offset = ($page - 1) * $perPage;
-        $paginatedResult = array_slice($result->toArray(), $offset, $perPage);
+        });
 
         return response()->json([
             'data' => $paginatedResult,
             'total' => $totalItems,
-            'current_page' => (int) $page,
-            'per_page' => (int) $perPage,
+            'current_page' => $page,
+            'per_page' => $perPage,
             'last_page' => $lastPage,
             'filter' => [
                 'tanggal_awal' => $tanggalAwal->format('Y-m-d'),

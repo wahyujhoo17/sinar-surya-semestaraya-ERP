@@ -403,6 +403,25 @@
         </table>
     </div>
 
+    <div class="summary-row" style="margin-top: -5px; margin-bottom: 10px;">
+        <table class="summary-table">
+            <tr>
+                <td class="summary-cell" style="width: 33.33%;">
+                    <div class="summary-label">Total HPP</div>
+                    <div class="summary-value">Rp {{ number_format($totalHpp ?? 0, 0, ',', '.') }}</div>
+                </td>
+                <td class="summary-cell" style="width: 33.33%;">
+                    <div class="summary-label">Total Laba Kotor</div>
+                    <div class="summary-value">Rp {{ number_format($totalLabaKotor ?? 0, 0, ',', '.') }}</div>
+                </td>
+                <td class="summary-cell" style="width: 33.33%;">
+                    <div class="summary-label">Rata Margin %</div>
+                    <div class="summary-value">{{ number_format($rataMarginPersen ?? 0, 2, ',', '.') }}%</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
     <!-- Sales Orders with Details -->
     @forelse($dataPenjualan as $so)
         <div class="so-section">
@@ -563,6 +582,24 @@
                                     <td style="padding: 3px 5px; font-weight: 700; color: #334155;">Total Penjualan</td>
                                     <td style="padding: 3px 5px; text-align: right; font-weight: 700; color: #1e293b;">
                                         Rp {{ number_format($so->total, 0, ',', '.') }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #64748b;">
+                                        Total HPP</td>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #1e293b;">
+                                        Rp {{ number_format($so->total_hpp ?? 0, 0, ',', '.') }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #64748b;">
+                                        Laba Kotor</td>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #1e293b;">
+                                        Rp {{ number_format($so->laba_kotor ?? 0, 0, ',', '.') }}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #64748b;">
+                                        Margin %</td>
+                                    <td style="padding: 2px 5px; border-bottom: 1px solid #e5e7eb; text-align: right; color: #1e293b;">
+                                        {{ number_format($so->margin_persen ?? 0, 2, ',', '.') }}%</td>
                                 </tr>
                                 @if ($so->total_uang_muka > 0)
                                     <tr>
@@ -741,6 +778,18 @@
                             <tr>
                                 <td class="grand-label">Total Penjualan</td>
                                 <td class="grand-value">Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="grand-label">Total HPP</td>
+                                <td class="grand-value">Rp {{ number_format($totalHpp ?? 0, 0, ',', '.') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="grand-label">Total Laba Kotor</td>
+                                <td class="grand-value">Rp {{ number_format($totalLabaKotor ?? 0, 0, ',', '.') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="grand-label">Rata Margin %</td>
+                                <td class="grand-value">{{ number_format($rataMarginPersen ?? 0, 2, ',', '.') }}%</td>
                             </tr>
                             <tr>
                                 <td class="grand-label">Uang Muka</td>

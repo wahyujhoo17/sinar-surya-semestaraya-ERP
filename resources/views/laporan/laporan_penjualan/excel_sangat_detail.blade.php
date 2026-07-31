@@ -85,13 +85,13 @@
             @foreach ($so->details as $index => $detail)
                 <tr>
                     @if ($index === 0)
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top; text-align: center;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top; text-align: center;">
                             {{ $no++ }}</td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top;">{{ $so->nomor }}
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top;">{{ $so->nomor }}
                         </td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top;">
                             {{ \Carbon\Carbon::parse($so->tanggal)->format('d M Y') }}</td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top;">
                             {{ $so->customer->company ?? $so->customer->nama }}</td>
                     @endif
                     <td>{{ $detail->produk->kode ?? '-' }}</td>
@@ -109,17 +109,17 @@
                            {{ number_format(($detail->subtotal ?? 0) - ($detail->diskon_nominal ?? 0), 2, ',', '.') }}
                     </td>
                     @if ($index === 0)
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top; text-align: right;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top; text-align: right;">
                                {{ number_format($so->total, 2, ',', '.') }}</td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top; text-align: right;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top; text-align: right;">
                                {{ number_format($so->total_uang_muka ?? 0, 2, ',', '.') }}
                         </td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top; text-align: right;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top; text-align: right;">
                                {{ number_format($so->total_bayar ?? 0, 2, ',', '.') }}
                         </td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top; text-align: center;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top; text-align: center;">
                             {{ $statusLabel }}</td>
-                        <td rowspan="{{ $so->details->count() + 5 }}" style="vertical-align: top;">
+                        <td rowspan="{{ $so->details->count() + 8 }}" style="vertical-align: top;">
                             {{ $so->user->name ?? '-' }}</td>
                     @endif
                 </tr>

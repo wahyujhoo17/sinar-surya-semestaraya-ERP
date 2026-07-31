@@ -37,6 +37,7 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
         // Query sales_order dengan detail produk, payment history, dan delivery orders
         $query = Invoice::query()
             ->with([
+                'details.bundle.items.produk',
                 'details.produk.satuan',
                 'customer',
                 'user',
@@ -78,11 +79,22 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
 
         $dataPenjualan = $query->orderBy('invoice.tanggal', 'desc')->get();
 
+        $salesMarginService = app(\App\Services\SalesMarginService::class);
+        foreach ($dataPenjualan as $invoice) {
+            $marginData = $salesMarginService->calculateInvoiceMargin($invoice);
+            $invoice->total_hpp = $marginData['total_hpp'];
+            $invoice->laba_kotor = $marginData['laba_kotor'];
+            $invoice->margin_persen = $marginData['margin_persen'];
+        }
+
         // Hitung total penjualan, total dibayar, uang muka, dan sisa pembayaran
         $totalPenjualan = $dataPenjualan->sum('total');
         $totalDibayar = $dataPenjualan->sum('total_bayar');
         $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
         $sisaPembayaran = $totalPenjualan - $totalDibayar;
+        $totalHpp = $dataPenjualan->sum('total_hpp');
+        $totalLabaKotor = $dataPenjualan->sum('laba_kotor');
+        $rataMarginPersen = $totalPenjualan > 0 ? round(($totalLabaKotor / $totalPenjualan) * 100, 2) : 0;
 
         return view('laporan.laporan_penjualan.excel_sangat_detail', [
             'dataPenjualan' => $dataPenjualan,
@@ -90,7 +102,10 @@ class LaporanPenjualanSangatDetailExport implements FromView, WithTitle, WithSty
             'totalPenjualan' => $totalPenjualan,
             'totalDibayar' => $totalDibayar,
             'totalUangMuka' => $totalUangMuka,
-            'sisaPembayaran' => $sisaPembayaran
+            'sisaPembayaran' => $sisaPembayaran,
+            'totalHpp' => $totalHpp,
+            'totalLabaKotor' => $totalLabaKotor,
+            'rataMarginPersen' => $rataMarginPersen
         ]);
     }
 

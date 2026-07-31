@@ -326,7 +326,7 @@ class LaporanPenjualanController extends Controller
         // Tentukan view dan data berdasarkan detail level
         if ($detailLevel === 'simple') {
             // Level Simple: Ringkasan per transaksi dengan detail tambahan
-            $dataPenjualan = $query->with(['customer', 'user', 'salesOrder'])
+            $dataPenjualan = $query->with(['details.bundle.items.produk', 'customer', 'user', 'salesOrder'])
                 ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
                 ->select(
                     'invoice.*',
@@ -369,7 +369,7 @@ class LaporanPenjualanController extends Controller
             $orientation = 'portrait';
         } elseif ($detailLevel === 'sangat_detail') {
             // Level Sangat Detail: Dengan detail item produk dan history pembayaran
-            $dataPenjualan = $query->with([
+            $dataPenjualan = $query->with(['details.bundle.items.produk', 
                 'details.produk.satuan',
                 'customer',
                 'user',
@@ -394,10 +394,20 @@ class LaporanPenjualanController extends Controller
                 ->orderBy('invoice.tanggal', 'desc')
                 ->get();
 
+            foreach ($dataPenjualan as $invoice) {
+                $marginData = $this->salesMarginService->calculateInvoiceMargin($invoice);
+                $invoice->total_hpp = $marginData['total_hpp'];
+                $invoice->laba_kotor = $marginData['laba_kotor'];
+                $invoice->margin_persen = $marginData['margin_persen'];
+            }
+
             $totalPenjualan = $dataPenjualan->sum('total');
             $totalDibayar = $dataPenjualan->sum('total_bayar');
             $totalUangMuka = $dataPenjualan->sum('total_uang_muka');
             $sisaPembayaran = $totalPenjualan - $totalDibayar - $totalUangMuka;
+            $totalHpp = $dataPenjualan->sum('total_hpp');
+            $totalLabaKotor = $dataPenjualan->sum('laba_kotor');
+            $rataMarginPersen = $totalPenjualan > 0 ? round(($totalLabaKotor / $totalPenjualan) * 100, 2) : 0;
 
             $viewData = [
                 'dataPenjualan' => $dataPenjualan,
@@ -413,6 +423,9 @@ class LaporanPenjualanController extends Controller
                 'totalDibayar' => $totalDibayar,
                 'totalUangMuka' => $totalUangMuka,
                 'sisaPembayaran' => $sisaPembayaran,
+                'totalHpp' => $totalHpp,
+                'totalLabaKotor' => $totalLabaKotor,
+                'rataMarginPersen' => $rataMarginPersen,
                 'company' => $company
             ];
 
@@ -424,7 +437,7 @@ class LaporanPenjualanController extends Controller
             $dataPenjualan = $query->join('customer', 'invoice.customer_id', '=', 'customer.id')
                 ->leftJoin('users', 'invoice.user_id', '=', 'users.id')
                 ->leftJoin('sales_order', 'invoice.sales_order_id', '=', 'sales_order.id')
-                ->with(['details.produk.satuan', 'customer', 'user', 'invoices'])
+                ->with(['details.bundle.items.produk', 'details.produk.satuan', 'customer', 'user', 'invoices'])
                 ->select(
                     'sales_order.*',
                     DB::raw('COALESCE(

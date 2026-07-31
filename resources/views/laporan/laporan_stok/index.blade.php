@@ -66,7 +66,7 @@
                 x-transition:leave="transition ease-in duration-200"
                 x-transition:leave-start="opacity-100 transform translate-y-0"
                 x-transition:leave-end="opacity-0 transform -translate-y-2" class="p-5">
-                <form @submit.prevent="fetchData()" class="space-y-6">
+                <form @submit.prevent="goToPage(1)" class="space-y-6">
                     <!-- Filter Section -->
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -111,6 +111,9 @@
                                                         } else if(option.value === 'last-month') {
                                                             filter.tanggal_awal = getLastMonthStart();
                                                             filter.tanggal_akhir = getLastMonthEnd();
+                                                        }
+                                                        if(option.value !== 'custom') {
+                                                            goToPage(1);
                                                         }"
                                                     :class="dateType === option.value ?
                                                         'bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-200 dark:border-primary-700 ring-1 ring-primary-500 dark:ring-primary-400' :
@@ -278,7 +281,7 @@
                 </div>
                 <div class="flex items-center gap-2 text-sm">
                     <span class="text-gray-600 dark:text-gray-400">Tampilkan</span>
-                    <select x-model="perPage" @change="page = 1"
+                    <select x-model="perPage" @change="goToPage(1)"
                         class="form-select w-20 py-1 rounded-md text-sm border-gray-300 shadow-sm dark:bg-gray-800 dark:border-gray-700">
                         <option value="10">10</option>
                         <option value="25">25</option>
@@ -303,7 +306,7 @@
                     <div class="flex items-center justify-center">
                         <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
                             aria-label="Pagination">
-                            <button @click="page = 1" :disabled="page <= 1"
+                            <button @click="goToPage(1)" :disabled="page <= 1"
                                 :class="{ 'opacity-50 cursor-not-allowed': page <= 1 }"
                                 class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-150">
                                 <span class="sr-only">First</span>
@@ -314,7 +317,7 @@
                                         clip-rule="evenodd" />
                                 </svg>
                             </button>
-                            <button @click="page--" :disabled="page <= 1"
+                            <button @click="goToPage(page - 1)" :disabled="page <= 1"
                                 :class="{ 'opacity-50 cursor-not-allowed': page <= 1 }"
                                 class="relative inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-150">
                                 <span class="sr-only">Previous</span>
@@ -326,7 +329,7 @@
                                 </svg>
                             </button>
                             <template x-for="pgNum in pageNumbers" :key="pgNum">
-                                <button @click="page = pgNum"
+                                <button @click="goToPage(pgNum)"
                                     :class="page === pgNum ?
                                         'z-10 bg-primary-50 dark:bg-primary-900/30 border-primary-500 dark:border-primary-700 text-primary-600 dark:text-primary-400' :
                                         'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'"
@@ -334,7 +337,7 @@
                                     x-text="pgNum">
                                 </button>
                             </template>
-                            <button @click="page++" :disabled="page >= totalPages"
+                            <button @click="goToPage(page + 1)" :disabled="page >= totalPages"
                                 :class="{ 'opacity-50 cursor-not-allowed': page >= totalPages }"
                                 class="relative inline-flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-150">
                                 <span class="sr-only">Next</span>
@@ -345,7 +348,7 @@
                                         clip-rule="evenodd" />
                                 </svg>
                             </button>
-                            <button @click="page = totalPages" :disabled="page >= totalPages"
+                            <button @click="goToPage(totalPages)" :disabled="page >= totalPages"
                                 :class="{ 'opacity-50 cursor-not-allowed': page >= totalPages }"
                                 class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-150">
                                 <span class="sr-only">Last</span>
@@ -377,6 +380,7 @@
                 page: 1,
                 perPage: 25,
                 totalItems: 0,
+                totalPages: 1,
 
                 init() {
                     this.fetchData();
@@ -427,6 +431,14 @@
                     });
                 },
 
+                goToPage(p) {
+                    p = parseInt(p);
+                    if (p >= 1 && p <= this.totalPages) {
+                        this.page = p;
+                        this.fetchData();
+                    }
+                },
+
                 fetchData() {
                     this.loading = true;
                     console.log('Fetching data with params:', this.filter);
@@ -454,6 +466,8 @@
                             console.log('Data received:', res);
                             this.data = res.data;
                             this.totalItems = res.total;
+                            this.totalPages = res.last_page || 1;
+                            if (res.current_page) this.page = res.current_page;
                             this.loading = false;
                         })
                         .catch(err => {
@@ -528,10 +542,6 @@
                     }
 
                     return pages;
-                },
-
-                get totalPages() {
-                    return Math.ceil(this.totalItems / this.perPage) || 1;
                 },
 
                 get startItem() {
