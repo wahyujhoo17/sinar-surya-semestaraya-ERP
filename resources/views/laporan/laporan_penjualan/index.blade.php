@@ -394,13 +394,13 @@
         </div>
 
         {{-- Cards Ringkasan --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-3 sm:gap-4 mb-6">
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
                     <div
-                        class="p-2.5 rounded-full bg-primary-500/10 text-primary-500 dark:bg-primary-800/20 dark:text-primary-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                        class="p-2.5 sm:p-3 rounded-xl bg-primary-500/10 text-primary-500 dark:bg-primary-800/20 dark:text-primary-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20"
                             fill="currentColor">
                             <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
                             <path fill-rule="evenodd"
@@ -408,92 +408,92 @@
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Penjualan</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="formatCurrency(totalPenjualan)"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Total Penjualan">Total Penjualan</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="formatCurrency(totalPenjualan)" :title="formatCurrency(totalPenjualan)"></h3>
                     </div>
                 </div>
             </div>
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
                     <div
-                        class="p-2.5 rounded-full bg-green-500/10 text-green-500 dark:bg-green-800/20 dark:text-green-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                        class="p-2.5 sm:p-3 rounded-xl bg-green-500/10 text-green-500 dark:bg-green-800/20 dark:text-green-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20"
                             fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Sudah Dibayar</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="formatCurrency(totalDibayar)"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Sudah Dibayar">Sudah Dibayar</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="formatCurrency(totalDibayar)" :title="formatCurrency(totalDibayar)"></h3>
                     </div>
                 </div>
             </div>
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
-                    <div class="p-2.5 rounded-full bg-red-500/10 text-red-500 dark:bg-red-800/20 dark:text-red-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20"
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
+                    <div class="p-2.5 sm:p-3 rounded-xl bg-red-500/10 text-red-500 dark:bg-red-800/20 dark:text-red-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" viewBox="0 0 20 20"
                             fill="currentColor">
                             <path fill-rule="evenodd"
                                 d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 3.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z"
                                 clip-rule="evenodd" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Sisa Piutang</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="formatCurrency(sisaPembayaran)"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Sisa Piutang">Sisa Piutang</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="formatCurrency(sisaPembayaran)" :title="formatCurrency(sisaPembayaran)"></h3>
                     </div>
                 </div>
             </div>
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
-                    <div class="p-2.5 rounded-full bg-amber-500/10 text-amber-500 dark:bg-amber-800/20 dark:text-amber-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
+                    <div class="p-2.5 sm:p-3 rounded-xl bg-amber-500/10 text-amber-500 dark:bg-amber-800/20 dark:text-amber-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total HPP (Modal)</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="formatCurrency(totalHpp)"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Total HPP (Modal)">Total HPP (Modal)</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="formatCurrency(totalHpp)" :title="formatCurrency(totalHpp)"></h3>
                     </div>
                 </div>
             </div>
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
-                    <div class="p-2.5 rounded-full bg-teal-500/10 text-teal-500 dark:bg-teal-800/20 dark:text-teal-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
+                    <div class="p-2.5 sm:p-3 rounded-xl bg-teal-500/10 text-teal-500 dark:bg-teal-800/20 dark:text-teal-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Laba Kotor</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="formatCurrency(totalLabaKotor)"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Total Laba Kotor">Total Laba Kotor</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="formatCurrency(totalLabaKotor)" :title="formatCurrency(totalLabaKotor)"></h3>
                     </div>
                 </div>
             </div>
             <div
-                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-200 dark:border-gray-700">
-                <div class="flex items-center">
-                    <div class="p-2.5 rounded-full bg-indigo-500/10 text-indigo-500 dark:bg-indigo-800/20 dark:text-indigo-400 mr-3 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 sm:p-5 border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200 min-w-0">
+                <div class="flex items-center min-w-0">
+                    <div class="p-2.5 sm:p-3 rounded-xl bg-indigo-500/10 text-indigo-500 dark:bg-indigo-800/20 dark:text-indigo-400 mr-3 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <div>
-                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Rata-Rata Margin</p>
-                        <h3 class="text-base font-bold text-gray-900 dark:text-white mt-0.5"
-                            x-text="(rataMarginPersen || 0) + '%'"></h3>
+                    <div class="min-w-0 flex-1 overflow-hidden">
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 truncate" title="Rata-Rata Margin">Rata-Rata Margin</p>
+                        <h3 class="text-sm sm:text-base font-bold tracking-tight text-gray-900 dark:text-white mt-0.5 truncate"
+                            x-text="(rataMarginPersen || 0) + '%'" :title="(rataMarginPersen || 0) + '%'"></h3>
                     </div>
                 </div>
             </div>
