@@ -564,6 +564,16 @@
         </div>
     @endif
 
+    <!-- Catatan Section -->
+    @if (!empty($penggajian->clean_catatan))
+        <div style="border: 1px solid #b8c4d6; padding: 10px; margin-bottom: 15px; background-color: #f8fafc; border-radius: 4px;">
+            <strong style="color: #2c3e50;">Catatan:</strong><br>
+            <div style="margin-top: 5px; color: #4b5563; font-size: 11px; line-height: 1.4;">
+                {!! nl2br(e($penggajian->clean_catatan)) !!}
+            </div>
+        </div>
+    @endif
+
     <!-- Signatures with QR Codes -->
     <table class="signature-table">
         <tr>

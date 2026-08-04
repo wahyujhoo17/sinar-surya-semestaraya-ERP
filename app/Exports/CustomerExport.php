@@ -7,25 +7,33 @@ use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
-class CustomerExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles
+class CustomerExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
 {
-    private $salesId;
+    protected $filters;
 
-    public function __construct($salesId = null)
+    public function __construct($filters = [])
     {
-        $this->salesId = $salesId;
+        $this->filters = $filters;
     }
 
     /**
-     * Check if current user can access all customers (admin/manager_penjualan)
+     * Check if current user can access all customers (admin/manager_penjualan/admin_penjualan)
      */
     private function canAccessAllCustomers()
     {
-        return Auth::user()->hasRole('admin') || Auth::user()->hasRole('manager_penjualan');
+        $user = Auth::user();
+        if (!$user) {
+            return false;
+        }
+        return $user->hasRole('admin') || $user->hasRole('manager_penjualan') || $user->hasRole('admin_penjualan');
     }
 
     /**
@@ -33,11 +41,42 @@ class CustomerExport implements FromCollection, WithHeadings, WithMapping, Shoul
      */
     public function collection()
     {
-        if ($this->canAccessAllCustomers()) {
-            return Customer::all();
-        } else {
-            return Customer::where('sales_id', Auth::id())->get();
+        $query = Customer::with(['sales.karyawan']);
+
+        if (!$this->canAccessAllCustomers()) {
+            $user = Auth::user();
+            $query->where(function ($q) use ($user) {
+                $q->where('sales_id', $user->id)
+                  ->orWhere('sales_name', $user->name);
+            });
+        } elseif (!empty($this->filters['sales_id'])) {
+            if ($this->filters['sales_id'] === 'none') {
+                $query->whereNull('sales_id');
+            } else {
+                $query->where('sales_id', $this->filters['sales_id']);
+            }
         }
+
+        if (!empty($this->filters['search'])) {
+            $search = $this->filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%$search%")
+                    ->orWhere('kode', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%")
+                    ->orWhere('telepon', 'like', "%$search%")
+                    ->orWhere('company', 'like', "%$search%");
+            });
+        }
+
+        if (!empty($this->filters['tipe'])) {
+            $query->where('tipe', $this->filters['tipe']);
+        }
+
+        if (isset($this->filters['is_active']) && $this->filters['is_active'] !== '') {
+            $query->where('is_active', $this->filters['is_active']);
+        }
+
+        return $query->orderBy('nama', 'asc')->get();
     }
 
     /**
@@ -46,29 +85,31 @@ class CustomerExport implements FromCollection, WithHeadings, WithMapping, Shoul
     public function headings(): array
     {
         return [
-            'Kode',
-            'Nama',
+            'No',
+            'Kode Pelanggan',
+            'Nama Pelanggan',
             'Tipe',
+            'Perusahaan',
+            'Grup',
+            'Industri',
+            'Sales',
             'Jalan',
             'Kota',
             'Provinsi',
             'Kode Pos',
             'Negara',
-            'Company',
-            'Group',
-            'Industri',
-            'Sales',
-            'Alamat',
+            'Alamat Lengkap',
             'Alamat Pengiriman',
             'Telepon',
             'Email',
             'NPWP',
             'Kontak Person',
-            'No HP Kontak',
+            'Jabatan Kontak',
+            'No. HP Kontak',
             'Catatan',
             'Status',
             'Tanggal Dibuat',
-            'Tanggal Update'
+            'Terakhir Diupdate'
         ];
     }
 
@@ -78,30 +119,54 @@ class CustomerExport implements FromCollection, WithHeadings, WithMapping, Shoul
      */
     public function map($customer): array
     {
+        static $no = 1;
+
+        // Mendapatkan nama lengkap Sales
+        $salesName = '-';
+        if ($customer->sales) {
+            $salesName = $customer->sales->display_name;
+        } elseif (!empty($customer->sales_name)) {
+            $salesName = $customer->sales_name;
+        }
+
+        $formatDate = function ($date) {
+            if (!$date) return '-';
+            if ($date instanceof \Carbon\Carbon) {
+                return $date->format('d/m/Y H:i');
+            }
+            try {
+                return \Carbon\Carbon::parse($date)->format('d/m/Y H:i');
+            } catch (\Exception $e) {
+                return $date;
+            }
+        };
+
         return [
-            $customer->kode,
-            $customer->nama,
-            $customer->tipe,
-            $customer->jalan,
-            $customer->kota,
-            $customer->provinsi,
-            $customer->kode_pos,
-            $customer->negara,
-            $customer->company,
-            $customer->group,
-            $customer->industri,
-            $customer->sales_name,
-            $customer->alamat,
-            $customer->alamat_pengiriman,
-            $customer->telepon,
-            $customer->email,
-            $customer->npwp,
-            $customer->kontak_person,
-            $customer->no_hp_kontak,
-            $customer->catatan,
-            $customer->is_active ? 'Aktif' : 'Non Aktif',
-            $customer->created_at->format('d/m/Y H:i'),
-            $customer->updated_at->format('d/m/Y H:i')
+            $no++,
+            $customer->kode ?? '-',
+            $customer->nama ?? '-',
+            $customer->tipe ?? '-',
+            $customer->company ?? '-',
+            $customer->group ?? '-',
+            $customer->industri ?? '-',
+            $salesName,
+            $customer->jalan ?? '-',
+            $customer->kota ?? '-',
+            $customer->provinsi ?? '-',
+            $customer->kode_pos ?? '-',
+            $customer->negara ?? '-',
+            $customer->alamat ?? '-',
+            $customer->alamat_pengiriman ?? '-',
+            $customer->telepon ?? '-',
+            $customer->email ?? '-',
+            $customer->npwp ?? '-',
+            $customer->kontak_person ?? '-',
+            $customer->jabatan_kontak ?? '-',
+            $customer->no_hp_kontak ?? '-',
+            $customer->catatan ?? '-',
+            $customer->is_active ? 'Aktif' : 'Non-Aktif',
+            $formatDate($customer->created_at),
+            $formatDate($customer->updated_at)
         ];
     }
 
@@ -112,8 +177,61 @@ class CustomerExport implements FromCollection, WithHeadings, WithMapping, Shoul
     public function styles(Worksheet $sheet)
     {
         return [
-            // Style the first row as bold text.
-            1 => ['font' => ['bold' => true]],
+            1 => [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['argb' => 'FFFFFF'],
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['argb' => '1E3A8A'],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+
+                // Set height for header
+                $sheet->getRowDimension(1)->setRowHeight(25);
+
+                // Auto-size columns A to Y
+                foreach (range('A', 'Z') as $column) {
+                    $sheet->getColumnDimension($column)->setAutoSize(true);
+                }
+
+                $highestRow = $sheet->getHighestRow();
+                $highestColumn = $sheet->getHighestColumn();
+
+                // Add borders to all data cells
+                $sheet->getStyle('A1:' . $highestColumn . $highestRow)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['argb' => 'D1D5DB'],
+                        ],
+                    ],
+                ]);
+
+                // Alignments
+                $sheet->getStyle('A1:A' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('B1:B' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('D1:D' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('L1:L' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('W1:W' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                $sheet->getStyle('X1:Y' . $highestRow)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+            },
         ];
     }
 }

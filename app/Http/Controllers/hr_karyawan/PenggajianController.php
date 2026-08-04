@@ -1362,11 +1362,16 @@ class PenggajianController extends Controller
             DB::beginTransaction();
 
             // Update status to approved
-            $penggajian->update([
+            $updateData = [
                 'status' => 'disetujui',
                 'disetujui_oleh' => Auth::id(),
-                'catatan' => $penggajian->catatan . "\n\nCatatan Persetujuan: " . $request->approval_note,
-            ]);
+            ];
+
+            if ($request->filled('approval_note')) {
+                $updateData['catatan'] = trim(($penggajian->catatan ? $penggajian->catatan . "\n\n" : '') . "Catatan Persetujuan: " . $request->approval_note);
+            }
+
+            $penggajian->update($updateData);
 
             DB::commit();
             return redirect()->route('hr.penggajian.show', $penggajian->id)->with('success', 'Penggajian berhasil disetujui.');

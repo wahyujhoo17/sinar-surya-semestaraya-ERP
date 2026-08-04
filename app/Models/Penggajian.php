@@ -234,4 +234,22 @@ class Penggajian extends Model
 
         return $namaBulan[$bulan] ?? 'Bulan Tidak Valid';
     }
+
+    /**
+     * Accessor untuk mendapatkan catatan yang sudah dibersihkan dari label kosong
+     */
+    public function getCleanCatatanAttribute()
+    {
+        $catatan = $this->catatan;
+        if (!$catatan) {
+            return null;
+        }
+
+        // Hapus label jika tidak ada isi/keterangan lanjutan di belakangnya
+        $catatan = preg_replace('/Catatan Persetujuan:\s*$/i', '', $catatan);
+        $catatan = preg_replace('/Catatan Pembayaran:\s*$/i', '', $catatan);
+        $catatan = trim($catatan);
+
+        return $catatan !== '' ? $catatan : null;
+    }
 }

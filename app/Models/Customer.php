@@ -31,6 +31,7 @@ class Customer extends Model
         'email',
         'npwp',
         'kontak_person',
+        'jabatan_kontak',
         'no_hp_kontak',
         'catatan',
         'is_active',

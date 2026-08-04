@@ -498,10 +498,10 @@
                             </table>
                         </div>
 
-                        @if ($penggajian->catatan)
-                            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                                <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Catatan:</h3>
-                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ $penggajian->catatan }}</p>
+                        @if ($penggajian->clean_catatan)
+                            <div class="mt-6 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                                <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Catatan:</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-line">{!! nl2br(e($penggajian->clean_catatan)) !!}</p>
                             </div>
                         @endif
 

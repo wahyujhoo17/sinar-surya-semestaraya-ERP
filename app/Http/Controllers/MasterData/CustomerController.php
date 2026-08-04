@@ -382,9 +382,9 @@ class CustomerController extends Controller
         return response()->json(['success' => true, 'groups' => $groups]);
     }
 
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new CustomerExport, 'pelanggan-' . date('Y-m-d') . '.xlsx');
+        return Excel::download(new CustomerExport($request->all()), 'pelanggan-' . date('Y-m-d') . '.xlsx');
     }
     public function import(Request $request)
     {
