@@ -23,7 +23,8 @@
 
     $manualKomponenPendapatan = $penggajian->komponenGaji
         ->where('jenis', 'pendapatan')
-        ->reject(fn($komponen) => str_starts_with((string) ($komponen->keterangan ?? ''), '__AUTO_TUNJANGAN_'));
+        ->reject(fn($komponen) => str_starts_with((string) ($komponen->keterangan ?? ''), '__AUTO_TUNJANGAN_')
+            || $komponen->nama_komponen === 'Komisi Penjualan'); // [KOMISI_DISABLED_TEMPORARILY]
     $manualKomponenPotongan = $penggajian->komponenGaji->where('jenis', 'potongan');
 @endphp
 <x-app-layout :breadcrumbs="$breadcrumbs ?? []" :currentPage="$currentPage ?? 'Detail Penggajian'">
@@ -514,7 +515,8 @@
                             $totalKomisi = $komisiKomponen->sum('nilai');
                         @endphp
 
-                        @if ($komisiKomponen->count() > 0)
+                        {{-- [KOMISI_DISABLED_TEMPORARILY] Set false menjadi true untuk mengaktifkan kembali rincian komisi --}}
+                        @if (false && $komisiKomponen->count() > 0)
                             <div class="mt-6 p-4">
                                 <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                     <span class="flex items-center">

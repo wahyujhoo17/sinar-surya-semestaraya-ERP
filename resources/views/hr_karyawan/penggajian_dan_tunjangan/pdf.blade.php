@@ -389,7 +389,7 @@
                             fn($komponen) => str_starts_with(
                                 (string) ($komponen->keterangan ?? ''),
                                 '__AUTO_TUNJANGAN_',
-                            ),
+                            ) || $komponen->nama_komponen === 'Komisi Penjualan', // [KOMISI_DISABLED_TEMPORARILY]
                         );
                     $manualKomponenPotongan = $penggajian->komponenGaji->where('jenis', 'potongan');
                 @endphp
@@ -541,11 +541,20 @@
                     @endif
                 @endif
 
+                @php
+                    $totalPotonganVal =
+                        ($penggajian->bpjs_karyawan ?? 0) +
+                        ($penggajian->cash_bon ?? 0) +
+                        ($penggajian->keterlambatan ?? 0) +
+                        $manualKomponenPotongan->sum('nilai') +
+                        $penggajian->potongan;
+                    $displayTotalGajiBersih = $totalPendapatan - $totalPotonganVal;
+                @endphp
                 <!-- Total Section -->
                 <tr style="background-color: #f3f4f6; border-top: 3px solid #4a6fa5;">
                     <td class="font-bold" style="font-size: 14px;">TOTAL GAJI BERSIH</td>
                     <td class="text-right font-bold" style="font-size: 14px; color: #2c3e50;">
-                        Rp {{ number_format($penggajian->total_gaji, 2, ',', '.') }}
+                        Rp {{ number_format($displayTotalGajiBersih, 2, ',', '.') }}
                     </td>
                 </tr>
             </tbody>

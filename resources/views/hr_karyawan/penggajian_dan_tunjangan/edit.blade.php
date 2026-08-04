@@ -526,8 +526,8 @@
                 </div>
             @endif
 
-            {{-- Commission Calculation Card (Dynamic for Edit) --}}
-            <div x-show="commissionData.orders.length > 0" x-transition
+            {{-- Commission Calculation Card (Dynamic for Edit) [KOMISI_DISABLED_TEMPORARILY] --}}
+            <div x-show="false && commissionData.orders.length > 0" x-transition
                 class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200/70 dark:border-gray-700/70 overflow-hidden mb-6">
                 <div
                     class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-gray-800 dark:to-gray-700">

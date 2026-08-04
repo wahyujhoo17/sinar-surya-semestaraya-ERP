@@ -459,19 +459,27 @@ class PenggajianController extends Controller
         // Hitung komisi dari sales order jika ada dengan penyesuaian per sales order
         $salesOrderAdjustments = $request->input('sales_order_adjustments', []);
 
-        $komisiData = $this->hitungKomisiKaryawan(
-            $request->karyawan_id,
-            $request->bulan,
-            $request->tahun,
-            $salesOrderAdjustments
-        );
-        $komisi = $komisiData['komisi'];
-        $salesOrderIds = $komisiData['salesOrderIds'];
-        $komisiDetails = $komisiData['details'] ?? [];
+        // [KOMISI_DISABLED_TEMPORARILY] Set $enableKomisi = true jika ingin mengaktifkan kembali komisi
+        $enableKomisi = false;
+        if ($enableKomisi) {
+            $komisiData = $this->hitungKomisiKaryawan(
+                $request->karyawan_id,
+                $request->bulan,
+                $request->tahun,
+                $salesOrderAdjustments
+            );
+            $komisi = $komisiData['komisi'];
+            $salesOrderIds = $komisiData['salesOrderIds'];
+            $komisiDetails = $komisiData['details'] ?? [];
 
-        // Override komisi jika dikirim dari request (manual input)
-        if ($request->has('komisi') && $request->komisi !== null) {
-            $komisi = $request->komisi;
+            // Override komisi jika dikirim dari request (manual input)
+            if ($request->has('komisi') && $request->komisi !== null) {
+                $komisi = $request->komisi;
+            }
+        } else {
+            $komisi = 0;
+            $salesOrderIds = [];
+            $komisiDetails = [];
         }
 
         // Hitung pendapatan
@@ -707,9 +715,10 @@ class PenggajianController extends Controller
             }
         }
 
-        // Hitung ulang komisi dari komponen yang dikirim
+        // [KOMISI_DISABLED_TEMPORARILY] Set $enableKomisi = true jika ingin mengaktifkan kembali komisi
+        $enableKomisi = false;
         $newKomisi = 0;
-        if ($request->has('komponenGaji')) {
+        if ($enableKomisi && $request->has('komponenGaji')) {
             foreach ($request->komponenGaji as $komponen) {
                 if ($komponen['nama_komponen'] === 'Komisi Penjualan') {
                     $newKomisi += $komponen['nilai'];
@@ -819,6 +828,12 @@ class PenggajianController extends Controller
      */
     private function hitungKomisiKaryawan($karyawanId, $bulan, $tahun, $salesOrderAdjustments = [])
     {
+        // [KOMISI_DISABLED_TEMPORARILY] Set $enableKomisi = true jika ingin mengaktifkan kembali komisi
+        $enableKomisi = false;
+        if (!$enableKomisi) {
+            return ['komisi' => 0, 'salesOrderIds' => [], 'details' => []];
+        }
+
         // Get the user_id associated with karyawan
         $karyawan = Karyawan::findOrFail($karyawanId);
         if (!$karyawan->user_id) {
@@ -1238,6 +1253,18 @@ class PenggajianController extends Controller
      */
     public function getKomisiKaryawan(Request $request)
     {
+        // [KOMISI_DISABLED_TEMPORARILY] Set $enableKomisi = true jika ingin mengaktifkan kembali komisi
+        $enableKomisi = false;
+        if (!$enableKomisi) {
+            return response()->json([
+                'success' => true,
+                'komisi' => 0,
+                'salesOrderIds' => [],
+                'details' => [],
+                'message' => 'Komisi saat ini dinonaktifkan sementara.'
+            ]);
+        }
+
         $request->validate([
             'karyawan_id' => 'required|exists:karyawan,id',
             'bulan' => 'required|integer|min:1|max:12',
