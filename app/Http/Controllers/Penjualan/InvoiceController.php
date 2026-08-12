@@ -50,18 +50,18 @@ class InvoiceController extends Controller
     private function generateNewInvoiceNumber()
     {
         $prefix = get_document_prefix('invoice') . '-';
-        $date = now()->format('Ymd');
+        $date = now()->format('Ym');
         $pattern = $prefix . $date . '-';
 
-        // MySQL compatible query - use RIGHT function to extract last 3 digits
+        // MySQL compatible query - extract numeric sequence after pattern
         $lastInvoice = DB::table('invoice')
             ->where('nomor', 'like', $pattern . '%')
-            ->selectRaw('MAX(CAST(RIGHT(nomor, 3) AS UNSIGNED)) as last_num')
+            ->selectRaw('MAX(CAST(SUBSTRING(nomor, ' . (strlen($pattern) + 1) . ') AS UNSIGNED)) as last_num')
             ->first();
 
-        $newNumberSuffix = '001';
+        $newNumberSuffix = '0001';
         if ($lastInvoice && !is_null($lastInvoice->last_num)) {
-            $newNumberSuffix = str_pad($lastInvoice->last_num + 1, 3, '0', STR_PAD_LEFT);
+            $newNumberSuffix = str_pad($lastInvoice->last_num + 1, 4, '0', STR_PAD_LEFT);
         }
 
         return $prefix . $date . '-' . $newNumberSuffix;
