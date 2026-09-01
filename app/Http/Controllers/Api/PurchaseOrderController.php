@@ -17,14 +17,14 @@ class PurchaseOrderController extends Controller
     {
         $purchaseOrders = PurchaseOrder::where('supplier_id', $supplierId)
             ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian'])
-            ->orderBy('tanggal', 'desc')
+            ->orderBy('tanggal', 'asc')
             ->get();
 
         $result = [];
 
         foreach ($purchaseOrders as $po) {
-            // Calculate payments made
-            $totalPayments = PembayaranHutang::where('purchase_order_id', $po->id)->sum('jumlah');
+            // Calculate payments made via details
+            $totalPayments = $po->pembayaranDetails()->sum('jumlah');
 
             // Calculate returns
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)

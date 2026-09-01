@@ -5,6 +5,7 @@ namespace App\Exports;
 use App\Models\PembayaranHutang;
 use App\Models\PurchaseOrder;
 use App\Models\ReturPembelian;
+use App\Models\PembayaranHutangDetail;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -56,7 +57,7 @@ class HutangUsahaExport implements FromCollection, WithHeadings, WithMapping, Sh
         // Calculate remaining debt for each PO considering payments and returns
         foreach ($purchaseOrders as $po) {
             // Get total payments for this PO
-            $totalPayments = PembayaranHutang::where('purchase_order_id', $po->id)->sum('jumlah');
+            $totalPayments = PembayaranHutangDetail::where('purchase_order_id', $po->id)->sum('jumlah');
 
             // Get total returns for this PO
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)

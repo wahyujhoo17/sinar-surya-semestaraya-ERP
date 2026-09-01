@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\SalesOrder; // Still needed for context via Invoice
 use App\Models\PembayaranPiutang; // For relationships and potentially direct queries
+use App\Models\PembayaranPiutangDetail;
 use App\Models\ReturPenjualan; // For context in show view
 use App\Models\Customer;
 use App\Models\LogAktivitas;
@@ -266,8 +267,9 @@ class PiutangUsahaController extends Controller
             'user', // User who created/managed the invoice
             'details',
             'details.produk', // Invoice items
-            'pembayaranPiutang',
-            'pembayaranPiutang.user', // Payments for this invoice
+            'pembayaranDetails.pembayaranPiutang.user',
+            'pembayaranDetails.pembayaranPiutang.kas',
+            'pembayaranDetails.pembayaranPiutang.rekeningBank',
             'uangMukaAplikasi', // Uang muka applications for this invoice
             'uangMukaAplikasi.uangMukaPenjualan', // Related uang muka penjualan records
             'salesOrder', // Parent Sales Order for context
@@ -279,8 +281,21 @@ class PiutangUsahaController extends Controller
             }
         ])->findOrFail($id);
 
-        // Total payments for this specific invoice (can also use $invoice->pembayaranPiutang->sum('jumlah'))
-        $totalPaymentsForInvoice = $invoice->pembayaranPiutang->sum('jumlah');
+        // Get payments for this invoice via detail
+        $payments = $invoice->pembayaranDetails
+            ->map(function ($detail) {
+                $header = $detail->pembayaranPiutang;
+                if (!$header) return null;
+                $p = clone $header;
+                $p->jumlah = $detail->jumlah;
+                $p->catatan = $detail->catatan ?? $header->catatan;
+                return $p;
+            })
+            ->filter()
+            ->values();
+
+        // Total payments for this specific invoice
+        $totalPaymentsForInvoice = $payments->sum('jumlah');
 
         // Total uang muka applied to this invoice
         $totalUangMukaApplied = $invoice->uangMukaAplikasi->sum('jumlah_aplikasi');
@@ -292,26 +307,22 @@ class PiutangUsahaController extends Controller
         if ($invoice->salesOrder) {
             $returnsRelatedToSO = $invoice->salesOrder->returPenjualan; // Already loaded with details
             foreach ($returnsRelatedToSO as $return) {
-                // This calculation assumes ReturPenjualanDetail has quantity and we get price from original SO detail.
-                // It would be better if ReturPenjualan model had a 'total_nilai_retur' attribute or an accessor.
-                if ($return->salesOrder && $return->salesOrder->details) { // Ensure parent SO of return and its details are available
-                    $soDetailsOfReturn = $return->salesOrder->details; // SO details related to the SO of the return document
+                if ($return->salesOrder && $return->salesOrder->details) {
+                    $soDetailsOfReturn = $return->salesOrder->details;
                     foreach ($return->details as $returDetail) {
                         $matchingSoDetail = $soDetailsOfReturn->where('produk_id', $returDetail->produk_id)->first();
                         if ($matchingSoDetail) {
                             $totalReturValueSO += ($matchingSoDetail->harga ?? 0) * $returDetail->quantity;
                         }
                     }
-                } elseif (isset($return->total_nilai_retur)) { // Ideal: if ReturPenjualan model has this
+                } elseif (isset($return->total_nilai_retur)) {
                     $totalReturValueSO += $return->total_nilai_retur;
                 }
             }
         }
 
-        // $invoice->sisa_piutang and $invoice->status_display are available from accessors on the Invoice model.
-
         // Ambil log aktivitas untuk semua pembayaran pada invoice ini
-        $paymentIds = $invoice->pembayaranPiutang->pluck('id')->toArray();
+        $paymentIds = $payments->pluck('id')->toArray();
         $logs = LogAktivitas::where('modul', 'piutang_usaha')
             ->whereIn('data_id', $paymentIds)
             ->with('user')
@@ -320,11 +331,11 @@ class PiutangUsahaController extends Controller
 
         return view('keuangan.piutang_usaha.show', [
             'invoice' => $invoice,
-            'payments' => $invoice->pembayaranPiutang, // Payments specific to this invoice
+            'payments' => $payments, // Payments specific to this invoice with accurate allocated amounts
             'totalPaymentsForInvoice' => $totalPaymentsForInvoice,
-            'totalUangMukaApplied' => $totalUangMukaApplied, // Total uang muka applied
-            'returnsRelatedToSO' => $returnsRelatedToSO, // For display
-            'totalReturValueSO' => $totalReturValueSO,   // For display
+            'totalUangMukaApplied' => $totalUangMukaApplied,
+            'returnsRelatedToSO' => $returnsRelatedToSO,
+            'totalReturValueSO' => $totalReturValueSO,
             'logs' => $logs,
         ]);
     }
@@ -357,7 +368,7 @@ class PiutangUsahaController extends Controller
      */
     public function generatePdf(Request $request)
     {
-        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranPiutang'])
+        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranDetails', 'uangMukaAplikasi'])
             ->where('total', '>', 0);
 
         // Get sort column and direction
@@ -427,7 +438,7 @@ class PiutangUsahaController extends Controller
         // Calculate total piutang for the filtered set for PDF summary
         $totalPiutangPdf = 0;
         foreach ($invoices as $invoice) {
-            $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+            $totalPayments = $invoice->pembayaranDetails->sum('jumlah');
             $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
             if ($sisaPiutang > 0) {
                 $totalPiutangPdf += $sisaPiutang;
@@ -467,10 +478,6 @@ class PiutangUsahaController extends Controller
 
     /**
      * Display payment history for a specific invoice.
-     * (This method might be redundant if show() already lists payments,
-     * or it could be a dedicated view for just payment history if extensive)
-     * For now, assuming it's similar to show() or part of it.
-     * If a separate history view is needed, it would focus on $invoice->pembayaranPiutang.
      *
      * @param int $id (Invoice ID)
      * @return \\Illuminate\\Contracts\\View\\View
@@ -479,19 +486,27 @@ class PiutangUsahaController extends Controller
     {
         $invoice = Invoice::with([
             'customer',
-            'pembayaranPiutang',
-            'pembayaranPiutang.user', // User who recorded payment
-            'pembayaranPiutang.transaksiKas', // If linked
-            'pembayaranPiutang.transaksiBank', // If linked
+            'pembayaranDetails.pembayaranPiutang.user',
+            'pembayaranDetails.pembayaranPiutang.transaksiKas',
+            'pembayaranDetails.pembayaranPiutang.transaksiBank',
             'salesOrder' // For context like SO number
         ])->findOrFail($id);
 
-        // The view 'keuangan.piutang_usaha.history' will receive $invoice
-        // and can iterate over $invoice->pembayaranPiutang
+        $payments = $invoice->pembayaranDetails
+            ->map(function ($detail) {
+                $header = $detail->pembayaranPiutang;
+                if (!$header) return null;
+                $p = clone $header;
+                $p->jumlah = $detail->jumlah;
+                $p->catatan = $detail->catatan ?? $header->catatan;
+                return $p;
+            })
+            ->filter()
+            ->values();
 
         return view('keuangan.piutang_usaha.history', [
             'invoice' => $invoice,
-            'payments' => $invoice->pembayaranPiutang()->orderBy('tanggal', 'desc')->get(),
+            'payments' => $payments,
         ]);
     }
 }

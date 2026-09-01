@@ -25,7 +25,7 @@ class PiutangUsahaExport implements FromCollection, WithHeadings, WithMapping, S
      */
     public function collection()
     {
-        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranPiutang'])
+        $query = Invoice::with(['customer', 'salesOrder', 'pembayaranDetails', 'uangMukaAplikasi'])
             ->where('total', '>', 0);
 
         // Apply all filters from request
@@ -84,7 +84,7 @@ class PiutangUsahaExport implements FromCollection, WithHeadings, WithMapping, S
         $invoices = $query->get();
 
         $invoices->transform(function ($invoice) {
-            $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+            $totalPayments = $invoice->pembayaranDetails->sum('jumlah');
             $invoice->total_pembayaran_invoice = $totalPayments;
             $invoice->sisa_piutang_invoice = $invoice->sisa_piutang; // Use accessor that includes nota kredit
 

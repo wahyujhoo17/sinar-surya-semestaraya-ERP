@@ -28,7 +28,25 @@ class PembayaranHutang extends Model
     ];
 
     /**
-     * Relasi ke Purchase Order
+     * Relasi ke Detail Pembayaran Hutang
+     */
+    public function details()
+    {
+        return $this->hasMany(PembayaranHutangDetail::class, 'pembayaran_hutang_id');
+    }
+
+    /**
+     * Relasi many-to-many ke Purchase Orders via Detail
+     */
+    public function purchaseOrders()
+    {
+        return $this->belongsToMany(PurchaseOrder::class, 'pembayaran_hutang_detail', 'pembayaran_hutang_id', 'purchase_order_id')
+            ->withPivot('jumlah', 'catatan')
+            ->withTimestamps();
+    }
+
+    /**
+     * Relasi ke Purchase Order (Legacy / Single PO Fallback)
      */
     public function purchaseOrder()
     {
@@ -109,9 +127,9 @@ class PembayaranHutang extends Model
             $entries = [];
 
             // Debit: Kas atau Bank tergantung metode pembayaran (asset berkurang)
-            $akunSumber = null;
+            $isKas = in_array(strtolower($this->metode_pembayaran), ['kas', 'tunai']);
 
-            if ($this->metode_pembayaran == 'kas' || $this->metode_pembayaran == 'tunai') {
+            if ($isKas) {
                 // Jika ada kas_id, cari akun akuntansi yang terkait dengan kas tersebut
                 if ($this->kas_id) {
                     $akunKas = \App\Models\AkunAkuntansi::where('ref_type', 'App\Models\Kas')
@@ -145,15 +163,16 @@ class PembayaranHutang extends Model
                 return false;
             }
 
+            // Debit: Hutang Usaha (liability berkurang)
             $entries[] = [
-                'akun_id' => $akunSumber,
+                'akun_id' => $akunHutangUsaha,
                 'debit' => $this->jumlah,
                 'kredit' => 0
             ];
 
-            // Kredit: Hutang Usaha (liability berkurang)
+            // Kredit: Kas atau Bank (asset berkurang)
             $entries[] = [
-                'akun_id' => $akunHutangUsaha,
+                'akun_id' => $akunSumber,
                 'debit' => 0,
                 'kredit' => $this->jumlah
             ];

@@ -75,11 +75,21 @@ class PurchaseOrder extends Model
     }
 
     /**
-     * Relasi ke Pembayaran Hutang
+     * Relasi ke Detail Pembayaran Hutang
+     */
+    public function pembayaranDetails()
+    {
+        return $this->hasMany(PembayaranHutangDetail::class, 'purchase_order_id');
+    }
+
+    /**
+     * Relasi ke Pembayaran Hutang (Header via Detail)
      */
     public function pembayaran()
     {
-        return $this->hasMany(PembayaranHutang::class, 'purchase_order_id');
+        return $this->belongsToMany(PembayaranHutang::class, 'pembayaran_hutang_detail', 'purchase_order_id', 'pembayaran_hutang_id')
+            ->withPivot('jumlah', 'catatan')
+            ->withTimestamps();
     }
 
     /**

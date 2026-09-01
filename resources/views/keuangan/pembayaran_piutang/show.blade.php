@@ -162,136 +162,100 @@
                         </div>
                     </div>
 
-                    {{-- Invoice Information Card --}}
-                    @if ($pembayaran->invoice)
-                        <div
-                            class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-                            <div
-                                class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-                                    <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                        </path>
-                                    </svg>
-                                    Informasi Invoice
-                                </h3>
-                            </div>
-                            <div class="p-6">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <div class="space-y-4">
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nomor
-                                                Invoice</dt>
-                                            <dd class="text-base font-semibold text-gray-900 dark:text-white">
-                                                @if ($pembayaran->invoice->nomor)
-                                                    <a href="{{ route('penjualan.invoice.show', $pembayaran->invoice->id) }}"
-                                                        target="_blank"
-                                                        class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline">
-                                                        {{ $pembayaran->invoice->nomor }}
-                                                        <svg class="w-4 h-4 inline ml-1" fill="none"
-                                                            stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14">
-                                                            </path>
-                                                        </svg>
-                                                    </a>
-                                                @else
-                                                    <span class="text-gray-400">-</span>
+                    {{-- Invoices Allocation Card (Multi-Invoice Support) --}}
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                Rincian Invoice yang Dibayar
+                            </h3>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300">
+                                {{ $pembayaran->details->count() > 0 ? $pembayaran->details->count() : ($pembayaran->invoice ? '1' : '0') }} Invoice
+                            </span>
+                        </div>
+                        <div class="p-6">
+                            @if ($pembayaran->details->count() > 0)
+                                <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                        <thead class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left">No. Invoice</th>
+                                                <th class="px-4 py-3 text-left">Tanggal</th>
+                                                <th class="px-4 py-3 text-right">Total Invoice</th>
+                                                <th class="px-4 py-3 text-right">Alokasi Pembayaran</th>
+                                                <th class="px-4 py-3 text-right">Sisa Piutang</th>
+                                                <th class="px-4 py-3 text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                            @foreach ($pembayaran->details as $detail)
+                                                @if ($detail->invoice)
+                                                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                        <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                                                            <a href="{{ route('penjualan.invoice.show', $detail->invoice->id) }}" target="_blank"
+                                                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline">
+                                                                {{ $detail->invoice->nomor }}
+                                                            </a>
+                                                        </td>
+                                                        <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                                            {{ $detail->invoice->tanggal ? \Carbon\Carbon::parse($detail->invoice->tanggal)->translatedFormat('d M Y') : '-' }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300 font-mono">
+                                                            Rp {{ number_format($detail->invoice->total, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-right font-bold text-green-600 dark:text-green-400 font-mono">
+                                                            Rp {{ number_format($detail->jumlah, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-right font-semibold text-red-600 dark:text-red-400 font-mono">
+                                                            Rp {{ number_format($detail->invoice->sisa_piutang, 0, ',', '.') }}
+                                                        </td>
+                                                        <td class="px-4 py-3 text-center">
+                                                            <a href="{{ route('penjualan.invoice.show', $detail->invoice->id) }}" target="_blank"
+                                                                class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-blue-700 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg hover:bg-blue-100 transition-colors">
+                                                                Lihat Invoice
+                                                            </a>
+                                                        </td>
+                                                    </tr>
                                                 @endif
-                                            </dd>
-                                        </div>
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                                Tanggal Invoice</dt>
-                                            <dd class="text-base text-gray-900 dark:text-white">
-                                                {{ \Carbon\Carbon::parse($pembayaran->invoice->tanggal)->translatedFormat('d F Y') }}
-                                            </dd>
-                                        </div>
+                                            @endforeach
+                                        </tbody>
+                                        <tfoot class="bg-gray-50 dark:bg-gray-750 font-bold text-gray-900 dark:text-white">
+                                            <tr>
+                                                <td colspan="3" class="px-4 py-3 text-right">Total Pembayaran:</td>
+                                                <td class="px-4 py-3 text-right font-mono text-green-600 dark:text-green-400">
+                                                    Rp {{ number_format($pembayaran->details->sum('jumlah'), 0, ',', '.') }}
+                                                </td>
+                                                <td colspan="2"></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            @elseif($pembayaran->invoice)
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor Invoice</dt>
+                                        <dd class="text-base font-semibold text-gray-900 dark:text-white">
+                                            <a href="{{ route('penjualan.invoice.show', $pembayaran->invoice->id) }}" target="_blank" class="text-blue-600 hover:underline">
+                                                {{ $pembayaran->invoice->nomor }}
+                                            </a>
+                                        </dd>
                                     </div>
-                                    <div class="space-y-4">
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total
-                                                Invoice</dt>
-                                            <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                                                Rp {{ number_format($pembayaran->invoice->total, 0, ',', '.') }}
-                                            </dd>
-                                        </div>
-                                        @if ($pembayaran->invoice->jatuh_tempo)
-                                            <div>
-                                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                                    Jatuh Tempo</dt>
-                                                <dd class="text-base text-gray-900 dark:text-white">
-                                                    {{ \Carbon\Carbon::parse($pembayaran->invoice->jatuh_tempo)->translatedFormat('d F Y') }}
-                                                </dd>
-                                            </div>
-                                        @endif
-                                        <div>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Sisa
-                                                Piutang</dt>
-                                            <dd class="text-lg font-semibold text-red-600 dark:text-red-400">
-                                                Rp {{ number_format($pembayaran->invoice->sisa_piutang, 0, ',', '.') }}
-                                            </dd>
-                                        </div>
+                                    <div>
+                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Invoice</dt>
+                                        <dd class="text-base font-semibold text-gray-900 dark:text-white">
+                                            Rp {{ number_format($pembayaran->invoice->total, 0, ',', '.') }}
+                                        </dd>
                                     </div>
                                 </div>
-
-                                {{-- Breakdown pembayaran dan potongan --}}
-                                @if ($pembayaran->invoice->uang_muka_terapkan > 0 || $pembayaran->invoice->kredit_terapkan > 0)
-                                    <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
-                                        <h4
-                                            class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-blue-500"
-                                                viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                            Rincian Potongan & Uang Muka
-                                        </h4>
-                                        <div class="space-y-3">
-                                            @if ($pembayaran->invoice->uang_muka_terapkan > 0)
-                                                <div
-                                                    class="flex justify-between items-center py-2 px-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                                    <span class="text-sm text-blue-700 dark:text-blue-300">Uang Muka
-                                                        Diterapkan:</span>
-                                                    <span class="font-semibold text-blue-800 dark:text-blue-200">Rp
-                                                        {{ number_format($pembayaran->invoice->uang_muka_terapkan, 0, ',', '.') }}</span>
-                                                </div>
-                                            @endif
-                                            @if ($pembayaran->invoice->kredit_terapkan > 0)
-                                                <div
-                                                    class="flex justify-between items-center py-2 px-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                                                    <span class="text-sm text-green-700 dark:text-green-300">Nota
-                                                        Kredit Diterapkan:</span>
-                                                    <span class="font-semibold text-green-800 dark:text-green-200">Rp
-                                                        {{ number_format($pembayaran->invoice->kredit_terapkan, 0, ',', '.') }}</span>
-                                                </div>
-                                            @endif
-                                            @php
-                                                $totalPembayaranLain = $pembayaran->invoice
-                                                    ->pembayaranPiutang()
-                                                    ->where('id', '!=', $pembayaran->id)
-                                                    ->sum('jumlah');
-                                            @endphp
-                                            @if ($totalPembayaranLain > 0)
-                                                <div
-                                                    class="flex justify-between items-center py-2 px-3 bg-purple-50 dark:bg-purple-900/30 rounded-lg">
-                                                    <span
-                                                        class="text-sm text-purple-700 dark:text-purple-300">Pembayaran
-                                                        Lainnya:</span>
-                                                    <span class="font-semibold text-purple-800 dark:text-purple-200">Rp
-                                                        {{ number_format($totalPembayaranLain, 0, ',', '.') }}</span>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
+                            @else
+                                <p class="text-sm text-gray-500 dark:text-gray-400 italic">Pembayaran ini tidak dialokasikan ke nomor invoice tertentu.</p>
+                            @endif
                         </div>
-                    @endif
+                    </div>
 
                     {{-- Customer Information Card --}}
                     @if ($pembayaran->customer)

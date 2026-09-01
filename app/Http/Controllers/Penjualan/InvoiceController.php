@@ -945,7 +945,7 @@ class InvoiceController extends Controller
         }
 
         // Update status pembayaran berdasarkan total pembayaran dari semua invoice
-        $totalPembayaran = \App\Models\PembayaranPiutang::whereHas('invoice', function ($query) use ($salesOrderId) {
+        $totalPembayaran = \App\Models\PembayaranPiutangDetail::whereHas('invoice', function ($query) use ($salesOrderId) {
             $query->where('sales_order_id', $salesOrderId);
         })->sum('jumlah');
 

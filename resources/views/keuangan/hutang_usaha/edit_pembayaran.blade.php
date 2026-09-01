@@ -26,6 +26,7 @@
                 metode: '{{ old('metode_pembayaran', $payment->metode_pembayaran) }}',
                 sisaHutang: {{ $sisaHutang + $payment->jumlah }},
                 jumlahLama: {{ $payment->jumlah }},
+                jumlahBayar: {{ old('jumlah', $payment->jumlah) }},
                 showValidationError: false,
                 errorMessage: '',
                 isSubmitting: false,
@@ -54,7 +55,7 @@
                     document.querySelectorAll('.bank-field').forEach(el => el.style.display = 'none');
                 },
                 validatePayment() {
-                    let amount = parseFloat(document.getElementById('jumlah').value || 0);
+                    let amount = parseFloat(this.jumlahBayar || 0);
                     let maxAllowed = this.sisaHutang;
                     if (amount <= 0) {
                         this.showValidationError = true;
@@ -72,6 +73,44 @@
                 },
                 formatRupiah(angka) {
                     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+                },
+                formatRupiahInput(angka) {
+                    if (angka === null || angka === undefined || angka === '') return '';
+                    const num = parseFloat(angka);
+                    if (isNaN(num)) return '';
+                    if (num === 0) return '';
+                    const parts = num.toString().split('.');
+                    const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                    if (parts.length > 1 && parts[1] && parts[1] !== '0' && parts[1] !== '00') {
+                        return intFormatted + ',' + parts[1];
+                    }
+                    return intFormatted;
+                },
+                parseRupiahInput(str) {
+                    if (!str && str !== 0) return 0;
+                    let cleaned = str.toString().trim();
+                    if (!cleaned) return 0;
+                    const lastCommaIndex = cleaned.lastIndexOf(',');
+                    if (lastCommaIndex !== -1) {
+                        cleaned = cleaned.substring(0, lastCommaIndex).replace(/\./g, '').replace(/[^0-9]/g, '') +
+                            '.' + cleaned.substring(lastCommaIndex + 1).replace(/[^0-9]/g, '');
+                    } else {
+                        cleaned = cleaned.replace(/\./g, '').replace(/[^0-9]/g, '');
+                    }
+                    const num = parseFloat(cleaned);
+                    return isNaN(num) ? 0 : num;
+                },
+                handleJumlahInput(event) {
+                    const rawStr = event.target.value;
+                    if (rawStr === '') {
+                        this.jumlahBayar = 0;
+                        this.validatePayment();
+                        return;
+                    }
+                    const rawVal = this.parseRupiahInput(rawStr);
+                    this.jumlahBayar = rawVal;
+                    event.target.value = this.formatRupiahInput(rawVal);
+                    this.validatePayment();
                 }
             }"
             @submit.prevent="if(validatePayment()) { isSubmitting = true; $el.submit(); }">
@@ -219,11 +258,12 @@
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <span class="text-gray-500 dark:text-gray-400 font-medium">Rp</span>
                                     </div>
-                                    <input type="number" id="jumlah" name="jumlah" required
-                                        value="{{ old('jumlah', $payment->jumlah) }}"
-                                        min="1"
-                                        class="pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-amber-500 focus:border-amber-500 block w-full rounded-md shadow-sm"
-                                        @input="validatePayment()">
+                                    <input type="hidden" name="jumlah" :value="jumlahBayar">
+                                    <input type="text" id="jumlah_display" required
+                                        :value="formatRupiahInput(jumlahBayar)"
+                                        @input="handleJumlahInput($event)"
+                                        placeholder="0"
+                                        class="pl-10 font-bold border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-amber-500 focus:border-amber-500 block w-full rounded-md shadow-sm font-mono">
                                 </div>
                                 <div x-show="showValidationError" x-cloak class="mt-2">
                                     <p class="text-sm text-red-600 dark:text-red-400" x-text="errorMessage"></p>

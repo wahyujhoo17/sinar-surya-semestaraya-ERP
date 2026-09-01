@@ -30,7 +30,25 @@ class PembayaranPiutang extends Model
     ];
 
     /**
-     * Relasi ke Invoice
+     * Relasi ke Detail Pembayaran Piutang
+     */
+    public function details()
+    {
+        return $this->hasMany(PembayaranPiutangDetail::class, 'pembayaran_piutang_id');
+    }
+
+    /**
+     * Relasi many-to-many ke Invoices via Detail
+     */
+    public function invoices()
+    {
+        return $this->belongsToMany(Invoice::class, 'pembayaran_piutang_detail', 'pembayaran_piutang_id', 'invoice_id')
+            ->withPivot('jumlah', 'catatan')
+            ->withTimestamps();
+    }
+
+    /**
+     * Relasi ke Invoice (Legacy / Single Invoice Fallback)
      */
     public function invoice()
     {

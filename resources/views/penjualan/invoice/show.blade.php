@@ -600,7 +600,7 @@
                                 <div class="flex justify-between">
                                     <span class="text-purple-600 dark:text-purple-400">Total Pembayaran</span>
                                     <span class="font-medium text-purple-600 dark:text-purple-400">- Rp
-                                        {{ number_format($invoice->pembayaranPiutang->sum('jumlah'), 0, ',', '.') }}</span>
+                                        {{ number_format($invoice->pembayaranDetails()->sum('jumlah'), 0, ',', '.') }}</span>
                                 </div>
                             @endif
                         </div>
@@ -748,7 +748,10 @@
                                     $totalPembayaran = 0;
                                 @endphp
                                 @foreach ($invoice->pembayaranPiutang as $pembayaran)
-                                    @php $totalPembayaran += $pembayaran->jumlah; @endphp
+                                    @php
+                                        $allocatedAmount = $pembayaran->pivot->jumlah ?? $pembayaran->jumlah;
+                                        $totalPembayaran += $allocatedAmount;
+                                    @endphp
                                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
@@ -760,10 +763,10 @@
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                             {{ $pembayaran->no_referensi ?? '-' }}</td>
                                         <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
-                                            {{ $pembayaran->catatan ?? '-' }}</td>
+                                            {{ $pembayaran->pivot->catatan ?? ($pembayaran->catatan ?? '-') }}</td>
                                         <td
                                             class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-green-600 dark:text-green-400">
-                                            Rp {{ number_format($pembayaran->jumlah, 0, ',', '.') }}
+                                            Rp {{ number_format($allocatedAmount, 0, ',', '.') }}
                                         </td>
                                     </tr>
                                 @endforeach

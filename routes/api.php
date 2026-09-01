@@ -10,6 +10,7 @@ use App\Models\Customer;
 
 // Purchase Order routes
 Route::get('supplier/{id}/purchase-orders', [PurchaseOrderController::class, 'getBySupplier']);
+Route::get('purchase-orders/by-supplier/{id}', [PurchaseOrderController::class, 'getBySupplier']);
 
 // Inventory routes
 Route::get('gudang/{id}/produks', [TransferGudangController::class, 'getProduksByGudang']);

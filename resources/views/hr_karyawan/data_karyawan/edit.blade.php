@@ -189,7 +189,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_btn" id="tunjangan_btn"
                                         value="{{ old('tunjangan_btn', $karyawan->tunjangan_btn ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -206,7 +206,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_keluarga" id="tunjangan_keluarga"
                                         value="{{ old('tunjangan_keluarga', $karyawan->tunjangan_keluarga ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -223,7 +223,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_jabatan" id="tunjangan_jabatan"
                                         value="{{ old('tunjangan_jabatan', $karyawan->tunjangan_jabatan ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -240,7 +240,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_transport" id="tunjangan_transport"
                                         value="{{ old('tunjangan_transport', $karyawan->tunjangan_transport ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -257,7 +257,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_makan" id="tunjangan_makan"
                                         value="{{ old('tunjangan_makan', $karyawan->tunjangan_makan ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -274,7 +274,7 @@
                                     </div>
                                     <input type="number" name="tunjangan_pulsa" id="tunjangan_pulsa"
                                         value="{{ old('tunjangan_pulsa', $karyawan->tunjangan_pulsa ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -291,7 +291,7 @@
                                     </div>
                                     <input type="number" name="default_tunjangan" id="default_tunjangan"
                                         value="{{ old('default_tunjangan', $karyawan->default_tunjangan ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -308,7 +308,7 @@
                                     </div>
                                     <input type="number" name="default_bonus" id="default_bonus"
                                         value="{{ old('default_bonus', $karyawan->default_bonus ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -325,7 +325,7 @@
                                     </div>
                                     <input type="number" name="default_lembur_rate" id="default_lembur_rate"
                                         value="{{ old('default_lembur_rate', $karyawan->default_lembur_rate ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -355,7 +355,7 @@
                                     </div>
                                     <input type="number" name="bpjs" id="bpjs"
                                         value="{{ old('bpjs', $karyawan->bpjs ?? 0) }}" min="0"
-                                        step="1000"
+                                        step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -372,7 +372,7 @@
                                     </div>
                                     <input type="number" name="default_potongan" id="default_potongan"
                                         value="{{ old('default_potongan', $karyawan->default_potongan ?? 0) }}"
-                                        min="0" step="1000"
+                                        min="0" step="any"
                                         class="pl-10 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200">
                                 </div>
                             </div>
@@ -451,7 +451,7 @@
                                 <span class="text-gray-500 sm:text-sm">Rp</span>
                             </div>
                             <input type="number" name="gaji_pokok" id="gaji_pokok"
-                                value="{{ old('gaji_pokok', $karyawan->gaji_pokok) }}" min="0" step="1000"
+                                value="{{ old('gaji_pokok', $karyawan->gaji_pokok) }}" min="0" step="any"
                                 required
                                 class="pl-10 mt-1 block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('gaji_pokok') border-red-500 dark:border-red-500 @enderror">
                         </div>

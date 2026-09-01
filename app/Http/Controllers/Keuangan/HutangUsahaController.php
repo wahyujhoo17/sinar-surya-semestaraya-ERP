@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Keuangan;
 
 use App\Http\Controllers\Controller;
 use App\Models\PembayaranHutang;
+use App\Models\PembayaranHutangDetail;
 use App\Models\PurchaseOrder;
 use App\Models\ReturPembelian;
 use App\Models\Supplier;
@@ -22,7 +23,7 @@ class HutangUsahaController extends Controller
      */
     public function index(Request $request)
     {
-        $baseQuery = PurchaseOrder::with(['supplier', 'details'])
+        $baseQuery = PurchaseOrder::with(['supplier', 'details', 'pembayaranDetails'])
             ->whereIn('status_pembayaran', ['belum_bayar', 'sebagian', 'lunas'])
             ->where('status', '!=', 'dibatalkan');
 
@@ -50,8 +51,8 @@ class HutangUsahaController extends Controller
 
         // Calculate remaining debt for each PO in the current page
         foreach ($purchaseOrders as $po) {
-            // Get total payments for this PO
-            $totalPayments = PembayaranHutang::where('purchase_order_id', $po->id)->sum('jumlah');
+            // Get total payments for this PO via detail
+            $totalPayments = $po->pembayaranDetails()->sum('jumlah');
 
             // Get total returns for this PO
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
@@ -80,10 +81,9 @@ class HutangUsahaController extends Controller
         // ── Summary stats (computed across ALL filtered rows, not just current page) ──
         $allPoIds = (clone $baseQuery)->pluck('id');
 
-        // Total hutang (sum of all PO totals) minus total payments — use Eloquent so
-        // the correct table name is always resolved from the model, avoiding raw-SQL issues.
+        // Total hutang (sum of all PO totals) minus total payments
         $totalPo    = PurchaseOrder::whereIn('id', $allPoIds)->sum('total');
-        $totalBayar = PembayaranHutang::whereIn('purchase_order_id', $allPoIds)->sum('jumlah');
+        $totalBayar = PembayaranHutangDetail::whereIn('purchase_order_id', $allPoIds)->sum('jumlah');
         $totalSisaHutang = max(0, $totalPo - $totalBayar);
 
         $jumlahBelumLunas = (clone $baseQuery)
@@ -117,11 +117,21 @@ class HutangUsahaController extends Controller
         $po = PurchaseOrder::with(['supplier', 'details', 'details.produk', 'user'])
             ->findOrFail($id);
 
-        // Get payments for this PO
-        $payments = PembayaranHutang::where('purchase_order_id', $id)
-            ->with('user')
-            ->orderBy('tanggal', 'desc')
-            ->get();
+        // Get payments for this PO via detail
+        $payments = PembayaranHutangDetail::where('purchase_order_id', $id)
+            ->with(['pembayaranHutang.user', 'pembayaranHutang.kas', 'pembayaranHutang.rekeningBank'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($detail) {
+                $header = $detail->pembayaranHutang;
+                if (!$header) return null;
+                $p = clone $header;
+                $p->jumlah = $detail->jumlah;
+                $p->keterangan = $detail->catatan ?? $header->catatan;
+                return $p;
+            })
+            ->filter()
+            ->values();
 
         // Get returns for this PO
         $returns = ReturPembelian::where('purchase_order_id', $id)
@@ -216,7 +226,7 @@ class HutangUsahaController extends Controller
 
         // Calculate remaining debt for each PO considering payments and returns
         foreach ($purchaseOrders as $po) {
-            $totalPayments = PembayaranHutang::where('purchase_order_id', $po->id)->sum('jumlah');
+            $totalPayments = $po->pembayaranDetails()->sum('jumlah');
 
             $returPembelian = ReturPembelian::where('purchase_order_id', $po->id)
                 ->where('status', 'selesai')
@@ -287,11 +297,21 @@ class HutangUsahaController extends Controller
         $po = PurchaseOrder::with(['supplier', 'details', 'details.produk', 'user'])
             ->findOrFail($id);
 
-        // Get payments for this PO
-        $payments = PembayaranHutang::where('purchase_order_id', $id)
-            ->with('user')
-            ->orderBy('tanggal', 'desc')
-            ->get();
+        // Get payments for this PO via detail
+        $payments = PembayaranHutangDetail::where('purchase_order_id', $id)
+            ->with(['pembayaranHutang.user', 'pembayaranHutang.kas', 'pembayaranHutang.rekeningBank'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($detail) {
+                $header = $detail->pembayaranHutang;
+                if (!$header) return null;
+                $p = clone $header;
+                $p->jumlah = $detail->jumlah;
+                $p->keterangan = $detail->catatan ?? $header->catatan;
+                return $p;
+            })
+            ->filter()
+            ->values();
 
         // Get returns for this PO
         $returns = ReturPembelian::where('purchase_order_id', $id)
@@ -341,11 +361,21 @@ class HutangUsahaController extends Controller
         $purchaseOrder = PurchaseOrder::with(['supplier', 'details', 'details.produk'])
             ->findOrFail($id);
 
-        // Get payments for this PO
-        $pembayaran = PembayaranHutang::where('purchase_order_id', $id)
-            ->with('user')
-            ->orderBy('tanggal', 'desc')
-            ->get();
+        // Get payments for this PO via detail
+        $pembayaran = PembayaranHutangDetail::where('purchase_order_id', $id)
+            ->with(['pembayaranHutang.user', 'pembayaranHutang.kas', 'pembayaranHutang.rekeningBank'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($detail) {
+                $header = $detail->pembayaranHutang;
+                if (!$header) return null;
+                $p = clone $header;
+                $p->jumlah = $detail->jumlah;
+                $p->keterangan = $detail->catatan ?? $header->catatan;
+                return $p;
+            })
+            ->filter()
+            ->values();
 
         // Get returns for this PO
         $retur = ReturPembelian::where('purchase_order_id', $id)

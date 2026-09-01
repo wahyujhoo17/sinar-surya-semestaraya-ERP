@@ -176,84 +176,107 @@
                     </div>
                 </div>
 
-                {{-- Purchase Order Information Card --}}
-                @if ($payment->purchaseOrder)
-                    <div
-                        class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
-                        <div
-                            class="px-6 py-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60">
-                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                                <svg class="h-5 w-5 text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                Informasi Purchase Order
-                            </h3>
-                        </div>
-                        <div class="p-6">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div class="space-y-4">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nomor PO
-                                        </dt>
-                                        <dd class="text-base font-semibold text-gray-900 dark:text-white">
-                                            <a href="{{ route('keuangan.hutang-usaha.show', $payment->purchaseOrder->id) }}"
-                                                class="text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 font-medium hover:underline">
-                                                {{ $payment->purchaseOrder->nomor }}
-                                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                </svg>
-                                            </a>
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Tanggal
-                                            PO</dt>
-                                        <dd class="text-base text-gray-900 dark:text-white">
-                                            {{ $payment->purchaseOrder->tanggal_po ? $payment->purchaseOrder->tanggal_po->format('d F Y') : '-' }}
-                                        </dd>
-                                    </div>
-                                </div>
-                                <div class="space-y-4">
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Total PO
-                                        </dt>
-                                        <dd class="text-lg font-semibold text-gray-900 dark:text-white">
-                                            Rp {{ number_format($payment->purchaseOrder->total, 0, ',', '.') }}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Status
-                                            Pembayaran</dt>
-                                        <dd>
-                                            @php $po = $payment->purchaseOrder; @endphp
-                                            @if ($po->status_pembayaran == 'lunas')
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-100/60 dark:ring-emerald-500/20">Lunas</span>
-                                            @elseif($po->status_pembayaran == 'sebagian')
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 ring-1 ring-amber-100/60 dark:ring-amber-500/20">Dibayar
-                                                    Sebagian</span>
-                                            @elseif($po->status_pembayaran == 'kelebihan_bayar')
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 ring-1 ring-blue-100/60 dark:ring-blue-500/20">Kelebihan
-                                                    Bayar</span>
-                                            @else
-                                                <span
-                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300 ring-1 ring-rose-100/60 dark:ring-rose-500/20">Belum
-                                                    Bayar</span>
+                {{-- Purchase Order Allocation Information Card (Multi-PO Support) --}}
+                <div class="bg-white dark:bg-gray-800/80 overflow-hidden shadow-md rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-sm">
+                    <div class="px-6 py-4 bg-gradient-to-br from-violet-50 to-purple-50 dark:from-gray-800 dark:to-gray-750 border-b border-gray-200/60 dark:border-gray-700/60 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="h-5 w-5 text-violet-500" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Rincian Purchase Order yang Dibayar
+                        </h3>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full bg-violet-100 dark:bg-violet-900/40 text-violet-800 dark:text-violet-300">
+                            {{ $payment->details->count() > 0 ? $payment->details->count() : ($payment->purchaseOrder ? '1' : '0') }} PO
+                        </span>
+                    </div>
+                    <div class="p-6">
+                        @if ($payment->details->count() > 0)
+                            <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                    <thead class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left">No. PO</th>
+                                            <th class="px-4 py-3 text-left">Tanggal</th>
+                                            <th class="px-4 py-3 text-right">Total PO</th>
+                                            <th class="px-4 py-3 text-right">Alokasi Pembayaran</th>
+                                            <th class="px-4 py-3 text-center">Status PO</th>
+                                            <th class="px-4 py-3 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
+                                        @foreach ($payment->details as $detail)
+                                            @if ($detail->purchaseOrder)
+                                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                                    <td class="px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                                                        <a href="{{ route('keuangan.hutang-usaha.show', $detail->purchaseOrder->id) }}" target="_blank"
+                                                            class="text-violet-600 hover:text-violet-700 dark:text-violet-400 hover:underline">
+                                                            {{ $detail->purchaseOrder->nomor }}
+                                                        </a>
+                                                    </td>
+                                                    <td class="px-4 py-3 text-gray-600 dark:text-gray-300">
+                                                        {{ $detail->purchaseOrder->tanggal ? \Carbon\Carbon::parse($detail->purchaseOrder->tanggal)->translatedFormat('d M Y') : '-' }}
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right text-gray-700 dark:text-gray-300 font-mono">
+                                                        Rp {{ number_format($detail->purchaseOrder->total, 0, ',', '.') }}
+                                                    </td>
+                                                    <td class="px-4 py-3 text-right font-bold text-indigo-600 dark:text-indigo-400 font-mono">
+                                                        Rp {{ number_format($detail->jumlah, 0, ',', '.') }}
+                                                    </td>
+                                                    <td class="px-4 py-3 text-center">
+                                                        @php $poStatus = $detail->purchaseOrder->status_pembayaran; @endphp
+                                                        @if ($poStatus == 'lunas')
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">Lunas</span>
+                                                        @elseif($poStatus == 'sebagian')
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">Sebagian</span>
+                                                        @else
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-300">Belum Bayar</span>
+                                                        @endif
+                                                    </td>
+                                                    <td class="px-4 py-3 text-center">
+                                                        <a href="{{ route('keuangan.hutang-usaha.show', $detail->purchaseOrder->id) }}" target="_blank"
+                                                            class="inline-flex items-center px-2.5 py-1 text-xs font-medium text-violet-700 bg-violet-50 dark:bg-violet-900/30 dark:text-violet-300 rounded-lg hover:bg-violet-100 transition-colors">
+                                                            Lihat PO
+                                                        </a>
+                                                    </td>
+                                                </tr>
                                             @endif
-                                        </dd>
-                                    </div>
+                                        @endforeach
+                                    </tbody>
+                                    <tfoot class="bg-gray-50 dark:bg-gray-750 font-bold text-gray-900 dark:text-white">
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-3 text-right">Total Pembayaran:</td>
+                                            <td class="px-4 py-3 text-right font-mono text-indigo-600 dark:text-indigo-400">
+                                                Rp {{ number_format($payment->details->sum('jumlah'), 0, ',', '.') }}
+                                            </td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        @elseif($payment->purchaseOrder)
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor PO</dt>
+                                    <dd class="text-base font-semibold text-gray-900 dark:text-white">
+                                        <a href="{{ route('keuangan.hutang-usaha.show', $payment->purchaseOrder->id) }}" target="_blank" class="text-violet-600 hover:underline">
+                                            {{ $payment->purchaseOrder->nomor }}
+                                        </a>
+                                    </dd>
+                                </div>
+                                <div>
+                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Total PO</dt>
+                                    <dd class="text-base font-semibold text-gray-900 dark:text-white">
+                                        Rp {{ number_format($payment->purchaseOrder->total, 0, ',', '.') }}
+                                    </dd>
                                 </div>
                             </div>
-                        </div>
+                        @else
+                            <p class="text-sm text-gray-500 dark:text-gray-400 italic">Pembayaran ini tidak dialokasikan ke nomor Purchase Order tertentu.</p>
+                        @endif
                     </div>
-                @endif
+                </div>
 
                 {{-- Supplier Information Card --}}
                 @if ($payment->supplier)

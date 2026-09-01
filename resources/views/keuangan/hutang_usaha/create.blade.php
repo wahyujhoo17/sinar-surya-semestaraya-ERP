@@ -1,723 +1,780 @@
 <x-app-layout :breadcrumbs="[
     ['name' => 'Keuangan', 'url' => '#'],
     ['name' => 'Hutang Usaha', 'url' => route('keuangan.pembayaran-hutang.index')],
-    ['name' => 'Buat Pembayaran', 'url' => '#'],
-]" :currentPage="'Buat Pembayaran Hutang'">
+    ['name' => $po ? 'Proses Pembayaran' : 'Buat Pembayaran Multi-PO', 'url' => '#'],
+]" :currentPage="$po ? 'Proses Pembayaran Hutang' : 'Buat Pembayaran Hutang'">
 
-    <div class="max-w-full mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-full mx-auto py-6 px-4 sm:px-6 lg:px-8"
+        x-data="{
+            supplierId: '{{ old('supplier_id', $selectedSupplier->id ?? ($po->supplier_id ?? '')) }}',
+            metode: '{{ old('metode_pembayaran', 'bank') }}',
+            totalBayar: {{ old('jumlah', $sisaHutang ?? 0) }},
+            availablePOs: [],
+            selectedPoIdToAppend: '',
+            selectedPOs: [],
+            allocations: {},
+            catatanAllocations: {},
+            isLoadingPOs: false,
+            initialPoId: '{{ $po->id ?? '' }}',
+            initialSisaHutang: {{ $sisaHutang ?? 0 }},
+            isSubmitting: false,
+            errorMessage: '',
+
+            init() {
+                this.$nextTick(() => {
+                    const self = this;
+
+                    // Init Supplier Select2
+                    const $suppSelect = $('#supplier_select');
+                    if ($suppSelect.length) {
+                        $suppSelect.select2({
+                            placeholder: '-- Pilih / Cari Supplier --',
+                            allowClear: true,
+                            width: '100%'
+                        }).on('change', function() {
+                            self.supplierId = $(this).val();
+                            self.loadPOs(self.supplierId);
+                        });
+                    }
+
+                    // Init PO Select2
+                    this.initPoSelect2();
+
+                    if (this.supplierId) {
+                        this.loadPOs(this.supplierId);
+                    }
+                });
+            },
+
+            initPoSelect2() {
+                const self = this;
+                const $poSelect = $('#po_select2');
+                if ($poSelect.length) {
+                    $poSelect.select2({
+                        placeholder: '-- Cari & Pilih Purchase Order yang Ingin Dibayar --',
+                        allowClear: true,
+                        width: '100%'
+                    }).off('change.app').on('change.app', function() {
+                        self.selectedPoIdToAppend = $(this).val();
+                    });
+                }
+            },
+
+            loadPOs(supplierId) {
+                if (!supplierId) {
+                    this.availablePOs = [];
+                    this.selectedPOs = [];
+                    this.allocations = {};
+                    this.catatanAllocations = {};
+                    this.selectedPoIdToAppend = '';
+                    this.renderPoSelect2Options();
+                    return;
+                }
+
+                this.isLoadingPOs = true;
+                fetch(`/api/purchase-orders/by-supplier/${supplierId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.availablePOs = data;
+                    this.selectedPOs = [];
+                    this.allocations = {};
+                    this.catatanAllocations = {};
+                    this.selectedPoIdToAppend = '';
+
+                    // If initialized from a specific PO
+                    if (this.initialPoId) {
+                        const targetId = parseInt(this.initialPoId);
+                        const exists = this.availablePOs.find(item => item.id === targetId);
+                        if (exists) {
+                            this.addPO(exists);
+                            this.allocations[targetId] = exists.sisa_hutang;
+                            this.totalBayar = exists.sisa_hutang;
+                        }
+                    }
+
+                    this.$nextTick(() => {
+                        this.renderPoSelect2Options();
+                    });
+                })
+                .catch(err => {
+                    console.error('Error loading purchase orders:', err);
+                })
+                .finally(() => {
+                    this.isLoadingPOs = false;
+                });
+            },
+
+            renderPoSelect2Options() {
+                const self = this;
+                const $select = $('#po_select2');
+                if (!$select.length) return;
+
+                $select.empty();
+                $select.append(new Option('-- Cari & Pilih Purchase Order yang Ingin Dibayar --', ''));
+
+                this.availablePOs.forEach(item => {
+                    const isAdded = self.selectedPOs.some(p => p.id === item.id);
+                    const text = `${item.nomor} (${item.tanggal}) - Sisa Hutang: Rp ${self.formatRupiah(item.sisa_hutang)}${isAdded ? ' [Sudah Masuk List]' : ''}`;
+                    const option = new Option(text, item.id, false, false);
+                    if (isAdded) {
+                        $(option).attr('disabled', 'disabled');
+                    }
+                    $select.append(option);
+                });
+
+                $select.val('').trigger('change.select2');
+            },
+
+            addSelectedFromDropdown() {
+                if (!this.selectedPoIdToAppend) return;
+                const targetId = parseInt(this.selectedPoIdToAppend);
+                const item = this.availablePOs.find(p => p.id === targetId);
+                if (item) {
+                    this.addPO(item);
+                    this.selectedPoIdToAppend = '';
+                    this.renderPoSelect2Options();
+                }
+            },
+
+            addPO(item) {
+                if (this.selectedPOs.some(p => p.id === item.id)) return;
+                this.selectedPOs.push(item);
+                
+                const currentAllocated = this.getTotalAllocated();
+                const unallocated = Math.max(0, parseFloat(this.totalBayar || 0) - currentAllocated);
+                
+                if (unallocated > 0) {
+                    this.allocations[item.id] = Math.min(unallocated, parseFloat(item.sisa_hutang));
+                } else if (parseFloat(this.totalBayar || 0) === 0) {
+                    this.allocations[item.id] = parseFloat(item.sisa_hutang);
+                    this.recalculateTotalBayarFromAllocations();
+                } else {
+                    this.allocations[item.id] = 0;
+                }
+            },
+
+            removePO(poId) {
+                this.selectedPOs = this.selectedPOs.filter(p => p.id !== poId);
+                delete this.allocations[poId];
+                delete this.catatanAllocations[poId];
+                this.renderPoSelect2Options();
+            },
+
+            removeAllPOs() {
+                this.selectedPOs = [];
+                this.allocations = {};
+                this.catatanAllocations = {};
+                this.renderPoSelect2Options();
+            },
+
+            payInFull(item) {
+                this.allocations[item.id] = parseFloat(item.sisa_hutang);
+            },
+
+            formatRupiahInput(angka) {
+                if (angka === null || angka === undefined || angka === '') return '';
+                const num = parseFloat(angka);
+                if (isNaN(num)) return '';
+                if (num === 0) return '';
+                
+                const parts = num.toString().split('.');
+                const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                if (parts.length > 1 && parts[1] && parts[1] !== '0' && parts[1] !== '00') {
+                    return intFormatted + ',' + parts[1];
+                }
+                return intFormatted;
+            },
+
+            parseRupiahInput(str) {
+                if (!str && str !== 0) return 0;
+                let cleaned = str.toString().trim();
+                if (!cleaned) return 0;
+
+                const lastCommaIndex = cleaned.lastIndexOf(',');
+                if (lastCommaIndex !== -1) {
+                    cleaned = cleaned.substring(0, lastCommaIndex).replace(/\./g, '').replace(/[^0-9]/g, '') +
+                        '.' + cleaned.substring(lastCommaIndex + 1).replace(/[^0-9]/g, '');
+                } else {
+                    cleaned = cleaned.replace(/\./g, '').replace(/[^0-9]/g, '');
+                }
+
+                const num = parseFloat(cleaned);
+                return isNaN(num) ? 0 : num;
+            },
+
+            handleTotalBayarInput(event) {
+                const rawStr = event.target.value;
+                if (rawStr === '') {
+                    this.totalBayar = 0;
+                    return;
+                }
+                const rawVal = this.parseRupiahInput(rawStr);
+                this.totalBayar = rawVal;
+                event.target.value = this.formatRupiahInput(rawVal);
+            },
+
+            onAllocationInput(item, event) {
+                const rawStr = event.target.value;
+                if (rawStr === '') {
+                    this.allocations[item.id] = 0;
+                    return;
+                }
+                let rawVal = this.parseRupiahInput(rawStr);
+                const maxLimit = parseFloat(item.sisa_hutang || 0);
+                if (rawVal > maxLimit) {
+                    rawVal = maxLimit;
+                } else if (rawVal < 0) {
+                    rawVal = 0;
+                }
+                this.allocations[item.id] = rawVal;
+                event.target.value = this.formatRupiahInput(rawVal);
+            },
+
+            recalculateTotalBayarFromAllocations() {
+                let sum = 0;
+                for (let id in this.allocations) {
+                    sum += parseFloat(this.allocations[id] || 0);
+                }
+                this.totalBayar = sum;
+            },
+
+            syncTotalBayarWithAllocations() {
+                this.totalBayar = this.getTotalAllocated();
+            },
+
+            getTotalAllocated() {
+                let sum = 0;
+                for (let id in this.allocations) {
+                    sum += parseFloat(this.allocations[id] || 0);
+                }
+                return sum;
+            },
+
+            getUnallocatedDifference() {
+                return (parseFloat(this.totalBayar || 0) - this.getTotalAllocated()).toFixed(2);
+            },
+
+            validateAndSubmit(e) {
+                if (this.isSubmitting) {
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (parseFloat(this.totalBayar || 0) <= 0) {
+                    this.errorMessage = 'Jumlah pembayaran harus lebih dari 0.';
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return false;
+                }
+
+                if (this.selectedPOs.length === 0 && this.availablePOs.length > 0) {
+                    this.errorMessage = 'Pilih dan tambahkan minimal satu Purchase Order yang akan dibayar menggunakan dropdown di bawah.';
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return false;
+                }
+
+                const totalAlloc = this.getTotalAllocated();
+                if (totalAlloc <= 0 && this.selectedPOs.length > 0) {
+                    this.errorMessage = 'Tentukan nominal alokasi pembayaran untuk Purchase Order yang dipilih.';
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return false;
+                }
+
+                if (Math.abs(totalAlloc - parseFloat(this.totalBayar || 0)) > 0.05 && this.selectedPOs.length > 0) {
+                    this.errorMessage = 'Total alokasi PO (Rp ' + this.formatRupiah(totalAlloc) + ') belum seimbang dengan Jumlah Pembayaran (Rp ' + this.formatRupiah(this.totalBayar) + '). Klik tombol Samakan dengan Total Alokasi.';
+                    e.preventDefault();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return false;
+                }
+
+                this.errorMessage = '';
+                this.isSubmitting = true;
+                return true;
+            },
+
+            formatRupiah(val) {
+                return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(val || 0);
+            }
+        }">
+
         @push('styles')
+            <!-- Select2 CSS -->
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
             <style>
-                .form-card {
-                    transition: all 0.3s ease;
-                }
+                .form-card { transition: all 0.3s ease; }
+                [x-cloak] { display: none !important; }
 
-                .form-card:hover {
+                /* Custom Select2 styling */
+                .select2-container {
+                    width: 100% !important;
+                }
+                .select2-container--default .select2-selection--single {
+                    height: 42px;
+                    padding: 6px 12px;
+                    border-color: #D1D5DB;
+                    border-radius: 0.5rem;
+                    display: flex;
+                    align-items: center;
+                    font-size: 0.875rem;
+                }
+                .select2-container--default .select2-selection--single:focus,
+                .select2-container--default.select2-container--focus .select2-selection--single {
+                    border-color: #6366F1;
+                    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+                }
+                .select2-container--default .select2-selection--single .select2-selection__arrow {
+                    height: 40px;
+                    right: 8px;
+                }
+                .select2-dropdown {
+                    border-color: #D1D5DB;
+                    border-radius: 0.5rem;
                     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+                    font-size: 0.875rem;
+                    z-index: 9999;
+                }
+                .select2-container--default .select2-results__option--highlighted[aria-selected] {
+                    background-color: #6366F1;
+                }
+                .select2-container--default .select2-search--dropdown .select2-search__field {
+                    border-color: #D1D5DB;
+                    border-radius: 0.375rem;
+                    padding: 0.4rem 0.75rem;
+                    font-size: 0.875rem;
+                }
+                .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+                    border-color: #6366F1;
+                    outline: none;
+                    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
                 }
 
-                .payment-section {
-                    position: relative;
-                    overflow: hidden;
-                    border-radius: 0.75rem;
+                /* Dark mode Select2 */
+                .dark .select2-container--default .select2-selection--single {
+                    background-color: #374151;
+                    border-color: #4B5563;
                 }
-
-                .payment-section::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-                    z-index: 0;
-                    opacity: 0.5;
+                .dark .select2-container--default .select2-selection--single .select2-selection__rendered {
+                    color: #F9FAFB;
                 }
-
-                .payment-method-card {
-                    transition: all 0.3s ease;
-                    position: relative;
-                    z-index: 10;
+                .dark .select2-dropdown {
+                    background-color: #1F2937;
+                    border-color: #4B5563;
                 }
-
-                .payment-method-card:hover {
-                    transform: translateY(-2px);
+                .dark .select2-container--default .select2-results__option {
+                    color: #F9FAFB;
                 }
-
-                .summary-badge {
-                    position: absolute;
-                    top: -10px;
-                    right: -10px;
-                    background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-                    color: white;
-                    border-radius: 9999px;
-                    padding: 0.25rem 0.75rem;
-                    font-size: 0.75rem;
-                    font-weight: 600;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                .dark .select2-container--default .select2-search--dropdown .select2-search__field {
+                    background-color: #374151;
+                    border-color: #4B5563;
+                    color: #F9FAFB;
                 }
-
-                .info-card {
-                    position: relative;
-                    backdrop-filter: blur(10px);
-                    -webkit-backdrop-filter: blur(10px);
+                .dark .select2-container--default .select2-results__option[aria-selected=true] {
+                    background-color: #374151;
                 }
             </style>
         @endpush
 
-        <form action="{{ route('keuangan.pembayaran-hutang.store') }}" method="POST" id="payment-form"
-            x-data="{
-                metode: '{{ old('metode_pembayaran', '') }}',
-                currentSisaHutang: {{ old('jumlah', $sisaHutang ?? 0) }},
-                totalHutang: {{ $totalHutang ?? ($sisaHutang ?? 0) }},
-                totalDibayar: {{ $totalHutang ?? ($sisaHutang ?? 0) }} - {{ old('jumlah', $sisaHutang ?? 0) }},
-                showValidationError: false,
-                errorMessage: '',
-                isSubmitting: false,
-                init() {
-                    this.$watch('metode', (value) => {
-                        if (value === 'kas') {
-                            this.showKasFields();
-                        } else if (value === 'bank') {
-                            this.showBankFields();
-                        } else {
-                            this.hideAllFields();
-                        }
-                    });
-            
-                    // Set initial state
-                    if (this.metode) {
-                        this.$nextTick(() => {
-                            if (this.metode === 'kas') {
-                                this.showKasFields();
-                            } else if (this.metode === 'bank') {
-                                this.showBankFields();
-                            }
-                        });
-                    }
-                },
-                showKasFields() {
-                    document.querySelectorAll('.kas-field').forEach(el => el.style.display = 'block');
-                    document.querySelectorAll('.bank-field').forEach(el => el.style.display = 'none');
-                },
-                showBankFields() {
-                    document.querySelectorAll('.kas-field').forEach(el => el.style.display = 'none');
-                    document.querySelectorAll('.bank-field').forEach(el => el.style.display = 'block');
-                },
-                hideAllFields() {
-                    document.querySelectorAll('.kas-field').forEach(el => el.style.display = 'none');
-                    document.querySelectorAll('.bank-field').forEach(el => el.style.display = 'none');
-                },
-                validatePayment() {
-                    let amount = parseFloat(document.getElementById('jumlah').value);
-                    if (amount > this.currentSisaHutang) {
-                        this.showValidationError = true;
-                        this.errorMessage = `Jumlah pembayaran tidak boleh melebihi sisa hutang (Rp ${new Intl.NumberFormat('id-ID').format(this.currentSisaHutang)})`;
-                        return false;
-                    }
-                    this.showValidationError = false;
-                    this.errorMessage = '';
-                    return true;
-                },
-                formatRupiah(angka) {
-                    return new Intl.NumberFormat('id-ID', {
-                        style: 'currency',
-                        currency: 'IDR',
-                        minimumFractionDigits: 0
-                    }).format(angka);
-                },
-                updateJumlah() {
-                    let amount = parseFloat(document.getElementById('jumlah').value || 0);
-                    this.totalDibayar = this.totalHutang - amount;
-                    this.validatePayment();
-                }
-            }" @submit.prevent="if(validatePayment()) { isSubmitting = true; $el.submit(); }">
+        {{-- Overview Header with Back Button --}}
+        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Tambah Pembayaran Hutang</h1>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    Rekam pengeluaran kas/bank dan alokasikan ke satu atau banyak Purchase Order supplier.
+                </p>
+            </div>
+            <div>
+                <a href="{{ $po ? route('keuangan.hutang-usaha.show', $po->id) : route('keuangan.hutang-usaha.index') }}"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors duration-200">
+                    <svg class="-ml-1 mr-2 h-4 w-4 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Kembali
+                </a>
+            </div>
+        </div>
+
+        @if ($errors->any())
+            <div class="mb-6 p-4 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800">
+                <div class="flex items-start">
+                    <svg class="h-5 w-5 text-red-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <h4 class="text-sm font-semibold text-red-800 dark:text-red-300">Terdapat kesalahan pengisian formulir:</h4>
+                        <ul class="mt-1 list-disc list-inside text-sm text-red-700 dark:text-red-400">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        {{-- Dynamic JS Error Alert --}}
+        <div x-show="errorMessage" x-cloak class="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700">
+            <div class="flex items-start">
+                <svg class="h-5 w-5 text-amber-500 mt-0.5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="flex-1">
+                    <h4 class="text-sm font-semibold text-amber-800 dark:text-amber-300">Peringatan:</h4>
+                    <p class="text-sm text-amber-700 dark:text-amber-400" x-text="errorMessage"></p>
+                </div>
+                <button type="button" @click="errorMessage = ''" class="text-amber-500 hover:text-amber-700">
+                    <span class="sr-only">Tutup</span>
+                    &times;
+                </button>
+            </div>
+        </div>
+
+        <form action="{{ route('keuangan.pembayaran-hutang.store') }}" method="POST" @submit="validateAndSubmit($event)">
             @csrf
 
-            {{-- Header Section --}}
-            <div
-                class="bg-white dark:bg-gray-800 shadow-lg rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 mb-6 form-card">
-                <div
-                    class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col md:flex-row justify-between md:items-center gap-4 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750">
-                    <div>
-                        <div class="flex items-center">
-                            <div
-                                class="flex-shrink-0 bg-gradient-to-br from-primary-500 to-primary-600 h-10 w-1 rounded-full mr-3">
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Buat Pembayaran Hutang</h1>
-                                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Formulir pembayaran hutang
-                                    usaha ke supplier PT Sinar Surya Semestaraya</p>
-                            </div>
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden form-card mb-8">
+                {{-- Form Card Header --}}
+                <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-750">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-900 dark:text-white">Formulir Pembayaran Hutang</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Masukkan rincian pembayaran dan tentukan alokasi nominal per Purchase Order.
+                            </p>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <a href="{{ route('keuangan.hutang-usaha.index') }}"
-                            class="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors duration-200">
-                            Batal
-                        </a>
-                        <button type="submit"
-                            class="px-4 py-2 bg-primary-600 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors duration-200">
-                            Simpan Pembayaran
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Payment Summary Section --}}
-                <div class="px-6 pt-5 pb-2">
-                    <div
-                        class="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-xl p-5 mb-5 shadow-sm relative">
-                        <div class="summary-badge">Ringkasan</div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500"
-                                viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd"
-                                    d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                            Informasi Hutang
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div
-                                class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-blue-100 dark:border-blue-900/50 flex flex-col">
-                                <span class="text-sm text-gray-500 dark:text-gray-400">Total Hutang</span>
-                                <span x-text="formatRupiah(totalHutang)"
-                                    class="text-xl font-bold text-gray-900 dark:text-white mt-1"></span>
-                            </div>
-                            <div
-                                class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-blue-100 dark:border-blue-900/50 flex flex-col">
-                                <span class="text-sm text-gray-500 dark:text-gray-400">Sisa Tagihan Belum Dibayar</span>
-                                <span x-text="formatRupiah(currentSisaHutang)"
-                                    class="text-xl font-bold text-blue-600 dark:text-blue-400 mt-1"></span>
-                            </div>
-                            <div
-                                class="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-blue-100 dark:border-blue-900/50 flex flex-col">
-                                <span class="text-sm text-gray-500 dark:text-gray-400">Sisa Setelah Pembayaran</span>
-                                <span x-text="formatRupiah(totalDibayar)"
-                                    class="text-xl font-bold text-green-600 dark:text-green-400 mt-1"></span>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-mono font-semibold bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                                {{ $paymentNumber }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                {{-- Form Section - Basic Details --}}
-                <div class="px-6 py-5">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {{-- Left Column --}}
+                {{-- Form Body --}}
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        {{-- Left Column: Supplier & Amount --}}
                         <div class="space-y-5">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                                <div>
-                                    <label for="nomor"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Nomor Pembayaran <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="text" id="nomor" name="nomor"
-                                            value="{{ old('nomor', $paymentNumber) }}" readonly
-                                            class="bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                        <div
-                                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    @error('nomor')
-                                        <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                    @enderror
-                                </div>
-
-                                <div>
-                                    <label for="tanggal"
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                        Tanggal Pembayaran <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="date" id="tanggal" name="tanggal"
-                                            value="{{ old('tanggal', date('Y-m-d')) }}" required
-                                            class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                        <div
-                                            class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                            <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                                fill="currentColor">
-                                                <path fill-rule="evenodd"
-                                                    d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z"
-                                                    clip-rule="evenodd" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    @error('tanggal')
-                                        <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                            </div>
-
                             <div>
-                                <label for="supplier_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Supplier <span class="text-red-500">*</span>
                                 </label>
-                                <div class="relative rounded-md shadow-sm">
-                                    <select id="supplier_id" name="supplier_id"
-                                        @if ($po) disabled @endif
-                                        class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
+                                @if ($selectedSupplier)
+                                    <input type="hidden" name="supplier_id" value="{{ $selectedSupplier->id }}">
+                                    <div class="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg border border-gray-200 dark:border-gray-600">
+                                        <div class="font-bold text-gray-900 dark:text-white">{{ $selectedSupplier->nama }}</div>
+                                        <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $selectedSupplier->alamat ?? '-' }} &bull; {{ $selectedSupplier->telepon ?? '-' }}</div>
+                                    </div>
+                                @else
+                                    <select id="supplier_select" name="supplier_id" x-model="supplierId" required
+                                        class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                                         <option value="">-- Pilih Supplier --</option>
-                                        @foreach ($suppliers as $supplier)
-                                            <option value="{{ $supplier->id }}"
-                                                {{ old('supplier_id', $po->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
-                                                {{ $supplier->nama }}
+                                        @foreach ($suppliers as $s)
+                                            <option value="{{ $s->id }}" {{ old('supplier_id') == $s->id ? 'selected' : '' }}>
+                                                {{ $s->nama }}
                                             </option>
                                         @endforeach
                                     </select>
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                                            <path
-                                                d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                @if ($po)
-                                    <input type="hidden" name="supplier_id" value="{{ $po->supplier_id }}">
                                 @endif
-                                @error('supplier_id')
-                                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                @enderror
                             </div>
 
                             <div>
-                                <label for="purchase_order_id"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Purchase Order <span class="text-red-500">*</span>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Tanggal Pembayaran <span class="text-red-500">*</span>
                                 </label>
-                                <div class="relative rounded-md shadow-sm">
-                                    <select id="purchase_order_id" name="purchase_order_id"
-                                        @if ($po) disabled @endif
-                                        class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                        @if ($po)
-                                            <option value="{{ $po->id }}" selected>{{ $po->nomor }} -
-                                                {{ number_format($po->total, 0, ',', '.') }}</option>
-                                        @endif
-                                    </select>
-                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <svg class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                            xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
-                                            fill="currentColor">
-                                            <path fill-rule="evenodd"
-                                                d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm6 2a1 1 0 10-2 0v1H7a1 1 0 100 2h2v1a1 1 0 102 0v-1h2a1 1 0 100-2h-2V6z"
-                                                clip-rule="evenodd" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                @if ($po)
-                                    <input type="hidden" name="purchase_order_id" value="{{ $po->id }}">
-                                @endif
-                                @error('purchase_order_id')
-                                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                @enderror
+                                <input type="date" name="tanggal" value="{{ old('tanggal', date('Y-m-d')) }}" required
+                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
 
                             <div>
-                                <label for="jumlah"
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Jumlah Pembayaran <span class="text-red-500">*</span>
-                                </label>
-                                <div class="relative rounded-md shadow-sm">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        Jumlah Pembayaran (Rp) <span class="text-red-500">*</span>
+                                    </label>
+                                    <button type="button" @click="syncTotalBayarWithAllocations()" x-show="getTotalAllocated() > 0"
+                                        class="text-xs text-indigo-600 hover:text-indigo-700 font-medium">
+                                        Samakan dengan Total Alokasi
+                                    </button>
+                                </div>
+                                <div class="relative rounded-lg shadow-sm">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <span class="text-gray-500 dark:text-gray-400">Rp</span>
+                                        <span class="text-gray-500 dark:text-gray-400 sm:text-sm font-semibold">Rp</span>
                                     </div>
-                                    <input type="number" id="jumlah" name="jumlah"
-                                        value="{{ old('jumlah', $sisaHutang) }}" required
-                                        class="pl-10 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm"
-                                        @input="updateJumlah()" max="currentSisaHutang">
+                                    <input type="hidden" name="jumlah" :value="totalBayar">
+                                    <input type="text"
+                                        :value="formatRupiahInput(totalBayar)"
+                                        @input="handleTotalBayarInput($event)"
+                                        required
+                                        placeholder="0"
+                                        class="pl-10 text-lg font-bold border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg text-gray-900 focus:ring-indigo-500 focus:border-indigo-500 font-mono">
                                 </div>
-                                <div x-show="showValidationError" x-cloak class="mt-2">
-                                    <p class="text-sm text-red-600 dark:text-red-500" x-text="errorMessage"></p>
-                                </div>
-                                @error('jumlah')
-                                    <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                @enderror
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    Total nominal pengeluaran uang dari rekening/kas perusahaan.
+                                </p>
                             </div>
                         </div>
 
-                        {{-- Right Column --}}
-                        <div>
-                            <div
-                                class="payment-section bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-750 p-6 rounded-xl border border-gray-200 dark:border-gray-700 mb-4">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center mb-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
-                                        viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-                                        <path fill-rule="evenodd"
-                                            d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    Metode Pembayaran
-                                </h3>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <label
-                                        class="payment-method-card cursor-pointer bg-white dark:bg-gray-800 rounded-lg border-2 p-4 flex flex-col items-center"
-                                        :class="{ 'border-primary-500 dark:border-primary-400 shadow-md': metode === 'kas', 'border-gray-200 dark:border-gray-700': metode !== 'kas' }">
-                                        <input type="radio" name="metode_pembayaran" value="kas"
-                                            class="sr-only" x-model="metode">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3"
-                                            :class="{ 'text-primary-500': metode === 'kas', 'text-gray-400 dark:text-gray-500': metode !== 'kas' }"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                        </svg>
-                                        <div class="font-medium"
-                                            :class="{ 'text-primary-600 dark:text-primary-400': metode === 'kas', 'text-gray-900 dark:text-white': metode !== 'kas' }">
-                                            Kas</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                                            Pembayaran langsung melalui kas</div>
-                                    </label>
-
-                                    <label
-                                        class="payment-method-card cursor-pointer bg-white dark:bg-gray-800 rounded-lg border-2 p-4 flex flex-col items-center"
-                                        :class="{ 'border-primary-500 dark:border-primary-400 shadow-md': metode === 'bank', 'border-gray-200 dark:border-gray-700': metode !== 'bank' }">
-                                        <input type="radio" name="metode_pembayaran" value="bank"
-                                            class="sr-only" x-model="metode">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-3"
-                                            :class="{ 'text-primary-500': metode === 'bank', 'text-gray-400 dark:text-gray-500': metode !== 'bank' }"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                        <div class="font-medium"
-                                            :class="{ 'text-primary-600 dark:text-primary-400': metode === 'bank', 'text-gray-900 dark:text-white': metode !== 'bank' }">
-                                            Transfer Bank</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
-                                            Pembayaran melalui transfer bank</div>
-                                    </label>
-                                </div>
-
-                                @error('metode_pembayaran')
-                                    <p class="mt-2 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                @enderror
+                        {{-- Right Column: Payment Method & Target Account --}}
+                        <div class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Metode Pembayaran <span class="text-red-500">*</span>
+                                </label>
+                                <select name="metode_pembayaran" x-model="metode" required
+                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="bank">Transfer Bank</option>
+                                    <option value="kas">Kas / Tunai</option>
+                                    <option value="giro">Giro</option>
+                                    <option value="cek">Cek</option>
+                                </select>
                             </div>
 
-                            <div class="kas-field mt-4" style="display: none;">
-                                <div
-                                    class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-                                    <h3 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                        </svg>
-                                        Detail Pembayaran Kas
-                                    </h3>
-
-                                    <div>
-                                        <label for="kas_id"
-                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Akun Kas <span x-show="metode === 'kas'" class="text-red-500">*</span>
-                                        </label>
-                                        <div class="relative rounded-md shadow-sm">
-                                            <select id="kas_id" name="kas_id"
-                                                x-bind:required="metode === 'kas'"
-                                                class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                                <option value="">-- Pilih Akun Kas --</option>
-                                                @foreach ($kasAccounts as $kas)
-                                                    <option value="{{ $kas->id }}"
-                                                        {{ old('kas_id') == $kas->id ? 'selected' : '' }}>
-                                                        {{ $kas->nama }} - Saldo: Rp
-                                                        {{ number_format($kas->saldo, 0, ',', '.') }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <div
-                                                class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                    class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none"
-                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                        stroke-width="2"
-                                                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                        </div>
-                                        @error('kas_id')
-                                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-                                </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Nomor Bukti Transfer / Referensi
+                                </label>
+                                <input type="text" name="no_referensi" value="{{ old('no_referensi') }}"
+                                    placeholder="Contoh: TRF-SUPP-88123"
+                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
 
-                            <div class="bank-field mt-4" style="display: none;">
-                                <div
-                                    class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-5">
-                                    <h3 class="font-medium text-gray-900 dark:text-white mb-4 flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-primary-500"
-                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                        </svg>
-                                        Detail Pembayaran Bank
-                                    </h3>
-
-                                    <div class="space-y-4">
-                                        <div>
-                                            <label for="rekening_id"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                Rekening Bank <span x-show="metode === 'bank'"
-                                                    class="text-red-500">*</span>
-                                            </label>
-                                            <div class="relative rounded-md shadow-sm">
-                                                <select id="rekening_id" name="rekening_id"
-                                                    x-bind:required="metode === 'bank'"
-                                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                                    <option value="">-- Pilih Rekening Bank --</option>
-                                                    @foreach ($bankAccounts as $bank)
-                                                        <option value="{{ $bank->id }}"
-                                                            {{ old('rekening_id') == $bank->id ? 'selected' : '' }}>
-                                                            {{ $bank->nama_bank }} - {{ $bank->nomor_rekening }} -
-                                                            Saldo: Rp {{ number_format($bank->saldo, 0, ',', '.') }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
-                                                <div
-                                                    class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                        class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            @error('rekening_id')
-                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
-                                                </p>
-                                            @enderror
-                                        </div>
-
-                                        <div>
-                                            <label for="no_referensi"
-                                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                                No. Referensi <span x-show="metode === 'bank'"
-                                                    class="text-red-500">*</span>
-                                            </label>
-                                            <div class="relative rounded-md shadow-sm">
-                                                <input type="text" id="no_referensi" name="no_referensi"
-                                                    value="{{ old('no_referensi') }}"
-                                                    x-bind:required="metode === 'bank'"
-                                                    placeholder="Nomor referensi transfer bank"
-                                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:ring-primary-500 focus:border-primary-500 block w-full rounded-md shadow-sm pl-10">
-                                                <div
-                                                    class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                        class="h-5 w-5 text-gray-400 dark:text-gray-500"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            @error('no_referensi')
-                                                <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}
-                                                </p>
-                                            @enderror
-                                        </div>
-                                    </div>
-                                </div>
+                            {{-- Bank Selection --}}
+                            <div x-show="metode !== 'kas'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Rekening Bank Sumber <span class="text-red-500">*</span>
+                                </label>
+                                <select name="rekening_id" :required="metode !== 'kas'"
+                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">-- Pilih Rekening Bank --</option>
+                                    @foreach ($bankAccounts as $bank)
+                                        <option value="{{ $bank->id }}" {{ old('rekening_id') == $bank->id ? 'selected' : '' }}>
+                                            {{ $bank->nama_bank }} - {{ $bank->nomor_rekening }} (a/n {{ $bank->atas_nama }})
+                                        </option>
+                                    @endforeach
+                                </select>
                             </div>
-                        </div>
-                    </div>
 
-                    <div class="mt-6">
-                        <label for="catatan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Catatan
-                        </label>
-                        <div class="relative rounded-md shadow-sm">
-                            <textarea id="catatan" name="catatan" rows="4"
-                                class="shadow-sm block w-full focus:ring-primary-500 focus:border-primary-500 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md pl-10"
-                                placeholder="Catatan tambahan untuk pembayaran ini...">{{ old('catatan') }}</textarea>
-                            <div class="absolute top-3 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
+                            {{-- Cash Selection --}}
+                            <div x-show="metode === 'kas'">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Akun Kas Sumber <span class="text-red-500">*</span>
+                                </label>
+                                <select name="kas_id" :required="metode === 'kas'"
+                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                                    <option value="">-- Pilih Akun Kas --</option>
+                                    @foreach ($kasAccounts as $kas)
+                                        <option value="{{ $kas->id }}" {{ old('kas_id') == $kas->id ? 'selected' : '' }}>
+                                            {{ $kas->nama }} (Saldo: Rp {{ number_format($kas->saldo, 0, ',', '.') }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Catatan Umum
+                                </label>
+                                <textarea name="catatan" rows="2" class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm">{{ old('catatan') }}</textarea>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Form Actions --}}
-                <div
-                    class="px-6 py-4 bg-gradient-to-r from-gray-50 to-white dark:from-gray-800 dark:to-gray-750 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
-                        <div class="flex items-center">
-                            <span x-show="isSubmitting" class="mr-3">
-                                <svg class="animate-spin h-5 w-5 text-primary-500" xmlns="http://www.w3.org/2000/svg"
-                                    fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10"
-                                        stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                    </path>
-                                </svg>
-                            </span>
-                            <span x-show="showValidationError" class="text-sm text-red-600 dark:text-red-400">
-                                Harap periksa form pembayaran
-                            </span>
+                {{-- Purchase Orders Allocation Section --}}
+                <div class="px-6 pb-6">
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-6">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <svg class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                    </svg>
+                                    Alokasi Pembayaran ke Purchase Order (PO)
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    Cari Purchase Order melalui dropdown Select2 di bawah, lalu klik Tambah PO untuk memasukkan ke daftar alokasi.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <button type="button" @click="removeAllPOs()" x-show="selectedPOs.length > 0"
+                                    class="px-3 py-1.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800 rounded-lg text-xs font-medium hover:bg-red-100 transition-colors">
+                                    Kosongkan Daftar
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                            <a href="{{ route('keuangan.hutang-usaha.index') }}"
-                                class="w-full sm:w-auto order-2 sm:order-1 px-4 py-2.5 flex justify-center items-center bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg"
-                                    class="h-5 w-5 mr-2 text-gray-500 dark:text-gray-400" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                                Batal
-                            </a>
-                            <button type="submit" x-bind:disabled="isSubmitting"
-                                class="w-full sm:w-auto order-1 sm:order-2 px-4 py-2.5 flex justify-center items-center bg-primary-600 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:focus:ring-offset-gray-800 transition-colors">
-                                <svg class="h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                                <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Pembayaran'">Simpan
-                                    Pembayaran</span>
-                            </button>
+
+                        {{-- Search & Add PO Select2 Dropdown Row --}}
+                        <div class="mb-5 p-4 bg-gray-50 dark:bg-gray-750/70 border border-gray-200 dark:border-gray-700 rounded-xl">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-2">
+                                Cari & Pilih Purchase Order yang Ingin Dibayar
+                            </label>
+                            <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                                <div class="flex-1">
+                                    <select id="po_select2" :disabled="isLoadingPOs || availablePOs.length === 0"
+                                        class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg shadow-sm text-sm">
+                                        <option value="">-- Cari & Pilih Purchase Order yang Ingin Dibayar --</option>
+                                    </select>
+                                </div>
+                                <button type="button" @click="addSelectedFromDropdown()"
+                                    :disabled="!selectedPoIdToAppend || isLoadingPOs"
+                                    class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Tambah PO
+                                </button>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span x-text="'Tersedia ' + availablePOs.length + ' Purchase Order belum lunas untuk supplier ini.'"></span>
+                                <span x-text="selectedPOs.length + ' PO dipilih'"></span>
+                            </div>
                         </div>
+
+                        {{-- Loading Indicator --}}
+                        <div x-show="isLoadingPOs" class="py-12 text-center">
+                            <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Memuat daftar hutang Purchase Order...</p>
+                        </div>
+
+                        {{-- Empty State: No Supplier Selected or No PO Available --}}
+                        <div x-show="!isLoadingPOs && availablePOs.length === 0" class="py-10 text-center bg-gray-50 dark:bg-gray-750 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                            <svg class="h-10 w-10 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <p class="text-sm font-medium text-gray-600 dark:text-gray-300" x-text="supplierId ? 'Tidak ada Purchase Order yang memiliki sisa hutang untuk supplier ini.' : 'Pilih supplier terlebih dahulu untuk melihat daftar tagihan PO.'"></p>
+                        </div>
+
+                        {{-- Empty State: POs Available but none added yet --}}
+                        <div x-show="!isLoadingPOs && availablePOs.length > 0 && selectedPOs.length === 0" class="py-8 text-center bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-dashed border-indigo-200 dark:border-indigo-800">
+                            <svg class="h-8 w-8 text-indigo-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            <p class="text-sm font-medium text-indigo-800 dark:text-indigo-300">Belum ada Purchase Order yang ditambahkan ke daftar pembayaran.</p>
+                            <p class="text-xs text-indigo-600 dark:text-indigo-400 mt-1">Cari PO pada input dropdown di atas lalu klik <strong>"Tambah PO"</strong>.</p>
+                        </div>
+
+                        {{-- Active Allocated POs Table --}}
+                        <div x-show="!isLoadingPOs && selectedPOs.length > 0" class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                <thead class="bg-gray-50 dark:bg-gray-750 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3.5 text-left">Nomor PO</th>
+                                        <th scope="col" class="px-4 py-3.5 text-left">Tanggal</th>
+                                        <th scope="col" class="px-4 py-3.5 text-right">Total PO</th>
+                                        <th scope="col" class="px-4 py-3.5 text-right">Sisa Hutang</th>
+                                        <th scope="col" class="px-4 py-3.5 text-right w-60">Alokasi Pembayaran (Rp)</th>
+                                        <th scope="col" class="px-4 py-3.5 text-left">Catatan Alokasi</th>
+                                        <th scope="col" class="px-3 py-3.5 text-center w-16">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                                    <template x-for="(item, idx) in selectedPOs" :key="item.id">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                            <td class="px-4 py-3.5 font-semibold text-gray-900 dark:text-white">
+                                                <span x-text="item.nomor"></span>
+                                            </td>
+                                            <td class="px-4 py-3.5 text-gray-600 dark:text-gray-300" x-text="item.tanggal"></td>
+                                            <td class="px-4 py-3.5 text-right text-gray-600 dark:text-gray-300 font-mono" x-text="'Rp ' + formatRupiah(item.total)"></td>
+                                            <td class="px-4 py-3.5 text-right font-bold text-red-600 dark:text-red-400 font-mono" x-text="'Rp ' + formatRupiah(item.sisa_hutang)"></td>
+                                            <td class="px-4 py-3 text-right">
+                                                <div class="space-y-1">
+                                                    <div class="relative rounded-md shadow-sm">
+                                                        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                            <span class="text-gray-400 text-xs font-semibold">Rp</span>
+                                                        </div>
+                                                        <input type="hidden"
+                                                            :name="'allocations[' + item.id + ']'"
+                                                            :value="allocations[item.id] || 0">
+                                                        <input type="text"
+                                                            :value="formatRupiahInput(allocations[item.id])"
+                                                            @input="onAllocationInput(item, $event)"
+                                                            placeholder="0"
+                                                            class="pl-8 text-right font-semibold border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 font-mono">
+                                                    </div>
+                                                    <div class="flex justify-end">
+                                                        <button type="button" @click="payInFull(item)"
+                                                            class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium">
+                                                            Bayar Penuh
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <input type="text"
+                                                    :name="'catatan_allocations[' + item.id + ']'"
+                                                    x-model="catatanAllocations[item.id]"
+                                                    placeholder="Catatan..."
+                                                    class="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white block w-full rounded-lg text-xs py-1.5">
+                                            </td>
+                                            <td class="px-3 py-3.5 text-center">
+                                                <button type="button" @click="removePO(item.id)"
+                                                    title="Hapus dari daftar alokasi"
+                                                    class="text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors">
+                                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {{-- Calculation Summary Widget --}}
+                        <div x-show="selectedPOs.length > 0" class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-700">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Pembayaran</span>
+                                <div class="mt-1 text-xl font-extrabold text-gray-900 dark:text-white" x-text="'Rp ' + formatRupiah(totalBayar)"></div>
+                            </div>
+                            <div class="p-4 rounded-xl bg-gray-50 dark:bg-gray-750 border border-gray-200 dark:border-gray-700">
+                                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Total Teralokasi ke PO</span>
+                                <div class="mt-1 text-xl font-extrabold text-indigo-600 dark:text-indigo-400" x-text="'Rp ' + formatRupiah(getTotalAllocated())"></div>
+                            </div>
+                            <div class="p-4 rounded-xl border transition-all"
+                                :class="Math.abs(getUnallocatedDifference()) <= 0.05 ? 'bg-green-50/60 dark:bg-green-900/20 border-green-300 dark:border-green-800 text-green-800 dark:text-green-300' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300'">
+                                <span class="text-xs font-medium uppercase tracking-wider">Selisih Alokasi</span>
+                                <div class="mt-1 text-xl font-extrabold flex items-center gap-2">
+                                    <span x-text="'Rp ' + formatRupiah(getUnallocatedDifference())"></span>
+                                    <span x-show="Math.abs(getUnallocatedDifference()) <= 0.05" class="text-xs px-2 py-0.5 rounded-full bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-100">
+                                        Pas (Seimbang)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
+                </div>
+
+                {{-- Form Actions Footer --}}
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-750 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+                    <a href="{{ $po ? route('keuangan.hutang-usaha.show', $po->id) : route('keuangan.hutang-usaha.index') }}"
+                        class="px-5 py-2.5 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+                        Batal
+                    </a>
+                    <button type="submit" :disabled="isSubmitting"
+                        class="px-6 py-2.5 bg-indigo-600 border border-transparent rounded-lg text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors disabled:opacity-50 flex items-center gap-2">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Pembayaran'"></span>
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Initialize select2 if available
-                if (typeof $.fn.select2 !== 'undefined') {
-                    $('#supplier_id').select2({
-                        placeholder: '-- Pilih Supplier --',
-                        theme: document.documentElement.classList.contains('dark') ? 'select2-dark' :
-                            'select2-light',
-                        width: '100%',
-                        dropdownCssClass: 'select2-dropdown-clear'
-                    });
-                    $('#purchase_order_id').select2({
-                        placeholder: '-- Pilih Purchase Order --',
-                        theme: document.documentElement.classList.contains('dark') ? 'select2-dark' :
-                            'select2-light',
-                        width: '100%',
-                        dropdownCssClass: 'select2-dropdown-clear'
-                    });
-                    $('#kas_id').select2({
-                        placeholder: '-- Pilih Akun Kas --',
-                        theme: document.documentElement.classList.contains('dark') ? 'select2-dark' :
-                            'select2-light',
-                        width: '100%',
-                        dropdownCssClass: 'select2-dropdown-clear'
-                    });
-                    $('#rekening_id').select2({
-                        placeholder: '-- Pilih Rekening Bank --',
-                        theme: document.documentElement.classList.contains('dark') ? 'select2-dark' :
-                            'select2-light',
-                        width: '100%',
-                        dropdownCssClass: 'select2-dropdown-clear'
-                    });
-
-                    // Apply custom styles to match our modern design
-                    $(".select2-selection").addClass(
-                        "rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700");
-
-                    // Add icons to Select2 dropdowns
-                    setTimeout(function() {
-                        $('.select2-selection__rendered').each(function() {
-                            if (!$(this).find('.select2-icon').length) {
-                                $(this).prepend('<span class="select2-icon"></span>');
-                            }
-                        });
-                    }, 100);
-                }
-
-                // Dynamic PO loading when supplier changes
-                $('#supplier_id').on('change', function() {
-                    const supplierId = $(this).val();
-                    if (supplierId) {
-                        // Show loading indicator
-                        $('#purchase_order_id').html('<option value="">Loading...</option>');
-
-                        $.ajax({
-                            url: '/api/supplier/' + supplierId + '/purchase-orders',
-                            type: 'GET',
-                            dataType: 'json',
-                            success: function(data) {
-                                let options =
-                                    '<option value="">-- Pilih Purchase Order --</option>';
-
-                                data.forEach(function(po) {
-                                    options += `<option value="${po.id}" data-sisa="${po.sisa_hutang}" data-total="${po.total}">
-                                    ${po.nomor} - Total: Rp ${formatNumber(po.total)} - Sisa: Rp ${formatNumber(po.sisa_hutang)}
-                                </option>`;
-                                });
-
-                                $('#purchase_order_id').html(options);
-                            },
-                            error: function() {
-                                $('#purchase_order_id').html(
-                                    '<option value="">Error loading data</option>');
-                            }
-                        });
-                    } else {
-                        $('#purchase_order_id').html('<option value="">-- Pilih Purchase Order --</option>');
-                    }
-                });
-
-                // Set payment amount based on selected PO
-                $('#purchase_order_id').on('change', function() {
-                    const selected = $(this).find(':selected');
-                    const sisaHutang = parseFloat(selected.data('sisa') || 0);
-                    const totalHutang = parseFloat(selected.data('total') || 0);
-
-                    if (sisaHutang) {
-                        $('#jumlah').val(sisaHutang);
-
-                        // Update the Alpine.js state
-                        const paymentForm = document.getElementById('payment-form').__x.$data;
-                        paymentForm.currentSisaHutang = sisaHutang;
-                        paymentForm.totalHutang = totalHutang;
-                        paymentForm.totalDibayar = totalHutang - sisaHutang;
-                        paymentForm.showValidationError = false;
-                    }
-                });
-
-                // Validate payment amount on input
-                $('#jumlah').on('input', function() {
-                    const amount = parseFloat($(this).val() || 0);
-                    const paymentForm = document.getElementById('payment-form').__x.$data;
-
-                    paymentForm.totalDibayar = paymentForm.totalHutang - amount;
-
-                    if (amount > paymentForm.currentSisaHutang) {
-                        paymentForm.showValidationError = true;
-                        paymentForm.errorMessage =
-                            `Jumlah pembayaran tidak boleh melebihi sisa hutang (Rp ${formatNumber(paymentForm.currentSisaHutang)})`;
-                    } else {
-                        paymentForm.showValidationError = false;
-                        paymentForm.errorMessage = '';
-                    }
-                });
-
-                // Format number helper function
-                function formatNumber(num) {
-                    return new Intl.NumberFormat('id-ID').format(num);
-                }
-            });
-        </script>
+        <!-- Select2 JS -->
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @endpush
 </x-app-layout>

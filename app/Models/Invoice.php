@@ -70,11 +70,21 @@ class Invoice extends Model
     }
 
     /**
-     * Relasi ke Pembayaran (menggunakan nama yang konsisten dengan controller)
+     * Relasi ke Detail Pembayaran Piutang
      */
-    public function pembayaranPiutang() // Changed from pembayaran() to pembayaranPiutang()
+    public function pembayaranDetails()
     {
-        return $this->hasMany(PembayaranPiutang::class, 'invoice_id');
+        return $this->hasMany(PembayaranPiutangDetail::class, 'invoice_id');
+    }
+
+    /**
+     * Relasi ke Pembayaran Piutang (Header via Detail)
+     */
+    public function pembayaranPiutang()
+    {
+        return $this->belongsToMany(PembayaranPiutang::class, 'pembayaran_piutang_detail', 'invoice_id', 'pembayaran_piutang_id')
+            ->withPivot('jumlah', 'catatan')
+            ->withTimestamps();
     }
 
     /**
@@ -88,13 +98,13 @@ class Invoice extends Model
     // Accessor for Sisa Piutang
     public function getSisaPiutangAttribute()
     {
-        $totalPembayaran = $this->pembayaranPiutang()->sum('jumlah');
+        $totalPembayaran = $this->pembayaranDetails()->sum('jumlah');
         $totalKredit = $this->kredit_terapkan ?? 0;
         $uangMukaTerapkan = $this->uang_muka_terapkan ?? 0;
 
         // Formula: Subtotal + PPN - Uang Muka - Pembayaran - Kredit
         // Atau: Total - Uang Muka - Pembayaran - Kredit
-        return $this->total - $totalPembayaran - $totalKredit - $uangMukaTerapkan;
+        return (float)$this->total - (float)$totalPembayaran - (float)$totalKredit - (float)$uangMukaTerapkan;
     }    // Accessor for Status Display
     public function getStatusDisplayAttribute()
     {
