@@ -80,7 +80,19 @@ class User extends Authenticatable
             return $this->roles->contains('kode', $role);
         }
 
+        if (is_array($role)) {
+            return $this->roles->whereIn('kode', $role)->count() > 0;
+        }
+
         return $role->intersect($this->roles)->count() > 0;
+    }
+
+    /**
+     * Cek apakah user adalah admin atau superadmin
+     */
+    public function isAdminOrSuperAdmin()
+    {
+        return $this->hasRole(['admin', 'superadmin', 'super_admin', 'administrator']);
     }
 
     /**
@@ -89,8 +101,8 @@ class User extends Authenticatable
     public function hasPermission($permission)
     {
         foreach ($this->roles as $role) {
-            // Admin automatically has all permissions
-            if ($role->kode === 'admin') {
+            // Admin dan superadmin automatically have all permissions
+            if (in_array($role->kode, ['admin', 'superadmin', 'super_admin', 'administrator'])) {
                 return true;
             }
             if ($role->permissions->contains('kode', $permission)) {

@@ -16,8 +16,10 @@ class PenggajianObserver
      */
     public function updated(Penggajian $penggajian)
     {
+        $statusChanged = $penggajian->wasChanged('status') || $penggajian->isDirty('status');
+
         // Check if status has changed to 'dibayar'
-        if ($penggajian->isDirty('status') && $penggajian->status === 'dibayar') {
+        if ($statusChanged && $penggajian->status === 'dibayar') {
             try {
                 // Delete any existing journal entries first
                 $penggajian->deleteJournalEntries();
@@ -31,22 +33,34 @@ class PenggajianObserver
                     'exception' => $e
                 ]);
             }
-        }
-
-        // If the amount has changed while status is 'dibayar', recreate the journal
-        if ($penggajian->isDirty(['total_gaji', 'tanggal_bayar']) && $penggajian->status === 'dibayar') {
+        } elseif ($statusChanged && $penggajian->getOriginal('status') === 'dibayar' && $penggajian->status !== 'dibayar') {
+            // Status was reverted from 'dibayar' to something else (e.g. draft/disetujui)
             try {
-                // Delete existing journal entries
                 $penggajian->deleteJournalEntries();
-
-                // Create new journal entries
-                $penggajian->createAutomaticJournal();
             } catch (\Exception $e) {
-                Log::error('Error updating automatic journal for penggajian: ' . $e->getMessage(), [
+                Log::error('Error deleting automatic journal on status revert for penggajian: ' . $e->getMessage(), [
                     'penggajian_id' => $penggajian->id,
                     'karyawan_id' => $penggajian->karyawan_id,
                     'exception' => $e
                 ]);
+            }
+        } elseif ($penggajian->status === 'dibayar') {
+            // If the amount or payment date has changed while status remains 'dibayar', recreate the journal
+            $paymentFields = ['total_gaji', 'thp', 'tanggal_bayar', 'metode_pembayaran', 'kas_id', 'rekening_id'];
+            if ($penggajian->wasChanged($paymentFields) || $penggajian->isDirty($paymentFields)) {
+                try {
+                    // Delete existing journal entries
+                    $penggajian->deleteJournalEntries();
+
+                    // Create new journal entries
+                    $penggajian->createAutomaticJournal();
+                } catch (\Exception $e) {
+                    Log::error('Error updating automatic journal for penggajian: ' . $e->getMessage(), [
+                        'penggajian_id' => $penggajian->id,
+                        'karyawan_id' => $penggajian->karyawan_id,
+                        'exception' => $e
+                    ]);
+                }
             }
         }
     }

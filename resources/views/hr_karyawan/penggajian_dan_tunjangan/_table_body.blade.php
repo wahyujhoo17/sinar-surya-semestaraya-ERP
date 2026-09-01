@@ -88,8 +88,12 @@
                         </svg>
                     </a>
 
-                    {{-- Hide Edit and Delete buttons if status is 'dibayar' --}}
-                    @if ($item->status !== 'dibayar')
+                    {{-- Show Edit button if not paid OR if user has role admin/superadmin --}}
+                    @php
+                        $canEdit = $item->status !== 'dibayar' || (auth()->check() && (method_exists(auth()->user(), 'isAdminOrSuperAdmin') ? auth()->user()->isAdminOrSuperAdmin() : (auth()->user()->hasRole('admin') || auth()->user()->hasRole('superadmin') || auth()->user()->hasRole('super_admin') || auth()->user()->hasRole('administrator'))));
+                    @endphp
+
+                    @if ($canEdit)
                         <a href="{{ route('hr.penggajian.edit', array_merge(request()->except('ajax_request'), ['penggajian' => $item->id])) }}"
                             class="inline-flex items-center px-2 py-1 border border-transparent rounded-md shadow-sm text-xs font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
                             title="Edit">
@@ -99,6 +103,10 @@
                                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                         </a>
+                    @endif
+
+                    {{-- Hide Delete button if status is 'dibayar' --}}
+                    @if ($item->status !== 'dibayar')
                         <form action="{{ route('hr.penggajian.destroy', $item->id) }}" method="POST" class="inline">
                             @csrf
                             @method('DELETE')

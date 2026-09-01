@@ -640,6 +640,16 @@ class PenggajianController extends Controller
     public function edit($id)
     {
         $penggajian = Penggajian::with(['karyawan', 'komponenGaji'])->findOrFail($id);
+
+        // Jika penggajian sudah dibayar lunas, hanya role admin dan superadmin yang boleh mengedit
+        if ($penggajian->status === 'dibayar') {
+            $user = Auth::user();
+            if (!$user || !$user->isAdminOrSuperAdmin()) {
+                return redirect()->route('hr.penggajian.index')
+                    ->with('error', 'Penggajian yang sudah dibayar lunas hanya dapat diedit oleh Admin atau Superadmin.');
+            }
+        }
+
         $karyawan = Karyawan::where('status', 'aktif')->get();
 
         return view('hr_karyawan.penggajian_dan_tunjangan.edit', [
@@ -687,6 +697,15 @@ class PenggajianController extends Controller
         ]);
 
         $penggajian = Penggajian::findOrFail($id);
+
+        // Jika penggajian sudah dibayar lunas, hanya role admin dan superadmin yang boleh mengedit
+        if ($penggajian->status === 'dibayar') {
+            $user = Auth::user();
+            if (!$user || !$user->isAdminOrSuperAdmin()) {
+                return redirect()->route('hr.penggajian.index')
+                    ->with('error', 'Penggajian yang sudah dibayar lunas hanya dapat diedit oleh Admin atau Superadmin.');
+            }
+        }
 
         // Hitung total gaji
         $totalGaji = $request->gaji_pokok +
@@ -743,7 +762,7 @@ class PenggajianController extends Controller
                 'bpjs_karyawan' => $request->bpjs_karyawan ?? 0,
                 'total_gaji' => $totalGaji,
                 'thp' => $totalGaji,
-                'tanggal_bayar' => $request->tanggal_bayar,
+                'tanggal_bayar' => $request->tanggal_bayar ?: $penggajian->tanggal_bayar,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
                 'disetujui_oleh' => $request->status == 'disetujui' && !$penggajian->disetujui_oleh ? Auth::id() : $penggajian->disetujui_oleh,
