@@ -671,6 +671,8 @@ class PenggajianController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
             'gaji_pokok' => 'required|numeric|min:0',
             'tunjangan' => 'nullable|numeric|min:0',
             'tunjangan_keluarga' => 'nullable|numeric|min:0',
@@ -704,6 +706,22 @@ class PenggajianController extends Controller
             if (!$user || !$user->isAdminOrSuperAdmin()) {
                 return redirect()->route('hr.penggajian.index')
                     ->with('error', 'Penggajian yang sudah dibayar lunas hanya dapat diedit oleh Admin atau Superadmin.');
+            }
+        }
+
+        $targetBulan = $request->filled('bulan') ? (int) $request->bulan : $penggajian->bulan;
+        $targetTahun = $request->filled('tahun') ? (int) $request->tahun : $penggajian->tahun;
+
+        // Jika bulan atau tahun diubah, pastikan belum ada penggajian lain untuk karyawan ini pada periode tersebut
+        if ($targetBulan != $penggajian->bulan || $targetTahun != $penggajian->tahun) {
+            $duplicate = Penggajian::where('karyawan_id', $penggajian->karyawan_id)
+                ->where('bulan', $targetBulan)
+                ->where('tahun', $targetTahun)
+                ->where('id', '!=', $penggajian->id)
+                ->exists();
+
+            if ($duplicate) {
+                return back()->with('error', 'Data penggajian untuk karyawan ini pada periode ' . $this->getNamaBulan($targetBulan) . ' ' . $targetTahun . ' sudah ada.')->withInput();
             }
         }
 
@@ -751,6 +769,8 @@ class PenggajianController extends Controller
 
             // Update data penggajian
             $penggajian->update([
+                'bulan' => $targetBulan,
+                'tahun' => $targetTahun,
                 'gaji_pokok' => $request->gaji_pokok,
                 'tunjangan' => $request->tunjangan,
                 'bonus' => $request->bonus,
@@ -808,7 +828,10 @@ class PenggajianController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('hr.penggajian.index')->with('success', 'Data penggajian berhasil diperbarui');
+            return redirect()->route('hr.penggajian.index', [
+                'bulan' => $targetBulan,
+                'tahun' => $targetTahun,
+            ])->with('success', 'Data penggajian berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();

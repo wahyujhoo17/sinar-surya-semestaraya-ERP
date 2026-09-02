@@ -45,8 +45,8 @@ class PenggajianObserver
                 ]);
             }
         } elseif ($penggajian->status === 'dibayar') {
-            // If the amount or payment date has changed while status remains 'dibayar', recreate the journal
-            $paymentFields = ['total_gaji', 'thp', 'tanggal_bayar', 'metode_pembayaran', 'kas_id', 'rekening_id'];
+            // If the amount, payment date, or period (bulan/tahun) has changed while status remains 'dibayar', recreate the journal
+            $paymentFields = ['total_gaji', 'thp', 'tanggal_bayar', 'metode_pembayaran', 'kas_id', 'rekening_id', 'bulan', 'tahun'];
             if ($penggajian->wasChanged($paymentFields) || $penggajian->isDirty($paymentFields)) {
                 try {
                     // Delete existing journal entries

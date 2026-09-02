@@ -66,8 +66,7 @@
                         </svg>
                         Informasi Karyawan
                     </h3>
-                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Data karyawan dan periode penggajian (tidak
-                        dapat diubah)</p>
+                    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Data karyawan dan periode penggajian</p>
                 </div>
                 <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {{-- Employee Info (Read-only) --}}
@@ -81,26 +80,42 @@
                         </div>
                     </div>
 
-                    {{-- Month (Read-only) --}}
+                    {{-- Month Selection --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Bulan
+                        <label for="bulan" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Bulan <span class="text-red-500">*</span>
                         </label>
-                        <div
-                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-300">
-                            {{ Carbon\Carbon::create()->month($penggajian->bulan)->translatedFormat('F') }}
-                        </div>
+                        <select name="bulan" id="bulan" required
+                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('bulan') border-red-500 @enderror">
+                            @for ($i = 1; $i <= 12; $i++)
+                                <option value="{{ $i }}"
+                                    {{ old('bulan', $penggajian->bulan) == $i ? 'selected' : '' }}>
+                                    {{ Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
+                                </option>
+                            @endfor
+                        </select>
+                        @error('bulan')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        @enderror
                     </div>
 
-                    {{-- Year (Read-only) --}}
+                    {{-- Year Selection --}}
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Tahun
+                        <label for="tahun" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Tahun <span class="text-red-500">*</span>
                         </label>
-                        <div
-                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-300">
-                            {{ $penggajian->tahun }}
-                        </div>
+                        <select name="tahun" id="tahun" required
+                            class="block w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-md text-sm focus:border-primary-500 focus:ring-1 focus:ring-primary-500 dark:bg-gray-800 dark:text-gray-200 transition-colors duration-200 @error('tahun') border-red-500 @enderror">
+                            @for ($i = Carbon\Carbon::now()->year - 3; $i <= Carbon\Carbon::now()->year + 2; $i++)
+                                <option value="{{ $i }}"
+                                    {{ old('tahun', $penggajian->tahun) == $i ? 'selected' : '' }}>
+                                    {{ $i }}
+                                </option>
+                            @endfor
+                        </select>
+                        @error('tahun')
+                            <p class="mt-1 text-sm text-red-600 dark:text-red-500">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
