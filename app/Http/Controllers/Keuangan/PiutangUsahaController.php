@@ -165,7 +165,7 @@ class PiutangUsahaController extends Controller
             $nextWeek = $now->copy()->addDays(7);
 
             foreach ($filteredInvoices as $invoice) {
-                $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+                $totalPayments = $invoice->pembayaranPiutang->sum('pivot.jumlah');
                 $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
 
                 if ($sisaPiutang > 0) {
@@ -214,7 +214,7 @@ class PiutangUsahaController extends Controller
         // Calculate total sisa_piutang for the current page
         $totalSisaPiutangCurrent = 0;
         foreach ($invoices as $invoice) {
-            $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+            $totalPayments = $invoice->pembayaranPiutang->sum('pivot.jumlah');
             $sisaPiutang = $invoice->sisa_piutang; // Use accessor that includes nota kredit
             if ($sisaPiutang > 0) {
                 $totalSisaPiutangCurrent += $sisaPiutang;

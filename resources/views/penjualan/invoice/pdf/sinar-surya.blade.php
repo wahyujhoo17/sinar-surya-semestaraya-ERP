@@ -383,7 +383,7 @@
                         <td class="text-bold text-right">{{ number_format($invoice->total, 0, ',', '.') }}</td>
                     </tr>
                     
-                    @if ($invoice->uang_muka_terapkan > 0 || $invoice->pembayaranPiutang->sum('jumlah') > 0)
+                    @if ($invoice->uang_muka_terapkan > 0 || $invoice->pembayaranPiutang->sum('pivot.jumlah') > 0)
                         <tr>
                             <td colspan="2" style="padding-top: 10px;"><strong>Pembayaran:</strong></td>
                         </tr>
@@ -393,10 +393,10 @@
                                 <td class="text-right">- {{ number_format($invoice->uang_muka_terapkan, 0, ',', '.') }}</td>
                             </tr>
                         @endif
-                        @if ($invoice->pembayaranPiutang->sum('jumlah') > 0)
+                        @if ($invoice->pembayaranPiutang->sum('pivot.jumlah') > 0)
                             <tr>
                                 <td class="summary-line">Pembayaran</td>
-                                <td class="summary-line text-right">- {{ number_format($invoice->pembayaranPiutang->sum('jumlah'), 0, ',', '.') }}</td>
+                                <td class="summary-line text-right">- {{ number_format($invoice->pembayaranPiutang->sum('pivot.jumlah'), 0, ',', '.') }}</td>
                             </tr>
                         @endif
                         <tr>

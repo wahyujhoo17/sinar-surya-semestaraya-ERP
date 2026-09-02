@@ -277,7 +277,7 @@
             <tbody>
                 @forelse ($invoices as $index => $invoice)
                     @php
-                        $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+                        $totalPayments = $invoice->pembayaranPiutang->sum('pivot.jumlah');
                         $sisaPiutang = $invoice->sisa_piutang;
                         // Get all payments sorted by date descending
                         $allPayments = $invoice->pembayaranPiutang->sortByDesc('tanggal');

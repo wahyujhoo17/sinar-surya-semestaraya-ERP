@@ -40,7 +40,7 @@
         </div>
 
         @php
-            $totalBayar = $penjualan->pembayaranPiutang->sum('jumlah');
+            $totalBayar = $penjualan->pembayaranPiutang->sum('pivot.jumlah');
             $sisaPembayaran = $penjualan->total - $totalBayar;
         @endphp
 

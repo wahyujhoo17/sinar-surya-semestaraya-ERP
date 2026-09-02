@@ -1100,7 +1100,7 @@
                             foreach ($invoices as $invoice) {
                                 $totalInvoice += $invoice->total; // Total already includes ongkir
                                 $totalOngkirInvoice += $invoice->ongkos_kirim ?? 0; // Just for display
-                                $totalDibayar += $invoice->pembayaranPiutang->sum('jumlah');
+                                $totalDibayar += $invoice->pembayaranPiutang->sum('pivot.jumlah');
                                 $totalUangMuka += $invoice->uang_muka_terapkan ?? 0;
                                 $totalKredit += $invoice->kredit_terapkan ?? 0;
                             }

@@ -311,7 +311,7 @@ class PDFInvoiceTamplate
                 // Hitung pembayaran yang sudah diterima
                 $totalPembayaran = 0;
                 if (method_exists($invoice, 'pembayaranPiutang')) {
-                    $totalPembayaran = $invoice->pembayaranPiutang()->sum('jumlah') ?? 0;
+                    $totalPembayaran = $invoice->pembayaranDetails()->sum('jumlah') ?? 0;
                 }
 
                 // Hitung kredit yang diterapkan

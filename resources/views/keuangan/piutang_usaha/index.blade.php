@@ -901,7 +901,7 @@
                         @forelse ($invoices as $index => $invoice)
                             @php
                                 // Use accessor to ensure nota kredit is included in calculation
-                                $totalPayments = $invoice->pembayaranPiutang->sum('jumlah');
+                                $totalPayments = $invoice->pembayaranPiutang->sum('pivot.jumlah');
 
                                 // Add uang muka diterapkan to total payments
                                 $totalUangMukaDiterapkan = $invoice->uangMukaAplikasi->sum('jumlah_aplikasi');
