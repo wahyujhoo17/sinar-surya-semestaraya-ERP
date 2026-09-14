@@ -447,11 +447,8 @@
                         fetch(`/api/customers/${customerId}`)
                             .then(res => res.json())
                             .then(data => {
-                                if (data && data.alamat_pengiriman) {
-                                    $('#alamat_pengiriman').val(data.alamat_pengiriman);
-                                } else {
-                                    $('#alamat_pengiriman').val('');
-                                }
+                                const alamat = (data && (data.alamat_pengiriman || data.alamat || data.alamat_utama)) || '';
+                                $('#alamat_pengiriman').val(alamat);
                             });
                     } else {
                         $('#alamat_pengiriman').val('');

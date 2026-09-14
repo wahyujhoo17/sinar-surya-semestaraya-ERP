@@ -25,7 +25,8 @@ Route::get('customers/{id}', function ($id) {
         'id' => $customer->id,
         'nama' => $customer->nama,
         'company' => $customer->company,
-        'alamat_utama' => $customer->alamat_utama,
+        'alamat' => $customer->alamat,
+        'alamat_utama' => $customer->alamat,
         'alamat_pengiriman' => $customer->alamat_pengiriman
     ]);
 });

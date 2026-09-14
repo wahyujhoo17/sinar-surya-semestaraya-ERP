@@ -70,6 +70,14 @@ class Customer extends Model
     }
 
     /**
+     * Accessor untuk alamat utama (alias dari alamat)
+     */
+    public function getAlamatUtamaAttribute()
+    {
+        return $this->alamat;
+    }
+
+    /**
      * Method untuk mendapatkan total saldo uang muka yang tersedia
      */
     public function getTotalSaldoUangMukaAttribute()

@@ -370,7 +370,7 @@
                 <tr>
                     <td class="info-label">Alamat</td>
                     <td class="info-separator">:</td>
-                    <td class="info-value">{{ $deliveryOrder->alamat_pengiriman }}</td>
+                    <td class="info-value">{{ $deliveryOrder->alamat_pengiriman ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '-') }}</td>
                 </tr>
                 @if ($deliveryOrder->customer && $deliveryOrder->customer->telepon)
                     <tr>

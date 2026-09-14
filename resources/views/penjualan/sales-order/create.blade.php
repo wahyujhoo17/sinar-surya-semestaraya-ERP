@@ -1514,11 +1514,7 @@
                                         fetch(`/api/customers/${self.customer_id}`)
                                             .then(response => response.json())
                                             .then(data => {
-                                                if (data && data.alamat_pengiriman) {
-                                                    self.alamat_pengiriman = data.alamat_pengiriman;
-                                                } else {
-                                                    self.alamat_pengiriman = '';
-                                                }
+                                                self.alamat_pengiriman = (data && (data.alamat_pengiriman || data.alamat || data.alamat_utama)) || '';
                                             })
                                             .catch(error => console.error('Error fetching customer data:',
                                                 error));
@@ -1751,10 +1747,9 @@
                                     const quotation = data.data;
 
                                     self.customer_id = quotation.customer_id ? parseInt(quotation.customer_id) : '';
-                                    self.alamat_pengiriman = (quotation.customer && typeof quotation.customer ===
-                                            'object' && quotation.customer.alamat_pengiriman) ? quotation.customer
-                                        .alamat_pengiriman :
-                                        '';
+                                    self.alamat_pengiriman = (quotation.customer && typeof quotation.customer === 'object')
+                                        ? (quotation.customer.alamat_pengiriman || quotation.customer.alamat || quotation.customer.alamat_utama || '')
+                                        : '';
                                     self.syarat_ketentuan = quotation.syarat_ketentuan || '';
 
                                     console.log('Quotation data received:', quotation);

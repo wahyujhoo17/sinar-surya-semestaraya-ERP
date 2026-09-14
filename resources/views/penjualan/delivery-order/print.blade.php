@@ -345,7 +345,7 @@
 
                 <div class="recipient-content">
                     {{ $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama }}<br>
-                    {{ $deliveryOrder->alamat_pengiriman }}
+                    {{ $deliveryOrder->alamat_pengiriman ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '-') }}
                 </div>
             </div>
         </div>

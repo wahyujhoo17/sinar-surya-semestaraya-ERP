@@ -731,14 +731,10 @@
                                         // If it's just a display or hidden input, update its value
                                     }
                                 }
-                                if (response.salesOrder && response.salesOrder.alamat_pengiriman) {
-                                    $('#alamat_pengiriman').val(response.salesOrder
-                                        .alamat_pengiriman);
-                                } else if (response.customer && response.customer
-                                    .alamat_pengiriman) {
-                                    $('#alamat_pengiriman').val(response.customer
-                                        .alamat_pengiriman);
-                                }
+                                const alamatPengiriman = (response.salesOrder && response.salesOrder.alamat_pengiriman)
+                                    || (response.customer && (response.customer.alamat_pengiriman || response.customer.alamat || response.customer.alamat_utama))
+                                    || '';
+                                $('#alamat_pengiriman').val(alamatPengiriman);
                                 // Potentially re-fetch products or update existing ones if SO change means different items
                                 // For edit, this is complex. Usually, DO items are fixed. If SO change *can* alter items,
                                 // then a more complex product table refresh is needed here.

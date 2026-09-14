@@ -286,7 +286,7 @@
                     <div style="font-weight: 700; color: var(--hcb-blue); font-size: 13px; margin-bottom: 5px;">
                         {{ $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama }}</div>
                     <div style="font-size: 11px; line-height: 1.4; color: #374151;">
-                        {{ $deliveryOrder->alamat_pengiriman ?? ($deliveryOrder->customer->alamat ?? '-') }}<br>
+                        {{ $deliveryOrder->alamat_pengiriman ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '-') }}<br>
                         @if ($deliveryOrder->customer->telepon)
                             Telp: {{ $deliveryOrder->customer->telepon }}
                             <br>

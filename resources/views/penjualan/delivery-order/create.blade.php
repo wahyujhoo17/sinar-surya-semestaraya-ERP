@@ -302,7 +302,7 @@
                                     Alamat Pengiriman <span class="text-red-500">*</span>
                                 </label>
                                 <textarea id="alamat_pengiriman" name="alamat_pengiriman" rows="4" required
-                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm resize-vertical @error('alamat_pengiriman') border-red-500 @enderror">{{ old('alamat_pengiriman', $salesOrder?->alamat_pengiriman) }}</textarea>
+                                    class="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm resize-vertical @error('alamat_pengiriman') border-red-500 @enderror">{{ old('alamat_pengiriman', $salesOrder?->alamat_pengiriman ?: ($salesOrder?->customer?->alamat_pengiriman ?: $salesOrder?->customer?->alamat)) }}</textarea>
                                 @error('alamat_pengiriman')
                                     <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
                                 @enderror
@@ -843,7 +843,10 @@
                         success: function(response) {
                             // Update customer and address
                             $('#customer_id').val(response.customer.id).trigger('change');
-                            $('#alamat_pengiriman').val(response.salesOrder.alamat_pengiriman);
+                            const alamatPengiriman = response.salesOrder.alamat_pengiriman 
+                                || (response.customer ? (response.customer.alamat_pengiriman || response.customer.alamat || response.customer.alamat_utama) : '') 
+                                || '';
+                            $('#alamat_pengiriman').val(alamatPengiriman);
 
                             // Clear existing products and save new products
                             salesOrderProducts = response.details || [];
@@ -909,6 +912,19 @@
                             `;
                         }
                     });
+                });
+
+                // Auto-fill alamat pengiriman if customer changes manually (and no sales order is selected)
+                $('#customer_id').on('change', function() {
+                    const customerId = $(this).val();
+                    if (customerId && !$('#sales_order_id').val()) {
+                        fetch(`/api/customers/${customerId}`)
+                            .then(res => res.json())
+                            .then(data => {
+                                const alamat = (data && (data.alamat_pengiriman || data.alamat || data.alamat_utama)) || '';
+                                $('#alamat_pengiriman').val(alamat);
+                            });
+                    }
                 });
 
                 // Function to populate product table

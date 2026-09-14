@@ -108,12 +108,15 @@ class PDFTemplateService
             $pdf->SetXY($customerX, $customerY);
             $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
 
-            // Alamat customer (jika ada), font normal, di bawah company/nama
-            if (!empty($deliveryOrder->customer)) {
+            // Alamat pengiriman (prioritaskan dari DO, jika kosong ambil dari customer), font normal, di bawah company/nama
+            $alamatPengiriman = $deliveryOrder->alamat_pengiriman 
+                ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '');
+
+            if (!empty($alamatPengiriman)) {
                 $pdf->SetFont('helvetica', '', 7);
                 $alamatY = $customerY + 5.5; // geser ke bawah 5.5mm dari nama
                 $pdf->SetXY($customerX, $alamatY);
-                $pdf->MultiCell($maxCustomerWidth, 4, $deliveryOrder->customer->alamat_pengiriman, 0, 'L');
+                $pdf->MultiCell($maxCustomerWidth, 4, $alamatPengiriman, 0, 'L');
             }
 
             $pdf->SetFont('helvetica', '', 7);
@@ -286,8 +289,11 @@ class PDFTemplateService
         // Customer info
         $pdf->Cell(0, 8, 'Kepada:', 0, 1, 'L');
         $pdf->Cell(0, 8, $deliveryOrder->customer->nama, 0, 1, 'L');
-        if ($deliveryOrder->customer->alamat) {
-            $pdf->MultiCell(0, 8, $deliveryOrder->customer->alamat, 0, 'L');
+        $alamatPengiriman = $deliveryOrder->alamat_pengiriman 
+            ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '');
+
+        if (!empty($alamatPengiriman)) {
+            $pdf->MultiCell(0, 8, $alamatPengiriman, 0, 'L');
         }
         $pdf->Ln(10);
 
@@ -450,7 +456,7 @@ class PDFTemplateService
                 [
                     'x' => $templateSize['width'] * 0.12,
                     'y' => $templateSize['height'] * 0.35 + 6,
-                    'text' => 'ALAMAT: ' . ($deliveryOrder->customer->alamat ?? 'N/A'),
+                    'text' => 'ALAMAT: ' . ($deliveryOrder->alamat_pengiriman ?? $deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? 'N/A'),
                     'label' => 'Alamat'
                 ],
                 // Items start
@@ -686,11 +692,14 @@ class PDFTemplateService
             $pdf->SetXY($coords['customer_x'], $coords['customer_y']);
             $pdf->Cell(0, 0, $deliveryOrder->customer->nama, 0, 0, 'L');
 
-            // Customer address
-            if ($deliveryOrder->customer->alamat) {
+            // Customer address: prioritaskan dari DO
+            $alamatPengiriman = $deliveryOrder->alamat_pengiriman 
+                ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '');
+
+            if (!empty($alamatPengiriman)) {
                 $pdf->SetXY($coords['alamat_x'], $coords['alamat_y']);
                 $maxWidth = $templateSize['width'] * 0.6;
-                $pdf->MultiCell($maxWidth, 4, $deliveryOrder->customer->alamat, 0, 'L');
+                $pdf->MultiCell($maxWidth, 4, $alamatPengiriman, 0, 'L');
             }
 
             // Customer phone

@@ -106,12 +106,15 @@ class PDFDeliveryOrderSinarSuryaTemplate
             $pdf->SetXY($customerX, $customerY);
             $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
 
-            // Alamat customer (jika ada), font normal, di bawah company/nama
-            if (!empty($deliveryOrder->customer)) {
+            // Alamat pengiriman (prioritaskan dari DO, jika kosong ambil dari customer), font normal, di bawah company/nama
+            $alamatPengiriman = $deliveryOrder->alamat_pengiriman 
+                ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '');
+
+            if (!empty($alamatPengiriman)) {
                 $pdf->SetFont('helvetica', '', 7);
                 $alamatY = $customerY + 5.5; // geser ke bawah 5.5mm dari nama
                 $pdf->SetXY($customerX, $alamatY);
-                $pdf->MultiCell($maxCustomerWidth, 4, $deliveryOrder->customer->alamat_pengiriman, 0, 'L');
+                $pdf->MultiCell($maxCustomerWidth, 4, $alamatPengiriman, 0, 'L');
             }
 
             $pdf->SetFont('helvetica', '', 7);

@@ -411,7 +411,7 @@
                     <p class="customer-name">{{ $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama }}
                     </p>
                     <div class="customer-details">
-                        <p>{{ $deliveryOrder->alamat_pengiriman ?? ($deliveryOrder->customer->alamat ?? '-') }}</p>
+                        <p>{{ $deliveryOrder->alamat_pengiriman ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '-') }}</p>
                         @if ($deliveryOrder->customer->telepon)
                             <p>Telp: {{ $deliveryOrder->customer->telepon }}</p>
                         @endif
