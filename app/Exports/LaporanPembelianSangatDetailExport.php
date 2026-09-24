@@ -124,7 +124,7 @@ class LaporanPembelianSangatDetailExport implements FromView, WithTitle, WithSty
     {
         // Set style untuk header
         $headerRow = 5;
-        $sheet->getStyle("A{$headerRow}:P{$headerRow}")->applyFromArray([
+        $sheet->getStyle("A{$headerRow}:Q{$headerRow}")->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -146,7 +146,7 @@ class LaporanPembelianSangatDetailExport implements FromView, WithTitle, WithSty
         ]);
 
         // Set style untuk judul laporan
-        $sheet->getStyle('A1:P3')->applyFromArray([
+        $sheet->getStyle('A1:Q3')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'size' => 16,
@@ -181,6 +181,7 @@ class LaporanPembelianSangatDetailExport implements FromView, WithTitle, WithSty
             'N' => 18, // Dibayar
             'O' => 15, // Status
             'P' => 20, // Petugas
+            'Q' => 25, // Catatan
         ];
     }
 
@@ -195,7 +196,7 @@ class LaporanPembelianSangatDetailExport implements FromView, WithTitle, WithSty
                 $highestRow = $sheet->getHighestRow();
 
                 // Set borders for all data
-                $sheet->getStyle('A6:P' . $highestRow)->applyFromArray([
+                $sheet->getStyle('A6:Q' . $highestRow)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,

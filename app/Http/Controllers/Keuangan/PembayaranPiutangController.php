@@ -59,7 +59,22 @@ class PembayaranPiutangController extends Controller
      */
     public function create(Request $request)
     {
+        $customerId = $request->query('customer_id');
         $invoiceId = $request->query('invoice_id');
+        $invoiceIdsParam = $request->query('invoice_ids');
+
+        $invoiceIds = [];
+        if (!empty($invoiceIdsParam)) {
+            if (is_string($invoiceIdsParam)) {
+                $invoiceIds = array_filter(explode(',', $invoiceIdsParam));
+            } elseif (is_array($invoiceIdsParam)) {
+                $invoiceIds = array_filter($invoiceIdsParam);
+            }
+        }
+        if ($invoiceId && !in_array($invoiceId, $invoiceIds)) {
+            $invoiceIds[] = $invoiceId;
+        }
+
         $invoice = null;
         $sisaPiutang = 0;
         $customer = null;
@@ -67,16 +82,38 @@ class PembayaranPiutangController extends Controller
         $kasAccounts = Kas::where('is_aktif', true)->get();
         $bankAccounts = RekeningBank::where('is_aktif', true)->get();
         $availableInvoices = collect();
+        $preselectedInvoiceIds = [];
 
-        if ($invoiceId) {
-            $invoice = Invoice::with(['customer', 'pembayaranDetails', 'uangMukaAplikasi'])->find($invoiceId);
-            if ($invoice) {
-                $sisaPiutang = (float)$invoice->sisa_piutang;
+        if (!empty($invoiceIds)) {
+            $preselectedInvoices = Invoice::with(['customer', 'pembayaranDetails', 'uangMukaAplikasi'])
+                ->whereIn('id', $invoiceIds)
+                ->get();
+
+            if ($preselectedInvoices->isNotEmpty()) {
+                $invoice = $preselectedInvoices->first();
                 $customer = $invoice->customer;
+                $preselectedInvoiceIds = $preselectedInvoices->pluck('id')->map(fn($id) => (int)$id)->toArray();
+                $sisaPiutang = (float)$preselectedInvoices->sum(function ($inv) {
+                    return (float)$inv->sisa_piutang;
+                });
 
-                // Load all unpaid invoices for this customer
+                // Load all unpaid invoices for this customer with eager loading
                 $availableInvoices = Invoice::where('customer_id', $customer->id)
                     ->whereIn('status', ['Belum Lunas', 'Lunas Sebagian', 'belum_bayar', 'sebagian'])
+                    ->with(['pembayaranDetails'])
+                    ->orderBy('tanggal', 'asc')
+                    ->get()
+                    ->filter(function ($inv) {
+                        return (float)$inv->sisa_piutang > 0;
+                    })
+                    ->values();
+            }
+        } elseif ($customerId) {
+            $customer = Customer::find($customerId);
+            if ($customer) {
+                $availableInvoices = Invoice::where('customer_id', $customer->id)
+                    ->whereIn('status', ['Belum Lunas', 'Lunas Sebagian', 'belum_bayar', 'sebagian'])
+                    ->with(['pembayaranDetails'])
                     ->orderBy('tanggal', 'asc')
                     ->get()
                     ->filter(function ($inv) {
@@ -114,7 +151,8 @@ class PembayaranPiutangController extends Controller
             'nomorPembayaran',
             'kasAccounts',
             'bankAccounts',
-            'availableInvoices'
+            'availableInvoices',
+            'preselectedInvoiceIds'
         ));
     }
 
@@ -143,6 +181,22 @@ class PembayaranPiutangController extends Controller
             'no_referensi' => 'nullable|string|max:100',
             'allocations' => 'nullable|array',
             'allocations.*' => 'nullable|numeric|min:0',
+        ], [
+            'customer_id.required' => 'Customer wajib dipilih.',
+            'customer_id.exists' => 'Data customer yang dipilih tidak ditemukan.',
+            'tanggal_pembayaran.required' => 'Tanggal pembayaran wajib diisi.',
+            'tanggal_pembayaran.date' => 'Format tanggal pembayaran tidak valid.',
+            'jumlah_pembayaran.required' => 'Jumlah pembayaran wajib diisi.',
+            'jumlah_pembayaran.numeric' => 'Jumlah pembayaran harus berupa nominal angka valid.',
+            'jumlah_pembayaran.min' => 'Jumlah pembayaran harus lebih dari 0.',
+            'metode_pembayaran.required' => 'Metode pembayaran wajib dipilih.',
+            'metode_pembayaran.in' => 'Metode pembayaran yang dipilih tidak valid.',
+            'kas_id.required_if' => 'Akun kas penerima wajib dipilih untuk metode pembayaran Kas / Tunai.',
+            'kas_id.exists' => 'Akun kas yang dipilih tidak valid atau tidak aktif.',
+            'rekening_bank_id.required_if' => 'Rekening bank penerima wajib dipilih untuk metode transfer / bank.',
+            'rekening_bank_id.exists' => 'Rekening bank yang dipilih tidak valid atau tidak aktif.',
+            'catatan.max' => 'Catatan maksimal 500 karakter.',
+            'no_referensi.max' => 'Nomor referensi / bukti transfer maksimal 100 karakter.',
         ]);
 
         DB::beginTransaction();
@@ -167,9 +221,17 @@ class PembayaranPiutangController extends Controller
                 $allocations[$validatedData['invoice_id']] = $totalBayar;
             }
 
-            // If allocations are provided, validate amounts against remaining receivables
+            // Validasi: Wajib ada minimal satu invoice yang dialokasikan
+            if (empty($allocations)) {
+                DB::rollBack();
+                return back()->withInput()->withErrors([
+                    'allocations' => 'Pilih minimal satu tagihan invoice yang akan dibayar dan masukkan nominal alokasinya.'
+                ]);
+            }
+
+            // Validasi total alokasi harus sesuai dengan jumlah pembayaran
             $totalAllocated = array_sum($allocations);
-            if (!empty($allocations) && abs($totalAllocated - $totalBayar) > 0.05) {
+            if (abs($totalAllocated - $totalBayar) > 0.05) {
                 DB::rollBack();
                 return back()->withInput()->withErrors([
                     'jumlah_pembayaran' => 'Total alokasi invoice (Rp ' . number_format($totalAllocated, 0, ',', '.') .
@@ -180,14 +242,15 @@ class PembayaranPiutangController extends Controller
             // Verify each invoice belonging to this customer and validate remaining balance
             $validatedInvoices = [];
             foreach ($allocations as $invId => $amount) {
-                $inv = Invoice::where('id', $invId)
+                $inv = Invoice::with(['pembayaranDetails'])
+                    ->where('id', $invId)
                     ->where('customer_id', $customer->id)
                     ->first();
 
                 if (!$inv) {
                     DB::rollBack();
                     return back()->withInput()->withErrors([
-                        'allocations' => "Invoice ID #{$invId} tidak ditemukan atau bukan milik customer ini."
+                        'allocations' => "Invoice ID #{$invId} tidak ditemukan atau bukan milik customer {$customer->nama}."
                     ]);
                 }
 
@@ -206,12 +269,14 @@ class PembayaranPiutangController extends Controller
                 ];
             }
 
-            // Generate Payment Number
+            // Generate Payment Number safely with lock
             $paymentDate = date('Ymd', strtotime($request->tanggal_pembayaran));
             $prefix = 'BPP-' . $paymentDate . '-';
             $lastPaymentOnDate = PembayaranPiutang::where('nomor', 'like', $prefix . '%')
+                ->lockForUpdate()
                 ->orderBy('id', 'desc')
                 ->first();
+
             $lastNum = 0;
             if ($lastPaymentOnDate && $lastPaymentOnDate->nomor) {
                 $parts = explode('-', $lastPaymentOnDate->nomor);
@@ -222,10 +287,18 @@ class PembayaranPiutangController extends Controller
                 }
             }
             $newNum = str_pad($lastNum + 1, 4, '0', STR_PAD_LEFT);
+            $nomorPembayaran = $prefix . $newNum;
+
+            // Pastikan tidak duplikat jika terjadi concurrent requests
+            while (PembayaranPiutang::where('nomor', $nomorPembayaran)->exists()) {
+                $lastNum++;
+                $newNum = str_pad($lastNum, 4, '0', STR_PAD_LEFT);
+                $nomorPembayaran = $prefix . $newNum;
+            }
 
             // Create Payment Header
             $pembayaran = new PembayaranPiutang();
-            $pembayaran->nomor = $prefix . $newNum;
+            $pembayaran->nomor = $nomorPembayaran;
             $pembayaran->tanggal = $validatedData['tanggal_pembayaran'];
             $pembayaran->jumlah = $totalBayar;
             $pembayaran->metode_pembayaran = $validatedData['metode_pembayaran'];
@@ -279,7 +352,9 @@ class PembayaranPiutangController extends Controller
                 ]);
 
                 // Calculate remaining balance after this allocation
-                $sisaAfter = (float)$inv->sisa_piutang; // Recalculated including new detail
+                // Unset loaded relation so fresh calculation is done including newly created detail
+                $inv->unsetRelation('pembayaranDetails');
+                $sisaAfter = (float)$inv->sisa_piutang;
                 if ($sisaAfter <= 0.01) {
                     $inv->status = 'lunas';
                 } else {
@@ -327,8 +402,19 @@ class PembayaranPiutangController extends Controller
             return back()->withInput()->withErrors($e->errors());
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error saving PembayaranPiutang: ' . $e->getMessage() . ' Stack: ' . $e->getTraceAsString());
-            return back()->withInput()->withErrors(['error' => 'Terjadi kesalahan saat menyimpan pembayaran: ' . $e->getMessage()]);
+            Log::error('Error saving PembayaranPiutang: ' . $e->getMessage(), [
+                'stack' => $e->getTraceAsString(),
+                'request' => $request->except(['_token'])
+            ]);
+
+            $errorMessage = 'Terjadi kesalahan sistem saat memproses pembayaran piutang. ';
+            if ($e instanceof \Illuminate\Database\QueryException) {
+                $errorMessage .= 'Gagal menyimpan transaksi ke database. Pastikan data tagihan dan akun keuangan valid.';
+            } else {
+                $errorMessage .= $e->getMessage();
+            }
+
+            return back()->withInput()->withErrors(['error' => $errorMessage]);
         }
     }
 
@@ -374,12 +460,24 @@ class PembayaranPiutangController extends Controller
         $sisaPiutangSaatIni = 0;
         $sisaPiutangUntukEdit = 0;
 
-        if ($pembayaran->invoice_id) {
+        if ($pembayaran->details->count() === 1) {
+            $invoice = $pembayaran->details->first()->invoice;
+            if ($invoice) {
+                $sisaPiutangSaatIni = (float)$invoice->sisa_piutang;
+                $sisaPiutangUntukEdit = (float)$invoice->sisa_piutang + (float)$pembayaran->jumlah;
+            }
+        } elseif ($pembayaran->invoice_id) {
             $invoice = Invoice::with('customer')->find($pembayaran->invoice_id);
             if ($invoice) {
                 $sisaPiutangSaatIni = (float)$invoice->sisa_piutang;
                 $sisaPiutangUntukEdit = (float)$invoice->sisa_piutang + (float)$pembayaran->jumlah;
             }
+        } else {
+            // Multi-invoice payment
+            $sisaPiutangSaatIni = (float)$pembayaran->details->sum(function($d) {
+                return $d->invoice ? (float)$d->invoice->sisa_piutang : 0;
+            });
+            $sisaPiutangUntukEdit = $sisaPiutangSaatIni + (float)$pembayaran->jumlah;
         }
 
         return view('keuangan.pembayaran_piutang.edit', compact(
@@ -544,7 +642,12 @@ class PembayaranPiutangController extends Controller
 
             $this->logUserAktivitas('hapus', 'piutang_usaha', $id, $paymentLogDetail);
 
-            return redirect()->route('keuangan.pembayaran-piutang.index')->with('success', 'Pembayaran piutang berhasil dihapus.');
+            $previousUrl = url()->previous();
+            if ($previousUrl && !str_contains($previousUrl, 'pembayaran-piutang/' . $id)) {
+                return redirect($previousUrl)->with('success', 'Pembayaran piutang ' . $pembayaran->nomor . ' berhasil dibatalkan / dihapus.');
+            }
+
+            return redirect()->route('keuangan.pembayaran-piutang.index')->with('success', 'Pembayaran piutang ' . $pembayaran->nomor . ' berhasil dibatalkan / dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Terjadi kesalahan saat menghapus pembayaran: ' . $e->getMessage()]);
@@ -575,6 +678,7 @@ class PembayaranPiutangController extends Controller
     {
         $invoices = Invoice::where('customer_id', $customer->id)
             ->whereIn('status', ['Belum Lunas', 'Lunas Sebagian', 'belum_bayar', 'sebagian'])
+            ->with(['pembayaranDetails'])
             ->orderBy('tanggal', 'asc')
             ->get()
             ->filter(function ($invoice) {

@@ -96,7 +96,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
     public function styles(Worksheet $sheet)
     {
         // Set style untuk header
-        $sheet->getStyle('A5:H5')->applyFromArray([
+        $sheet->getStyle('A5:I5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -118,7 +118,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A6:H' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:I' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -157,6 +157,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
             'F' => 18, // Total Dibayar
             'G' => 18, // Sisa
             'H' => 20, // Pembuat
+            'I' => 25, // Catatan
         ];
     }
 
@@ -177,7 +178,7 @@ class LaporanPembelianSimpleExport implements FromView, WithTitle, WithStyles, W
 
                 // Bold and background for total row
                 if ($highestRow > 6) {
-                    $sheet->getStyle('A' . $highestRow . ':H' . $highestRow)->applyFromArray([
+                    $sheet->getStyle('A' . $highestRow . ':I' . $highestRow)->applyFromArray([
                         'font' => ['bold' => true],
                         'fill' => [
                             'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,

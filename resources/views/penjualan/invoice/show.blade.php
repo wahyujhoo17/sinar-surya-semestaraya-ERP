@@ -433,6 +433,11 @@
                                                 @endif
                                                 {{ $detail->produk->nama ?? $detail->deskripsi ?? 'Produk tidak ditemukan' }}
                                             </div>
+                                            @if($detail->produk && ($detail->produk->kode || $detail->produk->product_sku))
+                                                <div class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                                    {{ $detail->produk->kode ?? $detail->produk->product_sku }}
+                                                </div>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                                             {{ $detail->deskripsi ?? '-' }}</td>

@@ -1,13 +1,13 @@
 <table>
     <tr>
-        <td colspan="16" style="font-size: 16px; font-weight: bold; text-align: center;">LAPORAN PEMBELIAN DETAIL</td>
+        <td colspan="17" style="font-size: 16px; font-weight: bold; text-align: center;">LAPORAN PEMBELIAN DETAIL</td>
     </tr>
     <tr>
-        <td colspan="16" style="font-size: 14px; font-weight: bold; text-align: center;">PT. SINAR SURYA SEMESTARAYA
+        <td colspan="17" style="font-size: 14px; font-weight: bold; text-align: center;">PT. SINAR SURYA SEMESTARAYA
         </td>
     </tr>
     <tr>
-        <td colspan="16" style="font-size: 12px; font-weight: bold; text-align: center;">
+        <td colspan="17" style="font-size: 12px; font-weight: bold; text-align: center;">
             Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'])->format('d/m/Y') }} -
             {{ \Carbon\Carbon::parse($filters['tanggal_akhir'])->format('d/m/Y') }}
         </td>
@@ -64,6 +64,9 @@
         <th
             style="background-color: #1F2937; color: #FFFFFF; border: 2px solid #000000; text-align: center; font-weight: bold; padding: 8px;">
             Petugas</th>
+        <th
+            style="background-color: #1F2937; color: #FFFFFF; border: 2px solid #000000; text-align: center; font-weight: bold; padding: 8px;">
+            Catatan</th>
     </tr>
 
     @foreach ($dataPembelian as $po)
@@ -125,8 +128,11 @@
                             style="border: 1px solid #666666; vertical-align: top; text-align: center;">
                             {{ $statusLabel }}</td>
                         <td rowspan="{{ $po->details->count() }}"
-                            style="border: 1px solid #666666; vertical-align: top; border-right: 2px solid #000000;">
+                            style="border: 1px solid #666666; vertical-align: top;">
                             {{ $po->user->name ?? ($po->nama_petugas ?? '-') }}</td>
+                        <td rowspan="{{ $po->details->count() }}"
+                            style="border: 1px solid #666666; vertical-align: top; border-right: 2px solid #000000;">
+                            {{ $po->catatan ?? '-' }}</td>
                     @endif
                 </tr>
             @endforeach
@@ -143,7 +149,7 @@
                     <td colspan="3" style="border: 1px solid #F59E0B; text-align: right; font-weight: 600;">
                           {{ number_format($itemSubtotal, 2, ',', '.') }}
                     </td>
-                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                    <td colspan="7" style="border: 1px solid #F59E0B;"></td>
                 </tr>
                 <tr style="background-color: #FEF3C7;">
                     <td colspan="7"
@@ -157,7 +163,7 @@
                         style="border: 1px solid #F59E0B; text-align: right; font-weight: 600; color: #DC2626;">
                         -   {{ number_format($po->diskon_nominal ?? 0, 2, ',', '.') }}
                     </td>
-                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                    <td colspan="7" style="border: 1px solid #F59E0B;"></td>
                 </tr>
                 <tr style="background-color: #FEF3C7; border-bottom: 2px solid #F59E0B;">
                     <td colspan="7"
@@ -167,7 +173,7 @@
                     <td colspan="3" style="border: 1px solid #F59E0B; text-align: right; font-weight: bold;">
                           {{ number_format($itemSubtotal - ($po->diskon_nominal ?? 0), 2, ',', '.') }}
                     </td>
-                    <td colspan="6" style="border: 1px solid #F59E0B;"></td>
+                    <td colspan="7" style="border: 1px solid #F59E0B;"></td>
                 </tr>
             @endif
         @else
@@ -188,6 +194,7 @@
                       {{ number_format($totalBayar, 2, ',', '.') }}</td>
                 <td style="border: 1px solid #D1D5DB; text-align: center;">{{ $statusLabel }}</td>
                 <td style="border: 1px solid #D1D5DB;">{{ $po->user->name ?? ($po->nama_petugas ?? '-') }}</td>
+                <td style="border: 1px solid #D1D5DB;">{{ $po->catatan ?? '-' }}</td>
             </tr>
         @endif
     @endforeach
@@ -198,12 +205,12 @@
               {{ number_format($totalPembelian, 2, ',', '.') }}</td>
         <td style="border: 1px solid #000000; text-align: right; font-weight: bold;">
               {{ number_format($totalDibayar, 2, ',', '.') }}</td>
-        <td colspan="2" style="border: 1px solid #000000;"></td>
+        <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
     <tr style="background-color: #DBEAFE;">
         <td colspan="12" style="border: 1px solid #000000; text-align: right; font-weight: bold;">SISA PEMBAYARAN</td>
         <td colspan="2" style="border: 1px solid #000000; text-align: right; font-weight: bold;">
               {{ number_format($sisaPembayaran, 2, ',', '.') }}</td>
-        <td colspan="2" style="border: 1px solid #000000;"></td>
+        <td colspan="3" style="border: 1px solid #000000;"></td>
     </tr>
 </table>

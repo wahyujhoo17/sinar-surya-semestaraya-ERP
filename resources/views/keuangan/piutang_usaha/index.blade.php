@@ -102,6 +102,23 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <a href="{{ route('keuangan.pembayaran-piutang.index') }}"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 transition-colors">
+                        <svg class="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        Riwayat Pembayaran
+                    </a>
+                    <a href="{{ route('keuangan.pembayaran-piutang.create') }}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Buat Pembayaran
+                    </a>
+                </div>
             </div>
 
             {{-- Dashboard Summary Cards --}}
@@ -194,6 +211,78 @@
 
         {{-- Main Content --}}
         <div x-data="{
+            selectedInvoices: {},
+
+            toggleInvoice(id, customerId, customerName, sisaPiutang) {
+                if (this.selectedInvoices[id]) {
+                    delete this.selectedInvoices[id];
+                } else {
+                    this.selectedInvoices[id] = {
+                        id: id,
+                        customerId: customerId,
+                        customerName: customerName,
+                        sisa: parseFloat(sisaPiutang)
+                    };
+                }
+            },
+
+            toggleSelectAll(event) {
+                const checkboxes = document.querySelectorAll('.invoice-checkbox:not(:disabled)');
+                checkboxes.forEach(cb => {
+                    const id = cb.value;
+                    const custId = cb.dataset.customerId;
+                    const custName = cb.dataset.customerName;
+                    const sisa = cb.dataset.sisa;
+                    if (event.target.checked) {
+                        this.selectedInvoices[id] = {
+                            id: id,
+                            customerId: custId,
+                            customerName: custName,
+                            sisa: parseFloat(sisa)
+                        };
+                    } else {
+                        delete this.selectedInvoices[id];
+                    }
+                });
+            },
+
+            getSelectedCount() {
+                return Object.keys(this.selectedInvoices).length;
+            },
+
+            getSelectedTotal() {
+                let sum = 0;
+                for (let k in this.selectedInvoices) {
+                    sum += this.selectedInvoices[k].sisa || 0;
+                }
+                return sum;
+            },
+
+            getUniqueCustomers() {
+                const map = {};
+                for (let k in this.selectedInvoices) {
+                    const item = this.selectedInvoices[k];
+                    map[item.customerId] = item.customerName;
+                }
+                return Object.entries(map).map(([id, name]) => ({ id, name }));
+            },
+
+            isSingleCustomer() {
+                return this.getUniqueCustomers().length === 1;
+            },
+
+            goToBatchPayment() {
+                const customers = this.getUniqueCustomers();
+                if (customers.length !== 1) return;
+                const custId = customers[0].id;
+                const invIds = Object.keys(this.selectedInvoices).join(',');
+                window.location.href = `{{ route('keuangan.pembayaran-piutang.create') }}?customer_id=${custId}&invoice_ids=${invIds}`;
+            },
+
+            formatRupiah(val) {
+                return new Intl.NumberFormat('id-ID').format(val || 0);
+            },
+
             init() {
                 // Initialize table functionality if needed
             }
@@ -676,8 +765,12 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="piutangTable">
                     <thead class="bg-gray-50 dark:bg-gray-700/50">
                         <tr>
+                            <th scope="col" class="px-3 py-3 text-center w-10">
+                                <input type="checkbox" @change="toggleSelectAll($event)" title="Pilih Semua Tagihan Belum Lunas di Halaman Ini"
+                                    class="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4 cursor-pointer">
+                            </th>
                             <th scope="col"
-                                class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 {{ __('No') }}
                             </th>
                             <th scope="col"
@@ -942,7 +1035,21 @@
                             @endphp
                             <tr
                                 class="{{ $index % 2 == 0 ? '' : 'bg-gray-50 dark:bg-gray-800/50' }} hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors duration-200">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                                <td class="px-3 py-4 whitespace-nowrap text-center">
+                                    @if ($sisaPiutang > 0)
+                                        <input type="checkbox"
+                                            :checked="!!selectedInvoices[{{ $invoice->id }}]"
+                                            @change="toggleInvoice('{{ $invoice->id }}', '{{ $invoice->customer_id }}', '{{ addslashes($invoice->customer->company ?? ($invoice->customer->nama ?? '-')) }}', '{{ $sisaPiutang }}')"
+                                            class="invoice-checkbox rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 h-4 w-4 cursor-pointer"
+                                            value="{{ $invoice->id }}"
+                                            data-customer-id="{{ $invoice->customer_id }}"
+                                            data-customer-name="{{ $invoice->customer->company ?? ($invoice->customer->nama ?? '-') }}"
+                                            data-sisa="{{ $sisaPiutang }}">
+                                    @else
+                                        <span class="text-gray-300 dark:text-gray-600 text-xs">-</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                     {{ $index + 1 }}</td>
                                 <td
                                     class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300">
@@ -1050,7 +1157,7 @@
 
                                         <a href="{{ route('keuangan.pembayaran-piutang.create', ['invoice_id' => $invoice->id]) }}"
                                             class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-gray-200 text-gray-600 dark:text-gray-400 dark:bg-gray-700/50 dark:hover:bg-gray-600/50 transition-colors border border-dashed border-gray-300 dark:border-gray-600"
-                                            title="Lihat Riwayat Pembayaran Invoice">
+                                            title="Bayar Piutang Invoice Ini">
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"
                                                 fill="currentColor" class="w-4 h-4">
                                                 <path fill-rule="evenodd"
@@ -1063,7 +1170,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" {{-- Adjusted colspan --}}
+                                <td colspan="12" {{-- Adjusted colspan for checkbox --}}
                                     class="px-6 py-10 whitespace-nowrap text-center text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800">
                                     <div class="flex flex-col items-center justify-center">
                                         <svg class="h-10 w-10 text-gray-400 dark:text-gray-500 mb-2" fill="none"
@@ -1082,7 +1189,7 @@
                     </tbody>
                     <tfoot class="bg-gray-50 dark:bg-gray-700/50">
                         <tr>
-                            <th colspan="7" {{-- Adjusted colspan --}}
+                            <th colspan="8" {{-- Adjusted colspan for checkbox --}}
                                 class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                 {{ __('Total Sisa Piutang (dari Invoice ditampilkan):') }}</th>
                             <th
@@ -1106,6 +1213,40 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">
                     <span class="font-medium">*</span> Total Pembayaran = Pembayaran Piutang + Uang Muka Diterapkan
                 </p>
+            </div>
+        </div>
+
+        {{-- Floating Bulk Action Bar --}}
+        <div x-show="getSelectedCount() > 0" x-cloak
+            class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-2xl rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4 transition-all">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center justify-center bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 font-bold px-3 py-1 rounded-full text-xs">
+                    <span x-text="getSelectedCount()"></span>&nbsp;Invoice Dipilih
+                </span>
+                <div class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    Total Piutang: <span class="text-red-600 dark:text-red-400 font-mono font-bold" x-text="'Rp ' + formatRupiah(getSelectedTotal())"></span>
+                </div>
+            </div>
+
+            <template x-if="!isSingleCustomer()">
+                <div class="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800">
+                    Invoice berasal dari <strong x-text="getUniqueCustomers().length"></strong> customer berbeda. Pilih invoice dari 1 customer yang sama untuk pembayaran sekaligus.
+                </div>
+            </template>
+
+            <div class="flex items-center gap-2">
+                <button type="button" @click="selectedInvoices = {}"
+                    class="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    Batal
+                </button>
+                <button type="button" @click="goToBatchPayment()"
+                    :disabled="!isSingleCustomer()"
+                    class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-semibold shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Bayar Invoice Terpilih
+                </button>
             </div>
         </div>
     </div>

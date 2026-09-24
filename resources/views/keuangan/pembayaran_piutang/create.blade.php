@@ -5,305 +5,16 @@
 ]" :currentPage="$invoice ? 'Proses Pembayaran Piutang' : 'Buat Pembayaran Piutang'">
 
     <div class="max-w-full mx-auto py-6 px-4 sm:px-6 lg:px-8"
-        x-data="{
+        x-data="pembayaranPiutangApp({
             customerId: '{{ old('customer_id', $customer->id ?? '') }}',
             metode: '{{ old('metode_pembayaran', 'Bank Transfer') }}',
             totalBayar: {{ old('jumlah_pembayaran', $sisaPiutang ?? 0) }},
-            availableInvoices: [],
-            selectedInvoiceIdToAppend: '',
-            selectedInvoices: [],
-            allocations: {},
-            catatanAllocations: {},
-            isLoadingInvoices: false,
             initialInvoiceId: '{{ $invoice->id ?? '' }}',
             initialSisaPiutang: {{ $sisaPiutang ?? 0 }},
-            isSubmitting: false,
-            errorMessage: '',
-
-            init() {
-                this.$nextTick(() => {
-                    const self = this;
-
-                    // Init Customer Select2
-                    const $custSelect = $('#customer_select');
-                    if ($custSelect.length) {
-                        $custSelect.select2({
-                            placeholder: '-- Pilih / Cari Customer --',
-                            allowClear: true,
-                            width: '100%'
-                        }).on('change', function() {
-                            self.customerId = $(this).val();
-                            self.loadInvoices(self.customerId);
-                        });
-                    }
-
-                    // Init Invoice Select2
-                    this.initInvoiceSelect2();
-
-                    if (this.customerId) {
-                        this.loadInvoices(this.customerId);
-                    }
-                });
-            },
-
-            initInvoiceSelect2() {
-                const self = this;
-                const $invSelect = $('#invoice_select2');
-                if ($invSelect.length) {
-                    $invSelect.select2({
-                        placeholder: '-- Cari & Pilih Invoice yang Ingin Dibayar --',
-                        allowClear: true,
-                        width: '100%'
-                    }).off('change.app').on('change.app', function() {
-                        self.selectedInvoiceIdToAppend = $(this).val();
-                    });
-                }
-            },
-
-            loadInvoices(customerId) {
-                if (!customerId) {
-                    this.availableInvoices = [];
-                    this.selectedInvoices = [];
-                    this.allocations = {};
-                    this.catatanAllocations = {};
-                    this.selectedInvoiceIdToAppend = '';
-                    this.renderInvoiceSelect2Options();
-                    return;
-                }
-
-                this.isLoadingInvoices = true;
-                fetch(`/keuangan/customers/${customerId}/invoices`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    this.availableInvoices = data;
-                    this.selectedInvoices = [];
-                    this.allocations = {};
-                    this.catatanAllocations = {};
-                    this.selectedInvoiceIdToAppend = '';
-
-                    // If coming from a specific invoice
-                    if (this.initialInvoiceId) {
-                        const targetId = parseInt(this.initialInvoiceId);
-                        const exists = this.availableInvoices.find(inv => inv.id === targetId);
-                        if (exists) {
-                            this.addInvoice(exists);
-                            this.allocations[targetId] = exists.sisa_piutang;
-                            this.totalBayar = exists.sisa_piutang;
-                        }
-                    }
-
-                    this.$nextTick(() => {
-                        this.renderInvoiceSelect2Options();
-                    });
-                })
-                .catch(err => {
-                    console.error('Error loading invoices:', err);
-                })
-                .finally(() => {
-                    this.isLoadingInvoices = false;
-                });
-            },
-
-            renderInvoiceSelect2Options() {
-                const self = this;
-                const $select = $('#invoice_select2');
-                if (!$select.length) return;
-
-                $select.empty();
-                $select.append(new Option('-- Cari & Pilih Invoice yang Ingin Dibayar --', ''));
-
-                this.availableInvoices.forEach(inv => {
-                    const isAdded = self.selectedInvoices.some(i => i.id === inv.id);
-                    const text = `${inv.nomor_invoice} (${inv.tanggal_invoice}) - Sisa Piutang: Rp ${self.formatRupiah(inv.sisa_piutang)}${isAdded ? ' [Sudah Masuk List]' : ''}`;
-                    const option = new Option(text, inv.id, false, false);
-                    if (isAdded) {
-                        $(option).attr('disabled', 'disabled');
-                    }
-                    $select.append(option);
-                });
-
-                $select.val('').trigger('change.select2');
-            },
-
-            addSelectedFromDropdown() {
-                if (!this.selectedInvoiceIdToAppend) return;
-                const targetId = parseInt(this.selectedInvoiceIdToAppend);
-                const inv = this.availableInvoices.find(i => i.id === targetId);
-                if (inv) {
-                    this.addInvoice(inv);
-                    this.selectedInvoiceIdToAppend = '';
-                    this.renderInvoiceSelect2Options();
-                }
-            },
-
-            addInvoice(inv) {
-                if (this.selectedInvoices.some(i => i.id === inv.id)) return;
-                this.selectedInvoices.push(inv);
-                
-                // Calculate suggested allocation
-                const currentAllocated = this.getTotalAllocated();
-                const unallocated = Math.max(0, parseFloat(this.totalBayar || 0) - currentAllocated);
-                
-                if (unallocated > 0) {
-                    this.allocations[inv.id] = Math.min(unallocated, parseFloat(inv.sisa_piutang));
-                } else if (parseFloat(this.totalBayar || 0) === 0) {
-                    this.allocations[inv.id] = parseFloat(inv.sisa_piutang);
-                    this.recalculateTotalBayarFromAllocations();
-                } else {
-                    this.allocations[inv.id] = 0;
-                }
-            },
-
-            removeInvoice(invId) {
-                this.selectedInvoices = this.selectedInvoices.filter(i => i.id !== invId);
-                delete this.allocations[invId];
-                delete this.catatanAllocations[invId];
-                this.renderInvoiceSelect2Options();
-            },
-
-            removeAllInvoices() {
-                this.selectedInvoices = [];
-                this.allocations = {};
-                this.catatanAllocations = {};
-                this.renderInvoiceSelect2Options();
-            },
-
-            payInFull(inv) {
-                this.allocations[inv.id] = parseFloat(inv.sisa_piutang);
-            },
-
-            formatRupiahInput(angka) {
-                if (angka === null || angka === undefined || angka === '') return '';
-                const num = parseFloat(angka);
-                if (isNaN(num)) return '';
-                if (num === 0) return '';
-                
-                const parts = num.toString().split('.');
-                const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-                if (parts.length > 1 && parts[1] && parts[1] !== '0' && parts[1] !== '00') {
-                    return intFormatted + ',' + parts[1];
-                }
-                return intFormatted;
-            },
-
-            parseRupiahInput(str) {
-                if (!str && str !== 0) return 0;
-                let cleaned = str.toString().trim();
-                if (!cleaned) return 0;
-
-                const lastCommaIndex = cleaned.lastIndexOf(',');
-                if (lastCommaIndex !== -1) {
-                    cleaned = cleaned.substring(0, lastCommaIndex).replace(/\./g, '').replace(/[^0-9]/g, '') +
-                        '.' + cleaned.substring(lastCommaIndex + 1).replace(/[^0-9]/g, '');
-                } else {
-                    cleaned = cleaned.replace(/\./g, '').replace(/[^0-9]/g, '');
-                }
-
-                const num = parseFloat(cleaned);
-                return isNaN(num) ? 0 : num;
-            },
-
-            handleTotalBayarInput(event) {
-                const rawStr = event.target.value;
-                if (rawStr === '') {
-                    this.totalBayar = 0;
-                    return;
-                }
-                const rawVal = this.parseRupiahInput(rawStr);
-                this.totalBayar = rawVal;
-                event.target.value = this.formatRupiahInput(rawVal);
-            },
-
-            onAllocationInput(inv, event) {
-                const rawStr = event.target.value;
-                if (rawStr === '') {
-                    this.allocations[inv.id] = 0;
-                    return;
-                }
-                let rawVal = this.parseRupiahInput(rawStr);
-                const maxLimit = parseFloat(inv.sisa_piutang || 0);
-                if (rawVal > maxLimit) {
-                    rawVal = maxLimit;
-                } else if (rawVal < 0) {
-                    rawVal = 0;
-                }
-                this.allocations[inv.id] = rawVal;
-                event.target.value = this.formatRupiahInput(rawVal);
-            },
-
-            recalculateTotalBayarFromAllocations() {
-                let sum = 0;
-                for (let id in this.allocations) {
-                    sum += parseFloat(this.allocations[id] || 0);
-                }
-                this.totalBayar = sum;
-            },
-
-            syncTotalBayarWithAllocations() {
-                this.totalBayar = this.getTotalAllocated();
-            },
-
-            getTotalAllocated() {
-                let sum = 0;
-                for (let id in this.allocations) {
-                    sum += parseFloat(this.allocations[id] || 0);
-                }
-                return sum;
-            },
-
-            getUnallocatedDifference() {
-                return (parseFloat(this.totalBayar || 0) - this.getTotalAllocated()).toFixed(2);
-            },
-
-            validateAndSubmit(e) {
-                if (this.isSubmitting) {
-                    e.preventDefault();
-                    return false;
-                }
-
-                if (parseFloat(this.totalBayar || 0) <= 0) {
-                    this.errorMessage = 'Jumlah pembayaran harus lebih dari 0.';
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return false;
-                }
-
-                if (this.selectedInvoices.length === 0 && this.availableInvoices.length > 0) {
-                    this.errorMessage = 'Pilih dan tambahkan minimal satu invoice yang akan dibayar menggunakan dropdown di bawah.';
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return false;
-                }
-
-                const totalAlloc = this.getTotalAllocated();
-                if (totalAlloc <= 0 && this.selectedInvoices.length > 0) {
-                    this.errorMessage = 'Tentukan nominal alokasi pembayaran untuk invoice yang dipilih.';
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return false;
-                }
-
-                if (Math.abs(totalAlloc - parseFloat(this.totalBayar || 0)) > 0.05 && this.selectedInvoices.length > 0) {
-                    this.errorMessage = 'Total alokasi invoice (Rp ' + this.formatRupiah(totalAlloc) + ') belum seimbang dengan Jumlah Pembayaran (Rp ' + this.formatRupiah(this.totalBayar) + '). Klik tombol Samakan dengan Total Alokasi.';
-                    e.preventDefault();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                    return false;
-                }
-
-                this.errorMessage = '';
-                this.isSubmitting = true;
-                return true;
-            },
-
-            formatRupiah(val) {
-                return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(val || 0);
-            }
-        }">
+            oldAllocations: {{ Js::from(old('allocations', [])) }},
+            oldCatatanAllocations: {{ Js::from(old('catatan_allocations', [])) }},
+            preselectedInvoiceIds: {{ Js::from($preselectedInvoiceIds ?? []) }}
+        })">
 
         @push('styles')
             <!-- Select2 CSS -->
@@ -783,5 +494,353 @@
     @push('scripts')
         <!-- Select2 JS -->
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            function pembayaranPiutangApp(config) {
+                return {
+                    customerId: config.customerId || '',
+                    metode: config.metode || 'Bank Transfer',
+                    totalBayar: parseFloat(config.totalBayar || 0),
+                    availableInvoices: [],
+                    selectedInvoiceIdToAppend: '',
+                    selectedInvoices: [],
+                    allocations: {},
+                    catatanAllocations: {},
+                    isLoadingInvoices: false,
+                    initialInvoiceId: config.initialInvoiceId || '',
+                    initialSisaPiutang: parseFloat(config.initialSisaPiutang || 0),
+                    isSubmitting: false,
+                    errorMessage: '',
+                    oldAllocations: config.oldAllocations || {},
+                    oldCatatanAllocations: config.oldCatatanAllocations || {},
+                    preselectedInvoiceIds: config.preselectedInvoiceIds || [],
+
+                    init() {
+                        this.$nextTick(() => {
+                            const self = this;
+
+                            // Init Customer Select2
+                            const $custSelect = $('#customer_select');
+                            if ($custSelect.length) {
+                                $custSelect.select2({
+                                    placeholder: '-- Pilih / Cari Customer --',
+                                    allowClear: true,
+                                    width: '100%'
+                                }).on('change', function() {
+                                    self.customerId = $(this).val();
+                                    self.loadInvoices(self.customerId);
+                                });
+                            }
+
+                            // Init Invoice Select2
+                            this.initInvoiceSelect2();
+
+                            if (this.customerId) {
+                                this.loadInvoices(this.customerId);
+                            }
+                        });
+                    },
+
+                    initInvoiceSelect2() {
+                        const self = this;
+                        const $invSelect = $('#invoice_select2');
+                        if ($invSelect.length) {
+                            $invSelect.select2({
+                                placeholder: '-- Cari & Pilih Invoice yang Ingin Dibayar --',
+                                allowClear: true,
+                                width: '100%'
+                            }).off('change.app').on('change.app', function() {
+                                self.selectedInvoiceIdToAppend = $(this).val();
+                            });
+                        }
+                    },
+
+                    loadInvoices(customerId) {
+                        if (!customerId) {
+                            this.availableInvoices = [];
+                            this.selectedInvoices = [];
+                            this.allocations = {};
+                            this.catatanAllocations = {};
+                            this.selectedInvoiceIdToAppend = '';
+                            this.renderInvoiceSelect2Options();
+                            return;
+                        }
+
+                        this.isLoadingInvoices = true;
+                        fetch(`/keuangan/customers/${customerId}/invoices`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            this.availableInvoices = data;
+                            this.selectedInvoices = [];
+                            this.allocations = {};
+                            this.catatanAllocations = {};
+                            this.selectedInvoiceIdToAppend = '';
+
+                            const oldKeys = Object.keys(this.oldAllocations || {});
+                            if (oldKeys.length > 0) {
+                                // 1. Restore previous submission allocations if validation failed
+                                oldKeys.forEach(invIdStr => {
+                                    const targetId = parseInt(invIdStr);
+                                    const exists = this.availableInvoices.find(inv => inv.id === targetId);
+                                    if (exists) {
+                                        this.addInvoice(exists);
+                                        this.allocations[targetId] = parseFloat(this.oldAllocations[invIdStr] || 0);
+                                        if (this.oldCatatanAllocations && this.oldCatatanAllocations[invIdStr]) {
+                                            this.catatanAllocations[targetId] = this.oldCatatanAllocations[invIdStr];
+                                        }
+                                    }
+                                });
+                            } else if (this.preselectedInvoiceIds && this.preselectedInvoiceIds.length > 0) {
+                                // 2. Multi-invoice preselection from Piutang Usaha list
+                                let sumPreselected = 0;
+                                this.preselectedInvoiceIds.forEach(targetId => {
+                                    const exists = this.availableInvoices.find(inv => inv.id === targetId);
+                                    if (exists) {
+                                        this.addInvoice(exists);
+                                        this.allocations[targetId] = parseFloat(exists.sisa_piutang);
+                                        sumPreselected += parseFloat(exists.sisa_piutang);
+                                    }
+                                });
+                                this.totalBayar = sumPreselected;
+                            } else if (this.initialInvoiceId) {
+                                // 3. Single invoice preselection
+                                const targetId = parseInt(this.initialInvoiceId);
+                                const exists = this.availableInvoices.find(inv => inv.id === targetId);
+                                if (exists) {
+                                    this.addInvoice(exists);
+                                    this.allocations[targetId] = exists.sisa_piutang;
+                                    this.totalBayar = exists.sisa_piutang;
+                                }
+                            }
+
+                            this.$nextTick(() => {
+                                this.renderInvoiceSelect2Options();
+                            });
+                        })
+                        .catch(err => {
+                            console.error('Error loading invoices:', err);
+                        })
+                        .finally(() => {
+                            this.isLoadingInvoices = false;
+                        });
+                    },
+
+                    renderInvoiceSelect2Options() {
+                        const self = this;
+                        const $select = $('#invoice_select2');
+                        if (!$select.length) return;
+
+                        $select.empty();
+                        $select.append(new Option('-- Cari & Pilih Invoice yang Ingin Dibayar --', ''));
+
+                        this.availableInvoices.forEach(inv => {
+                            const isAdded = self.selectedInvoices.some(i => i.id === inv.id);
+                            const text = `${inv.nomor_invoice} (${inv.tanggal_invoice}) - Sisa Piutang: Rp ${self.formatRupiah(inv.sisa_piutang)}${isAdded ? ' [Sudah Masuk List]' : ''}`;
+                            const option = new Option(text, inv.id, false, false);
+                            if (isAdded) {
+                                $(option).attr('disabled', 'disabled');
+                            }
+                            $select.append(option);
+                        });
+
+                        $select.val('').trigger('change.select2');
+                    },
+
+                    addSelectedFromDropdown() {
+                        if (!this.selectedInvoiceIdToAppend) return;
+                        const targetId = parseInt(this.selectedInvoiceIdToAppend);
+                        const inv = this.availableInvoices.find(i => i.id === targetId);
+                        if (inv) {
+                            this.addInvoice(inv);
+                            this.selectedInvoiceIdToAppend = '';
+                            this.renderInvoiceSelect2Options();
+                        }
+                    },
+
+                    addInvoice(inv) {
+                        if (this.selectedInvoices.some(i => i.id === inv.id)) return;
+                        this.selectedInvoices.push(inv);
+                        
+                        // Calculate suggested allocation
+                        const currentAllocated = this.getTotalAllocated();
+                        const unallocated = Math.max(0, parseFloat(this.totalBayar || 0) - currentAllocated);
+                        
+                        if (unallocated > 0) {
+                            this.allocations[inv.id] = Math.min(unallocated, parseFloat(inv.sisa_piutang));
+                        } else if (parseFloat(this.totalBayar || 0) === 0) {
+                            this.allocations[inv.id] = parseFloat(inv.sisa_piutang);
+                            this.recalculateTotalBayarFromAllocations();
+                        } else {
+                            this.allocations[inv.id] = 0;
+                        }
+                    },
+
+                    removeInvoice(invId) {
+                        this.selectedInvoices = this.selectedInvoices.filter(i => i.id !== invId);
+                        delete this.allocations[invId];
+                        delete this.catatanAllocations[invId];
+                        this.renderInvoiceSelect2Options();
+                    },
+
+                    removeAllInvoices() {
+                        this.selectedInvoices = [];
+                        this.allocations = {};
+                        this.catatanAllocations = {};
+                        this.renderInvoiceSelect2Options();
+                    },
+
+                    payInFull(inv) {
+                        this.allocations[inv.id] = parseFloat(inv.sisa_piutang);
+                    },
+
+                    formatRupiahInput(angka) {
+                        if (angka === null || angka === undefined || angka === '') return '';
+                        const num = parseFloat(angka);
+                        if (isNaN(num)) return '';
+                        if (num === 0) return '';
+                        
+                        const parts = num.toString().split('.');
+                        const intFormatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+                        if (parts.length > 1 && parts[1] && parts[1] !== '0' && parts[1] !== '00') {
+                            return intFormatted + ',' + parts[1];
+                        }
+                        return intFormatted;
+                    },
+
+                    parseRupiahInput(str) {
+                        if (!str && str !== 0) return 0;
+                        let cleaned = str.toString().trim();
+                        if (!cleaned) return 0;
+
+                        const lastCommaIndex = cleaned.lastIndexOf(',');
+                        if (lastCommaIndex !== -1) {
+                            cleaned = cleaned.substring(0, lastCommaIndex).replace(/\./g, '').replace(/[^0-9]/g, '') +
+                                '.' + cleaned.substring(lastCommaIndex + 1).replace(/[^0-9]/g, '');
+                        } else {
+                            cleaned = cleaned.replace(/\./g, '').replace(/[^0-9]/g, '');
+                        }
+
+                        const num = parseFloat(cleaned);
+                        return isNaN(num) ? 0 : num;
+                    },
+
+                    handleTotalBayarInput(event) {
+                        const rawStr = event.target.value;
+                        if (rawStr === '') {
+                            this.totalBayar = 0;
+                            return;
+                        }
+                        const rawVal = this.parseRupiahInput(rawStr);
+                        this.totalBayar = rawVal;
+                        event.target.value = this.formatRupiahInput(rawVal);
+                    },
+
+                    onAllocationInput(inv, event) {
+                        const rawStr = event.target.value;
+                        if (rawStr === '') {
+                            this.allocations[inv.id] = 0;
+                            return;
+                        }
+                        let rawVal = this.parseRupiahInput(rawStr);
+                        const maxLimit = parseFloat(inv.sisa_piutang || 0);
+                        if (rawVal > maxLimit) {
+                            rawVal = maxLimit;
+                        } else if (rawVal < 0) {
+                            rawVal = 0;
+                        }
+                        this.allocations[inv.id] = rawVal;
+                        event.target.value = this.formatRupiahInput(rawVal);
+                    },
+
+                    recalculateTotalBayarFromAllocations() {
+                        let sum = 0;
+                        for (let id in this.allocations) {
+                            sum += parseFloat(this.allocations[id] || 0);
+                        }
+                        this.totalBayar = sum;
+                    },
+
+                    syncTotalBayarWithAllocations() {
+                        this.totalBayar = this.getTotalAllocated();
+                    },
+
+                    getTotalAllocated() {
+                        let sum = 0;
+                        for (let id in this.allocations) {
+                            sum += parseFloat(this.allocations[id] || 0);
+                        }
+                        return sum;
+                    },
+
+                    getUnallocatedDifference() {
+                        return (parseFloat(this.totalBayar || 0) - this.getTotalAllocated()).toFixed(2);
+                    },
+
+                    validateAndSubmit(e) {
+                        if (this.isSubmitting) {
+                            e.preventDefault();
+                            return false;
+                        }
+
+                        if (parseFloat(this.totalBayar || 0) <= 0) {
+                            this.errorMessage = 'Jumlah pembayaran harus lebih dari 0.';
+                            e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return false;
+                        }
+
+                        if (this.selectedInvoices.length === 0) {
+                            this.errorMessage = 'Pilih dan tambahkan minimal satu invoice yang akan dibayar menggunakan dropdown di bawah.';
+                            e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return false;
+                        }
+
+                        const totalAlloc = this.getTotalAllocated();
+                        if (totalAlloc <= 0) {
+                            this.errorMessage = 'Tentukan nominal alokasi pembayaran untuk invoice yang dipilih (alokasi harus lebih dari Rp 0).';
+                            e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return false;
+                        }
+
+                        if (Math.abs(totalAlloc - parseFloat(this.totalBayar || 0)) > 0.05) {
+                            this.errorMessage = 'Total alokasi invoice (Rp ' + this.formatRupiah(totalAlloc) + ') belum seimbang dengan Jumlah Pembayaran (Rp ' + this.formatRupiah(this.totalBayar) + '). Klik tombol "Samakan dengan Total Alokasi" atau sesuaikan nominal.';
+                            e.preventDefault();
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            return false;
+                        }
+
+                        // Periksa jika ada alokasi yang melebihi sisa piutang
+                        for (let inv of this.selectedInvoices) {
+                            const alloc = parseFloat(this.allocations[inv.id] || 0);
+                            const sisa = parseFloat(inv.sisa_piutang || 0);
+                            if (alloc > sisa + 0.01) {
+                                this.errorMessage = 'Nominal alokasi untuk invoice ' + inv.nomor_invoice + ' (Rp ' + this.formatRupiah(alloc) + ') melebihi sisa piutangnya (Rp ' + this.formatRupiah(sisa) + ').';
+                                e.preventDefault();
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                return false;
+                            }
+                        }
+
+                        this.errorMessage = '';
+                        this.isSubmitting = true;
+                        return true;
+                    },
+
+                    formatRupiah(val) {
+                        return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(val || 0);
+                    }
+                };
+            }
+
+            document.addEventListener('alpine:init', () => {
+                Alpine.data('pembayaranPiutangApp', (config) => pembayaranPiutangApp(config));
+            });
+        </script>
     @endpush
 </x-app-layout>

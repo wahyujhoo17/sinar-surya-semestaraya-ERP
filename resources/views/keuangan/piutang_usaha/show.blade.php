@@ -212,6 +212,11 @@
                                                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                         {{ $detail->produk->nama_produk ?? ($detail->produk->nama ?? 'Produk Tidak Ditemukan') }}
                                                     </div>
+                                                    @if($detail->produk && ($detail->produk->kode ?? $detail->produk->product_sku))
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 font-mono mt-0.5">
+                                                            {{ $detail->produk->kode ?? $detail->produk->product_sku }}
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td
                                                     class="px-4 lg:px-6 py-4 text-sm text-gray-900 dark:text-gray-100 text-right">

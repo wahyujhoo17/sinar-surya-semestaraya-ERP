@@ -1,18 +1,18 @@
 <table>
     <tr>
-        <td colspan="8" style="font-size: 16px; font-weight: bold; text-align: center;">LAPORAN PEMBELIAN RINGKAS</td>
+        <td colspan="9" style="font-size: 16px; font-weight: bold; text-align: center;">LAPORAN PEMBELIAN RINGKAS</td>
     </tr>
     <tr>
-        <td colspan="8" style="font-size: 12px; text-align: center;">
+        <td colspan="9" style="font-size: 12px; text-align: center;">
             Periode: {{ \Carbon\Carbon::parse($filters['tanggal_awal'] ?? now()->startOfMonth())->format('d M Y') }} s/d
             {{ \Carbon\Carbon::parse($filters['tanggal_akhir'] ?? now())->format('d M Y') }}
         </td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
     </tr>
     <tr>
         <td
@@ -39,6 +39,9 @@
         <td
             style="font-weight: bold; background-color: #1F2937; color: white; text-align: center; border: 2px solid #000000;">
             Pembuat</td>
+        <td
+            style="font-weight: bold; background-color: #1F2937; color: white; text-align: center; border: 2px solid #000000;">
+            Catatan</td>
     </tr>
     @php $no = 1; @endphp
     @foreach ($dataPembelian as $po)
@@ -56,6 +59,7 @@
             <td style="text-align: right; border: 1px solid #D1D5DB;">
                    {{ number_format($po->total - $po->total_bayar, 2, ',', '.') }}</td>
             <td style="border: 1px solid #D1D5DB;">{{ $po->user->name ?? '-' }}</td>
+            <td style="border: 1px solid #D1D5DB;">{{ $po->catatan ?? '-' }}</td>
         </tr>
     @endforeach
     <tr style="background-color: #DBEAFE; font-weight: bold;">
@@ -66,6 +70,6 @@
         </td>
         <td style="text-align: right; border: 2px solid #000000;">   {{ number_format($sisaPembayaran, 2, ',', '.') }}
         </td>
-        <td style="border: 2px solid #000000;"></td>
+        <td colspan="2" style="border: 2px solid #000000;"></td>
     </tr>
 </table>

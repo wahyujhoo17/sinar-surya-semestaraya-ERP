@@ -117,7 +117,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
     public function styles(Worksheet $sheet)
     {
         // Set style untuk header
-        $sheet->getStyle('A5:P5')->applyFromArray([
+        $sheet->getStyle('A5:Q5')->applyFromArray([
             'font' => [
                 'bold' => true,
                 'color' => ['rgb' => 'FFFFFF'],
@@ -139,7 +139,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         ]);
 
         // Set style untuk data
-        $sheet->getStyle('A6:P' . ($sheet->getHighestRow()))->applyFromArray([
+        $sheet->getStyle('A6:Q' . ($sheet->getHighestRow()))->applyFromArray([
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
@@ -163,7 +163,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
         ]);
 
         // Set auto size untuk semua kolom
-        foreach (range('A', 'P') as $col) {
+        foreach (range('A', 'Q') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 
@@ -192,6 +192,7 @@ class LaporanPembelianExport implements FromView, WithTitle, WithStyles, WithCol
             'N' => 18, // Dibayar
             'O' => 15, // Status
             'P' => 20, // Petugas
+            'Q' => 25, // Catatan
         ];
     }
 

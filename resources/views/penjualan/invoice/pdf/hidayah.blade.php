@@ -413,6 +413,10 @@
                             <td>
                                 <div style="font-weight: 500; color: #111827; margin-bottom: 2px;">
                                     {{ $detail->produk->nama ?? 'Produk' }}</div>
+                                @if ($detail->produk && ($detail->produk->kode || $detail->produk->product_sku))
+                                    <div style="color: #6b7280; font-size: 8px; line-height: 1.2;">
+                                        {{ $detail->produk->kode ?? $detail->produk->product_sku }}</div>
+                                @endif
                                 @if ($detail->deskripsi != $detail->produk->nama)
                                     <div style="color: #6b7280; font-size: 9px; line-height: 1.2;">
                                         {{ $detail->deskripsi }}</div>

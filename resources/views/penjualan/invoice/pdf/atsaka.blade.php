@@ -568,6 +568,9 @@
                                 <td class="text-center">{{ $no++ }}</td>
                                 <td>
                                     <div class="product-name">{{ $detail->produk->nama ?? 'Produk' }}</div>
+                                    @if ($detail->produk && ($detail->produk->kode || $detail->produk->product_sku))
+                                        <div style="font-size: 8px; color: #64748b;">{{ $detail->produk->kode ?? $detail->produk->product_sku }}</div>
+                                    @endif
                                     @if ($detail->deskripsi != $detail->produk->nama)
                                         <p class="product-desc">{{ $detail->deskripsi }}</p>
                                     @endif

@@ -98,7 +98,13 @@ class Invoice extends Model
     // Accessor for Sisa Piutang
     public function getSisaPiutangAttribute()
     {
-        $totalPembayaran = $this->pembayaranDetails()->sum('jumlah');
+        if ($this->relationLoaded('pembayaranDetails')) {
+            $totalPembayaran = $this->pembayaranDetails->sum('jumlah');
+        } elseif ($this->relationLoaded('pembayaranPiutang')) {
+            $totalPembayaran = $this->pembayaranPiutang->sum('pivot.jumlah');
+        } else {
+            $totalPembayaran = $this->pembayaranDetails()->sum('jumlah');
+        }
         $totalKredit = $this->kredit_terapkan ?? 0;
         $uangMukaTerapkan = $this->uang_muka_terapkan ?? 0;
 
