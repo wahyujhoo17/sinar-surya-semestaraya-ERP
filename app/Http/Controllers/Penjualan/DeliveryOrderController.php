@@ -738,16 +738,36 @@ class DeliveryOrderController extends Controller
      */
     public function destroy($id)
     {
+        if (!Auth::user()->hasPermission('delivery_order.delete')) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda tidak memiliki hak akses untuk menghapus Delivery Order.'
+                ], 403);
+            }
+            return back()->with('error', 'Anda tidak memiliki hak akses untuk menghapus Delivery Order.');
+        }
+
         $deliveryOrder = DeliveryOrder::findOrFail($id);
 
-        // Can only delete in draft status
-        if ($deliveryOrder->status !== 'draft') {
-            return redirect()->route('penjualan.delivery-order.show', $deliveryOrder->id)
-                ->with('error', 'Tidak dapat menghapus Delivery Order yang sudah diproses atau selesai!');
+        // Can only delete in draft or dibatalkan status
+        if (!in_array($deliveryOrder->status, ['draft', 'dibatalkan'])) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus Delivery Order yang sedang dikirim atau sudah diterima!'
+                ], 422);
+            }
+            return back()->with('error', 'Tidak dapat menghapus Delivery Order yang sedang dikirim atau sudah diterima!');
         }
 
         try {
             DB::beginTransaction();
+
+            $nomorDO = $deliveryOrder->nomor;
+            $salesOrderId = $deliveryOrder->sales_order_id;
+            $permintaanBarangId = $deliveryOrder->permintaan_barang_id;
+            $statusDO = $deliveryOrder->status;
 
             // Delete all delivery order details
             $deliveryOrder->details()->delete();
@@ -757,18 +777,60 @@ class DeliveryOrderController extends Controller
                 'Menghapus Delivery Order',
                 'delivery_order',
                 $deliveryOrder->id,
-                "Menghapus Delivery Order dengan nomor {$deliveryOrder->nomor}"
+                "Menghapus Delivery Order dengan nomor {$nomorDO} (Status: {$statusDO})"
             );
 
             // Delete the delivery order
             $deliveryOrder->delete();
 
+            // Update related Sales Order status if exists
+            if ($salesOrderId) {
+                $soExists = SalesOrder::where('id', $salesOrderId)->exists();
+                if ($soExists) {
+                    $this->updateSalesOrderStatus($salesOrderId);
+                }
+            }
+
+            // Update related Permintaan Barang status if exists
+            if ($permintaanBarangId) {
+                try {
+                    $remainingDO = DeliveryOrder::where('permintaan_barang_id', $permintaanBarangId)
+                        ->whereIn('status', ['dikirim', 'diterima'])
+                        ->exists();
+
+                    $permintaanBarang = \App\Models\PermintaanBarang::find($permintaanBarangId);
+                    if ($permintaanBarang && !$remainingDO) {
+                        $permintaanBarang->status = 'menunggu';
+                        $permintaanBarang->save();
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Error updating permintaan barang status after DO delete: ' . $e->getMessage());
+                }
+            }
+
             DB::commit();
 
-            return redirect()->route('penjualan.delivery-order.index')
-                ->with('success', 'Delivery Order berhasil dihapus!');
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Delivery Order {$nomorDO} berhasil dihapus!"
+                ]);
+            }
+
+            if (str_contains(url()->previous(), 'delivery-order/' . $deliveryOrder->id)) {
+                return redirect()->route('penjualan.delivery-order.index')
+                    ->with('success', "Delivery Order {$nomorDO} berhasil dihapus!");
+            }
+
+            return back()->with('success', "Delivery Order {$nomorDO} berhasil dihapus!");
         } catch (\Exception $e) {
             DB::rollBack();
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+                ], 500);
+            }
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }

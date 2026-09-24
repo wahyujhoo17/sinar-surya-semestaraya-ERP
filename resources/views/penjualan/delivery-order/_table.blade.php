@@ -169,6 +169,39 @@
                         </svg>
                     </button>
                 @endif
+
+                @if (auth()->user()->hasPermission('delivery_order.delete') && in_array($deliveryOrder->status, ['draft', 'dibatalkan']))
+                    <div>
+                        <button type="button"
+                            onclick="confirmDelete('Apakah Anda yakin ingin menghapus Delivery Order <strong>{{ addslashes($deliveryOrder->nomor) }}</strong>?<br><br>Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait dengan Delivery Order ini.', function() { document.getElementById('delete-form-{{ $deliveryOrder->id }}').submit(); })"
+                            class="inline-flex items-center justify-center h-8 w-8 rounded-lg hover:bg-red-100 text-gray-700 dark:text-white dark:bg-red-900/20 dark:hover:bg-red-900/30 transition-colors border border-dashed border-red-300"
+                            title="Hapus">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                                class="w-4 h-4">
+                                <path fill-rule="evenodd"
+                                    d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                        <form id="delete-form-{{ $deliveryOrder->id }}"
+                            action="{{ route('penjualan.delivery-order.destroy', $deliveryOrder->id) }}" method="POST"
+                            class="hidden">
+                            @csrf
+                            @method('DELETE')
+                        </form>
+                    </div>
+                @else
+                    <button type="button" disabled
+                        class="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed border border-dashed border-gray-300"
+                        title="Hanya delivery order dengan status Draft atau Dibatalkan yang dapat dihapus atau Anda tidak memiliki akses">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                            class="w-4 h-4">
+                            <path fill-rule="evenodd"
+                                d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                @endif
             </div>
         </td>
     </tr>

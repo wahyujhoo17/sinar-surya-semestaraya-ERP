@@ -298,8 +298,34 @@
                     </a>
                 @endif
 
+                @if (auth()->user()->hasPermission('delivery_order.delete') && $deliveryOrder->status == 'dibatalkan')
+                    <button type="button" @click="openConfirmationModal('delete')"
+                        class="inline-flex items-center px-4 py-2 bg-red-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                            viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Hapus
+                    </button>
+                @endif
+
+                @if (auth()->user()->hasPermission('delivery_order.delete') && in_array($deliveryOrder->status, ['draft', 'dibatalkan']))
+                    <form id="deleteDOForm"
+                        action="{{ route('penjualan.delivery-order.destroy', $deliveryOrder->id) }}"
+                        method="POST" class="hidden">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                @endif
+
                 <!-- Status Actions Dropdown -->
-                @if (auth()->user()->hasPermission('delivery_order.process') || auth()->user()->hasPermission('delivery_order.cancel'))
+                @if (
+                    auth()->user()->hasPermission('delivery_order.process') ||
+                    auth()->user()->hasPermission('delivery_order.complete') ||
+                    auth()->user()->hasPermission('delivery_order.cancel') ||
+                    (auth()->user()->hasPermission('delivery_order.delete') && in_array($deliveryOrder->status, ['draft', 'dibatalkan']))
+                )
                     <div class="relative" x-cloak>
                         <button @click="statusDropdownOpen = !statusDropdownOpen" type="button"
                             class="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all">
@@ -327,31 +353,29 @@
                             <div class="py-1" role="none">
                                 @if ($deliveryOrder->status == 'draft')
                                     <!-- Process Delivery -->
-                                    <form id="processDOForm"
-                                        action="{{ route('penjualan.delivery-order.proses', $deliveryOrder->id) }}"
-                                        method="POST">
-                                        @csrf
-                                    </form>
-                                    <button @click="openConfirmationModal('process')"
-                                        class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                        role="menuitem">
-                                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                                        <span class="text-blue-600 dark:text-blue-400">Proses Pengiriman</span>
-                                    </button>
+                                    @if (auth()->user()->hasPermission('delivery_order.process'))
+                                        <form id="processDOForm"
+                                            action="{{ route('penjualan.delivery-order.proses', $deliveryOrder->id) }}"
+                                            method="POST">
+                                            @csrf
+                                        </form>
+                                        <button @click="openConfirmationModal('process')"
+                                            class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            role="menuitem">
+                                            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                            <span class="text-blue-600 dark:text-blue-400">Proses Pengiriman</span>
+                                        </button>
+                                    @endif
 
                                     <!-- Delete -->
-                                    <form id="deleteDOForm"
-                                        action="{{ route('penjualan.delivery-order.destroy', $deliveryOrder->id) }}"
-                                        method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                    <button @click="openConfirmationModal('delete')"
-                                        class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                        role="menuitem">
-                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                        <span class="text-red-600 dark:text-red-400">Hapus</span>
-                                    </button>
+                                    @if (auth()->user()->hasPermission('delivery_order.delete'))
+                                        <button @click="openConfirmationModal('delete')"
+                                            class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            role="menuitem">
+                                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                            <span class="text-red-600 dark:text-red-400">Hapus</span>
+                                        </button>
+                                    @endif
                                 @endif
 
                                 @if ($deliveryOrder->status == 'dikirim')
@@ -379,6 +403,18 @@
                                             <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
                                             <span class="text-yellow-600 dark:text-yellow-400">Batalkan
                                                 Pengiriman</span>
+                                        </button>
+                                    @endif
+                                @endif
+
+                                @if ($deliveryOrder->status == 'dibatalkan')
+                                    <!-- Delete for dibatalkan -->
+                                    @if (auth()->user()->hasPermission('delivery_order.delete'))
+                                        <button @click="openConfirmationModal('delete')"
+                                            class="status-dropdown-item w-full text-left px-4 py-2 text-sm flex items-center transition-all space-x-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            role="menuitem">
+                                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                            <span class="text-red-600 dark:text-red-400">Hapus</span>
                                         </button>
                                     @endif
                                 @endif
