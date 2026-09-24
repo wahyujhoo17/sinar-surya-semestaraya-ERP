@@ -283,92 +283,33 @@
 
         <!-- Sales Order Summary Card -->
         <div
-            class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 mb-6 overflow-visible">
-            <div class="p-6" style="overflow: visible;">
-                <div class="lg:flex lg:items-center lg:justify-between">
-                    <!-- Order Info -->
-                    <div class="mb-4 lg:mb-0">
-                        <div class="flex items-center gap-3 mb-2">
-                            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
-                                {{ $salesOrder->nomor }}
-                            </h1>
-                            <div class="flex gap-2">
-                                <div
-                                    class="flex items-center px-3 py-1 rounded-full {{ $paymentStatusBgColor }} {{ $paymentStatusTextColor }}">
-                                    <span
-                                        class="flex w-2 h-2 mr-1.5 rounded-full bg-{{ paymentStatusColor($salesOrder->status_pembayaran) }}-500"></span>
-                                    <span
-                                        class="text-sm font-medium">{{ statusLabel($salesOrder->status_pembayaran, 'payment') }}</span>
-                                </div>
-                                <div
-                                    class="flex items-center px-3 py-1 rounded-full {{ $deliveryStatusBgColor }} {{ $deliveryStatusTextColor }}">
-                                    <span
-                                        class="flex w-2 h-2 mr-1.5 rounded-full bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-500"></span>
-                                    <span
-                                        class="text-sm font-medium">{{ statusLabel($salesOrder->status_pengiriman, 'delivery') }}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div
-                            class="flex flex-wrap items-center text-sm text-gray-600 dark:text-gray-400 gap-x-6 gap-y-1">
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d M Y') }}
-                            </div>
-                            @if ($salesOrder->nomor_po)
-                                <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    PO: {{ $salesOrder->nomor_po }}
-                                </div>
-                            @endif
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                {{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}
-                            </div>
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                                </svg>
-                                Total: Rp {{ number_format($salesOrder->total, 0, ',', '.') }}
-                            </div>
-                            @if ($salesOrder->ongkos_kirim > 0)
-                                <div class="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                    </svg>
-                                    Ongkos Kirim: Rp {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}
-                                </div>
-                            @endif
-                            <div class="flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                    viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                {{ \Carbon\Carbon::parse($salesOrder->created_at)->format('d M Y, H:i') }}
-                            </div>
+            class="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700/80 mb-6 overflow-visible">
+            <div class="p-5 sm:p-6" style="overflow: visible;">
+                <!-- Header: Title, Statuses & Action Toolbar -->
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <!-- Left: SO Number & Status Badges -->
+                    <div class="flex flex-wrap items-center gap-3">
+                        <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                            {{ $salesOrder->nomor }}
+                        </h1>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $paymentStatusBgColor }} {{ $paymentStatusTextColor }}">
+                                <span
+                                    class="w-1.5 h-1.5 mr-1.5 rounded-full bg-{{ paymentStatusColor($salesOrder->status_pembayaran) }}-500"></span>
+                                {{ statusLabel($salesOrder->status_pembayaran, 'payment') }}
+                            </span>
+                            <span
+                                class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $deliveryStatusBgColor }} {{ $deliveryStatusTextColor }}">
+                                <span
+                                    class="w-1.5 h-1.5 mr-1.5 rounded-full bg-{{ deliveryStatusColor($salesOrder->status_pengiriman) }}-500"></span>
+                                {{ statusLabel($salesOrder->status_pengiriman, 'delivery') }}
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Action Buttons -->
-                    <div class="flex flex-wrap gap-2 mt-4 lg:mt-0 lg:ml-4 dropdown-container" x-data="{
+                    <!-- Right: Minimalist Action Toolbar -->
+                    <div class="flex flex-wrap items-center gap-2 dropdown-container" x-data="{
                         statusDropdownOpen: false,
                         confirmModal: false,
                         formData: {
@@ -394,16 +335,16 @@
                             }
                         }
                     }">
-                        <!-- Create Invoice Button -->
+                        <!-- Create Invoice Button (Primary Action) -->
                         @if (auth()->user()->hasPermission('sales_order.generate_invoice'))
                             <a href="{{ route('penjualan.sales-order.generate-invoice', $salesOrder->id) }}"
-                                class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
+                                class="inline-flex items-center px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
-                                Buat Invoice
+                                <span>Buat Invoice</span>
                             </a>
                         @endif
 
@@ -411,14 +352,14 @@
                         @if (auth()->user()->hasPermission('sales_order.print'))
                             <div class="relative" x-data="{ printDropdownOpen: false }">
                                 <button type="button" @click="printDropdownOpen = !printDropdownOpen"
-                                    class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                    class="inline-flex items-center px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                     </svg>
-                                    Cetak PDF
-                                    <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <span>Cetak PDF</span>
+                                    <svg class="w-3.5 h-3.5 ml-1 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
                                             d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
                                             clip-rule="evenodd"></path>
@@ -484,13 +425,13 @@
                         @if (auth()->user()->hasPermission('sales_order.change_status'))
                             <div class="relative">
                                 <button type="button" @click="statusDropdownOpen = !statusDropdownOpen"
-                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors duration-200">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                    class="inline-flex items-center px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M7 11l5-5m0 0l5 5m-5-5v12" />
                                     </svg>
-                                    Ubah Status
+                                    <span>Ubah Status</span>
                                 </button>
 
                                 <!-- Status Change Dropdown -->
@@ -645,15 +586,112 @@
                                 !$salesOrder->invoices()->exists() &&
                                 !$salesOrder->workOrders()->exists())
                             <a href="{{ route('penjualan.sales-order.edit', $salesOrder->id) }}"
-                                class="inline-flex items-center px-4 py-2 bg-yellow-500 border border-transparent rounded-md text-sm font-medium text-white hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
+                                class="inline-flex items-center px-3.5 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                                title="Edit Sales Order">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-500 dark:text-gray-400" fill="none"
                                     viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
-                                Edit
+                                <span>Edit</span>
                             </a>
                         @endif
+
+                        <!-- Delete Button (only if allowed) -->
+                        @if (auth()->user()->hasPermission('sales_order.delete'))
+                            @if (
+                                !$salesOrder->deliveryOrders()->exists() &&
+                                !$salesOrder->invoices()->exists() &&
+                                !$salesOrder->workOrders()->exists())
+                                <button type="button"
+                                    onclick="confirmDelete('Apakah Anda yakin ingin menghapus Sales Order <strong>{{ addslashes($salesOrder->nomor) }}</strong>?<br><br>Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait dengan Sales Order ini.', function() { document.getElementById('delete-so-form').submit(); })"
+                                    class="inline-flex items-center px-3.5 py-2 bg-white dark:bg-gray-800 border border-red-200 dark:border-red-900/60 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-950/30 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                                    title="Hapus Sales Order">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-red-500 dark:text-red-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    <span>Hapus</span>
+                                </button>
+                                <form id="delete-so-form"
+                                    action="{{ route('penjualan.sales-order.destroy', $salesOrder->id) }}" method="POST"
+                                    class="hidden">
+                                    @csrf
+                                    @method('DELETE')
+                                </form>
+                            @else
+                                <button type="button" disabled
+                                    class="inline-flex items-center px-3.5 py-2 bg-gray-50 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 rounded-lg text-sm font-medium cursor-not-allowed"
+                                    title="Tidak dapat dihapus karena sudah memiliki Delivery Order, Work Order, atau Invoice terkait">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-300 dark:text-gray-600" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    <span>Hapus</span>
+                                </button>
+                            @endif
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Divider Line -->
+                <div class="border-t border-gray-100 dark:border-gray-700/60 mt-5 pt-4">
+                    <!-- Metadata Details -->
+                    <div class="flex flex-wrap items-center text-sm text-gray-600 dark:text-gray-400 gap-x-6 gap-y-2">
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            {{ \Carbon\Carbon::parse($salesOrder->tanggal)->format('d M Y') }}
+                        </div>
+                        @if ($salesOrder->nomor_po)
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span class="font-medium text-gray-700 dark:text-gray-300">PO:</span>&nbsp;{{ $salesOrder->nomor_po }}
+                            </div>
+                        @endif
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span class="font-medium text-gray-700 dark:text-gray-300">{{ $salesOrder->customer->nama ?? $salesOrder->customer->company }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                            </svg>
+                            <span>Total:</span>&nbsp;<span class="font-semibold text-gray-900 dark:text-white">Rp {{ number_format($salesOrder->total, 0, ',', '.') }}</span>
+                        </div>
+                        @if ($salesOrder->ongkos_kirim > 0)
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                </svg>
+                                <span>Ongkos Kirim:</span>&nbsp;<span class="font-medium text-gray-700 dark:text-gray-300">Rp {{ number_format($salesOrder->ongkos_kirim, 0, ',', '.') }}</span>
+                            </div>
+                        @endif
+                        <div class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5 text-gray-400 dark:text-gray-500" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {{ \Carbon\Carbon::parse($salesOrder->created_at)->format('d M Y, H:i') }}
+                        </div>
                     </div>
                 </div>
             </div>

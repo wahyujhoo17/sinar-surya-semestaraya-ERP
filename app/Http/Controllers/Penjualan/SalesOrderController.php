@@ -1203,10 +1203,27 @@ class SalesOrderController extends Controller
     public function destroy($id)
     {
         try {
+            if (!Auth::user()->hasPermission('sales_order.delete')) {
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak memiliki hak akses untuk menghapus sales order.'
+                    ], 403);
+                }
+                return redirect()->route('penjualan.sales-order.index')
+                    ->with('error', 'Anda tidak memiliki hak akses untuk menghapus sales order.');
+            }
+
             $salesOrder = SalesOrder::findOrFail($id);
 
             // Check if the sales order has delivery orders, work orders, or invoices
             if ($salesOrder->deliveryOrders()->exists() || $salesOrder->workOrders()->exists() || $salesOrder->invoices()->exists()) {
+                if (request()->ajax() || request()->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Tidak dapat menghapus sales order karena sudah memiliki delivery order, work order, atau invoice terkait.'
+                    ], 422);
+                }
                 return redirect()->route('penjualan.sales-order.index')
                     ->with('error', 'Tidak dapat menghapus sales order karena sudah memiliki delivery order, work order, atau invoice terkait.');
             }
@@ -1239,11 +1256,25 @@ class SalesOrderController extends Controller
 
             DB::commit();
 
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Sales Order berhasil dihapus'
+                ]);
+            }
+
             return redirect()->route('penjualan.sales-order.index')
                 ->with('success', 'Sales Order berhasil dihapus');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error deleting sales order: ' . $e->getMessage());
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat menghapus sales order. Error: ' . $e->getMessage()
+                ], 500);
+            }
 
             return redirect()->route('penjualan.sales-order.index')
                 ->with('error', 'Terjadi kesalahan saat menghapus sales order. Error: ' . $e->getMessage());
