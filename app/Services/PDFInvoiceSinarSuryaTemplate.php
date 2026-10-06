@@ -124,8 +124,63 @@ class PDFInvoiceSinarSuryaTemplate
             // --- Items ---
             $pdf->SetFont('helvetica', '', 8);
             $currentY = $itemsStartY + $lineHeight;
+            $maxItemsPerPage = 10;
+            $pageNumber = 1;
+            $totalItems = count($invoice->details);
+            $itemCount = 0;
+
             foreach ($invoice->details as $index => $detail) {
-                if ($currentY > $itemsMaxY) break;
+                // Cek apakah perlu halaman baru
+                if (($itemCount >= $maxItemsPerPage || $currentY > $itemsMaxY) && $index < $totalItems) {
+                    // Tambah halaman baru
+                    $pageNumber++;
+                    $pdf->AddPage($orientation, [$customWidth, $customHeight]);
+
+                    // Terapkan template jika ada
+                    if ($useTemplate && file_exists($templatePath)) {
+                        $tplId = $pdf->importPage(1);
+                        $pdf->useTemplate($tplId, 0, 0, $customWidth, $customHeight);
+                    }
+
+                    // Reset posisi dan counter
+                    $currentY = $itemsStartY + $lineHeight;
+                    $itemCount = 0;
+
+                    // Cetak ulang header untuk halaman baru
+                    $pdf->SetTextColor(0, 0, 0);
+                    $pdf->SetFont('helvetica', '', 10);
+                    $pdf->SetXY(97, 37.5);
+                    $pdf->Cell(0, 0, $invoice->nomor . ' (Hal. ' . $pageNumber . ')', 0, 0, 'L');
+                    $pdf->SetXY(160, 13.5);
+                    $pdf->Cell(0, 0, (\Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y')), 0, 0, 'L');
+
+                    // Customer info
+                    $pdf->SetFont('helvetica', 'B', 9);
+                    $pdf->SetXY($customerX, $customerY);
+                    $customerNameHeight = $pdf->getStringHeight($maxCustomerWidth, $customerName);
+                    $pdf->MultiCell($maxCustomerWidth, 5, $customerName, 0, 'L');
+
+                    $alamatY = $customerY + $customerNameHeight + 1;
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->SetXY($customerX, $alamatY);
+                    $pdf->MultiCell($maxCustomerWidth, 4, $alamatText, 0, 'L');
+
+                    // Detail invoice (PO, SJ, dsb)
+                    $pdf->SetFont('helvetica', '', 9);
+                    $pdf->SetXY($salesOrderX, $salesOrderY);
+                    $pdf->MultiCell($maxDetilWidth, 4, $nomorPOText, 0, 'L');
+
+                    $pdf->SetXY($salesOrderX, $salesOrderY + 5);
+                    $pdf->MultiCell($maxDetilWidth, 4, $nomorSJ, 0, 'L');
+
+                    $pdf->SetXY($salesOrderX, $salesOrderY + 11.5);
+                    $pdf->MultiCell($maxDetilWidth, 4, $nomorPembayaran, 0, align: 'L');
+
+                    $pdf->SetXY($salesOrderX, $salesOrderY + 16.8);
+                    $pdf->MultiCell($maxDetilWidth, 4, $salesName, 0, 'L');
+
+                    $pdf->SetFont('helvetica', '', 8);
+                }
 
                 // Hitung tinggi baris berdasarkan nama produk terlebih dahulu
                 $maxNamaWidth = 56.5;
@@ -198,6 +253,7 @@ class PDFInvoiceSinarSuryaTemplate
                 }
                 $pdf->Cell(26, $namaHeight, $subtotalText, 0, 1, 'R');
                 $currentY += $namaHeight;
+                $itemCount++;
             }
 
             // --- Summary (dari bawah ke atas) ---

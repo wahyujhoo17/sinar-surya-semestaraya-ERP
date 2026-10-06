@@ -59,63 +59,82 @@ class PDFDeliveryOrderSinarSuryaTemplate
             // Nomor surat jalan (koordinat baru: X=10mm, Y=18mm)
             $nomorX = 31;
             $nomorY = 42.5; // Moved up by 3 units from 44.5
-            $pdf->SetXY($nomorX, $nomorY);
-            $pdf->Cell(40, 0, $deliveryOrder->nomor, 0, 0, 'L');
-
-            // No PO (di bawah nomor jika ada)
-            if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
-                // Label "No PO" sejajar dengan "Nomor"
-                $pdf->SetXY(14, $nomorY + 4.5);
-                $pdf->SetTextColor(30, 64, 175); // Blue color to match pre-printed "Nomor" label
-                $pdf->SetFont('helvetica', 'B', 8);
-                $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
-
-                // Titik dua dan Value sejajar dengan nilai nomor
-                $pdf->SetXY($nomorX - 2.5, $nomorY + 4.5);
-                $pdf->SetTextColor(0, 0, 0); // Reset to black
-                $pdf->SetFont('helvetica', '', 8);
-                $pdf->Cell(40, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
-            }
-
-            // if (!empty($deliveryOrder->user) && !empty($deliveryOrder->user->name)) {
-            //     $userX = 130;
-            //     $userY = 200;
-            //     $pdf->SetFont('helvetica', '', 8);
-            //     $pdf->SetXY($userX, $userY);
-            //     $pdf->Cell(60, 0, $deliveryOrder->user->name, 0, 0, 'L');
-            // }
 
             // Tanggal (di bawah nomor)
             $tanggalX = 120;
             $tanggalY = 20;
-            $pdf->SetXY($tanggalX, $tanggalY);
             // Format tanggal seperti "Jakarta, 3 July 2025"
             $tanggal = $deliveryOrder->tanggal_kirim ?? $deliveryOrder->created_at;
             $tanggalObj = \Carbon\Carbon::parse($tanggal);
             $formattedTanggal = 'Jakarta, ' . $tanggalObj->day . ' ' . $tanggalObj->format('F Y');
-            $pdf->Cell(60, 0, $formattedTanggal, 0, 0, 'L');
 
             // Customer (kiri atas, X=111mm, Y=35mm), dengan max width agar tidak melebihi halaman
             $customerX = 90;
             $customerY = 42;
             $maxCustomerWidth = 50;
 
-            // Nama customer bold
-            // Nama customer bold
-            $pdf->SetFont('helvetica', 'B', 8);
-            $pdf->SetXY($customerX, $customerY);
-            $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
-
             // Alamat pengiriman (prioritaskan dari DO, jika kosong ambil dari customer), font normal, di bawah company/nama
             $alamatPengiriman = $deliveryOrder->alamat_pengiriman 
                 ?: ($deliveryOrder->customer->alamat_pengiriman ?? $deliveryOrder->customer->alamat ?? '');
 
-            if (!empty($alamatPengiriman)) {
-                $pdf->SetFont('helvetica', '', 7);
-                $alamatY = $customerY + 5.5; // geser ke bawah 5.5mm dari nama
-                $pdf->SetXY($customerX, $alamatY);
-                $pdf->MultiCell($maxCustomerWidth, 4, $alamatPengiriman, 0, 'L');
-            }
+            $pageNumber = 1;
+
+            $renderHeader = function ($page) use (
+                $pdf, $useTemplate, $templatePath, $orientation, $customWidth, $customHeight,
+                $nomorX, $nomorY, $deliveryOrder, $tanggalX, $tanggalY, $formattedTanggal,
+                $customerX, $customerY, $maxCustomerWidth, $alamatPengiriman
+            ) {
+                if ($page > 1) {
+                    $pdf->AddPage($orientation, [$customWidth, $customHeight]);
+                    if ($useTemplate && file_exists($templatePath)) {
+                        $tplId = $pdf->importPage(1);
+                        $pdf->useTemplate($tplId, 0, 0, $customWidth, $customHeight);
+                    }
+                }
+
+                $pdf->SetTextColor(0, 0, 0);
+
+                // Nomor surat jalan
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->SetXY($nomorX, $nomorY);
+                $nomorText = $deliveryOrder->nomor . ($page > 1 ? ' (Hal. ' . $page . ')' : '');
+                $pdf->Cell(40, 0, $nomorText, 0, 0, 'L');
+
+                // No PO (di bawah nomor jika ada)
+                if ($deliveryOrder->salesOrder && $deliveryOrder->salesOrder->nomor_po) {
+                    $pdf->SetXY(14, $nomorY + 4.5);
+                    $pdf->SetTextColor(30, 64, 175);
+                    $pdf->SetFont('helvetica', 'B', 8);
+                    $pdf->Cell(15, 0, 'No PO', 0, 0, 'L');
+
+                    $pdf->SetXY($nomorX - 2.5, $nomorY + 4.5);
+                    $pdf->SetTextColor(0, 0, 0);
+                    $pdf->SetFont('helvetica', '', 8);
+                    $pdf->Cell(40, 0, ':  ' . $deliveryOrder->salesOrder->nomor_po, 0, 0, 'L');
+                }
+
+                // Tanggal
+                $pdf->SetXY($tanggalX, $tanggalY);
+                $pdf->SetTextColor(0, 0, 0);
+                $pdf->SetFont('helvetica', '', 8);
+                $pdf->Cell(60, 0, $formattedTanggal, 0, 0, 'L');
+
+                // Customer
+                $pdf->SetFont('helvetica', 'B', 8);
+                $pdf->SetXY($customerX, $customerY);
+                $pdf->MultiCell($maxCustomerWidth, 5, $deliveryOrder->customer->company ?? $deliveryOrder->customer->nama, 0, 'L');
+
+                // Alamat pengiriman
+                if (!empty($alamatPengiriman)) {
+                    $pdf->SetFont('helvetica', '', 7);
+                    $alamatY = $customerY + 5.5;
+                    $pdf->SetXY($customerX, $alamatY);
+                    $pdf->MultiCell($maxCustomerWidth, 4, $alamatPengiriman, 0, 'L');
+                }
+            };
+
+            // Render header halaman pertama
+            $renderHeader(1);
 
             $pdf->SetFont('helvetica', '', 7);
 
@@ -131,6 +150,15 @@ class PDFDeliveryOrderSinarSuryaTemplate
             $kodeCol = 101; // Moved left by 2 units from 103
             $qtyCol = 120; // Moved right by 6 units total from 114 (3+3)
             $satuanCol = 145;
+
+            // Helper untuk mengecek dan menangani perpindahan halaman
+            $checkPageBreak = function () use (&$currentY, $maxItemsY, &$pageNumber, $renderHeader, $itemsStartY) {
+                if ($currentY > $maxItemsY) {
+                    $pageNumber++;
+                    $renderHeader($pageNumber);
+                    $currentY = $itemsStartY;
+                }
+            };
 
             // Group bundle items first
             $bundleGroups = [];
@@ -148,7 +176,7 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
             // Render Bundle Groups first
             foreach ($bundleGroups as $bundleName => $bundleItems) {
-                if ($currentY > $maxItemsY) break;
+                $checkPageBreak();
 
                 // Bundle Header - Show bundle name
                 $pdf->SetXY($noCol, $currentY);
@@ -170,7 +198,7 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
                 // Bundle Items - Show each item in the bundle
                 foreach ($bundleItems as $detail) {
-                    if ($currentY > $maxItemsY) break;
+                    $checkPageBreak();
 
                     $pdf->SetFont('helvetica', '', 8); // Reset to normal font
 
@@ -204,7 +232,7 @@ class PDFDeliveryOrderSinarSuryaTemplate
 
             // Render Non-Bundle Items
             foreach ($nonBundleItems as $detail) {
-                if ($currentY > $maxItemsY) break;
+                $checkPageBreak();
 
                 $pdf->SetFont('helvetica', '', 8); // Normal font
 
