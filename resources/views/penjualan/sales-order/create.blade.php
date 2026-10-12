@@ -2126,8 +2126,10 @@
                         } else if (type === 'nominal') {
                             let nominal = parseFloat(this.diskonGlobalNominal) || 0;
                             if (nominal < 0) nominal = 0;
-                            if (nominal > subtotal) nominal = subtotal;
-                            this.diskonGlobalNominal = nominal;
+                            if (subtotal > 0 && nominal > subtotal) {
+                                nominal = subtotal;
+                                this.diskonGlobalNominal = nominal;
+                            }
                             this.diskonGlobalPersen = subtotal > 0 ? (nominal / subtotal) * 100 : 0;
                         }
 
