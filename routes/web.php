@@ -489,6 +489,10 @@ Route::middleware(['auth'])->group(function () {
 
         // BOM (Bill of Materials) Routes - with permission middleware
         Route::middleware('permission:bill_of_material.view')->group(function () {
+            Route::get('bom/export-excel', [BOMController::class, 'exportExcel'])->name('bom.export-excel');
+            Route::get('bom/export-pdf', [BOMController::class, 'exportPdf'])->name('bom.export-pdf');
+            Route::get('bom/{id}/export-pdf', [BOMController::class, 'exportDetailPdf'])->name('bom.export-detail-pdf');
+            Route::get('bom/{id}/export-excel', [BOMController::class, 'exportDetailExcel'])->name('bom.export-detail-excel');
             Route::get('bom/{id}/get', [BOMController::class, 'getById'])->name('bom.get');
             Route::get('bom-data', [BOMController::class, 'data'])->name('bom.data');
             Route::get('bom-component-unit/{id}', [BOMController::class, 'getComponentUnit'])->name('bom.component-unit');

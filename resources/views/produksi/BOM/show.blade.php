@@ -2,7 +2,7 @@
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         <div class="mb-6 flex justify-between items-center">
             <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Detail Bill of Material</h1>
-            <div class="flex space-x-3">
+            <div class="flex flex-wrap gap-2">
                 {{-- Back Button --}}
                 <a href="{{ route('produksi.bom.index') }}"
                     class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
@@ -12,6 +12,24 @@
                             d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                     Kembali
+                </a>
+
+                {{-- Export Excel Button --}}
+                <a href="{{ route('produksi.bom.export-detail-excel', $bom->id) }}"
+                    class="inline-flex items-center px-4 py-2 border border-emerald-300 dark:border-emerald-600 rounded-md shadow-sm text-sm font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Excel
+                </a>
+
+                {{-- Export PDF Button --}}
+                <a href="{{ route('produksi.bom.export-detail-pdf', $bom->id) }}" target="_blank"
+                    class="inline-flex items-center px-4 py-2 border border-red-300 dark:border-red-600 rounded-md shadow-sm text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Export PDF
                 </a>
 
                 {{-- Edit Button --}}
@@ -115,6 +133,12 @@
                             @else
                                 <span class="text-gray-400 dark:text-gray-500">-</span>
                             @endif
+                        </p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Oleh</h3>
+                        <p class="mt-1 text-base font-medium text-gray-900 dark:text-white">
+                            {{ $bom->creator_name }}
                         </p>
                     </div>
                 </div>

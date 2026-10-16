@@ -1,11 +1,29 @@
 <x-app-layout :breadcrumbs="$breadcrumbs ?? []" :currentPage="$currentPage ?? 'Bill of Material'">
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         {{-- Overview Header --}}
-        <div class="mb-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Bill of Material (BOM)</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">
-                Kelola daftar Bill of Material untuk produksi PT Sinar Surya Semestaraya
-            </p>
+        <div class="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Bill of Material (BOM)</h1>
+                <p class="mt-2 text-gray-600 dark:text-gray-400">
+                    Kelola daftar Bill of Material untuk produksi PT Sinar Surya Semestaraya
+                </p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button type="button" id="btn_top_export_excel"
+                    class="inline-flex items-center px-4 py-2 border border-emerald-300 dark:border-emerald-600 rounded-lg shadow-sm text-sm font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Excel
+                </button>
+                <button type="button" id="btn_top_export_pdf"
+                    class="inline-flex items-center px-4 py-2 border border-red-300 dark:border-red-600 rounded-lg shadow-sm text-sm font-medium text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200">
+                    <svg class="-ml-1 mr-2 h-5 w-5 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    Export PDF
+                </button>
+            </div>
         </div>
 
         {{-- Dashboard Cards --}}
@@ -137,7 +155,7 @@
             class="mb-6 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
             <!-- Header section with title -->
             <div
-                class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+                class="bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 px-5 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
                 <h3 class="text-base font-medium text-blue-800 dark:text-blue-300 flex items-center">
                     <svg class="w-5 h-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                         stroke-width="1.5" stroke="currentColor">
@@ -147,28 +165,16 @@
                     Filter Data BOM
                     <span class="filter-badge ml-2 hidden"></span>
                 </h3>
+                <span class="text-xs text-gray-500 dark:text-gray-400">Sesuaikan filter untuk hasil pencarian & ekspor</span>
             </div>
 
             <!-- Filter content -->
             <div class="p-5">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <!-- Produk Filter -->
-                    <div>
-                        <label for="produk_filter"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Produk</label>
-                        <select id="produk_filter"
-                            class="select2 w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 text-sm dark:bg-gray-700 dark:text-white">
-                            <option value="">Semua Produk</option>
-                            @foreach ($produks as $produk)
-                                <option value="{{ $produk->id }}">{{ $produk->nama }} ({{ $produk->kode }})</option>
-                            @endforeach
-                        </select>
-                    </div>
-
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <!-- Search Filter -->
                     <div>
                         <label for="search_filter"
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari</label>
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari BOM / Produk</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                 <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg"
@@ -179,58 +185,128 @@
                                 </svg>
                             </div>
                             <input type="text" id="search_filter" name="search_filter"
-                                placeholder="Cari nama atau kode BOM"
+                                placeholder="Nama, kode BOM, produk..."
                                 class="pl-10 pr-3 py-2 w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white">
                         </div>
                     </div>
+
+                    <!-- Produk Filter -->
+                    <div>
+                        <label for="produk_filter"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Produk Target</label>
+                        <select id="produk_filter"
+                            class="select2 w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 text-sm dark:bg-gray-700 dark:text-white">
+                            <option value="">Semua Produk</option>
+                            @foreach ($produks as $produk)
+                                <option value="{{ $produk->id }}">{{ $produk->nama }} ({{ $produk->kode }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Tanggal Mulai -->
+                    <div>
+                        <label for="start_date"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Mulai (Dibuat)</label>
+                        <input type="date" id="start_date" name="start_date"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
+
+                    <!-- Tanggal Akhir -->
+                    <div>
+                        <label for="end_date"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Akhir (Dibuat)</label>
+                        <input type="date" id="end_date" name="end_date"
+                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-sm dark:bg-gray-700 dark:text-white">
+                    </div>
                 </div>
 
-                <!-- Status filter -->
-                <div class="mt-4">
-                    <div class="flex items-center space-x-4">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</span>
-                        <div class="flex items-center">
-                            <input type="radio" id="status_all" name="status_filter" value=""
-                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full"
-                                checked>
-                            <label for="status_all"
-                                class="ml-2 text-sm text-gray-700 dark:text-gray-300">Semua</label>
+                <!-- Secondary Filters: Status BOM & Status Komponen -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-200/70 dark:border-gray-700/60">
+                    <!-- Status BOM filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Status BOM:</label>
+                        <div class="flex items-center space-x-5">
+                            <div class="flex items-center">
+                                <input type="radio" id="status_all" name="status_filter" value=""
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full"
+                                    checked>
+                                <label for="status_all"
+                                    class="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">Semua</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="status_active" name="status_filter" value="1"
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full">
+                                <label for="status_active"
+                                    class="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300">Aktif</span>
+                                </label>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="radio" id="status_inactive" name="status_filter" value="0"
+                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full">
+                                <label for="status_inactive"
+                                    class="ml-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300">Non Aktif</span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="flex items-center">
-                            <input type="radio" id="status_active" name="status_filter" value="1"
-                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full">
-                            <label for="status_active"
-                                class="ml-2 text-sm text-gray-700 dark:text-gray-300">Aktif</label>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="radio" id="status_inactive" name="status_filter" value="0"
-                                class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded-full">
-                            <label for="status_inactive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">Non
-                                Aktif</label>
-                        </div>
+                    </div>
+
+                    <!-- Cost / Component Status filter -->
+                    <div>
+                        <label for="cost_status_filter"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Komponen / Biaya:</label>
+                        <select id="cost_status_filter"
+                            class="w-full border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:border-primary-500 focus:ring focus:ring-primary-500 focus:ring-opacity-50 text-sm dark:bg-gray-700 dark:text-white py-2">
+                            <option value="">Semua Status Biaya</option>
+                            <option value="ready">Siap Produksi (Ready - Ada Komponen & Harga)</option>
+                            <option value="no_cost">Belum Lengkap Biaya (No Cost)</option>
+                            <option value="empty">Kosong (Belum Memiliki Komponen)</option>
+                        </select>
                     </div>
                 </div>
 
                 <!-- Action buttons -->
-                <div class="mt-6 flex flex-col sm:flex-row gap-3">
-                    <button type="button" id="apply_filter"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
-                        <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M5 13l4 4L19 7" />
-                        </svg>
-                        Terapkan Filter
-                    </button>
-                    <button type="button" id="reset_filter"
-                        class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
-                        <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Reset Filter
-                    </button>
+                <div class="mt-6 pt-4 border-t border-gray-200/70 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="apply_filter"
+                            class="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                            <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Terapkan Filter
+                        </button>
+                        <button type="button" id="reset_filter"
+                            class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-lg text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all duration-200">
+                            <svg class="w-4 h-4 mr-2 -ml-1" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Reset Filter
+                        </button>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="btn_export_excel"
+                            class="inline-flex items-center justify-center px-4 py-2 border border-emerald-300 dark:border-emerald-600 shadow-sm text-sm font-medium rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all duration-200"
+                            title="Ekspor data hasil filter ke Excel">
+                            <svg class="w-4 h-4 mr-2 text-emerald-600 dark:text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export Excel
+                        </button>
+                        <button type="button" id="btn_export_pdf"
+                            class="inline-flex items-center justify-center px-4 py-2 border border-red-300 dark:border-red-600 shadow-sm text-sm font-medium rounded-lg text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/60 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200"
+                            title="Ekspor data hasil filter ke PDF">
+                            <svg class="w-4 h-4 mr-2 text-red-600 dark:text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                            Export PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1393,65 +1469,104 @@
                     direction: 'desc'
                 };
 
+                // Get current filter parameters
+                function getFilterParams() {
+                    return {
+                        produk_id: $('#produk_filter').val() || '',
+                        search_query: $('#search_filter').val() || '',
+                        status: $('input[name="status_filter"]:checked').val() ?? '',
+                        start_date: $('#start_date').val() || '',
+                        end_date: $('#end_date').val() || '',
+                        cost_status: $('#cost_status_filter').val() || ''
+                    };
+                }
+
                 // Show active filters indicator function
                 function updateFilterIndicators() {
-                    const produkId = $('#produk_filter').val();
-                    const searchQuery = $('#search_filter').val();
-                    const statusFilter = $('input[name="status_filter"]:checked').val();
-
+                    const params = getFilterParams();
                     let activeFilters = 0;
 
-                    // Count active filters
-                    if (produkId) activeFilters++;
-                    if (searchQuery) activeFilters++;
-                    if (statusFilter !== "") activeFilters++;
+                    if (params.produk_id) activeFilters++;
+                    if (params.search_query) activeFilters++;
+                    if (params.status !== '') activeFilters++;
+                    if (params.start_date) activeFilters++;
+                    if (params.end_date) activeFilters++;
+                    if (params.cost_status) activeFilters++;
 
                     // Add visual indicator to filter section
+                    $('.filter-badge').remove();
                     if (activeFilters > 0) {
-                        $('.filter-badge').remove();
                         $('h3:contains("Filter Data BOM")').append(
-                            `<span class="filter-badge inline-flex items-center justify-center ml-2 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">${activeFilters} aktif</span>`
+                            `<span class="filter-badge inline-flex items-center justify-center ml-2 px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 rounded-full">${activeFilters} aktif</span>`
                         ).removeClass('hidden');
-                    } else {
-                        $('.filter-badge').remove();
                     }
                 }
 
                 // Apply visual feedback to inputs
                 function applyInputFeedback() {
-                    // Apply visual feedback for inputs
                     if ($('#produk_filter').val()) {
                         const $selection = $('#produk_filter').next('.select2-container').find('.select2-selection');
-                        $selection.addClass('border-primary-500 dark:border-primary-400 animate-pulse-once');
-                        setTimeout(() => {
-                            $selection.removeClass('animate-pulse-once');
-                        }, 500);
+                        $selection.addClass('border-primary-500 dark:border-primary-400');
                     } else {
                         $('#produk_filter').next('.select2-container').find('.select2-selection').removeClass(
                             'border-primary-500 dark:border-primary-400');
                     }
 
                     if ($('#search_filter').val()) {
-                        $('#search_filter').addClass('border-primary-500 dark:border-primary-400 animate-pulse-once');
-                        setTimeout(() => {
-                            $('#search_filter').removeClass('animate-pulse-once');
-                        }, 500);
+                        $('#search_filter').addClass('border-primary-500 dark:border-primary-400');
                     } else {
                         $('#search_filter').removeClass('border-primary-500 dark:border-primary-400');
                     }
+
+                    if ($('#start_date').val()) {
+                        $('#start_date').addClass('border-primary-500 dark:border-primary-400');
+                    } else {
+                        $('#start_date').removeClass('border-primary-500 dark:border-primary-400');
+                    }
+
+                    if ($('#end_date').val()) {
+                        $('#end_date').addClass('border-primary-500 dark:border-primary-400');
+                    } else {
+                        $('#end_date').removeClass('border-primary-500 dark:border-primary-400');
+                    }
+
+                    if ($('#cost_status_filter').val()) {
+                        $('#cost_status_filter').addClass('border-primary-500 dark:border-primary-400');
+                    } else {
+                        $('#cost_status_filter').removeClass('border-primary-500 dark:border-primary-400');
+                    }
                 }
+
+                // Export Handlers
+                function triggerExportExcel() {
+                    const params = new URLSearchParams(getFilterParams()).toString();
+                    window.location.href = `{{ route('produksi.bom.export-excel') }}?${params}`;
+                }
+
+                function triggerExportPDF() {
+                    const params = new URLSearchParams(getFilterParams()).toString();
+                    window.open(`{{ route('produksi.bom.export-pdf') }}?${params}`, '_blank');
+                }
+
+                $('#btn_export_excel, #btn_top_export_excel').on('click', function(e) {
+                    e.preventDefault();
+                    triggerExportExcel();
+                });
+
+                $('#btn_export_pdf, #btn_top_export_pdf').on('click', function(e) {
+                    e.preventDefault();
+                    triggerExportPDF();
+                });
 
                 // Click event for sortable headers with improved visual feedback
                 $('.sortable').on('click', function() {
                     const sortField = $(this).data('sort');
 
-                    // Add visual indication of clicked state
                     $(this).addClass('bg-blue-50 dark:bg-blue-900/20');
                     setTimeout(() => {
                         $(this).removeClass('bg-blue-50 dark:bg-blue-900/20');
                     }, 150);
 
-                    // Toggle direction if clicking the same column
                     if (currentSort.field === sortField) {
                         currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
                     } else {
@@ -1459,20 +1574,15 @@
                         currentSort.direction = 'asc';
                     }
 
-                    // Update sort indicators
                     $('.sortable').removeClass('sort-asc sort-desc');
                     $(this).addClass(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
 
-                    // Show loading indicator just over the table area when sorting
                     $('#loading-indicator').fadeIn(100);
-
-                    // Load data with new sorting
                     loadBOMData();
                 });
 
-                // Apply filter button click with visual feedback
+                // Apply filter button click
                 $('#apply_filter').on('click', function() {
-                    // Add visual feedback for button click
                     const $btn = $(this);
                     $btn.addClass('transform scale-95').attr('disabled', true);
                     setTimeout(() => {
@@ -1492,11 +1602,12 @@
                         updateFilterIndicators();
                         applyInputFeedback();
                         loadBOMData();
-                    }, 500); // 500ms delay
+                    }, 500);
                 });
 
-                // Input change event handlers for visual feedback
-                $('#produk_filter').on('change', function() {
+                // Input change event handlers
+                $('#produk_filter, #start_date, #end_date, #cost_status_filter').on('change', function() {
+                    updateFilterIndicators();
                     applyInputFeedback();
                 });
 
@@ -1504,59 +1615,39 @@
                     updateFilterIndicators();
                 });
 
-                // Reset filter button click with smooth animation
+                // Reset filter button click
                 $('#reset_filter').on('click', function() {
-                    // Add visual feedback for button click
                     const $btn = $(this);
                     $btn.addClass('transform scale-95').attr('disabled', true);
 
-                    // Add animation for resetting filters
-                    $('#search_filter').addClass('transition-all duration-500');
-                    $('#produk_filter').next('.select2-container').find('.select2-selection').addClass(
-                        'transition-all duration-500');
-
                     setTimeout(() => {
-                        // Reset produk select dropdown
                         $('#produk_filter').val(null).trigger('change');
-
-                        // Reset search filter
                         $('#search_filter').val('');
-
-                        // Reset status filter
+                        $('#start_date').val('');
+                        $('#end_date').val('');
+                        $('#cost_status_filter').val('');
                         $('#status_all').prop('checked', true);
 
                         $btn.removeClass('transform scale-95').attr('disabled', false);
-
-                        // Remove filter badge
                         $('.filter-badge').remove();
-
-                        // Reset visual feedback
                         applyInputFeedback();
-
-                        // Reload data immediately after resetting filters
                         loadBOMData();
-                    }, 300);
+                    }, 250);
                 });
 
                 // Function to load BOM data via AJAX
                 function loadBOMData(page = 1) {
-                    // Show loading indicator with transition (only over the table)
                     $('#loading-indicator').fadeIn(100);
                     $('#bom-table-body').empty();
                     $('#empty-state').addClass('hidden');
 
-                    // Get filter values
-                    const produkId = $('#produk_filter').val();
-                    const searchQuery = $('#search_filter').val();
-                    const statusFilter = $('input[name="status_filter"]:checked').val();
+                    const filterParams = getFilterParams();
 
                     $.ajax({
                         url: '{{ route('produksi.bom.data') }}',
                         type: 'GET',
                         data: {
-                            produk_id: produkId,
-                            search_query: searchQuery,
-                            status: statusFilter,
+                            ...filterParams,
                             sort_field: currentSort.field,
                             sort_direction: currentSort.direction,
                             page: page
@@ -1565,9 +1656,7 @@
                             $('#loading-indicator').fadeOut(150);
                             $('#bom-table-body').html(response.html);
 
-                            // Update data summary if provided in the response
-                            if (response.from !== undefined && response.to !== undefined && response
-                                .total !== undefined) {
+                            if (response.from !== undefined && response.to !== undefined && response.total !== undefined) {
                                 $('#data-summary').removeClass('hidden');
                                 $('#showing-entries').text(
                                     `Menampilkan ${response.from}-${response.to} dari ${response.total} entri`
@@ -1581,16 +1670,13 @@
                                 })}`);
                             }
 
-                            // Show empty state if no data
                             if (response.empty) {
                                 $('#empty-state').removeClass('hidden');
                             }
 
-                            // Update pagination if provided
                             if (response.pagination) {
                                 $('#pagination-container').html(response.pagination);
 
-                                // Add event listeners for pagination links
                                 $('#pagination-container a').on('click', function(e) {
                                     e.preventDefault();
                                     const href = $(this).attr('href');
@@ -1603,7 +1689,6 @@
                             $('#loading-indicator').fadeOut(150);
                             console.error('Error loading BOM data:', xhr);
 
-                            // Dispatch notification event
                             window.dispatchEvent(new CustomEvent('notify', {
                                 detail: {
                                     type: 'error',

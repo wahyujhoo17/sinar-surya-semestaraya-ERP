@@ -5,9 +5,15 @@ namespace App\Http\Controllers\Produksi;
 use App\Http\Controllers\Controller;
 use App\Models\BillOfMaterial;
 use App\Models\BillOfMaterialDetail;
+use App\Models\Company;
 use App\Models\Produk;
 use App\Models\Satuan;
 use App\Services\BOMCostService;
+use App\Exports\BOMExport;
+use App\Exports\BOMDetailExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,10 +25,83 @@ class BOMController extends Controller
     public function __construct(BOMCostService $bomCostService)
     {
         $this->bomCostService = $bomCostService;
-        $this->middleware('permission:bill_of_material.view')->only(['index', 'show', 'getById', 'data', 'getComponentUnit', 'getCostBreakdown']);
+        $this->middleware('permission:bill_of_material.view')->only([
+            'index', 'show', 'getById', 'data', 'getComponentUnit', 'getCostBreakdown',
+            'exportExcel', 'exportPdf', 'exportDetailPdf', 'exportDetailExcel'
+        ]);
         $this->middleware('permission:bill_of_material.create')->only(['create', 'store', 'addComponent']);
         $this->middleware('permission:bill_of_material.edit')->only(['edit', 'update', 'updateComponent']);
         $this->middleware('permission:bill_of_material.delete')->only(['destroy', 'deleteComponent']);
+    }
+
+    /**
+     * Build base query for BOM with all active filters.
+     */
+    protected function buildBOMQuery(Request $request)
+    {
+        $search = $request->input('search_query') ?? $request->input('search');
+        $produkId = $request->input('produk_id');
+        $status = $request->input('status');
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $costStatus = $request->input('cost_status');
+
+        $query = BillOfMaterial::with([
+            'produk.kategori',
+            'produk.satuan',
+            'details.komponen.satuan',
+            'details.komponen.kategori',
+            'details.satuan'
+        ]);
+
+        // Search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('bill_of_materials.nama', 'like', "%{$search}%")
+                    ->orWhere('bill_of_materials.kode', 'like', "%{$search}%")
+                    ->orWhere('bill_of_materials.deskripsi', 'like', "%{$search}%")
+                    ->orWhereHas('produk', function ($query) use ($search) {
+                        $query->where('nama', 'like', "%{$search}%")
+                            ->orWhere('kode', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Product filter
+        if ($produkId) {
+            $query->where('bill_of_materials.produk_id', $produkId);
+        }
+
+        // Status filter
+        if ($status !== null && $status !== '') {
+            $query->where('bill_of_materials.is_active', $status == '1');
+        }
+
+        // Date range filter
+        if ($startDate) {
+            $query->whereDate('bill_of_materials.created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->whereDate('bill_of_materials.created_at', '<=', $endDate);
+        }
+
+        // Cost Status filter
+        if ($costStatus) {
+            if ($costStatus === 'ready') {
+                $query->whereHas('details.komponen', function ($q) {
+                    $q->where('harga_beli', '>', 0);
+                });
+            } elseif ($costStatus === 'no_cost') {
+                $query->whereHas('details')
+                    ->whereDoesntHave('details.komponen', function ($q) {
+                        $q->where('harga_beli', '>', 0);
+                    });
+            } elseif ($costStatus === 'empty') {
+                $query->doesntHave('details');
+            }
+        }
+
+        return $query;
     }
 
     /**
@@ -30,40 +109,32 @@ class BOMController extends Controller
      */
     public function index(Request $request)
     {
-
         $breadcrumbs = [
             ['name' => 'Produksi', 'url' => '#'],
             ['name' => 'Bill of Material', 'url' => route('produksi.bom.index')]
         ];
         $currentPage = 'Bill of Material';
 
-        $search = $request->input('search');
-        $status = $request->input('status');
         $perPage = $request->input('per_page', 10);
         $sortField = $request->input('sort', 'kode');
         $sortDirection = $request->input('direction', 'asc');
 
-        $query = BillOfMaterial::with('produk');
-
-        // Apply search filter
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                    ->orWhere('kode', 'like', "%{$search}%")
-                    ->orWhereHas('produk', function ($query) use ($search) {
-                        $query->where('nama', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        // Apply status filter
-        if ($status !== null && $status !== '') {
-            $isActive = $status == '1';
-            $query->where('is_active', $isActive);
-        }
+        $query = $this->buildBOMQuery($request);
 
         // Apply sorting
-        $query->orderBy($sortField, $sortDirection);
+        switch ($sortField) {
+            case 'produk':
+                $query->join('produk', 'bill_of_materials.produk_id', '=', 'produk.id')
+                    ->orderBy('produk.nama', $sortDirection)
+                    ->select('bill_of_materials.*');
+                break;
+            case 'is_active':
+                $query->orderBy('is_active', $sortDirection);
+                break;
+            default:
+                $query->orderBy($sortField, $sortDirection);
+                break;
+        }
 
         $boms = $query->paginate($perPage);
 
@@ -72,7 +143,7 @@ class BOMController extends Controller
         $activeBOM = BillOfMaterial::where('is_active', true)->count();
         $inactiveBOM = BillOfMaterial::where('is_active', false)->count();
 
-        // Get all products for the dropdown in create/edit modal
+        // Get all products for the dropdown in create/edit modal & filter
         $produks = Produk::where('is_active', true)->orderBy('nama')->get();
 
         if ($request->ajax()) {
@@ -444,42 +515,13 @@ class BOMController extends Controller
      */
     public function data(Request $request)
     {
-        // Get filter parameters from request
-        $search = $request->input('search_query');
-        $produkId = $request->input('produk_id');
-        $status = $request->input('status');
-        $sortField = $request->input('sort_field', 'kode');
-        $sortDirection = $request->input('sort_direction', 'asc');
+        $sortField = $request->input('sort_field', $request->input('sort', 'kode'));
+        $sortDirection = $request->input('sort_direction', $request->input('direction', 'asc'));
         $page = $request->input('page', 1);
         $perPage = $request->input('per_page', 10);
 
-        // Start query builder
-        $query = BillOfMaterial::with('produk');
-
-        // Apply search filter if provided
-        if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                    ->orWhere('kode', 'like', "%{$search}%")
-                    ->orWhere('deskripsi', 'like', "%{$search}%")
-                    ->orWhereHas('produk', function ($query) use ($search) {
-                        $query->where('nama', 'like', "%{$search}%")
-                            ->orWhere('kode', 'like', "%{$search}%");
-                    });
-            });
-        }
-
-        // Apply product filter if provided
-        if ($produkId) {
-            $query->where('produk_id', $produkId);
-        }
-
-        // Date range filter has been removed
-
-        // Apply status filter if provided
-        if ($status !== '' && $status !== null) {
-            $query->where('is_active', $status == '1');
-        }
+        // Build query using common filter helper
+        $query = $this->buildBOMQuery($request);
 
         // Apply sorting
         switch ($sortField) {
@@ -515,6 +557,139 @@ class BOMController extends Controller
         ];
 
         return response()->json($response);
+    }
+
+    /**
+     * Export daftar BOM ke Excel dengan filter aktif
+     */
+    public function exportExcel(Request $request)
+    {
+        $fileDate = now()->format('Ymd_His');
+        $fileName = "Laporan_BOM_{$fileDate}.xlsx";
+
+        return Excel::download(
+            new BOMExport($request->all()),
+            $fileName
+        );
+    }
+
+    /**
+     * Export daftar BOM ke PDF dengan filter aktif
+     */
+    public function exportPdf(Request $request)
+    {
+        $query = $this->buildBOMQuery($request);
+        $boms = $query->orderBy('bill_of_materials.kode', 'asc')->get();
+
+        $totalMaterialCost = 0;
+        $totalOverheadCost = 0;
+        $grandTotalCost = 0;
+
+        // Pre-fetch creators from log_aktivitas in one fast batch query
+        $logs = DB::table('log_aktivitas')
+            ->where('detail', 'like', '%"bom_id":%')
+            ->join('users', 'log_aktivitas.user_id', '=', 'users.id')
+            ->orderBy('log_aktivitas.created_at', 'asc')
+            ->select('log_aktivitas.detail', 'users.name')
+            ->get();
+
+        $bomCreators = [];
+        foreach ($logs as $l) {
+            $detail = json_decode($l->detail, true);
+            if (isset($detail['bom_id']) && !isset($bomCreators[$detail['bom_id']])) {
+                $bomCreators[$detail['bom_id']] = $l->name;
+            }
+        }
+
+        foreach ($boms as $bom) {
+            $bom->creator_name = $bomCreators[$bom->id] ?? $bom->creator_name;
+
+            $matCost = 0;
+            foreach ($bom->details as $detail) {
+                $qty = (float) $detail->quantity;
+                $hargaBeli = (float) ($detail->komponen->harga_beli ?? 0);
+                $matCost += ($qty * $hargaBeli);
+            }
+            $ovhCost = (float) ($bom->overhead_cost ?? 0);
+            $totCost = $matCost + $ovhCost;
+
+            $bom->calculated_material_cost = $matCost;
+            $bom->calculated_overhead_cost = $ovhCost;
+            $bom->calculated_total_cost = $totCost;
+            $bom->component_count = $bom->details->count();
+
+            $totalMaterialCost += $matCost;
+            $totalOverheadCost += $ovhCost;
+            $grandTotalCost += $totCost;
+        }
+
+        $company = Company::first();
+        $filters = $request->all();
+
+        $pdf = Pdf::loadView('produksi.BOM.pdf', [
+            'boms' => $boms,
+            'filters' => $filters,
+            'company' => $company,
+            'totalBOM' => $boms->count(),
+            'activeBOM' => $boms->where('is_active', true)->count(),
+            'inactiveBOM' => $boms->where('is_active', false)->count(),
+            'totalMaterialCost' => $totalMaterialCost,
+            'totalOverheadCost' => $totalOverheadCost,
+            'grandTotalCost' => $grandTotalCost,
+        ])->setPaper('a4', 'landscape');
+
+        $fileDate = now()->format('Ymd_His');
+        $fileName = "Laporan_BOM_{$fileDate}.pdf";
+
+        if ($request->input('download')) {
+            return $pdf->download($fileName);
+        }
+
+        return $pdf->stream($fileName);
+    }
+
+    /**
+     * Export single BOM specification sheet ke PDF
+     */
+    public function exportDetailPdf(string $id, Request $request)
+    {
+        $bom = BillOfMaterial::with([
+            'produk.kategori',
+            'produk.satuan',
+            'details.komponen.satuan',
+            'details.satuan'
+        ])->findOrFail($id);
+
+        $company = Company::first();
+
+        $pdf = Pdf::loadView('produksi.BOM.detail_pdf', [
+            'bom' => $bom,
+            'company' => $company,
+        ])->setPaper('a4', 'portrait');
+
+        $safeKode = preg_replace('/[^A-Za-z0-9_\-]/', '_', $bom->kode);
+        $fileName = "BOM_{$safeKode}.pdf";
+
+        if ($request->input('download')) {
+            return $pdf->download($fileName);
+        }
+
+        return $pdf->stream($fileName);
+    }
+
+    /**
+     * Export single BOM specification sheet ke Excel
+     */
+    public function exportDetailExcel(string $id)
+    {
+        $bom = BillOfMaterial::findOrFail($id);
+        $safeKode = preg_replace('/[^A-Za-z0-9_\-]/', '_', $bom->kode);
+        $fileName = "BOM_{$safeKode}.xlsx";
+
+        return Excel::download(
+            new BOMDetailExport($id),
+            $fileName
+        );
     }
 
     /**
