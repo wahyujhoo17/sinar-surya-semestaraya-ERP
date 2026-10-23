@@ -814,7 +814,7 @@
                                                 <div class="flex items-center space-x-2">
                                                     <div class="relative w-20">
                                                         <input type="number" name="diskon_persen" min="0"
-                                                            max="100" step="0.01" x-model="diskonPersen"
+                                                            max="100" step="any" x-model="diskonPersen"
                                                             @input="calculateTotal"
                                                             class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm 
                                                             focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-right pr-7">
@@ -1074,7 +1074,13 @@
                                     this.ongkosKirim = data.sales_order.ongkos_kirim || 0;
 
                                     // Get diskon from sales order
-                                    this.diskonPersen = data.sales_order.diskon_persen || 0;
+                                    // diskon_persen di SO hanya disimpan 2 desimal (mis. 35,93), sehingga
+                                    // dihitung ulang dari nominal/subtotal agar tidak ada selisih pembulatan
+                                    const soSubtotal = parseFloat(data.sales_order.subtotal) || 0;
+                                    const soDiskonNominal = parseFloat(data.sales_order.diskon_nominal) || 0;
+                                    this.diskonPersen = (soSubtotal > 0 && soDiskonNominal > 0) ?
+                                        (soDiskonNominal / soSubtotal) * 100 :
+                                        (data.sales_order.diskon_persen || 0);
 
                                     // Set PPN from sales order (if exists)
                                     if (typeof data.sales_order.ppn !== 'undefined' && data.sales_order.ppn !== null) {
