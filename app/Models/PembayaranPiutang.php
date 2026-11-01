@@ -182,7 +182,7 @@ class PembayaranPiutang extends Model
             $this->createJournalEntries(
                 $entries,
                 $this->nomor,
-                "Penerimaan pembayaran piutang: {$this->nomor} dari {$this->customer->nama}",
+                "Penerimaan pembayaran piutang: {$this->nomor} dari " . ($this->customer?->company ?: $this->customer?->nama ?: '-'),
                 $this->tanggal
             );
 

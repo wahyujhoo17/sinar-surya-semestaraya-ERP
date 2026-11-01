@@ -7,6 +7,7 @@ use App\Models\AkunAkuntansi;
 use App\Models\JurnalUmum;
 use App\Models\PeriodeAkuntansi;
 use App\Exports\BukuBesarExport;
+use App\Services\JurnalReferensiResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -133,6 +134,7 @@ class BukuBesarController extends Controller
         // Calculate running balance
         $runningBalance = $openingBalance;
         $transaksiWithBalance = [];
+        $referensi = new JurnalReferensiResolver($transaksi);
 
         foreach ($transaksi as $trx) {
             $trxBalance = $this->calculateBalance($akun->kategori, $trx->debit, $trx->kredit);
@@ -140,6 +142,7 @@ class BukuBesarController extends Controller
 
             $transaksiWithBalance[] = [
                 'transaksi' => $trx,
+                'referensi' => $referensi->resolve($trx),
                 'saldo' => $runningBalance
             ];
         }

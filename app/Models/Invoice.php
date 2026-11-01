@@ -295,7 +295,7 @@ class Invoice extends Model
             $this->createJournalEntries(
                 $entries,
                 $this->nomor,
-                "Invoice penjualan: {$this->nomor}",
+                "Invoice penjualan: {$this->nomor} - " . ($this->customer?->company ?: $this->customer?->nama ?: '-'),
                 $this->tanggal
             );
 

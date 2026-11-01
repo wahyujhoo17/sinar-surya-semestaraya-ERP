@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\AkunAkuntansi;
 use App\Models\JurnalUmum;
+use App\Services\JurnalReferensiResolver;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -79,10 +80,14 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
                 ->orderBy('created_at')
                 ->get();
 
+            $referensi = new JurnalReferensiResolver($transaksi);
+
             // Opening balance row
             $data->push([
                 'Tanggal',
                 'No. Referensi',
+                'Customer / Supplier',
+                'Dokumen Terkait',
                 'Keterangan',
                 'Debit',
                 'Kredit',
@@ -90,6 +95,8 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
             ]);
 
             $data->push([
+                '',
+                '',
                 '',
                 '',
                 'Saldo Awal',
@@ -103,10 +110,13 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
             foreach ($transaksi as $trx) {
                 $trxBalance = $this->calculateBalance($akun->kategori, $trx->debit, $trx->kredit);
                 $runningBalance += $trxBalance;
+                $ref = $referensi->resolve($trx);
 
                 $data->push([
                     date('d/m/Y', strtotime($trx->tanggal)),
                     $trx->no_referensi ?? '-',
+                    $ref['pihak'],
+                    $ref['dokumen'],
                     $trx->keterangan,
                     $trx->debit > 0 ? $trx->debit : '',
                     $trx->kredit > 0 ? $trx->kredit : '',
@@ -122,6 +132,8 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
             $data->push([
                 '',
                 '',
+                '',
+                '',
                 'Total Periode',
                 $periodDebit,
                 $periodKredit,
@@ -130,12 +142,16 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
             $data->push([
                 '',
                 '',
+                '',
+                '',
                 'Saldo Akhir',
                 '',
                 '',
                 $runningBalance
             ]);
             $data->push([
+                '',
+                '',
                 '',
                 '',
                 'Total Transaksi: ' . $transaksi->count(),
@@ -220,8 +236,16 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
             }
         }
 
-        // Amount columns (D, E, F) - right align
-        $styles['D:F'] = [
+        // Kolom teks panjang dibungkus agar tidak terpotong saat dibuka/dicetak
+        $styles['C:E'] = [
+            'alignment' => [
+                'wrapText' => true,
+                'vertical' => Alignment::VERTICAL_TOP,
+            ],
+        ];
+
+        // Amount columns (F, G, H) - right align
+        $styles['F:H'] = [
             'alignment' => ['horizontal' => Alignment::HORIZONTAL_RIGHT],
             'numberFormat' => ['formatCode' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1],
         ];
@@ -234,10 +258,12 @@ class BukuBesarMultipleAccountsExport implements FromCollection, WithHeadings, W
         return [
             'A' => 12,  // Tanggal
             'B' => 15,  // No. Referensi
-            'C' => 45,  // Keterangan
-            'D' => 18,  // Debit
-            'E' => 18,  // Kredit
-            'F' => 18,  // Saldo
+            'C' => 35,  // Customer / Supplier
+            'D' => 30,  // Dokumen Terkait
+            'E' => 45,  // Keterangan
+            'F' => 18,  // Debit
+            'G' => 18,  // Kredit
+            'H' => 18,  // Saldo
         ];
     }
 }

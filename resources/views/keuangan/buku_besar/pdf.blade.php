@@ -341,18 +341,22 @@
                 <table class="transaction-table">
                     <thead>
                         <tr>
-                            <th style="width: 10%;">Tanggal</th>
-                            <th style="width: 15%;">No. Referensi</th>
-                            <th style="width: 30%;">Keterangan</th>
-                            <th style="width: 13%;" class="text-right">Debit</th>
-                            <th style="width: 13%;" class="text-right">Kredit</th>
-                            <th style="width: 19%;" class="text-right">Saldo</th>
+                            <th style="width: 7%;">Tanggal</th>
+                            <th style="width: 11%;">No. Referensi</th>
+                            <th style="width: 15%;">Customer / Supplier</th>
+                            <th style="width: 15%;">Dokumen Terkait</th>
+                            <th style="width: 19%;">Keterangan</th>
+                            <th style="width: 10%;" class="text-right">Debit</th>
+                            <th style="width: 10%;" class="text-right">Kredit</th>
+                            <th style="width: 13%;" class="text-right">Saldo</th>
                         </tr>
                     </thead>
                     <tbody>
                         {{-- Opening Balance --}}
                         <tr class="opening-balance">
                             <td>{{ \Carbon\Carbon::parse($tanggalAwal)->subDay()->format('d/m/Y') }}</td>
+                            <td>-</td>
+                            <td>-</td>
                             <td>-</td>
                             <td>SALDO AWAL PERIODE</td>
                             <td class="text-right">-</td>
@@ -372,6 +376,8 @@
                             <tr>
                                 <td>{{ \Carbon\Carbon::parse($trx->tanggal)->format('d/m/Y') }}</td>
                                 <td>{{ $trx->no_referensi ?? '-' }}</td>
+                                <td>{{ $item['referensi']['pihak'] }}</td>
+                                <td>{{ $item['referensi']['dokumen'] }}</td>
                                 <td>{{ $trx->keterangan ?? '-' }}</td>
                                 <td class="text-right">
                                     {{ $trx->debit > 0 ? 'Rp ' . number_format($trx->debit, 0, ',', '.') : '-' }}
@@ -389,7 +395,7 @@
 
                         {{-- Period Total --}}
                         <tr style="background: #f9fafb; border-top: 1px solid #cbd5e1;">
-                            <td colspan="3" style="text-align: right; font-weight: 600; padding-right: 5px;">
+                            <td colspan="5" style="text-align: right; font-weight: 600; padding-right: 5px;">
                                 Total Mutasi:
                             </td>
                             <td class="text-right" style="font-weight: 600;">
@@ -403,7 +409,7 @@
 
                         {{-- Closing Balance --}}
                         <tr class="closing-balance">
-                            <td colspan="5" style="padding-left: 6px; font-weight: 600;">Saldo Akhir</td>
+                            <td colspan="7" style="padding-left: 6px; font-weight: 600;">Saldo Akhir</td>
                             <td
                                 class="text-right {{ $data['ending_balance'] >= 0 ? 'balance-positive' : 'balance-negative' }}">
                                 Rp

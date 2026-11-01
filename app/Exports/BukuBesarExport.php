@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Models\AkunAkuntansi;
 use App\Models\JurnalUmum;
+use App\Services\JurnalReferensiResolver;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\WithTitle;
@@ -87,6 +88,7 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
         // Calculate running balance
         $runningBalance = $openingBalance;
         $transaksiWithBalance = [];
+        $referensi = new JurnalReferensiResolver($transaksi);
 
         foreach ($transaksi as $trx) {
             $trxBalance = $this->calculateBalance($akun->kategori, $trx->debit, $trx->kredit);
@@ -94,6 +96,7 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
 
             $transaksiWithBalance[] = [
                 'transaksi' => $trx,
+                'referensi' => $referensi->resolve($trx),
                 'saldo' => $runningBalance
             ];
         }
@@ -186,7 +189,7 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
 
             // Apply data rows styling
             $dataStartRow = $headerRow + 1;
-            $styles['A' . $dataStartRow . ':F' . $lastRow] = [
+            $styles['A' . $dataStartRow . ':H' . $lastRow] = [
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_THIN,
@@ -196,8 +199,18 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
             ];
         }
 
-        // Amount columns (D, E, F) - right align
-        $styles['D:F'] = [
+        // Kolom teks panjang dibungkus agar tidak terpotong saat dibuka/dicetak
+        if ($headerRow) {
+            $styles['C' . ($headerRow + 1) . ':E' . $lastRow] = [
+                'alignment' => [
+                    'wrapText' => true,
+                    'vertical' => Alignment::VERTICAL_TOP,
+                ],
+            ];
+        }
+
+        // Amount columns (F, G, H) - right align
+        $styles['F:H'] = [
             'alignment' => [
                 'horizontal' => Alignment::HORIZONTAL_RIGHT,
             ],
@@ -211,10 +224,12 @@ class BukuBesarExport implements FromView, WithTitle, ShouldAutoSize, WithStyles
         return [
             'A' => 12,  // Tanggal
             'B' => 15,  // No. Referensi
-            'C' => 40,  // Keterangan
-            'D' => 18,  // Debit
-            'E' => 18,  // Kredit
-            'F' => 18,  // Saldo
+            'C' => 35,  // Customer / Supplier
+            'D' => 30,  // Dokumen Terkait
+            'E' => 45,  // Keterangan
+            'F' => 18,  // Debit
+            'G' => 18,  // Kredit
+            'H' => 18,  // Saldo
         ];
     }
 }
