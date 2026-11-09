@@ -137,6 +137,7 @@
                                 </svg>
                             </div>
                             <input type="text" id="search-input" x-model="search"
+                                @input.debounce.300ms="applyFilters"
                                 placeholder="Cari No GR, No PO, Supplier..."
                                 class="block w-full pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-white focus:ring-sky-500 focus:border-sky-500 transition-colors">
                         </div>
@@ -430,6 +431,7 @@
                 tableHtml: '',
                 paginationHtml: '',
                 loading: false,
+                fetchController: null,
                 init() {
                     // Force tab to be 'semua' on initialization
                     this.tab = 'semua';
@@ -515,7 +517,12 @@
                     const url = `{{ route('pembelian.penerimaan-barang.index') }}?${queryString}`;
                     // console.log("Fetching table with URL:", url);
 
+                    // Batalkan request sebelumnya agar respons lama tidak menimpa hasil terbaru
+                    if (this.fetchController) this.fetchController.abort();
+                    this.fetchController = new AbortController();
+
                     fetch(url, {
+                            signal: this.fetchController.signal,
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json',
@@ -577,6 +584,8 @@
                             this.attachPaginationListener();
                         })
                         .catch(error => {
+                            if (error.name === 'AbortError') return;
+
                             console.error('Error fetching table data:', error);
                             this.loading = false;
                             this.tableHtml =

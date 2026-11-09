@@ -399,7 +399,13 @@ class PenerimaanBarangController extends Controller
             ->where('status', '!=', 'dibatalkan')
             ->where('status_penerimaan', '!=', 'diterima'); // Exclude POs where all items are already fully received
         if ($request->filled('q')) {
-            $poQuery->where('nomor', 'like', '%' . $request->q . '%');
+            $search = $request->q;
+            $poQuery->where(function ($q) use ($search) {
+                $q->where('nomor', 'like', '%' . $search . '%')
+                    ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                        $supplierQuery->where('nama', 'like', '%' . $search . '%');
+                    });
+            });
         }
         $purchaseOrders = $poQuery->orderBy('created_at', 'desc')->paginate(10);
 
