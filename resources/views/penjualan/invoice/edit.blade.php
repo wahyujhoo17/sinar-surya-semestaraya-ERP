@@ -216,6 +216,8 @@
                         method="POST" x-data="invoiceForm()" x-init="init()">
                         @csrf
                         @method('PUT')
+                        {{-- Penanda: qty baris bundle dikirim dalam satuan paket --}}
+                        <input type="hidden" name="qty_paket_aktif" value="1">
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                             <!-- Bagian kiri -->
@@ -466,9 +468,24 @@
                                                         x-model="item.satuan">
                                                 </td>
                                                 <td class="px-4 py-3 text-center">
-                                                    <span x-text="item.qty"></span>
-                                                    <input type="hidden" :name="`items[${index}][qty]`"
-                                                        x-model="item.qty">
+                                                    <template x-if="item.editable">
+                                                        <div>
+                                                            <input type="number" :name="`items[${index}][qty]`"
+                                                                x-model="item.qty" @input="calculateTotal"
+                                                                :min="item.item_type === 'bundle' ? 1 : 0.01" :max="item.max_qty"
+                                                                :step="item.item_type === 'bundle' ? 1 : 'any'" required
+                                                                class="block w-24 mx-auto rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-center">
+                                                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                                                x-text="'Maks ' + item.max_qty + (item.item_type === 'bundle' ? ' paket' : '')"></p>
+                                                        </div>
+                                                    </template>
+                                                    <template x-if="!item.editable">
+                                                        <div>
+                                                            <span x-text="item.qty"></span>
+                                                            <input type="hidden" :name="`items[${index}][qty]`"
+                                                                x-model="item.qty">
+                                                        </div>
+                                                    </template>
                                                 </td>
                                                 <td class="px-4 py-3 text-right">
                                                     <template x-if="!item.is_bundle_item || !item.parent_detail_id">
@@ -619,7 +636,7 @@
                                                 <div class="flex items-center space-x-2">
                                                     <div class="relative w-20">
                                                         <input type="number" name="diskon_persen" min="0"
-                                                            max="100" step="0.01" x-model="diskonPersen"
+                                                            max="100" step="any" x-model="diskonPersen"
                                                             @input="calculateTotal"
                                                             class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm 
                                                             focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm text-right pr-7">
@@ -739,15 +756,33 @@
                     caraAplikasiUangMuka: 'otomatis', // Untuk radio button cara aplikasi
                     selectedAdvancePayments: [], // Untuk manual selection uang muka
                     items: {!! json_encode(
-                        $invoice->details->map(function ($detail) {
+                        $invoice->details->map(function ($detail) use ($qtyLimits, $bundleInfo, $qtyClosing) {
+                                // Paket bundle: qty = jumlah paket sebenarnya, harga = harga per paket
+                                $paket = $bundleInfo[$detail->id] ?? null;
+                                $qty = $paket ? (float) $paket['paket'] : (float) $detail->quantity;
+                                $harga = $paket ? round((float) $detail->subtotal / $paket['paket'], 2) : (float) $detail->harga;
+                                // Isi bundle: qty per paket, dipakai untuk mengikuti perubahan qty paket
+                                $parentPaket = $bundleInfo[$detail->parent_detail_id] ?? null;
+
                                 return [
                                     'id' => $detail->id,
                                     'produk_id' => $detail->produk_id,
                                     'nama_produk' => $detail->deskripsi,
                                     'deskripsi' => $detail->deskripsi,
                                     'satuan' => $detail->satuan ? $detail->satuan->nama : '',
-                                    'qty' => $detail->quantity,
-                                    'harga' => $detail->harga,
+                                    'qty' => $qty,
+                                    'original_qty' => $qty,
+                                    'original_subtotal' => (float) $detail->subtotal,
+                                    'original_harga' => $harga,
+                                    'editable' => array_key_exists($detail->id, $qtyLimits) || $paket !== null,
+                                    'max_qty' => $qtyLimits[$detail->id] ?? ($paket['max'] ?? (float) $detail->quantity),
+                                    'so_paket' => $paket['so_paket'] ?? null,
+                                    'so_value' => $paket['so_value'] ?? null,
+                                    'per_paket' => $parentPaket ? ($parentPaket['per_paket'][$detail->produk_id] ?? null) : null,
+                                    // Invoice penutup: qty = sisa SO -> subtotal = sisa nilai SO
+                                    'sisa_qty' => $paket ? $paket['sisa_paket'] : ($qtyClosing[$detail->id]['sisa_qty'] ?? null),
+                                    'closing_subtotal' => $paket ? $paket['closing_value'] : ($qtyClosing[$detail->id]['closing_subtotal'] ?? null),
+                                    'harga' => $harga,
                                     'diskon' => $detail->diskon_persen,
                                     'subtotal' => $detail->subtotal,
                                     'item_type' => $detail->item_type,
@@ -759,10 +794,24 @@
                             })->values()->all(),
                         JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE,
                     ) !!},
-                    subtotal: {{ $invoice->subtotal ?? 0 }},
-                    diskonPersen: {{ $invoice->diskon_persen ?? 0 }},
-                    diskonNominal: {{ $invoice->diskon_nominal ?? 0 }},
-                    ppnPersen: {{ (($invoice->subtotal ?? 0) - ($invoice->diskon_nominal ?? 0)) > 0 && ($invoice->ppn ?? 0) > 0 ? round((($invoice->ppn ?? 0) / (($invoice->subtotal ?? 0) - ($invoice->diskon_nominal ?? 0))) * 100) : 0 }},
+                    @php
+                        $origSubtotal = (float) ($invoice->subtotal ?? 0);
+                        $origDiskon = (float) ($invoice->diskon_nominal ?? 0);
+                        // Persen diskon presisi dari nominal (kolom persen hanya 2 desimal)
+                        $origDiskonPersen = $origSubtotal > 0 && $origDiskon > 0
+                            ? ($origDiskon / $origSubtotal) * 100
+                            : (float) ($invoice->diskon_persen ?? 0);
+                    @endphp
+                    // Nilai awal invoice: dipakai agar angka tidak bergeser jika item & diskon tidak diubah
+                    originalSubtotal: @json($origSubtotal),
+                    originalDiskon: @json($origDiskon),
+                    originalDiskonPersen: @json($origDiskonPersen),
+                    originalPpn: @json((float) ($invoice->ppn ?? 0)),
+                    penutup: @json($penutup),
+                    subtotal: @json($origSubtotal),
+                    diskonPersen: @json($origDiskonPersen),
+                    diskonNominal: @json($origDiskon),
+                    ppnPersen: @json((float) $ppnRate),
                     ppnNominal: {{ $invoice->ppn ?? 0 }},
                     ongkosKirim: {{ $invoice->ongkos_kirim ?? 0 }},
                     total: {{ $invoice->total ?? 0 }},
@@ -800,37 +849,108 @@
                             });
                     },
 
+                    // Perhitungan disamakan dengan InvoiceController@update (server tetap menghitung ulang)
                     calculateSubtotal() {
+                        // Isi bundle mengikuti qty paket: qty isi = qty paket × qty per paket
+                        this.items.forEach(parent => {
+                            if (parent.item_type !== 'bundle' || !parent.editable) return;
+                            const paket = parseFloat(parent.qty) || 0;
+                            this.items.forEach(child => {
+                                if (child.parent_detail_id == parent.id && child.per_paket) {
+                                    child.qty = Math.round(paket * child.per_paket * 100) / 100;
+                                }
+                            });
+                        });
+
                         this.subtotal = this.items.reduce((sum, item) => {
-                            if (item.is_bundle_item && item.parent_detail_id) {
-                                // Skip calculation for bundle children as their price is already in the parent bundle
-                                item.subtotal = 0;
-                                return sum;
-                            }
-                            const harga = parseFloat(item.harga) || 0;
                             const qty = parseFloat(item.qty) || 0;
+                            const qtyChanged = item.editable && Math.abs(qty - item.original_qty) >= 0.001;
+
+                            // Qty = sisa SO: nilai = sisa nilai SO (jika selisihnya sebatas pembulatan)
+                            const isPenutup = item.editable && item.sisa_qty !== null && item.closing_subtotal !== null &&
+                                item.closing_subtotal >= 0 && Math.abs(qty - item.sisa_qty) < 0.001;
+
+                            if (!qtyChanged) {
+                                // Paket penutup dengan selisih pembulatan dikoreksi ke sisa nilai SO
+                                const selisih = Math.abs(item.closing_subtotal - item.original_subtotal);
+                                if (item.item_type === 'bundle' && isPenutup && selisih >= 0.5 && selisih <= 5) {
+                                    item.subtotal = item.closing_subtotal;
+                                    item.harga = Math.round(item.closing_subtotal / qty * 100) / 100;
+                                    return sum + item.closing_subtotal;
+                                }
+                                // Baris yang tidak diubah memakai subtotal yang tersimpan
+                                item.subtotal = item.original_subtotal;
+                                item.harga = item.original_harga;
+                                return sum + item.original_subtotal;
+                            }
+
+                            if (item.item_type === 'bundle') {
+                                // Nilai paket proporsional terhadap nilai bundle di SO
+                                let nilaiPaket = Math.round(item.so_value * qty / item.so_paket);
+                                if (isPenutup && Math.abs(item.closing_subtotal - nilaiPaket) <= 5) {
+                                    nilaiPaket = item.closing_subtotal;
+                                }
+                                item.subtotal = nilaiPaket;
+                                item.harga = qty > 0 ? Math.round(nilaiPaket / qty * 100) / 100 : 0;
+                                return sum + nilaiPaket;
+                            }
+
+                            const harga = parseFloat(item.harga) || 0;
                             const diskon = parseFloat(item.diskon) || 0;
-                            const itemSubtotal = Math.round((harga * qty) * (1 - diskon / 100));
-                            item.subtotal = itemSubtotal; // Update item's subtotal
+                            let itemSubtotal = Math.round((harga * qty) * (1 - diskon / 100));
+                            if (isPenutup && Math.abs(item.closing_subtotal - itemSubtotal) <= 5) {
+                                itemSubtotal = item.closing_subtotal;
+                            }
+                            item.subtotal = itemSubtotal;
                             return sum + itemSubtotal;
                         }, 0);
+                    },
+
+                    // Invoice penutup: subtotal semua invoice SO = subtotal SO (sama dengan closingDiskon/closingPpn di server)
+                    isInvoicePenutup() {
+                        return this.penutup !== null &&
+                            Math.abs(this.penutup.others_subtotal + this.subtotal - this.penutup.so_subtotal) < 0.5;
                     },
 
                     calculateTotal() {
                         this.calculateSubtotal(); // Recalculate subtotal of items first
 
-                        // Calculate diskon nominal
+                        // Diskon: tetap pakai nominal lama jika subtotal & persen tidak berubah
                         const diskonPersen = parseFloat(this.diskonPersen) || 0;
-                        this.diskonNominal = Math.round(this.subtotal * (diskonPersen / 100));
+                        if (Math.abs(this.subtotal - this.originalSubtotal) < 0.01 &&
+                            Math.abs(diskonPersen - this.originalDiskonPersen) < 0.0001) {
+                            this.diskonNominal = this.originalDiskon;
+                        } else {
+                            this.diskonNominal = Math.round(this.subtotal * (diskonPersen / 100));
+                        }
 
-                        // Calculate PPN nominal (applied after discount)
+                        // Invoice penutup: diskon = sisa diskon SO
+                        const penutup = this.isInvoicePenutup();
+                        if (penutup && Math.abs(diskonPersen - this.penutup.so_diskon_persen) < 0.01 &&
+                            this.penutup.sisa_diskon >= 0 && Math.abs(this.penutup.sisa_diskon - this.diskonNominal) <= 5) {
+                            this.diskonNominal = this.penutup.sisa_diskon;
+                        }
+
+                        // PPN (setelah diskon): tetap pakai nominal lama jika DPP tidak berubah
                         const afterDiscount = this.subtotal - this.diskonNominal;
                         const ppnPersen = parseFloat(this.ppnPersen) || 0;
-                        this.ppnNominal = Math.round(afterDiscount * (ppnPersen / 100));
+                        if (this.originalPpn <= 0) {
+                            this.ppnNominal = 0;
+                        } else if (Math.abs(afterDiscount - (this.originalSubtotal - this.originalDiskon)) < 0.01) {
+                            this.ppnNominal = this.originalPpn;
+                        } else {
+                            this.ppnNominal = Math.round(afterDiscount * (ppnPersen / 100));
+                        }
+
+                        // Invoice penutup: PPN = sisa PPN SO
+                        if (penutup && this.ppnNominal > 0 && this.penutup.sisa_ppn >= 0 &&
+                            Math.abs(this.penutup.sisa_ppn - this.ppnNominal) <= 5) {
+                            this.ppnNominal = this.penutup.sisa_ppn;
+                        }
 
                         // Calculate total (including ongkos kirim)
                         const ongkosKirim = parseFloat(this.ongkosKirim) || 0;
-                        this.total = Math.round(afterDiscount + this.ppnNominal + ongkosKirim);
+                        this.total = Math.round((afterDiscount + this.ppnNominal + ongkosKirim) * 100) / 100;
                     },
 
                     formatRupiah(value, prefix = 'Rp ') {

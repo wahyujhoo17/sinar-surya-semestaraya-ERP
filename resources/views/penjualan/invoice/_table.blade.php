@@ -50,7 +50,14 @@
                 {{ $no }}
             </td>
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
-                {{ $invoice->nomor }}
+                @if (auth()->user()->hasPermission('invoice.view'))
+                    <a href="{{ route('penjualan.invoice.show', $invoice->id) }}"
+                        class="font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 hover:underline">
+                        {{ $invoice->nomor }}
+                    </a>
+                @else
+                    {{ $invoice->nomor }}
+                @endif
             </td>
             <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-300">
                 {{ date('d/m/Y', strtotime($invoice->tanggal)) }}

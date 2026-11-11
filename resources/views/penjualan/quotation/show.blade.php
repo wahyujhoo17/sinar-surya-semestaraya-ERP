@@ -62,14 +62,11 @@
 
     <div class="max-w-full mx-auto py-8 sm:px-6 lg:px-8">
         {{-- Header --}}
-        <div class="mb-8">
+        <div class="mb-6">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex items-center">
-                    <div
-                        class="flex-shrink-0 bg-gradient-to-br from-primary-500 to-primary-600 h-10 w-1 rounded-full mr-3">
-                    </div>
                     <div>
-                        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Detail Quotation</h1>
+                        <h1 class="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white">Detail Quotation</h1>
                         <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">{{ $quotation->nomor }}</p>
                     </div>
                 </div>
@@ -473,371 +470,236 @@
     @endif
 
     {{-- Main Content --}}
-    <div class="space-y-6">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {{-- Status (left) --}}
-            <div class="lg:col-span-1">
-                {{-- Status Card --}}
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
-                    <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Status</h2>
-                    </div>
-                    <div class="p-5">
-                        @php
-                            $statusColors = [
-                                'draft' => 'gray',
-                                'dikirim' => 'blue',
-                                'disetujui' => 'emerald',
-                                'ditolak' => 'red',
-                                'kedaluwarsa' => 'amber',
-                            ];
-                            $statusColor = $statusColors[$quotation->status] ?? 'gray';
-                        @endphp
-                        <div class="mb-5 flex items-center">
-                            <div class="flex-shrink-0">
-                                <span
-                                    class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-{{ $statusColor }}-100 dark:bg-{{ $statusColor }}-900/20 text-{{ $statusColor }}-600 dark:text-{{ $statusColor }}-400">
-                                    @if ($quotation->status == 'draft')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                    @elseif($quotation->status == 'dikirim')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                    @elseif($quotation->status == 'disetujui')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    @elseif($quotation->status == 'ditolak')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    @elseif($quotation->status == 'kedaluwarsa')
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                    @endif
-                                </span>
-                            </div>
-                            <div class="ml-3">
-                                <h3 class="text-lg font-medium text-gray-900 dark:text-white capitalize">
-                                    {{ $quotation->status }}</h3>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">
-                                    @if ($quotation->status == 'draft')
-                                        Quotation masih dalam tahap draft
-                                    @elseif($quotation->status == 'dikirim')
-                                        Quotation telah dikirim ke customer
-                                    @elseif($quotation->status == 'disetujui')
-                                        Quotation telah disetujui oleh customer
-                                    @elseif($quotation->status == 'ditolak')
-                                        Quotation ditolak oleh customer
-                                    @elseif($quotation->status == 'kedaluwarsa')
-                                        Quotation telah kedaluwarsa
-                                    @endif
-                                </p>
-                            </div>
-                        </div>
+    <div class="max-w-full mx-auto pb-8 sm:px-6 lg:px-8 space-y-6">
+        @php
+            $qCustomer = $quotation->customer;
+            $qCustomerName = $qCustomer ? ($qCustomer->company ?: $qCustomer->nama) : null;
+            $qCustomerTags = $qCustomer
+                ? collect([$qCustomer->kode, $qCustomer->group, $qCustomer->tipe, $qCustomer->industri])->filter()->unique()
+                : collect();
+            $qCustomerPhones = $qCustomer
+                ? collect([$qCustomer->no_hp_kontak, $qCustomer->telepon])->filter()->map(fn($p) => trim($p))->unique()->values()
+                : collect();
+            $qCustomerAlamat = $qCustomer
+                ? ($qCustomer->alamat ?: collect([$qCustomer->jalan, $qCustomer->kota, $qCustomer->provinsi, $qCustomer->kode_pos])->filter()->implode(', '))
+                : null;
+            $qCustomerAlamat = $qCustomerAlamat ? trim(preg_replace(['/\s*,(\s*,)+/', '/\s+/'], [',', ' '], $qCustomerAlamat), ' ,') : null;
+            $qCanViewCustomer = $qCustomer && auth()->user()->hasPermission('pelanggan.view');
 
-                        @if ($quotation->tanggal_berlaku && \Carbon\Carbon::parse($quotation->tanggal_berlaku)->isFuture())
-                            <div
-                                class="p-3 bg-amber-50 dark:bg-amber-900/20 text-xs text-amber-800 dark:text-amber-300 rounded-md">
-                                <div class="flex items-center mb-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="font-medium">Masa Berlaku:</span>
-                                </div>
-                                <div class="ml-5">
-                                    <div>Sampai:
-                                        {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
-                                    <div class="mt-0.5">Tersisa:
-                                        {{ ceil(now()->floatDiffInDays(\Carbon\Carbon::parse($quotation->tanggal_berlaku))) }}
-                                        hari</div>
-                                </div>
-                            </div>
-                        @elseif ($quotation->tanggal_berlaku)
-                            <div
-                                class="p-3 bg-red-50 dark:bg-red-900/20 text-xs text-red-800 dark:text-red-300 rounded-md">
-                                <div class="flex items-center mb-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1.5" fill="none"
-                                        viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span class="font-medium">Kedaluwarsa:</span>
-                                </div>
-                                <div class="ml-5">
-                                    <div>Tanggal:
-                                        {{ \Carbon\Carbon::parse($quotation->tanggal_berlaku)->format('d M Y') }}</div>
-                                    <div class="mt-0.5">Quotation sudah kedaluwarsa.</div>
-                                </div>
-                            </div>
+            $qSales = $qCustomer ? $qCustomer->sales : null;
+            $qSalesName = $qSales ? (optional($qSales->karyawan)->nama_lengkap ?: $qSales->name) : ($qCustomer->sales_name ?? null);
+
+            $qStatusMap = [
+                'draft' => ['Draft', 'bg-gray-100 text-gray-700 ring-gray-500/20 dark:bg-gray-500/10 dark:text-gray-300 dark:ring-gray-500/20'],
+                'dikirim' => ['Dikirim', 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/20'],
+                'disetujui' => ['Disetujui', 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20'],
+                'ditolak' => ['Ditolak', 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/20'],
+                'kedaluwarsa' => ['Kedaluwarsa', 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20'],
+            ];
+            $qStatus = $qStatusMap[$quotation->status] ?? [ucfirst((string) $quotation->status), $qStatusMap['draft'][1]];
+
+            // Masa berlaku
+            $qBerlaku = $quotation->tanggal_berlaku ? \Carbon\Carbon::parse($quotation->tanggal_berlaku)->startOfDay() : null;
+            $qBerlakuNote = null;
+            if ($qBerlaku) {
+                $qSisaHari = (int) round(now()->startOfDay()->diffInDays($qBerlaku, false));
+                if ($qSisaHari < 0) {
+                    $qBerlakuNote = ['Sudah lewat ' . abs($qSisaHari) . ' hari', 'text-red-600 dark:text-red-400'];
+                } elseif ($qSisaHari === 0) {
+                    $qBerlakuNote = ['Berakhir hari ini', 'text-amber-600 dark:text-amber-400'];
+                } else {
+                    $qBerlakuNote = [$qSisaHari . ' hari lagi', $qSisaHari <= 7 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'];
+                }
+            }
+        @endphp
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {{-- Quotation --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm p-5">
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-500/10 ring-1 ring-primary-100 dark:ring-primary-500/20 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                Quotation</p>
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $quotation->nomor }}
+                            </p>
+                        </div>
+                    </div>
+                    <span
+                        class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset {{ $qStatus[1] }}">
+                        {{ $qStatus[0] }}
+                    </span>
+                </div>
+
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Tanggal</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d/m/Y') }}</p>
+                    </div>
+                    <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Berlaku Sampai</p>
+                        <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                            {{ $qBerlaku ? $qBerlaku->format('d/m/Y') : '-' }}</p>
+                        @if ($qBerlakuNote)
+                            <p class="mt-0.5 text-xs font-medium {{ $qBerlakuNote[1] }}">{{ $qBerlakuNote[0] }}</p>
                         @endif
+                    </div>
+                </div>
+
+                @if ($quotation->catatan_status)
+                    <p
+                        class="mt-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 px-3 py-2 text-xs text-gray-600 dark:text-gray-300">
+                        <span class="font-medium">Catatan status:</span> {{ $quotation->catatan_status }}
+                    </p>
+                @endif
+
+                <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-3 text-[13px]">
+                    <div class="min-w-0">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Dibuat oleh</p>
+                        <p class="mt-0.5 font-medium text-gray-900 dark:text-white truncate">
+                            {{ optional($quotation->user)->name ?? '-' }}</p>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Sales</p>
+                        <p class="mt-0.5 font-medium text-gray-900 dark:text-white truncate">{{ $qSalesName ?: '-' }}</p>
                     </div>
                 </div>
             </div>
 
-            {{-- Informasi (right) --}}
-            <div class="lg:col-span-2">
-                {{-- Info Card --}}
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
-                    <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Informasi Quotation</h2>
+            {{-- Customer --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm p-5">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-100 dark:ring-emerald-500/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
                     </div>
-                    <div class="p-5">
-                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Nomor Quotation</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ $quotation->nomor }}
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                            Customer</p>
+                        @if ($qCustomer && $qCanViewCustomer)
+                            <a href="{{ route('master.pelanggan.show', $qCustomer->id) }}" target="_blank"
+                                class="block text-sm font-semibold text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate">
+                                {{ $qCustomerName }}
+                            </a>
+                        @else
+                            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                {{ $qCustomerName ?? '-' }}</p>
+                        @endif
+                    </div>
+                </div>
+
+                @if ($qCustomer)
+                    @if ($qCustomerTags->isNotEmpty())
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ $qCustomerTags->implode(' · ') }}</p>
+                    @endif
+
+                    <dl class="mt-4 space-y-2.5 text-[13px]">
+                        @if ($qCustomer->kontak_person)
+                            <div class="flex items-start gap-3">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                <dt class="sr-only">Kontak</dt>
+                                <dd class="text-gray-900 dark:text-white">{{ $qCustomer->kontak_person }}</dd>
+                            </div>
+                        @endif
+                        @foreach ($qCustomerPhones as $phone)
+                            <div class="flex items-start gap-3">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <dt class="sr-only">Telepon</dt>
+                                <dd><a href="tel:{{ preg_replace('/[^0-9+]/', '', $phone) }}"
+                                        class="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400">{{ $phone }}</a>
                                 </dd>
                             </div>
-
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Tanggal</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                    {{ \Carbon\Carbon::parse($quotation->tanggal)->format('d M Y') }}</dd>
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Customer</dt>
-                                <dd class="col-span-2">
-                                    <div
-                                        class="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                                        <div class="flex items-start">
-                                            <div class="flex-shrink-0">
-                                                <div
-                                                    class="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
-                                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                                        class="h-5 w-5 text-primary-600 dark:text-primary-400"
-                                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            <div class="ml-3 flex-1">
-                                                <div class="text-sm font-semibold text-gray-900 dark:text-white">
-                                                    {{ $quotation->customer->company ?? ($quotation->customer->nama ?? '-') }}
-                                                </div>
-                                                @if ($quotation->customer->kode)
-                                                    <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                        Kode: {{ $quotation->customer->kode }}
-                                                    </div>
-                                                @endif
-                                                @if ($quotation->customer)
-                                                    <div class="mt-3 space-y-2">
-                                                        @if ($quotation->customer->email)
-                                                            <div
-                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                </svg>
-                                                                {{ $quotation->customer->email }}
-                                                            </div>
-                                                        @endif
-                                                        @if ($quotation->customer->telepon)
-                                                            <div
-                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                                </svg>
-                                                                {{ $quotation->customer->telepon }}
-                                                            </div>
-                                                        @endif
-                                                        @if ($quotation->customer->telepon_alternatif)
-                                                            <div
-                                                                class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                                <svg xmlns="http://www.w3.org/2000/svg"
-                                                                    class="h-4 w-4 mr-2 text-gray-400" fill="none"
-                                                                    viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path stroke-linecap="round"
-                                                                        stroke-linejoin="round" stroke-width="2"
-                                                                        d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                                </svg>
-                                                                {{ $quotation->customer->telepon_alternatif }}
-                                                            </div>
-                                                        @endif
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </div>
-                                    </div>
+                        @endforeach
+                        @if ($qCustomer->email)
+                            <div class="flex items-start gap-3">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
+                                <dt class="sr-only">Email</dt>
+                                <dd class="min-w-0 truncate"><a href="mailto:{{ $qCustomer->email }}"
+                                        class="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400">{{ $qCustomer->email }}</a>
                                 </dd>
                             </div>
-
-                            {{-- Sales Person Section --}}
-                            @if ($quotation->customer && $quotation->customer->sales_id)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Sales Person</dt>
-                                    <dd class="col-span-2">
-                                        @if ($quotation->customer->sales)
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                                {{ $quotation->customer->sales->karyawan->nama_lengkap ?? $quotation->customer->sales->name }}
-                                            </div>
-                                            <div class="mt-2 space-y-1.5">
-                                                @if ($quotation->customer->sales->karyawan->email || $quotation->customer->sales->email)
-                                                    <div
-                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {{ $quotation->customer->sales->karyawan->email ?? $quotation->customer->sales->email }}
-                                                    </div>
-                                                @endif
-                                                @if ($quotation->customer->sales->karyawan && $quotation->customer->sales->karyawan->telepon)
-                                                    <div
-                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                        </svg>
-                                                        {{ $quotation->customer->sales->karyawan->telepon }}
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @else
-                                            <div class="text-sm text-gray-500 dark:text-gray-400">
-                                                Sales tidak ditemukan
-                                            </div>
-                                        @endif
-                                    </dd>
-                                </div>
-                            @endif
-
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat</dt>
-                                <dd class="col-span-2">
-                                    @if ($quotation->customer)
-                                        <div class="text-sm text-gray-900 dark:text-white mb-1">
-                                            {{ $quotation->customer->alamat ?? 'Alamat tidak tersedia' }}</div>
-                                        <div class="flex flex-wrap gap-x-2 text-xs text-gray-600 dark:text-gray-400">
-                                            @if ($quotation->customer->kota)
-                                                <span>{{ $quotation->customer->kota }}</span>
-                                            @endif
-                                            @if ($quotation->customer->provinsi)
-                                                <span>{{ $quotation->customer->provinsi }}</span>
-                                            @endif
-                                            @if ($quotation->customer->kode_pos)
-                                                <span>{{ $quotation->customer->kode_pos }}</span>
-                                            @endif
-                                        </div>
-                                    @else
-                                        <div class="text-sm text-gray-900 dark:text-white">Alamat tidak tersedia</div>
-                                    @endif
-                                </dd>
+                        @endif
+                        @if ($qCustomerAlamat)
+                            <div class="flex items-start gap-3">
+                                <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <dt class="sr-only">Alamat</dt>
+                                <dd class="text-gray-600 dark:text-gray-300 leading-relaxed">{{ $qCustomerAlamat }}</dd>
                             </div>
+                        @endif
+                        @if (!$qCustomer->kontak_person && $qCustomerPhones->isEmpty() && !$qCustomer->email && !$qCustomerAlamat)
+                            <p class="text-gray-400 dark:text-gray-500 italic">Belum ada data kontak & alamat</p>
+                        @endif
+                    </dl>
 
-                            @if ($quotation->customer && $quotation->customer->npwp)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">NPWP</dt>
-                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                        {{ $quotation->customer->npwp }}</dd>
-                                </div>
-                            @endif
-
-                            @if ($quotation->customer && $quotation->customer->kontak_person)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Kontak Person</dt>
-                                    <dd class="col-span-2">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ $quotation->customer->kontak_person }}</div>
-                                        @if ($quotation->customer->no_hp_kontak || $quotation->customer->pic_email)
-                                            <div class="mt-1 space-y-1">
-                                                @if ($quotation->customer->no_hp_kontak)
-                                                    <div
-                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {{ $quotation->customer->no_hp_kontak }}
-                                                    </div>
-                                                @endif
-                                                @if ($quotation->customer->email)
-                                                    <div
-                                                        class="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                                                        <svg xmlns="http://www.w3.org/2000/svg"
-                                                            class="h-3.5 w-3.5 mr-1.5" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                        </svg>
-                                                        {{ $quotation->customer->email }}
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        @endif
-                                    </dd>
-                                </div>
-                            @endif
-
-                            @if ($quotation->alamat_pengiriman)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Alamat Pengiriman
-                                    </dt>
-                                    <dd class="col-span-2">
-                                        <div class="text-sm text-gray-900 dark:text-white whitespace-pre-line">
-                                            {{ $quotation->alamat_pengiriman }}</div>
-                                    </dd>
-                                </div>
-                            @endif
-
-                            <div class="grid grid-cols-3 gap-2 py-3">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Dibuat Oleh</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                    {{ $quotation->user->name ?? 'User tidak ditemukan' }}</dd>
-                            </div>
-
-                            @if ($quotation->catatan)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Catatan</dt>
-                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white">
-                                        {{ $quotation->catatan }}</dd>
-                                </div>
-                            @endif
-
-                            @if ($quotation->syarat_ketentuan)
-                                <div class="grid grid-cols-3 gap-2 py-3">
-                                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Syarat & Ketentuan
-                                    </dt>
-                                    <dd class="col-span-2 text-sm text-gray-900 dark:text-white whitespace-pre-line">
-                                        {{ $quotation->syarat_ketentuan }}</dd>
-                                </div>
-                            @endif
+                    @if ($qCustomer->npwp)
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 text-[13px]">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">NPWP</p>
+                            <p class="mt-0.5 font-medium text-gray-900 dark:text-white">{{ $qCustomer->npwp }}</p>
                         </div>
+                    @endif
+                @endif
+            </div>
+
+            {{-- Catatan & Ketentuan --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm p-5">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-500/10 ring-1 ring-amber-100 dark:ring-amber-500/20 flex items-center justify-center">
+                        <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="1.8">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </div>
+                    <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">Catatan &
+                        Ketentuan</p>
+                </div>
+
+                <div class="mt-4 space-y-4 text-[13px]">
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Catatan</p>
+                        <p class="mt-1 text-gray-900 dark:text-white whitespace-pre-line leading-relaxed">
+                            {{ $quotation->catatan ?: '-' }}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Syarat & Ketentuan</p>
+                        @if ($quotation->syarat_ketentuan)
+                            <div
+                                class="mt-1 max-h-56 overflow-y-auto pr-1 text-gray-700 dark:text-gray-300 whitespace-pre-line leading-relaxed">{{ $quotation->syarat_ketentuan }}</div>
+                        @else
+                            <p class="mt-1 text-gray-900 dark:text-white">-</p>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -846,9 +708,9 @@
         {{-- Items (full width) --}}
         <div>
             <!-- Items -->
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
                 <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Detail Item</h2>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Detail Item</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -1190,9 +1052,9 @@
 
             @if ($quotation->salesOrders && $quotation->salesOrders->count() > 0)
                 <!-- Related Sales Orders -->
-                <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden mb-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm overflow-hidden mb-6">
                     <div class="p-5 border-b border-gray-200 dark:border-gray-700">
-                        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Sales Order Terkait</h2>
+                        <h2 class="text-base font-semibold text-gray-900 dark:text-white">Sales Order Terkait</h2>
                     </div>
                     <div class="p-5">
                         <div class="overflow-x-auto">
@@ -1273,9 +1135,9 @@
             @endif
 
             <!-- Log Aktivitas -->
-            <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm overflow-hidden">
                 <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                    <h2 class="text-lg font-medium text-gray-900 dark:text-white">Log Aktivitas</h2>
+                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Log Aktivitas</h2>
                 </div>
                 <div class="p-5">
                     @if ($quotation->logAktivitas && $quotation->logAktivitas->count() > 0)

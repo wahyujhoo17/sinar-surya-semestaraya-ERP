@@ -397,6 +397,16 @@ class InvoiceController extends Controller
                     $subtotalProporsional = round($detail->subtotal * $proporsiQty);
                 }
 
+                // Item biasa yang sebagian sudah di-invoice: pakai SISA nilai SO (nilai SO - yang sudah di-invoice)
+                // agar total semua invoice tepat sama dengan SO (tanpa selisih pembulatan)
+                if (!$detail->is_bundle_item && !$detail->bundle_id && $qtyAlreadyInvoiced > 0 && $qtyAvailable > 0) {
+                    $subtotalSudahInvoice = (float) (clone $qtyAlreadyInvoicedQuery)->sum('invoice_detail.subtotal');
+                    $sisaNilai = round((float) $detail->subtotal - $subtotalSudahInvoice, 2);
+                    if ($sisaNilai >= 0 && abs($sisaNilai - $subtotalProporsional) <= 5) {
+                        $subtotalProporsional = $sisaNilai;
+                    }
+                }
+
                 return [
                     'sales_order_detail_id' => $detail->id,
                     'produk_id' => $detail->produk_id,
@@ -444,8 +454,42 @@ class InvoiceController extends Controller
                         // Remove virtual parent if it has no children left (all fully invoiced)
                         unset($details[$key]);
                     } else {
+                        // Qty paket sebenarnya = sisa qty isi bundle / qty per paket (definisi bundle).
+                        // Jika definisi tidak valid, tetap 1 paket seperti sebelumnya.
+                        $paket = null;
+                        $soPaket = null;
+                        $bundlePackageInfo = $this->getBundlePackageInfo((int) $id, (int) $item['bundle_id']);
+                        if ($bundlePackageInfo) {
+                            $childQty = [];
+                            foreach ($details as $childItem) {
+                                if (isset($childItem['parent_detail_id']) && $childItem['parent_detail_id'] === $item['sales_order_detail_id']) {
+                                    $childQty[$childItem['produk_id']] = ($childQty[$childItem['produk_id']] ?? 0) + (float) $childItem['qty'];
+                                }
+                            }
+                            $paket = $this->countPaket($childQty, $bundlePackageInfo['per_paket']);
+                            $soPaket = $bundlePackageInfo['so_paket'];
+                        }
+                        $paket = $paket ?: 1;
+
+                        // Nilai paket = SISA nilai bundle di SO (nilai bundle SO - nilai bundle yang sudah di-invoice),
+                        // bukan jumlah pembulatan per item isi, agar tidak ada selisih Rp terhadap SO
+                        if ($bundlePackageInfo) {
+                            $nilaiBundleSudahInvoice = (float) InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+                                ->where('invoice.sales_order_id', $id)
+                                ->where('invoice_detail.bundle_id', $item['bundle_id'])
+                                ->where('invoice_detail.item_type', 'bundle')
+                                ->sum('invoice_detail.subtotal');
+                            $sisaNilaiBundle = round($bundlePackageInfo['so_value'] - $nilaiBundleSudahInvoice, 2);
+                            if ($sisaNilaiBundle >= 0 && abs($sisaNilaiBundle - $childrenSubtotals) <= 5) {
+                                $childrenSubtotals = $sisaNilaiBundle;
+                            }
+                        }
+
+                        $details[$key]['qty'] = $paket;
+                        $details[$key]['max_available_qty'] = $paket;
+                        $details[$key]['original_qty'] = $soPaket ?? 1;
                         $details[$key]['subtotal'] = $childrenSubtotals;
-                        $details[$key]['harga'] = $childrenSubtotals; // Match harga with subtotal since qty is 1
+                        $details[$key]['harga'] = round($childrenSubtotals / $paket, 2); // Harga per paket
                     }
                 }
             }
@@ -463,6 +507,8 @@ class InvoiceController extends Controller
                 'success' => true,
                 'sales_order' => $salesOrder,
                 'details' => $details,
+                // Data invoice penutup: dipakai agar diskon & PPN invoice terakhir = sisa SO (tanpa selisih pembulatan)
+                'penutup' => $this->getSoInvoiceRemainder((int) $id),
                 'jatuh_tempo' => $jatuhTempo,
                 'terms_pembayaran' => $salesOrder->terms_pembayaran,
                 'invoice_info' => [
@@ -516,6 +562,20 @@ class InvoiceController extends Controller
             return $validationResponse;
         }
 
+        // Invoice penutup (menghabiskan sisa SO): diskon & PPN = sisa SO agar total semua invoice tepat sama dengan SO
+        $storeSubtotal = (float) $request->subtotal;
+        $storeDiskon = (float) ($request->diskon_nominal ?? 0);
+        $storePpn = (float) ($request->ppn ?? 0);
+        $storeTotal = (float) $request->total;
+        $penutup = $this->getSoInvoiceRemainder((int) $request->sales_order_id);
+        $adjDiskon = $this->closingDiskon($penutup, $storeSubtotal, (float) ($request->diskon_persen ?? 0), $storeDiskon);
+        $adjPpn = $this->closingPpn($penutup, $storeSubtotal, $storePpn);
+        if (abs($adjDiskon - $storeDiskon) > 0.001 || abs($adjPpn - $storePpn) > 0.001) {
+            $storeDiskon = $adjDiskon;
+            $storePpn = $adjPpn;
+            $storeTotal = round($storeSubtotal - $storeDiskon + $storePpn + (float) ($request->ongkos_kirim ?? 0), 2);
+        }
+
         DB::beginTransaction();
 
         try {
@@ -526,14 +586,14 @@ class InvoiceController extends Controller
                 'sales_order_id' => $request->sales_order_id,
                 'customer_id' => $request->customer_id,
                 'user_id' => Auth::id(),
-                'subtotal' => $request->subtotal,
+                'subtotal' => $storeSubtotal,
                 'diskon_persen' => $request->diskon_persen ?? 0,
-                'diskon_nominal' => $request->diskon_nominal ?? 0,
-                'ppn' => $request->ppn ?? 0,
+                'diskon_nominal' => $storeDiskon,
+                'ppn' => $storePpn,
                 'ongkos_kirim' => $request->ongkos_kirim ?? 0,
-                'total' => $request->total,
+                'total' => $storeTotal,
                 'uang_muka_terapkan' => 0, // Initialize
-                'sisa_tagihan' => $request->total, // Initialize with total
+                'sisa_tagihan' => $storeTotal, // Initialize with total
                 'jatuh_tempo' => $request->jatuh_tempo,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
@@ -642,7 +702,51 @@ class InvoiceController extends Controller
     public function edit(Invoice $invoice)
     {
         $invoice->load(['customer', 'salesOrder', 'details.produk']);
-        return view('penjualan.invoice.edit', compact('invoice'));
+
+        // Batas qty per baris yang boleh diubah: qty SO dikurangi qty di invoice lain dari SO yang sama
+        $editableDetails = $invoice->details->filter(fn($detail) => $this->isQtyEditableDetail($detail));
+        $availableQty = $this->getAvailableQtyForInvoice($invoice, $editableDetails->pluck('produk_id')->unique()->all());
+
+        $qtyLimits = [];
+        foreach ($editableDetails as $detail) {
+            $otherLinesQty = $editableDetails
+                ->where('produk_id', $detail->produk_id)
+                ->where('id', '!=', $detail->id)
+                ->sum('quantity');
+            // Jangan lebih kecil dari qty saat ini, agar invoice lama yang sudah melebihi SO tetap bisa disimpan
+            $qtyLimits[$detail->id] = max(
+                (float) $detail->quantity,
+                round(($availableQty[$detail->produk_id] ?? 0) - $otherLinesQty, 2)
+            );
+        }
+
+        // Item biasa satu-satunya untuk produknya: jika qty = sisa qty SO, subtotal = sisa nilai SO
+        $remainingSubtotal = $this->getRemainingSubtotalForInvoice($invoice, $editableDetails->pluck('produk_id')->unique()->all());
+        $qtyClosing = [];
+        foreach ($editableDetails as $detail) {
+            if ($editableDetails->where('produk_id', $detail->produk_id)->count() === 1) {
+                $qtyClosing[$detail->id] = [
+                    'sisa_qty' => round($availableQty[$detail->produk_id] ?? 0, 2),
+                    'closing_subtotal' => $remainingSubtotal[$detail->produk_id] ?? null,
+                ];
+            }
+        }
+
+        // Data invoice penutup (diskon & PPN = sisa SO)
+        $penutup = $this->getSoInvoiceRemainder((int) $invoice->sales_order_id, $invoice->id);
+
+        // Bundle: yang diubah qty paketnya, isi bundle mengikuti otomatis
+        $bundleInfo = [];
+        foreach ($invoice->details->filter(fn($detail) => $this->isBundleParentDetail($detail)) as $parent) {
+            $state = $this->getInvoiceBundleState($invoice, $parent);
+            if ($state) {
+                $bundleInfo[$parent->id] = $state;
+            }
+        }
+
+        $ppnRate = $this->getInvoicePpnRate($invoice);
+
+        return view('penjualan.invoice.edit', compact('invoice', 'qtyLimits', 'qtyClosing', 'bundleInfo', 'penutup', 'ppnRate'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -661,24 +765,257 @@ class InvoiceController extends Controller
             'cara_aplikasi_uang_muka' => 'nullable|in:otomatis,manual',
             'uang_muka_terpilih' => 'nullable|array',
             'uang_muka_terpilih.*' => 'exists:uang_muka_penjualan,id',
+            'items' => 'nullable|array',
+            'items.*.id' => 'required_with:items|integer',
+            'items.*.qty' => 'nullable|numeric|min:0.01',
         ]);
+
+        $invoice->load(['details', 'salesOrder']);
+
+        // --- Perubahan qty item biasa & qty paket bundle ---
+        $requestedQty = collect($request->input('items', []))
+            ->filter(fn($item) => isset($item['id'], $item['qty']) && $item['qty'] !== '')
+            ->mapWithKeys(fn($item) => [(int) $item['id'] => round((float) $item['qty'], 2)]);
+
+        $qtyChanges = [];
+        foreach ($invoice->details as $detail) {
+            if (!$this->isQtyEditableDetail($detail) || !$requestedQty->has($detail->id)) {
+                continue;
+            }
+
+            $newQty = $requestedQty[$detail->id];
+            if (abs($newQty - (float) $detail->quantity) < 0.001) {
+                continue;
+            }
+
+            $harga = (float) $detail->harga;
+            $diskonPersenItem = (float) $detail->diskon_persen;
+
+            $subtotalBaru = round($harga * $newQty * (1 - $diskonPersenItem / 100));
+            $qtyChanges[$detail->id] = [
+                'kind' => 'produk',
+                'old' => (float) $detail->quantity,
+                'new' => $newQty,
+                'subtotal' => $subtotalBaru,
+                'fields' => [
+                    'quantity' => $newQty,
+                    'diskon_nominal' => ($harga * $newQty * $diskonPersenItem) / 100,
+                    'subtotal' => $subtotalBaru,
+                ],
+            ];
+        }
+
+        // Bundle: qty paket diubah, nilai paket proporsional terhadap nilai bundle di SO, isi bundle mengikuti
+        $qtyErrors = [];
+        $paketNormalisasi = [];
+        foreach ($invoice->details as $parent) {
+            if (!$this->isBundleParentDetail($parent)) {
+                continue;
+            }
+
+            $state = $this->getInvoiceBundleState($invoice, $parent);
+            if (!$state) {
+                continue; // Definisi paket tidak valid: bundle tetap dikunci
+            }
+
+            // Hanya form edit versi baru yang mengirim qty dalam satuan paket (penanda qty_paket_aktif).
+            // Form lama mengirim qty tersimpan (1 untuk invoice lama) dan tidak boleh dianggap perubahan paket.
+            $newPaket = ($request->boolean('qty_paket_aktif') && $requestedQty->has($parent->id))
+                ? $requestedQty[$parent->id]
+                : (float) $state['paket'];
+            if ($newPaket < 1 || abs($newPaket - round($newPaket)) > 0.001) {
+                $qtyErrors[] = "{$parent->deskripsi}: qty paket harus bilangan bulat minimal 1";
+                continue;
+            }
+            $newPaket = (int) round($newPaket);
+            $isPaketPenutup = $newPaket === $state['sisa_paket'] && $state['closing_value'] >= 0;
+
+            if ($newPaket === $state['paket']) {
+                // Paket penutup yang nilainya selisih pembulatan dari sisa SO: koreksi ke sisa nilai SO
+                $selisihPenutup = abs($state['closing_value'] - (float) $parent->subtotal);
+                if ($isPaketPenutup && $selisihPenutup >= 0.5 && $selisihPenutup <= 5) {
+                    $qtyChanges[$parent->id] = [
+                        'kind' => 'koreksi',
+                        'old' => (float) $parent->subtotal,
+                        'new' => $state['closing_value'],
+                        'subtotal' => $state['closing_value'],
+                        'fields' => [
+                            'quantity' => $newPaket,
+                            'harga' => round($state['closing_value'] / $newPaket, 2),
+                            'subtotal' => $state['closing_value'],
+                        ],
+                    ];
+                    continue;
+                }
+
+                // Invoice lama menyimpan paket sebagai "1 × total semua paket"; samakan dengan jumlah paket sebenarnya
+                if (abs((float) $parent->quantity - $newPaket) > 0.001) {
+                    $paketNormalisasi[$parent->id] = [
+                        'quantity' => $newPaket,
+                        'harga' => round((float) $parent->subtotal / $newPaket, 2),
+                    ];
+                }
+                continue;
+            }
+
+            if ($newPaket > $state['max']) {
+                $qtyErrors[] = "{$parent->deskripsi}: qty paket {$newPaket} melebihi sisa paket di Sales Order ({$state['max']})";
+                continue;
+            }
+
+            $nilaiPaket = round($state['so_value'] * $newPaket / $state['so_paket']);
+            if ($isPaketPenutup && abs($state['closing_value'] - $nilaiPaket) <= 5) {
+                $nilaiPaket = $state['closing_value'];
+            }
+            $qtyChanges[$parent->id] = [
+                'kind' => 'bundle',
+                'old' => $state['paket'],
+                'new' => $newPaket,
+                'subtotal' => $nilaiPaket,
+                'fields' => [
+                    'quantity' => $newPaket,
+                    'harga' => round($nilaiPaket / $newPaket, 2),
+                    'subtotal' => $nilaiPaket,
+                ],
+            ];
+
+            foreach ($invoice->details->where('parent_detail_id', $parent->id) as $child) {
+                $childQty = round($newPaket * $state['per_paket'][$child->produk_id], 2);
+                $qtyChanges[$child->id] = [
+                    'kind' => 'isi_bundle',
+                    'old' => (float) $child->quantity,
+                    'new' => $childQty,
+                    'subtotal' => (float) $child->subtotal,
+                    'fields' => ['quantity' => $childQty],
+                ];
+            }
+        }
+
+        // Validasi qty item biasa tidak melebihi sisa qty SO (qty di invoice lain dari SO yang sama tidak boleh terpakai dua kali)
+        $regularChangeIds = collect($qtyChanges)->filter(fn($change) => $change['kind'] === 'produk')->keys()->all();
+        if (!empty($regularChangeIds)) {
+            $changedProdukIds = $invoice->details->whereIn('id', $regularChangeIds)->pluck('produk_id')->unique()->all();
+            $availableQty = $this->getAvailableQtyForInvoice($invoice, $changedProdukIds);
+            $remainingSubtotal = $this->getRemainingSubtotalForInvoice($invoice, $changedProdukIds);
+
+            foreach ($changedProdukIds as $produkId) {
+                $produkDetails = $invoice->details->filter(
+                    fn($detail) => $this->isQtyEditableDetail($detail) && $detail->produk_id == $produkId
+                );
+                $totalQtyBaru = $produkDetails->sum(
+                    fn($detail) => $qtyChanges[$detail->id]['new'] ?? (float) $detail->quantity
+                );
+                $totalQtyLama = (float) $produkDetails->sum('quantity');
+                $tersedia = round($availableQty[$produkId] ?? 0, 2);
+
+                // Menurunkan qty selalu boleh; menaikkan tidak boleh melebihi sisa qty SO
+                if ($totalQtyBaru > $tersedia + 0.001 && $totalQtyBaru > $totalQtyLama + 0.001) {
+                    $qtyErrors[] = "Produk {$produkDetails->first()->deskripsi}: qty {$totalQtyBaru} melebihi qty yang tersedia dari Sales Order ({$tersedia})";
+                    continue;
+                }
+
+                // Qty = seluruh sisa SO: subtotal = sisa nilai SO (tanpa selisih pembulatan)
+                $lineId = $produkDetails->count() === 1 ? $produkDetails->first()->id : null;
+                if ($lineId && isset($qtyChanges[$lineId]) && abs($totalQtyBaru - $tersedia) < 0.001) {
+                    $sisaNilai = $remainingSubtotal[$produkId] ?? -1;
+                    if ($sisaNilai >= 0 && abs($sisaNilai - $qtyChanges[$lineId]['subtotal']) <= 5) {
+                        $qtyChanges[$lineId]['subtotal'] = $sisaNilai;
+                        $qtyChanges[$lineId]['fields']['subtotal'] = $sisaNilai;
+                    }
+                }
+            }
+        }
+
+        if (!empty($qtyErrors)) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Validasi gagal: ' . implode(', ', $qtyErrors));
+        }
+
+        // --- Hitung ulang total di server (tidak memakai angka dari browser) ---
+        $oldSubtotal = (float) $invoice->subtotal;
+        $oldDiskon = (float) $invoice->diskon_nominal;
+        $oldPpn = (float) $invoice->ppn;
+        $oldTotal = (float) $invoice->total;
+        $ppnRate = $this->getInvoicePpnRate($invoice);
+
+        $subtotal = empty($qtyChanges)
+            ? $oldSubtotal
+            : (float) $invoice->details->sum(fn($detail) => $qtyChanges[$detail->id]['subtotal'] ?? (float) $detail->subtotal);
+
+        // Persen diskon tersimpan 2 desimal, jadi persen asli dihitung dari nominal agar tidak ada selisih pembulatan
+        $diskonPersen = (float) ($request->diskon_persen ?? 0);
+        $oldDiskonPersenPresisi = ($oldSubtotal > 0 && $oldDiskon > 0)
+            ? ($oldDiskon / $oldSubtotal) * 100
+            : (float) $invoice->diskon_persen;
+
+        if (abs($subtotal - $oldSubtotal) < 0.01 && abs($diskonPersen - $oldDiskonPersenPresisi) < 0.0001) {
+            $diskonNominal = $oldDiskon;
+        } else {
+            $diskonNominal = round($subtotal * $diskonPersen / 100);
+        }
+
+        // Invoice penutup (menghabiskan sisa SO): diskon & PPN = sisa SO
+        $penutup = $this->getSoInvoiceRemainder((int) $invoice->sales_order_id, $invoice->id);
+        $diskonNominal = $this->closingDiskon($penutup, $subtotal, $diskonPersen, $diskonNominal);
+
+        $dpp = $subtotal - $diskonNominal;
+        if ($oldPpn <= 0) {
+            $ppn = 0;
+        } elseif (abs($dpp - ($oldSubtotal - $oldDiskon)) < 0.01) {
+            $ppn = $oldPpn;
+        } else {
+            $ppn = round($dpp * $ppnRate / 100);
+        }
+        $ppn = $this->closingPpn($penutup, $subtotal, $ppn);
+
+        $ongkosKirim = (float) ($request->ongkos_kirim ?? 0);
+        $total = round($dpp + $ppn + $ongkosKirim, 2);
+
+        // Total baru tidak boleh lebih kecil dari yang sudah dibayar
+        $reapplyUangMuka = $request->filled('gunakan_uang_muka') && $request->gunakan_uang_muka;
+        $totalPembayaran = (float) $invoice->pembayaranDetails()->sum('jumlah');
+        $kreditTerapkan = (float) ($invoice->kredit_terapkan ?? 0);
+        $sudahDibayar = $totalPembayaran + $kreditTerapkan + ($reapplyUangMuka ? 0 : (float) $invoice->uang_muka_terapkan);
+
+        if ($total < $sudahDibayar - 0.01) {
+            return redirect()->back()->withInput()
+                ->with('error', 'Total invoice baru (Rp ' . number_format($total, 0, ',', '.') . ') lebih kecil dari jumlah yang sudah dibayar (Rp ' . number_format($sudahDibayar, 0, ',', '.') . '). Kurangi pembayaran terlebih dahulu atau sesuaikan qty.');
+        }
+
+        $hadJournal = $invoice->journalEntries()->exists();
 
         DB::beginTransaction();
 
         try {
-            // Update invoice
+            // Update qty item yang berubah (item biasa, paket bundle, dan isi bundle)
+            foreach ($qtyChanges as $detailId => $change) {
+                InvoiceDetail::where('id', $detailId)->where('invoice_id', $invoice->id)->update($change['fields']);
+            }
+
+            // Paket lama "1 × total" disimpan sebagai jumlah paket sebenarnya (nilai tidak berubah)
+            foreach ($paketNormalisasi as $detailId => $fields) {
+                InvoiceDetail::where('id', $detailId)->where('invoice_id', $invoice->id)->update($fields);
+            }
+
+            // Update invoice (observer membangun ulang jurnal jika nilai berubah)
             $invoice->update([
                 'tanggal' => $request->tanggal,
-                'diskon_persen' => $request->diskon_persen ?? 0,
-                'diskon_nominal' => $request->diskon_nominal ?? 0,
-                'ppn' => $request->ppn ?? 0,
-                'ongkos_kirim' => $request->ongkos_kirim ?? 0,
-                'total' => $request->total,
+                'subtotal' => $subtotal,
+                'diskon_persen' => $diskonPersen,
+                'diskon_nominal' => $diskonNominal,
+                'ppn' => $ppn,
+                'ongkos_kirim' => $ongkosKirim,
+                'total' => $total,
                 'jatuh_tempo' => $request->jatuh_tempo,
                 'status' => $request->status,
                 'catatan' => $request->catatan,
                 'syarat_ketentuan' => $request->syarat_ketentuan,
             ]);
+
+            // Pastikan jurnal tetap ada dan seimbang; jika tidak, batalkan semua perubahan
+            if ($hadJournal && $invoice->wasChanged(['subtotal', 'diskon_nominal', 'ppn', 'ongkos_kirim', 'total'])) {
+                $this->assertInvoiceJournalValid($invoice);
+            }
 
             // Handle aplikasi uang muka jika ada perubahan
             // Cek apakah user ingin menggunakan uang muka
@@ -717,15 +1054,42 @@ class InvoiceController extends Controller
                 }
             }
 
+            // Sinkronkan sisa tagihan & status dengan total baru
+            $invoice->refresh();
+            $invoice->sisa_tagihan = (float) $invoice->total - (float) $invoice->uang_muka_terapkan;
+            $totalTerbayar = $totalPembayaran + $kreditTerapkan + (float) $invoice->uang_muka_terapkan;
+            if ($totalTerbayar > 0) {
+                $invoice->status = $invoice->sisa_piutang <= 0.01 ? 'lunas' : 'sebagian';
+            }
+            $invoice->save();
+
             // Update sales order status if needed
             $this->updateSalesOrderStatus($invoice->sales_order_id);
 
             // Log activity
+            $aktivitas = 'Memperbarui invoice: ' . $invoice->nomor;
+            $detailLog = null;
+            $loggedChanges = collect($qtyChanges)->filter(fn($change) => in_array($change['kind'], ['produk', 'bundle', 'koreksi']));
+            if ($loggedChanges->isNotEmpty()) {
+                $aktivitas .= ' (perubahan qty ' . $loggedChanges->count() . ' item)';
+                $detailLog = 'Perubahan qty: ' . $loggedChanges->map(function ($change, $detailId) use ($invoice) {
+                    $nama = optional($invoice->details->firstWhere('id', $detailId))->deskripsi ?? ('Item #' . $detailId);
+                    if ($change['kind'] === 'koreksi') {
+                        return "{$nama}: koreksi pembulatan nilai Rp " . number_format($change['old'], 0, ',', '.')
+                            . ' → Rp ' . number_format($change['new'], 0, ',', '.');
+                    }
+                    $satuan = $change['kind'] === 'bundle' ? ' paket' : '';
+                    return "{$nama}: " . (float) $change['old'] . ' → ' . (float) $change['new'] . $satuan;
+                })->implode('; ') . ' | Total: ' . number_format($oldTotal, 0, ',', '.')
+                    . ' → ' . number_format((float) $invoice->total, 0, ',', '.');
+            }
+
             LogAktivitas::create([
                 'user_id' => Auth::id(),
-                'aktivitas' => 'Memperbarui invoice: ' . $invoice->nomor,
+                'aktivitas' => $aktivitas,
                 'modul' => 'invoice',
                 'data_id' => $invoice->id,
+                'detail' => $detailLog,
             ]);
 
             DB::commit();
@@ -883,7 +1247,7 @@ class InvoiceController extends Controller
         if ($sisaInvoice <= 0) {
             return redirect()
                 ->back()
-                ->with('error', 'Sales Order ini sudah fully invoiced. Total SO: ' . number_format($salesOrder->total, 0, ',', '.') . ', Total Invoice: ' . number_format($totalInvoiced, 0, ',', '.'));
+                ->with('info', 'Sales Order ini sudah ter-invoice penuh, tidak ada sisa yang perlu dibuatkan invoice. Total SO: Rp ' . number_format($salesOrder->total, 0, ',', '.') . ', Total Invoice: Rp ' . number_format($totalInvoiced, 0, ',', '.'));
         }
 
         // Generate invoice number
@@ -1505,6 +1869,330 @@ class InvoiceController extends Controller
                 'message' => 'Gagal mengambil data uang muka customer',
                 'error' => app()->environment('local') ? $e->getMessage() : null
             ], 500);
+        }
+    }
+
+    /**
+     * Qty item hanya boleh diubah untuk produk biasa (bukan bundle / isi bundle)
+     */
+    private function isQtyEditableDetail(InvoiceDetail $detail): bool
+    {
+        return !empty($detail->produk_id)
+            && ($detail->item_type ?? 'produk') !== 'bundle'
+            && !$detail->is_bundle_item
+            && empty($detail->bundle_id)
+            && empty($detail->parent_detail_id);
+    }
+
+    /**
+     * Sisa nilai SO untuk "invoice penutup" (invoice yang menghabiskan sisa SO).
+     * Invoice penutup memakai sisa diskon & PPN SO agar total semua invoice tepat sama dengan SO.
+     */
+    private function getSoInvoiceRemainder(int $salesOrderId, ?int $excludeInvoiceId = null): ?array
+    {
+        $so = SalesOrder::find($salesOrderId);
+        if (!$so) {
+            return null;
+        }
+
+        $others = Invoice::where('sales_order_id', $salesOrderId)
+            ->when($excludeInvoiceId, fn($query) => $query->where('id', '!=', $excludeInvoiceId));
+
+        $soSubtotal = (float) $so->subtotal;
+        $soDiskon = (float) $so->diskon_nominal;
+        // PPN nominal SO = total - DPP - ongkos kirim
+        $soPpn = max(0, round((float) $so->total - ($soSubtotal - $soDiskon) - (float) $so->ongkos_kirim, 2));
+
+        return [
+            'so_subtotal' => $soSubtotal,
+            'so_diskon_persen' => ($soSubtotal > 0 && $soDiskon > 0) ? ($soDiskon / $soSubtotal) * 100 : (float) $so->diskon_persen,
+            'others_subtotal' => (float) (clone $others)->sum('subtotal'),
+            'sisa_diskon' => round($soDiskon - (float) (clone $others)->sum('diskon_nominal'), 2),
+            'sisa_ppn' => round($soPpn - (float) (clone $others)->sum('ppn'), 2),
+        ];
+    }
+
+    private function isInvoicePenutup(?array $remainder, float $subtotal): bool
+    {
+        return $remainder !== null
+            && abs($remainder['others_subtotal'] + $subtotal - $remainder['so_subtotal']) < 0.5;
+    }
+
+    /**
+     * Diskon invoice penutup = sisa diskon SO, hanya jika persen diskon sama dengan SO
+     * dan selisihnya sebatas pembulatan (maks Rp 5).
+     */
+    private function closingDiskon(?array $remainder, float $subtotal, float $diskonPersen, float $diskonNominal): float
+    {
+        if (
+            $this->isInvoicePenutup($remainder, $subtotal)
+            && abs($diskonPersen - $remainder['so_diskon_persen']) < 0.01
+            && $remainder['sisa_diskon'] >= 0
+            && abs($remainder['sisa_diskon'] - $diskonNominal) <= 5
+        ) {
+            return $remainder['sisa_diskon'];
+        }
+
+        return $diskonNominal;
+    }
+
+    /**
+     * PPN invoice penutup = sisa PPN SO, jika selisihnya sebatas pembulatan (maks Rp 5).
+     */
+    private function closingPpn(?array $remainder, float $subtotal, float $ppn): float
+    {
+        if (
+            $ppn > 0
+            && $this->isInvoicePenutup($remainder, $subtotal)
+            && $remainder['sisa_ppn'] >= 0
+            && abs($remainder['sisa_ppn'] - $ppn) <= 5
+        ) {
+            return $remainder['sisa_ppn'];
+        }
+
+        return $ppn;
+    }
+
+    /**
+     * Sisa nilai (subtotal) SO per produk biasa yang belum di-invoice invoice lain
+     */
+    private function getRemainingSubtotalForInvoice(Invoice $invoice, array $produkIds): array
+    {
+        if (empty($produkIds)) {
+            return [];
+        }
+
+        $soSubtotal = SalesOrderDetail::where('sales_order_id', $invoice->sales_order_id)
+            ->whereIn('produk_id', $produkIds)
+            ->where('is_bundle_item', 0)
+            ->whereNull('bundle_id')
+            ->groupBy('produk_id')
+            ->selectRaw('produk_id, SUM(subtotal) as nilai')
+            ->pluck('nilai', 'produk_id');
+
+        $otherSubtotal = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+            ->where('invoice.sales_order_id', $invoice->sales_order_id)
+            ->where('invoice.id', '!=', $invoice->id)
+            ->whereIn('invoice_detail.produk_id', $produkIds)
+            ->where('invoice_detail.is_bundle_item', 0)
+            ->whereNull('invoice_detail.bundle_id')
+            ->groupBy('invoice_detail.produk_id')
+            ->selectRaw('invoice_detail.produk_id, SUM(invoice_detail.subtotal) as nilai')
+            ->pluck('nilai', 'produk_id');
+
+        $remaining = [];
+        foreach ($produkIds as $produkId) {
+            $remaining[$produkId] = round((float) ($soSubtotal[$produkId] ?? 0) - (float) ($otherSubtotal[$produkId] ?? 0), 2);
+        }
+
+        return $remaining;
+    }
+
+    /**
+     * Baris induk paket bundle di invoice
+     */
+    private function isBundleParentDetail(InvoiceDetail $detail): bool
+    {
+        return $detail->item_type === 'bundle' && !empty($detail->bundle_id) && !$detail->is_bundle_item;
+    }
+
+    /**
+     * Hitung jumlah paket dari qty isi bundle berdasarkan definisi bundle (qty per paket).
+     * null jika rasio antar isi tidak konsisten / bukan bilangan bulat.
+     */
+    private function countPaket(array $qtyByProduk, array $perPaket): ?int
+    {
+        $paket = null;
+        foreach ($qtyByProduk as $produkId => $qty) {
+            $qtyPerPaket = (float) ($perPaket[$produkId] ?? 0);
+            if ($qtyPerPaket <= 0) {
+                return null;
+            }
+
+            $ratio = (float) $qty / $qtyPerPaket;
+            if ($paket !== null && abs($ratio - $paket) > 0.001) {
+                return null;
+            }
+            $paket = $paket ?? $ratio;
+        }
+
+        if ($paket === null || $paket < 0.999 || abs($paket - round($paket)) > 0.001) {
+            return null;
+        }
+
+        return (int) round($paket);
+    }
+
+    /**
+     * Info bundle di SO: jumlah paket, qty isi, nilai bundle, dan qty isi per paket (definisi bundle).
+     * SO hanya menyimpan isi bundle (tanpa baris induk), jadi jumlah paket diturunkan dari definisi bundle.
+     */
+    private function getBundlePackageInfo(int $salesOrderId, int $bundleId): ?array
+    {
+        $soChildren = SalesOrderDetail::where('sales_order_id', $salesOrderId)
+            ->where('bundle_id', $bundleId)
+            ->where('is_bundle_item', 1)
+            ->get(['produk_id', 'quantity', 'subtotal']);
+
+        if ($soChildren->isEmpty()) {
+            return null;
+        }
+
+        $perPaket = \App\Models\ProductBundleItem::where('bundle_id', $bundleId)
+            ->groupBy('produk_id')
+            ->selectRaw('produk_id, SUM(quantity) as qty')
+            ->pluck('qty', 'produk_id')
+            ->map(fn($qty) => (float) $qty)
+            ->all();
+
+        $soQty = $soChildren->groupBy('produk_id')->map(fn($rows) => (float) $rows->sum('quantity'))->all();
+        $soPaket = $this->countPaket($soQty, $perPaket);
+
+        if ($soPaket === null) {
+            return null;
+        }
+
+        return [
+            'so_paket' => $soPaket,
+            'so_qty' => $soQty,
+            'so_value' => (float) $soChildren->sum('subtotal'),
+            'per_paket' => $perPaket,
+        ];
+    }
+
+    /**
+     * Kondisi paket bundle di invoice: jumlah paket saat ini dan batas maksimal
+     * (sisa paket SO setelah dikurangi paket di invoice lain dari SO yang sama).
+     * null jika bundle tidak bisa diedit (definisi tidak valid / isi tidak konsisten).
+     */
+    private function getInvoiceBundleState(Invoice $invoice, InvoiceDetail $parent): ?array
+    {
+        $info = $this->getBundlePackageInfo((int) $invoice->sales_order_id, (int) $parent->bundle_id);
+        if (!$info) {
+            return null;
+        }
+
+        $children = $invoice->details->where('parent_detail_id', $parent->id);
+        if ($children->isEmpty()) {
+            return null;
+        }
+
+        $paket = $this->countPaket(
+            $children->groupBy('produk_id')->map(fn($rows) => (float) $rows->sum('quantity'))->all(),
+            $info['per_paket']
+        );
+        if ($paket === null) {
+            return null;
+        }
+
+        $otherQty = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+            ->where('invoice.sales_order_id', $invoice->sales_order_id)
+            ->where('invoice.id', '!=', $invoice->id)
+            ->where('invoice_detail.bundle_id', $parent->bundle_id)
+            ->where('invoice_detail.is_bundle_item', 1)
+            ->groupBy('invoice_detail.produk_id')
+            ->selectRaw('invoice_detail.produk_id, SUM(invoice_detail.quantity) as qty')
+            ->pluck('qty', 'produk_id');
+
+        $sisaPaket = null;
+        foreach ($info['so_qty'] as $produkId => $soQty) {
+            $sisa = ($soQty - (float) ($otherQty[$produkId] ?? 0)) / $info['per_paket'][$produkId];
+            $sisaPaket = $sisaPaket === null ? $sisa : min($sisaPaket, $sisa);
+        }
+
+        // Nilai bundle di invoice lain dari SO yang sama (untuk nilai paket penutup = sisa nilai SO)
+        $otherBundleValue = (float) InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+            ->where('invoice.sales_order_id', $invoice->sales_order_id)
+            ->where('invoice.id', '!=', $invoice->id)
+            ->where('invoice_detail.bundle_id', $parent->bundle_id)
+            ->where('invoice_detail.item_type', 'bundle')
+            ->sum('invoice_detail.subtotal');
+
+        $sisaPaketBulat = (int) floor(($sisaPaket ?? 0) + 0.001);
+
+        return [
+            'paket' => $paket,
+            // Tidak lebih kecil dari paket saat ini, agar invoice lama tetap bisa disimpan
+            'max' => max($paket, $sisaPaketBulat),
+            // Jika qty paket = sisa paket SO, invoice ini menutup bundle: nilainya = sisa nilai bundle SO
+            'sisa_paket' => $sisaPaketBulat,
+            'closing_value' => round($info['so_value'] - $otherBundleValue, 2),
+            'so_paket' => $info['so_paket'],
+            'so_value' => $info['so_value'],
+            'per_paket' => $info['per_paket'],
+        ];
+    }
+
+    /**
+     * Qty SO per produk yang masih bisa dipakai invoice ini
+     * (qty SO dikurangi qty di invoice LAIN dari SO yang sama)
+     */
+    private function getAvailableQtyForInvoice(Invoice $invoice, array $produkIds): array
+    {
+        if (empty($produkIds)) {
+            return [];
+        }
+
+        $soQty = SalesOrderDetail::where('sales_order_id', $invoice->sales_order_id)
+            ->whereIn('produk_id', $produkIds)
+            ->where('is_bundle_item', 0)
+            ->whereNull('bundle_id')
+            ->groupBy('produk_id')
+            ->selectRaw('produk_id, SUM(quantity) as qty')
+            ->pluck('qty', 'produk_id');
+
+        $otherInvoicedQty = InvoiceDetail::join('invoice', 'invoice.id', '=', 'invoice_detail.invoice_id')
+            ->where('invoice.sales_order_id', $invoice->sales_order_id)
+            ->where('invoice.id', '!=', $invoice->id)
+            ->whereIn('invoice_detail.produk_id', $produkIds)
+            ->where('invoice_detail.is_bundle_item', 0)
+            ->whereNull('invoice_detail.bundle_id')
+            ->groupBy('invoice_detail.produk_id')
+            ->selectRaw('invoice_detail.produk_id, SUM(invoice_detail.quantity) as qty')
+            ->pluck('qty', 'produk_id');
+
+        $available = [];
+        foreach ($produkIds as $produkId) {
+            $available[$produkId] = (float) ($soQty[$produkId] ?? 0) - (float) ($otherInvoicedQty[$produkId] ?? 0);
+        }
+
+        return $available;
+    }
+
+    /**
+     * Tarif PPN invoice (persen). Diambil dari SO; fallback dihitung dari nilai PPN invoice.
+     */
+    private function getInvoicePpnRate(Invoice $invoice): float
+    {
+        if ((float) $invoice->ppn <= 0) {
+            return 0;
+        }
+
+        $soRate = (float) optional($invoice->salesOrder)->ppn;
+        if ($soRate > 0) {
+            return $soRate;
+        }
+
+        $dpp = (float) $invoice->subtotal - (float) $invoice->diskon_nominal;
+        return $dpp > 0 ? ((float) $invoice->ppn / $dpp) * 100 : 0;
+    }
+
+    /**
+     * Pastikan jurnal invoice ada, seimbang, dan piutangnya sama dengan total invoice.
+     * Observer menelan error jurnal, jadi dicek ulang di sini agar perubahan dibatalkan jika gagal.
+     */
+    private function assertInvoiceJournalValid(Invoice $invoice): void
+    {
+        $entries = $invoice->journalEntries()->get();
+        $totalDebit = (float) $entries->sum('debit');
+        $totalKredit = (float) $entries->sum('kredit');
+
+        if (
+            $entries->isEmpty()
+            || abs($totalDebit - $totalKredit) > 0.01
+            || abs($totalDebit - (float) $invoice->total) > 0.01
+        ) {
+            throw new \Exception('Jurnal invoice gagal diperbarui (debit: ' . $totalDebit . ', kredit: ' . $totalKredit . ', total invoice: ' . $invoice->total . '). Perubahan dibatalkan.');
         }
     }
 

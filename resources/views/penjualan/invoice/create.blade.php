@@ -561,7 +561,8 @@
                                                                 x-model="item.qty" :data-original-qty="item.original_qty"
                                                                 :data-max-qty="item.max_available_qty"
                                                                 @input="updateItemSubtotal(index)" min="0"
-                                                                :max="item.max_available_qty" step="0.01"
+                                                                :max="item.max_available_qty"
+                                                                :step="item.item_type === 'bundle' ? 1 : 0.01"
                                                                 class="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:text-white text-sm">
                                                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                                 Max: <span x-text="item.max_available_qty"></span>
@@ -936,6 +937,7 @@
                     items: [],
                     subtotal: 0,
                     diskonPersen: 0,
+                    penutup: null, // Data invoice penutup dari server (sisa diskon & PPN SO)
                     diskonNominal: 0,
                     ppnPersen: 0, // Default PPN is 0, will be set from sales order
                     ppnNominal: 0,
@@ -1102,6 +1104,9 @@
                                     // Save the terms_pembayaran for reference
                                     this.termsPembayaran = data.terms_pembayaran || '';
 
+                                    // Data invoice penutup (sisa diskon & PPN SO)
+                                    this.penutup = data.penutup || null;
+
                                     // Set items data
                                     this.items = data.details.map(item => ({
                                         sales_order_detail_id: item.sales_order_detail_id,
@@ -1217,6 +1222,7 @@
                         this.items = [];
                         this.subtotal = 0;
                         this.diskonPersen = 0;
+                        this.penutup = null;
                         this.diskonNominal = 0;
                         this.ppnPersen = 0;
                         this.ppnNominal = 0;
@@ -1249,10 +1255,23 @@
                         const diskonPersen = parseFloat(this.diskonPersen) || 0;
                         this.diskonNominal = Math.round(this.subtotal * (diskonPersen / 100));
 
+                        // Invoice penutup (subtotal semua invoice = subtotal SO): diskon & PPN = sisa SO,
+                        // sama dengan closingDiskon/closingPpn di InvoiceController
+                        const penutup = this.penutup !== null &&
+                            Math.abs(this.penutup.others_subtotal + this.subtotal - this.penutup.so_subtotal) < 0.5;
+                        if (penutup && Math.abs(diskonPersen - this.penutup.so_diskon_persen) < 0.01 &&
+                            this.penutup.sisa_diskon >= 0 && Math.abs(this.penutup.sisa_diskon - this.diskonNominal) <= 5) {
+                            this.diskonNominal = this.penutup.sisa_diskon;
+                        }
+
                         // Calculate PPN nominal (applied after discount)
                         const afterDiscount = this.subtotal - this.diskonNominal;
                         const ppnPersen = parseFloat(this.ppnPersen) || 0;
                         this.ppnNominal = Math.round(afterDiscount * (ppnPersen / 100));
+                        if (penutup && this.ppnNominal > 0 && this.penutup.sisa_ppn >= 0 &&
+                            Math.abs(this.penutup.sisa_ppn - this.ppnNominal) <= 5) {
+                            this.ppnNominal = this.penutup.sisa_ppn;
+                        }
 
                         // Calculate total (including ongkos kirim)
                         const ongkosKirim = parseFloat(this.ongkosKirim) || 0;

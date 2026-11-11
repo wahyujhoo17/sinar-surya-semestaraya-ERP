@@ -229,127 +229,303 @@
         </div>
 
         <!-- Invoice Information Grid -->
+        @php
+            $customer = $invoice->customer;
+            $so = $invoice->salesOrder;
+
+            // Jatuh tempo
+            $jatuhTempo = \Carbon\Carbon::parse($invoice->jatuh_tempo)->startOfDay();
+            $sisaHari = (int) round(now()->startOfDay()->diffInDays($jatuhTempo, false));
+            $isLunas = strtolower($invoice->status ?? '') === 'lunas';
+            if ($isLunas) {
+                $jatuhTempoNote = ['Sudah lunas', 'text-emerald-600 dark:text-emerald-400'];
+            } elseif ($sisaHari < 0) {
+                $jatuhTempoNote = ['Lewat ' . abs($sisaHari) . ' hari', 'text-red-600 dark:text-red-400'];
+            } elseif ($sisaHari === 0) {
+                $jatuhTempoNote = ['Jatuh tempo hari ini', 'text-amber-600 dark:text-amber-400'];
+            } else {
+                $jatuhTempoNote = [$sisaHari . ' hari lagi', $sisaHari <= 7 ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'];
+            }
+
+            // Customer
+            $customerName = $customer ? ($customer->company ?: $customer->nama) : null;
+            $customerAlamat = $customer
+                ? ($customer->alamat ?: collect([$customer->jalan, $customer->kota, $customer->provinsi, $customer->kode_pos])->filter()->implode(', '))
+                : null;
+            // Rapikan koma ganda / spasi berlebih dari data alamat
+            $customerAlamat = $customerAlamat ? trim(preg_replace(['/\s*,(\s*,)+/', '/\s+/'], [',', ' '], $customerAlamat), " ,") : null;
+            $customerPhones = $customer
+                ? collect([$customer->telepon, $customer->no_hp_kontak])->filter()->map(fn($p) => trim($p))->unique()->values()
+                : collect();
+            $customerSales = $customer ? (optional($customer->sales)->name ?: $customer->sales_name) : null;
+            $customerTags = $customer ? collect([$customer->group, $customer->tipe, $customer->industri])->filter()->unique()->values() : collect();
+            $canViewCustomer = $customer && auth()->user()->hasPermission('pelanggan.view');
+
+            // Sales Order: progres invoice
+            $soTotalInvoiced = $so ? (float) $so->invoices()->sum('total') : 0;
+            $soInvoiceCount = $so ? $so->invoices()->count() : 0;
+            $soProgress = $so && $so->total > 0 ? min(100, round($soTotalInvoiced / $so->total * 100)) : 0;
+            $soStatusMap = [
+                'fully_invoiced' => ['Ter-invoice penuh', 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-500/10 dark:text-emerald-300 dark:ring-emerald-500/20'],
+                'partially_invoiced' => ['Sebagian ter-invoice', 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-300 dark:ring-amber-500/20'],
+                'not_invoiced' => ['Belum ter-invoice', 'bg-gray-50 text-gray-600 ring-gray-500/20 dark:bg-gray-500/10 dark:text-gray-300 dark:ring-gray-500/20'],
+            ];
+            $soStatus = $so ? ($soStatusMap[$so->status_invoice] ?? null) : null;
+        @endphp
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <!-- Invoice Details -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 p-6 card">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Informasi Invoice</h3>
-                </div>
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Nomor</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ $invoice->nomor }}</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Tanggal</span>
+                class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                <div class="p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-500/10 ring-1 ring-blue-100 dark:ring-blue-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Informasi Invoice</p>
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white">{{ $invoice->nomor }}</p>
+                            </div>
+                        </div>
                         <span
-                            class="font-medium text-gray-900 dark:text-white">{{ date('d/m/Y', strtotime($invoice->tanggal)) }}</span>
+                            class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium {{ $invoice->status_pembayaran_class }}">
+                            {{ $invoice->status_display }}
+                        </span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Jatuh Tempo</span>
-                        <span
-                            class="font-medium text-red-600 dark:text-red-400">{{ date('d/m/Y', strtotime($invoice->jatuh_tempo)) }}</span>
+
+                    <div class="mt-4 grid grid-cols-2 gap-3">
+                        <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Tanggal</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ \Carbon\Carbon::parse($invoice->tanggal)->format('d/m/Y') }}</p>
+                        </div>
+                        <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Jatuh Tempo</p>
+                            <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                {{ $jatuhTempo->format('d/m/Y') }}</p>
+                            <p class="mt-0.5 text-xs font-medium {{ $jatuhTempoNote[1] }}">{{ $jatuhTempoNote[0] }}</p>
+                        </div>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Dibuat Oleh</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ $invoice->user->name }}</span>
+
+                    <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300">
+                            {{ mb_strtoupper(mb_substr(optional($invoice->user)->name ?? '-', 0, 1)) }}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Dibuat oleh</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                {{ optional($invoice->user)->name ?? '-' }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Customer Information -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 p-6 card">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+                class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                <div class="p-5">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="flex-shrink-0 w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 ring-1 ring-emerald-100 dark:ring-emerald-500/20 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                Customer</p>
+                            @if ($customer && $canViewCustomer)
+                                <a href="{{ route('master.pelanggan.show', $customer->id) }}" target="_blank"
+                                    class="block text-sm font-semibold text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate">
+                                    {{ $customerName }}
+                                </a>
+                            @elseif ($customer)
+                                <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ $customerName }}
+                                </p>
+                            @else
+                                <p class="text-sm font-semibold text-gray-400">-</p>
+                            @endif
+                        </div>
                     </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Customer</h3>
-                </div>
-                <div class="space-y-3">
-                    @if ($invoice->customer->company ?? $invoice->customer->nama)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Perusahaan</span>
-                            <span
-                                class="font-medium text-gray-900 dark:text-white">{{ $invoice->customer->company ?? $invoice->customer->nama }}</span>
-                        </div>
-                    @endif
-                    @if ($invoice->customer->email)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Email</span>
-                            <span
-                                class="font-medium text-gray-900 dark:text-white">{{ $invoice->customer->email }}</span>
-                        </div>
-                    @endif
-                    @if ($invoice->customer->telepon)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Telepon</span>
-                            <span
-                                class="font-medium text-gray-900 dark:text-white">{{ $invoice->customer->telepon }}</span>
-                        </div>
-                    @endif
-                    @if ($invoice->customer->kontak_person)
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Kontak</span>
-                            <span
-                                class="font-medium text-gray-900 dark:text-white">{{ $invoice->customer->kontak_person }}</span>
-                        </div>
+
+                    @if ($customer)
+                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                            {{ collect([$customer->kode])->merge($customerTags)->implode(' · ') }}
+                        </p>
+
+                        <dl class="mt-4 space-y-2.5 text-[13px]">
+                            @if ($customer->kontak_person)
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <dt class="sr-only">Kontak</dt>
+                                        <dd class="text-gray-900 dark:text-white">{{ $customer->kontak_person }}</dd>
+                                    </div>
+                                </div>
+                            @endif
+                            @foreach ($customerPhones as $phone)
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <dt class="sr-only">Telepon</dt>
+                                        <dd><a href="tel:{{ preg_replace('/[^0-9+]/', '', $phone) }}"
+                                                class="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400">{{ $phone }}</a>
+                                        </dd>
+                                    </div>
+                                </div>
+                            @endforeach
+                            @if ($customer->email)
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <dt class="sr-only">Email</dt>
+                                        <dd class="truncate"><a href="mailto:{{ $customer->email }}"
+                                                class="text-gray-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400">{{ $customer->email }}</a>
+                                        </dd>
+                                    </div>
+                                </div>
+                            @endif
+                            @if ($customerAlamat)
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <dt class="sr-only">Alamat</dt>
+                                        <dd class="text-gray-600 dark:text-gray-300 leading-relaxed">{{ $customerAlamat }}</dd>
+                                    </div>
+                                </div>
+                            @endif
+                            @if (!$customer->kontak_person && $customerPhones->isEmpty() && !$customer->email && !$customerAlamat)
+                                <p class="text-gray-400 dark:text-gray-500 italic">Belum ada data kontak & alamat</p>
+                            @endif
+                        </dl>
+
+                        @if ($customer->npwp || $customerSales)
+                            <div
+                                class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 grid grid-cols-2 gap-3 text-sm">
+                                @if ($customer->npwp)
+                                    <div class="min-w-0">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">NPWP</p>
+                                        <p class="mt-0.5 font-medium text-gray-900 dark:text-white truncate">
+                                            {{ $customer->npwp }}</p>
+                                    </div>
+                                @endif
+                                @if ($customerSales)
+                                    <div class="min-w-0">
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">Sales</p>
+                                        <p class="mt-0.5 font-medium text-gray-900 dark:text-white truncate">
+                                            {{ $customerSales }}</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    @else
+                        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Data customer tidak ditemukan</p>
                     @endif
                 </div>
             </div>
 
             <!-- Sales Order Information -->
             <div
-                class="bg-white dark:bg-gray-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 p-6 card">
-                <div class="flex items-center gap-3 mb-4">
-                    <div
-                        class="w-8 h-8 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                        </svg>
-                    </div>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Order</h3>
-                </div>
-                @if ($invoice->salesOrder)
-                    <div class="space-y-3">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Nomor SO</span>
-                            <a href="{{ route('penjualan.sales-order.show', $invoice->salesOrder->id) }}"
-                                target="_blank"
-                                class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline">
-                                {{ $invoice->salesOrder->nomor }}
-                            </a>
+                class="group relative overflow-hidden bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                <div class="p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-8 h-8 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 ring-1 ring-indigo-100 dark:ring-indigo-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                                    Sales Order</p>
+                                @if ($so)
+                                    <a href="{{ route('penjualan.sales-order.show', $so->id) }}" target="_blank"
+                                        class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300">
+                                        {{ $so->nomor }}
+                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                            stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                    </a>
+                                @else
+                                    <p class="text-sm font-semibold text-gray-400">-</p>
+                                @endif
+                            </div>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Tanggal SO</span>
+                        @if ($soStatus)
                             <span
-                                class="font-medium text-gray-900 dark:text-white">{{ date('d/m/Y', strtotime($invoice->salesOrder->tanggal)) }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600 dark:text-gray-400">Total SO</span>
-                            <span class="font-medium text-green-600 dark:text-green-400">Rp
-                                {{ number_format($invoice->salesOrder->total, 0, ',', '.') }}</span>
-                        </div>
+                                class="inline-flex items-center whitespace-nowrap px-2.5 py-1 rounded-full text-xs font-medium ring-1 ring-inset {{ $soStatus[1] }}">
+                                {{ $soStatus[0] }}
+                            </span>
+                        @endif
                     </div>
-                @else
-                    <div class="text-center py-4">
-                        <p class="text-gray-500 dark:text-gray-400">Tidak ada data Sales Order</p>
-                    </div>
-                @endif
+
+                    @if ($so)
+                        <div class="mt-4 grid grid-cols-2 gap-3">
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Tanggal SO</p>
+                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white">
+                                    {{ \Carbon\Carbon::parse($so->tanggal)->format('d/m/Y') }}</p>
+                            </div>
+                            <div class="rounded-xl bg-gray-50 dark:bg-gray-700/40 p-3 min-w-0">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">No. PO Customer</p>
+                                <p class="mt-1 text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                    {{ $so->nomor_po ?: '-' }}</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-baseline justify-between">
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Total SO</p>
+                                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                                    Rp {{ number_format($so->total, 0, ',', '.') }}</p>
+                            </div>
+                            <div class="mt-3 h-2 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                                <div class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500"
+                                    style="width: {{ $soProgress }}%"></div>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                                <span>Ter-invoice Rp {{ number_format($soTotalInvoiced, 0, ',', '.') }}
+                                    ({{ $soInvoiceCount }} invoice)</span>
+                                <span class="font-medium text-gray-700 dark:text-gray-300">{{ $soProgress }}%</span>
+                            </div>
+                        </div>
+                    @else
+                        <p class="mt-5 text-sm text-gray-500 dark:text-gray-400">Tidak ada data Sales Order</p>
+                    @endif
+                </div>
             </div>
         </div>
 

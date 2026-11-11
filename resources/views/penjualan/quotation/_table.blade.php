@@ -25,10 +25,10 @@
             {{ ($quotations->firstItem() ?? 1) + $loop->index }}
         </td>
         <td class="px-5 py-4">
-            @if ($quotation->status === 'draft')
-                <a href="{{ route('penjualan.quotation.edit', $quotation->id) }}" class="group">
+            @if (auth()->user()->hasPermission('quotation.view'))
+                <a href="{{ route('penjualan.quotation.show', $quotation->id) }}" class="group">
                     <div
-                        class="text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 transition duration-150">
+                        class="text-sm font-medium text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300 group-hover:underline transition duration-150">
                         {{ $quotation->nomor }}
                     </div>
                     <div class="text-xs text-gray-500 dark:text-gray-400">
