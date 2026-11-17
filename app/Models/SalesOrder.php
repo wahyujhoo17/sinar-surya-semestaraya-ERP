@@ -21,6 +21,7 @@ class SalesOrder extends Model
         'subtotal',
         'diskon_persen',
         'diskon_nominal',
+        'diskon_tipe',
         'ppn',
         'total',
         'ongkos_kirim',
@@ -98,6 +99,52 @@ class SalesOrder extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class, 'sales_order_id');
+    }
+
+    /**
+     * Persen diskon global untuk label dokumen (mis. "7,5%"), hanya jika persen itu
+     * memang menghasilkan nominal diskonnya. Diskon yang diisi dalam Rupiah mengembalikan null
+     * agar dokumen tidak menampilkan persen hasil pembulatan yang tidak cocok dengan nominal.
+     */
+    public function getDiskonPersenLabelAttribute(): ?string
+    {
+        $persen = (float) $this->diskon_persen;
+
+        if ($persen <= 0 || (float) $this->diskon_nominal <= 0 || $this->diskon_tipe_efektif !== 'persen') {
+            return null;
+        }
+
+        return rtrim(rtrim(number_format($persen, 2, ',', '.'), '0'), ',') . '%';
+    }
+
+    /**
+     * Jenis diskon global: 'persen' atau 'nominal' (Rp).
+     * Memakai kolom diskon_tipe; untuk SO lama (NULL / kolom belum ada) ditebak dari nilainya:
+     * 'persen' bila nominal = subtotal × persen, selain itu 'nominal'.
+     */
+    public function getDiskonTipeEfektifAttribute(): string
+    {
+        $tipe = $this->attributes['diskon_tipe'] ?? null;
+        if (in_array($tipe, ['persen', 'nominal'], true)) {
+            return $tipe;
+        }
+
+        $persen = (float) $this->diskon_persen;
+        $nominal = (float) $this->diskon_nominal;
+
+        return ($persen > 0 && abs(round((float) $this->subtotal * $persen / 100) - $nominal) < 1)
+            ? 'persen'
+            : 'nominal';
+    }
+
+    /**
+     * Apakah kolom diskon_tipe sudah ada (migration 2026_11_17_000000 sudah dijalankan).
+     */
+    public static function hasDiskonTipeColumn(): bool
+    {
+        static $hasColumn = null;
+
+        return $hasColumn ??= \Illuminate\Support\Facades\Schema::hasColumn('sales_order', 'diskon_tipe');
     }
 
     /**

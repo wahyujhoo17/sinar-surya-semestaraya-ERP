@@ -468,8 +468,8 @@
             </tr>
             @if ($salesOrder->diskon_nominal > 0)
                 <tr>
-                    <td>Diskon @if ($salesOrder->diskon_persen > 0)
-                            ({{ number_format($salesOrder->diskon_persen, 1) }}%)
+                    <td>Diskon @if ($salesOrder->diskon_persen_label)
+                            ({{ $salesOrder->diskon_persen_label }})
                         @endif
                     </td>
                     <td class="text-right">Rp {{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</td>

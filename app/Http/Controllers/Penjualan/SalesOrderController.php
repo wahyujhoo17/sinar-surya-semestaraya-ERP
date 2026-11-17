@@ -303,6 +303,44 @@ class SalesOrderController extends Controller
         ));
     }
 
+    /**
+     * Hitung diskon global, PPN, dan total Sales Order.
+     *
+     * - Jika pengguna mengisi diskon dalam Rupiah (diskon_global_tipe = nominal), nominal itulah acuannya.
+     *   Persen hanya informasi; kolom persen tersimpan 2 desimal sehingga tidak boleh dipakai
+     *   untuk menghitung ulang nominal (penyebab nominal bergeser saat SO diedit).
+     * - Diskon & PPN dibulatkan ke Rupiah penuh, sama seperti invoice.
+     *
+     * @return array [diskonPersen, diskonNominal, ppnPersen, ongkosKirim, total, diskonTipe]
+     */
+    private function hitungTotalSalesOrder(Request $request, float $subtotal): array
+    {
+        $diskonPersen = (float) ($request->diskon_global_persen ?? 0);
+        $diskonNominal = (float) ($request->diskon_global_nominal ?? 0);
+
+        $tipe = $request->input('diskon_global_tipe');
+        if (!in_array($tipe, ['persen', 'nominal'], true)) {
+            // Form lama / request tanpa penanda: nominal yang terkirim dianggap acuan bila ada
+            $tipe = $diskonNominal > 0 ? 'nominal' : 'persen';
+        }
+
+        if ($tipe === 'persen') {
+            $diskonPersen = min(max($diskonPersen, 0), 100);
+            $diskonNominal = $diskonPersen > 0 ? round($subtotal * $diskonPersen / 100) : 0;
+        } else {
+            $diskonNominal = round(min(max($diskonNominal, 0), max($subtotal, 0)));
+            $diskonPersen = $subtotal > 0 ? round(($diskonNominal / $subtotal) * 100, 2) : 0;
+        }
+
+        $afterDiscount = $subtotal - $diskonNominal;
+        $ppn = (float) ($request->ppn ?? 0);
+        $ppnNominal = round($afterDiscount * $ppn / 100);
+        $ongkosKirim = (float) ($request->ongkos_kirim ?? 0);
+        $total = $afterDiscount + $ppnNominal + $ongkosKirim;
+
+        return [$diskonPersen, $diskonNominal, $ppn, $ongkosKirim, $total, $tipe];
+    }
+
     public function store(Request $request)
     {
 
@@ -395,6 +433,7 @@ class SalesOrderController extends Controller
             'items' => 'required|array|min:1',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
+            'diskon_global_tipe' => 'nullable|in:persen,nominal',
             'ongkos_kirim' => 'nullable|numeric|min:0',
             'ppn' => 'nullable|numeric|min:0|max:100',
             'check_stock' => 'nullable|boolean',
@@ -515,21 +554,8 @@ class SalesOrderController extends Controller
             }
 
             // Calculate discounts and taxes
-            $diskonGlobalPersen = $request->diskon_global_persen ?? 0;
-            $diskonGlobalNominal = $request->diskon_global_nominal ?? 0;
-
-            if ($diskonGlobalPersen > 0) {
-                $diskonGlobalNominal = ($diskonGlobalPersen / 100) * $subtotal;
-            }
-
-            $afterDiscount = $subtotal - $diskonGlobalNominal;
-
-            $ppn = $request->ppn ?? 0;
-            $ppnValue = ($ppn / 100) * $afterDiscount;
-
-            $ongkosKirim = $request->ongkos_kirim ?? 0;
-
-            $total = $afterDiscount + $ppnValue + $ongkosKirim;
+            [$diskonGlobalPersen, $diskonGlobalNominal, $ppn, $ongkosKirim, $total, $diskonTipe] =
+                $this->hitungTotalSalesOrder($request, $subtotal);
 
             // Create Sales Order
             $salesOrder = new SalesOrder();
@@ -542,6 +568,9 @@ class SalesOrderController extends Controller
             $salesOrder->subtotal = $subtotal;
             $salesOrder->diskon_persen = $diskonGlobalPersen;
             $salesOrder->diskon_nominal = $diskonGlobalNominal;
+            if (SalesOrder::hasDiskonTipeColumn()) {
+                $salesOrder->diskon_tipe = $diskonTipe;
+            }
             $salesOrder->ppn = $ppn;
             $salesOrder->ongkos_kirim = $ongkosKirim;
             $salesOrder->total = $total;
@@ -946,6 +975,7 @@ class SalesOrderController extends Controller
             'items' => 'required|array|min:1',
             'diskon_global_persen' => 'nullable|numeric|min:0|max:100',
             'diskon_global_nominal' => 'nullable|numeric|min:0',
+            'diskon_global_tipe' => 'nullable|in:persen,nominal',
             'ppn' => 'nullable|numeric|min:0|max:100',
         ];
 
@@ -1059,18 +1089,8 @@ class SalesOrderController extends Controller
             ]);
 
             // Calculate discounts and taxes
-            $diskonPersen = $request->diskon_global_persen ?? 0;
-            $diskonNominal = $request->diskon_global_nominal ?? 0;
-
-            if ($diskonPersen > 0) {
-                $diskonNominal = ($diskonPersen / 100) * $subtotal;
-            }
-
-            $afterDiscount = $subtotal - $diskonNominal;
-            $ppn = $request->ppn ?? 0;
-            $ppnValue = ($ppn / 100) * $afterDiscount;
-            $ongkosKirim = $request->ongkos_kirim ?? 0;
-            $total = $afterDiscount + $ppnValue + $ongkosKirim;
+            [$diskonPersen, $diskonNominal, $ppn, $ongkosKirim, $total, $diskonTipe] =
+                $this->hitungTotalSalesOrder($request, $subtotal);
 
             // Update Sales Order
             $salesOrder->nomor = $request->nomor;
@@ -1081,6 +1101,9 @@ class SalesOrderController extends Controller
             $salesOrder->subtotal = $subtotal;
             $salesOrder->diskon_persen = $diskonPersen;
             $salesOrder->diskon_nominal = $diskonNominal;
+            if (SalesOrder::hasDiskonTipeColumn()) {
+                $salesOrder->diskon_tipe = $diskonTipe;
+            }
             $salesOrder->ppn = $ppn;
             $salesOrder->total = $total;
             $salesOrder->status_pembayaran = $request->status_pembayaran;

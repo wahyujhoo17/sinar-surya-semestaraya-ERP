@@ -787,7 +787,7 @@
                     </div>
                     @if ($salesOrder->diskon_nominal > 0)
                         <div class="summary-item summary-highlight clearfix">
-                            <span class="label">Diskon ({{ number_format($salesOrder->diskon_persen, 1) }}%):</span>
+                            <span class="label">Diskon{{ $salesOrder->diskon_persen_label ? ' (' . $salesOrder->diskon_persen_label . ')' : '' }}:</span>
                             <span class="amount">-Rp
                                 {{ number_format($salesOrder->diskon_nominal, 0, ',', '.') }}</span>
                         </div>

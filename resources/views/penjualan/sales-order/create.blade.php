@@ -977,24 +977,51 @@
                                 x-text="formatRupiah(calculateTotal().subtotal)"></span>
                         </div>
 
-                        <div class="flex justify-between items-center">
-                            <label for="diskon_global_persen"
-                                class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
-                                (%):</label>
-                            <input type="number" step="any" min="0" max="100"
-                                name="diskon_global_persen" id="diskon_global_persen"
-                                x-model.number="diskonGlobalPersen" @input="updateDiskonGlobal('persen')"
-                                placeholder="0"
-                                class="w-24 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <label for="diskon_global_nominal"
-                                class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global
-                                (Rp):</label>
-                            <input type="number" step="any" min="0" name="diskon_global_nominal"
-                                id="diskon_global_nominal" x-model.number="diskonGlobalNominal"
-                                @input="updateDiskonGlobal('nominal')" placeholder="0"
-                                class="w-36 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
+                        {{-- Diskon Global: pilih satu jenis (% atau Rp) --}}
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center gap-3">
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Diskon Global</span>
+                                <div class="flex items-center gap-2">
+                                    <div class="inline-flex rounded-lg bg-gray-100 dark:bg-gray-700 p-0.5" role="group"
+                                        aria-label="Jenis diskon global">
+                                        <button type="button" @click="setTipeDiskon('persen')"
+                                            :class="lastChangedDiskon === 'persen' ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700'"
+                                            class="w-9 py-1 text-xs font-semibold rounded-md transition-colors">%</button>
+                                        <button type="button" @click="setTipeDiskon('nominal')"
+                                            :class="lastChangedDiskon === 'nominal' ? 'bg-white dark:bg-gray-600 text-primary-600 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-300 hover:text-gray-700'"
+                                            class="w-9 py-1 text-xs font-semibold rounded-md transition-colors">Rp</button>
+                                    </div>
+
+                                    <div x-show="lastChangedDiskon === 'persen'" class="relative w-36">
+                                        <input type="number" step="any" min="0" max="100" id="diskon_global_persen"
+                                            x-model.number="diskonGlobalPersen" @input="updateDiskonGlobal('persen')"
+                                            placeholder="0"
+                                            class="w-full pr-8 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 right-0 pr-3 flex items-center text-xs text-gray-400">%</span>
+                                    </div>
+
+                                    <div x-show="lastChangedDiskon === 'nominal'" class="relative w-36">
+                                        <span
+                                            class="pointer-events-none absolute inset-y-0 left-0 pl-3 flex items-center text-xs text-gray-400">Rp</span>
+                                        <input type="text" inputmode="numeric" id="diskon_global_nominal"
+                                            :value="formatRibuan(diskonGlobalNominal)" @input="onInputDiskonNominal($event)"
+                                            placeholder="0"
+                                            class="w-full pl-9 text-sm text-right border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md focus:ring-primary-500 focus:border-primary-500">
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-right text-xs text-gray-500 dark:text-gray-400"
+                                x-show="calculateTotal().diskonGlobalNominal > 0"
+                                x-text="lastChangedDiskon === 'persen'
+                                    ? '= ' + formatRupiah(calculateTotal().diskonGlobalNominal)
+                                    : '≈ ' + (calculateTotal().subtotal > 0 ? (calculateTotal().diskonGlobalNominal / calculateTotal().subtotal * 100).toLocaleString('id-ID', { maximumFractionDigits: 2 }) : 0) + '% dari subtotal'">
+                            </p>
+
+                            {{-- Nilai yang dikirim ke server --}}
+                            <input type="hidden" name="diskon_global_tipe" :value="lastChangedDiskon">
+                            <input type="hidden" name="diskon_global_persen" :value="diskonGlobalPersen || 0">
+                            <input type="hidden" name="diskon_global_nominal" :value="diskonGlobalNominal || 0">
                         </div>
 
                         <div class="flex justify-between items-center">
@@ -1347,6 +1374,12 @@
                         "{{ old('diskon_global_persen', $quotation ? $quotation->diskon_persen : 0) }}"),
                     diskonGlobalNominal: parseFloat(
                         "{{ old('diskon_global_nominal', $quotation ? $quotation->diskon_nominal : 0) }}"),
+                    // Sumber diskon global: 'persen' atau 'nominal' (Rp). Nominal Rp yang diketik tidak boleh
+                    // dihitung ulang dari persen (persen hanya tersimpan 2 desimal).
+                    lastChangedDiskon: @json(old('diskon_global_tipe',
+                        $quotation && $quotation->diskon_persen > 0 &&
+                        abs(round($quotation->subtotal * $quotation->diskon_persen / 100) - $quotation->diskon_nominal) < 1
+                            ? 'persen' : 'nominal')),
                     ongkosKirim: parseFloat("{{ old('ongkos_kirim', $quotation ? $quotation->ongkos_kirim : 0) }}"),
                     includePPN: {{ old('ppn', $quotation ? ($quotation->ppn > 0 ? 'true' : 'false') : 'true') }},
 
@@ -1925,6 +1958,10 @@
 
                                     self.diskonGlobalPersen = parseFloat(quotation.diskon_persen) || 0;
                                     self.diskonGlobalNominal = parseFloat(quotation.diskon_nominal) || 0;
+                                    // Diskon quotation diisi dalam % jika nominalnya = persen × subtotal, selain itu Rp
+                                    self.lastChangedDiskon = (self.diskonGlobalPersen > 0 && Math.abs(Math.round(
+                                            (parseFloat(quotation.subtotal) || 0) * self.diskonGlobalPersen / 100) -
+                                        self.diskonGlobalNominal) < 1) ? 'persen' : 'nominal';
                                     self.ongkosKirim = parseFloat(quotation.ongkos_kirim) || 0;
                                     self.includePPN = quotation.ppn ? parseFloat(quotation.ppn) > 0 :
                                         true;
@@ -2116,6 +2153,7 @@
 
                     updateDiskonGlobal(type) {
                         const subtotal = this.calculateSubtotal();
+                        this.lastChangedDiskon = type;
 
                         if (type === 'persen') {
                             let persen = parseFloat(this.diskonGlobalPersen) || 0;
@@ -2136,6 +2174,32 @@
                         this.calculateTotal();
                     },
 
+                    // Toggle jenis diskon global (% / Rp); nilai diskon yang sedang berlaku dipertahankan
+                    setTipeDiskon(tipe) {
+                        if (this.lastChangedDiskon === tipe) return;
+                        const nominalSekarang = this.calculateTotal().diskonGlobalNominal;
+                        const subtotal = this.calculateSubtotal();
+                        if (tipe === 'persen') {
+                            this.diskonGlobalPersen = subtotal > 0 ? Math.round(nominalSekarang / subtotal * 10000) / 100 : 0;
+                        } else {
+                            this.diskonGlobalNominal = Math.round(nominalSekarang);
+                        }
+                        this.updateDiskonGlobal(tipe);
+                    },
+
+                    // Format ribuan untuk input diskon Rp (1.000.000)
+                    formatRibuan(value) {
+                        const angka = Math.round(parseFloat(value) || 0);
+                        return angka > 0 ? angka.toLocaleString('id-ID') : '';
+                    },
+
+                    onInputDiskonNominal(event) {
+                        const digits = event.target.value.replace(/[^\d]/g, '');
+                        this.diskonGlobalNominal = digits ? parseInt(digits, 10) : 0;
+                        this.updateDiskonGlobal('nominal');
+                        event.target.value = this.formatRibuan(this.diskonGlobalNominal);
+                    },
+
                     calculateSubtotal() {
                         return this.items.reduce((total, item) => {
                             // Only count bundle headers and regular items, skip bundle items to avoid double counting
@@ -2151,10 +2215,13 @@
                         let diskonGlobalNominal = parseFloat(this.diskonGlobalNominal) || 0;
 
                         // Recalculate diskonGlobalNominal if diskonGlobalPersen is the source of truth
-                        if (parseFloat(this.diskonGlobalPersen) > 0 && this.lastChangedDiskon === 'persen') {
-                            diskonGlobalNominal = (parseFloat(this.diskonGlobalPersen) / 100) * subtotal;
+                        // Dibulatkan ke Rupiah penuh, sama dengan SalesOrderController::hitungTotalSalesOrder
+                        if (this.lastChangedDiskon === 'persen') {
+                            diskonGlobalNominal = parseFloat(this.diskonGlobalPersen) > 0 ?
+                                Math.round((parseFloat(this.diskonGlobalPersen) / 100) * subtotal) : 0;
                             this.diskonGlobalNominal = diskonGlobalNominal; // Update the model
                         } else if (this.lastChangedDiskon === 'nominal') {
+                            diskonGlobalNominal = Math.round(Math.min(Math.max(diskonGlobalNominal, 0), Math.max(subtotal, 0)));
                             // Recalculate diskonGlobalPersen if diskonGlobalNominal is the source of truth
                             if (subtotal > 0) {
                                 this.diskonGlobalPersen = (diskonGlobalNominal / subtotal) * 100;
@@ -2165,7 +2232,7 @@
 
                         const afterDiscount = subtotal - diskonGlobalNominal;
                         const ongkosKirimValue = parseFloat(this.ongkosKirim) || 0;
-                        const ppnNominal = this.includePPN ? ({{ setting('tax_percentage', 11) }} / 100) * afterDiscount : 0;
+                        const ppnNominal = this.includePPN ? Math.round(({{ setting('tax_percentage', 11) }} / 100) * afterDiscount) : 0;
                         const total = afterDiscount + ppnNominal + ongkosKirimValue;
 
                         // Update reactive properties for display
